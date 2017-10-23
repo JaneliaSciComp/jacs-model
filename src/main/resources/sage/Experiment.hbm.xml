@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated Nov 2, 2015 2:36:55 PM by Hibernate Tools 3.4.0.CR1 -->
+<hibernate-mapping>
+    <class name="org.janelia.it.jacs.model.sage.Experiment" table="experiment" catalog="sage">
+        <id name="id" type="java.lang.Integer">
+            <column name="id" />
+            <generator class="identity" />
+        </id>
+        <many-to-one name="type" class="org.janelia.it.jacs.model.sage.CvTerm" fetch="select">
+            <column name="type_id" not-null="true" />
+        </many-to-one>
+        <many-to-one name="lab" class="org.janelia.it.jacs.model.sage.CvTerm" fetch="select">
+            <column name="lab_id" not-null="true" />
+        </many-to-one>
+        <property name="name" type="string">
+            <column name="name" not-null="true" />
+        </property>
+        <property name="experimenter" type="string">
+            <column name="experimenter" not-null="true" />
+        </property>
+        <property name="createDate" type="timestamp">
+            <column name="create_date" length="19" not-null="true" />
+        </property>
+        <set name="images" table="image" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="experiment_id" />
+            </key>
+            <one-to-many class="org.janelia.it.jacs.model.sage.Image" />
+        </set>
+        <set name="experimentProperties" table="experiment_property" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="experiment_id" not-null="true" />
+            </key>
+            <one-to-many class="org.janelia.it.jacs.model.sage.ExperimentProperty" />
+        </set>
+        <set name="observations" table="observation" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="experiment_id" />
+            </key>
+            <one-to-many class="org.janelia.it.jacs.model.sage.Observation" />
+        </set>
+        <set name="sessions" table="session" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="experiment_id" />
+            </key>
+            <one-to-many class="org.janelia.it.jacs.model.sage.SageSession" />
+        </set>
+    </class>
+</hibernate-mapping>

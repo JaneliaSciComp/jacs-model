@@ -1,2 +1,8 @@
-# jacs-model
-JACS Domain Model and DAOs
+# JACS Domain Model and DAOs
+
+## Build
+
+gradle wrapper 
+gradle jar
+
+

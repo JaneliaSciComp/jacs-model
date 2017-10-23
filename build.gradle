@@ -1,0 +1,83 @@
+group 'org.janelia'
+version '1.0'
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    flatDir {
+        dirs "${rootDir}/projectrepository"
+    }
+}
+
+dependencies {
+    project.ext {
+        // logging
+        SLF4J_VERSION = "1.7.21"
+        LOGBACK_VERSION = "1.1.7"
+        SLF4J_LIB = "org.slf4j:slf4j-api:${SLF4J_VERSION}"
+        LOGBACK_CORE_LIB = "ch.qos.logback:logback-core:${LOGBACK_VERSION}"
+        LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:${LOGBACK_VERSION}"
+
+        // protobuf
+        PROTOSTUFF_VERSION = "1.3.8"
+        PROTOSTUFF_API_LIB = "io.protostuff:protostuff-api:${PROTOSTUFF_VERSION}"
+        PROTOSTUFF_CORE_LIB = "io.protostuff:protostuff-core:${PROTOSTUFF_VERSION}"
+        PROTOSTUFF_RUNTIME_LIB = "io.protostuff:protostuff-runtime:${PROTOSTUFF_VERSION}"
+
+        // utilities
+        REFLECTIONS_LIB = "org.reflections:reflections:0.9.9-RC1"
+        GUAVA_LIB = "com.google.guava:guava:19.0"
+
+        // database
+        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:3.4.2"
+        MYSQL_DRIVER_LIB = "mysql:mysql-connector-java:5.1.42"
+        JONGO_LIB = "org.jongo:jongo:1.3.0"
+        HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
+
+        // apache commons
+        COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:3.5"
+        COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:4.1"
+
+        // JSON
+        JACKSON_VERSION = "2.8.8"
+        JACKSON_CORE_LIB = "com.fasterxml.jackson.core:jackson-core:${JACKSON_VERSION}"
+        JACKSON_ANNOTATIONS_LIB = "com.fasterxml.jackson.core:jackson-annotations:${JACKSON_VERSION}"
+        JACKSON_DATABIND_LIB = "com.fasterxml.jackson.core:jackson-databind:${JACKSON_VERSION}"
+        JACKSON_DATATYPE_JODA_LIB = "com.fasterxml.jackson.datatype:jackson-datatype-joda:${JACKSON_VERSION}"
+        JACKSON_JAXRS_JSON_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${JACKSON_VERSION}"
+
+        // scientific computing
+        JAMA_LIB = "gov.nist.math:jama:1.0.3"
+
+        // testing
+        JUNIT_LIB = "junit:junit:4.12"
+    }
+
+    compile SLF4J_LIB,
+            LOGBACK_CORE_LIB,
+            LOGBACK_CLASSIC_LIB,
+            PROTOSTUFF_API_LIB,
+            PROTOSTUFF_CORE_LIB,
+            PROTOSTUFF_RUNTIME_LIB,
+            REFLECTIONS_LIB,
+            GUAVA_LIB,
+            MONGODB_DRIVER_LIB,
+            JONGO_LIB,
+            HIBERNATE_LIB,
+            COMMONS_LANG_LIB,
+            JACKSON_CORE_LIB,
+            JACKSON_ANNOTATIONS_LIB,
+            JAMA_LIB
+
+    testCompile JUNIT_LIB
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = "4.1"
+}
