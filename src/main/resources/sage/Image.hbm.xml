@@ -3,18 +3,18 @@
 "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
 <!-- Generated Jan 14, 2014 11:00:59 AM by Hibernate Tools 3.4.0.CR1 -->
 <hibernate-mapping>
-    <class name="org.janelia.it.jacs.model.sage.Image" table="image" catalog="sage">
+    <class name="org.janelia.model.sage.Image" table="image" catalog="sage">
         <id name="id" type="java.lang.Integer">
             <column name="id" />
             <generator class="identity" />
         </id>
-        <many-to-one name="family" class="org.janelia.it.jacs.model.sage.CvTerm" fetch="select">
+        <many-to-one name="family" class="org.janelia.model.sage.CvTerm" fetch="select">
             <column name="family_id" not-null="true" />
         </many-to-one>
-        <many-to-one name="line" class="org.janelia.it.jacs.model.sage.Line" fetch="select">
+        <many-to-one name="line" class="org.janelia.model.sage.Line" fetch="select">
             <column name="line_id" not-null="true" />
         </many-to-one>
-        <many-to-one name="source" class="org.janelia.it.jacs.model.sage.CvTerm" fetch="select">
+        <many-to-one name="source" class="org.janelia.model.sage.CvTerm" fetch="select">
             <column name="source_id" not-null="true" />
         </many-to-one>
         <property name="name" type="string">
@@ -29,7 +29,7 @@
         <property name="jfsPath" type="string">
             <column name="jfs_path" length="1000" />
         </property>
-        <many-to-one name="experiment" class="org.janelia.it.jacs.model.sage.Experiment" fetch="select">
+        <many-to-one name="experiment" class="org.janelia.model.sage.Experiment" fetch="select">
             <column name="experiment_id" />
         </many-to-one>
         <property name="captureDate" type="timestamp">
@@ -51,13 +51,13 @@
             <key>
                 <column name="image_id" not-null="true" />
             </key>
-            <one-to-many class="org.janelia.it.jacs.model.sage.ImageProperty" />
+            <one-to-many class="org.janelia.model.sage.ImageProperty" />
         </set>
         <set name="secondaryImages" table="secondary_image" inverse="true" lazy="true" fetch="select" cascade="all,delete-orphan">
             <key>
                 <column name="image_id" not-null="true" />
             </key>
-            <one-to-many class="org.janelia.it.jacs.model.sage.SecondaryImage" />
+            <one-to-many class="org.janelia.model.sage.SecondaryImage" />
         </set>
     </class>
 </hibernate-mapping>
