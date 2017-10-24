@@ -31,24 +31,6 @@ public abstract class Subject implements HasIdentifier, Serializable {
 
     private Set<String> groups = new HashSet<>();
 
-    /**
-     * TODO: remove this after the model gets upgraded in the next release
-     */
-    @Deprecated
-    public Set<String> getGroups() {
-        return groups;
-    }
-
-    /**
-     * TODO: remove this after the model gets upgraded in the next release
-     */
-    @Deprecated
-    public void setGroups(Set<String> groups) {
-        if (groups == null)
-            throw new IllegalArgumentException("Property cannot be null");
-        this.groups = groups;
-    }
-        
     public Long getId() {
         return id;
     }
