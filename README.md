@@ -2,8 +2,14 @@
 
 ## Build
 
-gradle wrapper 
-gradle jar
+If you don't have gradle version 4.0:
+`gradle wrapper` 
+
+Run the unit tests:
+`gradle test`
+
+Build the jar:
+`gradle jar`
 
 ## Summary
 
