@@ -74,7 +74,12 @@ public class DomainUtils {
     private static final Map<String,String> simpleToQualifiedNames = new HashMap<>();
     
     static {
-        registerAnnotatedClasses();
+        try {
+            registerAnnotatedClasses();
+        }
+        catch (Throwable e) {
+            log.error("Error initializing DomainUtils", e);
+        }
     }
 
     /**
@@ -88,6 +93,9 @@ public class DomainUtils {
         for (Class<?> clazz : reflections.getTypesAnnotatedWith(MongoMapped.class)) {
             Class<? extends DomainObject> nodeClass = (Class<? extends DomainObject>)clazz;
             MongoMapped annotation = nodeClass.getAnnotation(MongoMapped.class);
+            // Newer versions of Reflections will return subclasses of annotated classes.
+            // But we only want things which are actually annotated.
+            if (annotation==null) continue;
             try {
                 String collectionName = annotation.collectionName();
                 if (typeClasses.containsKey(collectionName)) {
@@ -108,20 +116,23 @@ public class DomainUtils {
                 
             }
             catch (Exception e) {
-                log.error("Error registering annotated domain object classes", e);
+                log.error("Error registering MongoMapped domain object "+clazz.getName(), e);
             }
         }
+
         for(Class<?> searchClass : reflections.getTypesAnnotatedWith(SearchType.class)) {
-            searchClasses.add((Class<? extends DomainObject>)searchClass);
-        }
-        Collections.sort(searchClasses, new Comparator<Class<?>>() {
-            @Override
-            public int compare(Class<?> o1, Class<?> o2) {
-                final String l1 = o1.getAnnotation(SearchType.class).label();
-                final String l2 = o2.getAnnotation(SearchType.class).label();
-                return l1.compareTo(l2);
+            SearchType annotation = searchClass.getAnnotation(SearchType.class);
+            if (annotation!=null) {
+                searchClasses.add((Class<? extends DomainObject>) searchClass);
             }
-        });  
+        }
+
+        Collections.sort(searchClasses, (Class<?> o1, Class<?> o2) -> {
+            final String l1 = o1.getAnnotation(SearchType.class).label();
+            final String l2 = o2.getAnnotation(SearchType.class).label();
+            return l1.compareTo(l2);
+        });
+
         for(Class<?> searchClazz : searchClasses) {
             String searchTypeKey = searchClazz.getAnnotation(SearchType.class).key();
             searchTypeToClassName.put(searchTypeKey, searchClazz.getSimpleName());
