@@ -1,5 +1,8 @@
 package org.janelia.model.domain.sample;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
@@ -7,9 +10,6 @@ import org.janelia.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A neuron fragment segmented from an image by the Neuron Separator. 

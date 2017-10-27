@@ -3,10 +3,11 @@ package org.janelia.model.domain.compartments;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.interfaces.HasFilepath;
 import org.janelia.model.domain.support.MongoMapped;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @MongoMapped(collectionName="compartmentSet",label="Compartment Set")
 public class CompartmentSet extends AbstractDomainObject implements HasFilepath {

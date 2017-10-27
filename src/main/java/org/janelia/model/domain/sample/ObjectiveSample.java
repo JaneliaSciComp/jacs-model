@@ -5,9 +5,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.janelia.model.util.ModelStringUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.Lists;
-import org.janelia.model.util.ModelStringUtil;
 
 /**
  * A set of LSMs in a Sample with a common objective. 

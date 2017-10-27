@@ -1,5 +1,7 @@
 package org.janelia.model.access.domain;
 
+import static org.janelia.model.access.domain.DomainUtils.abbr;
+
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,13 +16,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
-import org.janelia.model.security.Subject;
 import org.janelia.model.domain.compartments.CompartmentSet;
 import org.janelia.model.domain.enums.OrderStatus;
 import org.janelia.model.domain.enums.PipelineStatus;
@@ -45,15 +45,17 @@ import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.sample.SampleLock;
 import org.janelia.model.domain.sample.StatusTransition;
 import org.janelia.model.domain.screen.FlyLine;
-import org.janelia.model.security.Group;
-import org.janelia.model.security.GroupRole;
-import org.janelia.model.security.User;
-import org.janelia.model.security.UserGroupRole;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
+import org.janelia.model.security.Group;
+import org.janelia.model.security.GroupRole;
+import org.janelia.model.security.Subject;
+import org.janelia.model.security.User;
+import org.janelia.model.security.UserGroupRole;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.jongo.Aggregate;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
@@ -112,13 +114,12 @@ public class DomainDAO {
     protected MongoCollection tmWorkspaceCollection;
     protected MongoCollection tmNeuronCollection;
 
+
     public DomainDAO(String serverUrl, String databaseName) throws UnknownHostException {
         this(serverUrl, databaseName, null, null);
     }
 
     public DomainDAO(String serverUrl, String databaseName, String username, String password) throws UnknownHostException {
-
-        this.databaseName = databaseName;
 
         List<ServerAddress> members = new ArrayList<>();
         for (String serverMember : serverUrl.split(",")) {
@@ -129,13 +130,22 @@ public class DomainDAO {
             MongoCredential credential = MongoCredential.createMongoCRCredential(username, databaseName, password.toCharArray());
             this.m = new MongoClient(members, Arrays.asList(credential));
             log.info("Connected to MongoDB (" + databaseName + "@" + serverUrl + ") as user " + username);
-        }
-        else {
+        } else {
             this.m = new MongoClient(members);
             log.info("Connected to MongoDB (" + databaseName + "@" + serverUrl + ")");
         }
 
         m.setWriteConcern(WriteConcern.JOURNALED);
+        init(m, databaseName);
+    }
+
+    public DomainDAO(MongoClient m, String databaseName) {
+        init(m, databaseName);
+    }
+
+    private final void init(MongoClient m, String databaseName) {
+        this.m = m;
+        this.databaseName = databaseName;
         this.jongo = new Jongo(m.getDB(databaseName),
                 new JacksonMapper.Builder()
                 .enable(MapperFeature.AUTO_DETECT_GETTERS)
@@ -767,7 +777,7 @@ public class DomainDAO {
 
         if (domainClass == null) return new ArrayList<>();
 
-        log.debug("getDomainObjects({}, className={}, ids={})", subjectKey, domainClass.getSimpleName(), DomainUtils.abbr(ids));
+        log.debug("getDomainObjects({}, className={}, ids={})", subjectKey, domainClass.getSimpleName(), abbr(ids));
 
         long start = System.currentTimeMillis();
 
@@ -813,7 +823,7 @@ public class DomainDAO {
 
         if (domainClass == null) return new ArrayList<>();
 
-        log.debug("getUserDomainObjects({}, className={}, ids={})", subjectKey, domainClass.getSimpleName(), DomainUtils.abbr(ids));
+        log.debug("getUserDomainObjects({}, className={}, ids={})", subjectKey, domainClass.getSimpleName(), abbr(ids));
 
         long start = System.currentTimeMillis();
 
@@ -950,7 +960,7 @@ public class DomainDAO {
     }
     
     public List<Annotation> getAnnotations(String subjectKey, Collection<Reference> references) {
-        log.debug("getAnnotations({}, references={})", subjectKey, DomainUtils.abbr(references));
+        log.debug("getAnnotations({}, references={})", subjectKey, abbr(references));
         Set<String> subjects = getReaderSet(subjectKey);
 
         List<String> targetRefs = new ArrayList<>();
@@ -1573,7 +1583,7 @@ public class DomainDAO {
             throw new IllegalArgumentException("Term not found: " + parentTermId);
         }
 
-        log.debug("addTerms({}, ontologyId={}, parentTermId={}, terms={}, index={})", subjectKey, ontologyId, parentTermId, DomainUtils.abbr(terms), index);
+        log.debug("addTerms({}, ontologyId={}, parentTermId={}, terms={}, index={})", subjectKey, ontologyId, parentTermId, abbr(terms), index);
 
         int i = 0;
         for (OntologyTerm childTerm : terms) {
@@ -1712,7 +1722,7 @@ public class DomainDAO {
         if (treeNode == null) {
             throw new IllegalArgumentException("Tree node not found: " + treeNodeArg.getId());
         }
-        log.debug("addChildren({}, TreeNode#{}, references={}, index={})", subjectKey, treeNode.getId(), DomainUtils.abbr(references), index);
+        log.debug("addChildren({}, TreeNode#{}, references={}, index={})", subjectKey, treeNode.getId(), abbr(references), index);
         Set<String> refs = new HashSet<>();
         for (Reference reference : treeNode.getChildren()) {
             refs.add(reference.toString());
@@ -1756,7 +1766,7 @@ public class DomainDAO {
         if (treeNode == null) {
             throw new IllegalArgumentException("Tree node not found: " + treeNodeArg.getId());
         }
-        log.debug("removeChildren({}, TreeNode#{}, references={})", subjectKey, treeNode.getId(), DomainUtils.abbr(references));
+        log.debug("removeChildren({}, TreeNode#{}, references={})", subjectKey, treeNode.getId(), abbr(references));
         for (Reference ref : references) {
             if (ref.getTargetId() == null) {
                 throw new IllegalArgumentException("Cannot add child without an id");
@@ -2136,7 +2146,7 @@ public class DomainDAO {
     }
 
     // add SampleIds to order as they get processed
-    public void addSampleIdsToOrder(String orderNo, List<Long> sampleIds) throws Exception {
+    public void addSampleIdsToOrder(String orderNo, Long[] sampleIds) throws Exception {
         intakeOrdersCollection.update("{orderNo: #}", orderNo).with("{$push: { sampleIds: { $each: # } } }", sampleIds);
     }
 

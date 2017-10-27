@@ -1,8 +1,6 @@
 package org.janelia.model.security;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.janelia.model.domain.interfaces.HasIdentifier;
 import org.janelia.model.domain.support.MongoMapped;
@@ -28,9 +26,7 @@ public abstract class Subject implements HasIdentifier, Serializable {
     private String key;
     private String name;
     private String fullName;
-
-    private Set<String> groups = new HashSet<>();
-
+        
     public Long getId() {
         return id;
     }

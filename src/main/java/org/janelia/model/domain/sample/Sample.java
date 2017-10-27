@@ -6,10 +6,10 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.interfaces.IsParent;
-import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SAGEAttribute;
 import org.janelia.model.domain.support.SearchAttribute;

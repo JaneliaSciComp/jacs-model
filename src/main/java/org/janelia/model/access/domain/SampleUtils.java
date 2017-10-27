@@ -55,6 +55,7 @@ public class SampleUtils {
      * @param area
      * @param aligned
      * @param resultName
+     * @param alignSpace
      * @param groupName
      * @return
      */
@@ -195,7 +196,7 @@ public class SampleUtils {
         }
         return chosenResults.values();
     }
-
+    
     public static PipelineResult getResultContainingNeuronSeparation(Sample sample, NeuronFragment neuronFragment) {
         return getNeuronSeparation(sample, neuronFragment, PipelineResult.class);
     }

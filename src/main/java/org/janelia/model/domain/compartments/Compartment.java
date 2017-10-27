@@ -4,10 +4,11 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasFiles;
 import org.janelia.model.domain.interfaces.HasIdentifier;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Compartment implements HasIdentifier, HasFiles, Serializable {
 

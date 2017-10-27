@@ -1,6 +1,11 @@
 package org.janelia.model.domain.workspace;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
@@ -8,10 +13,6 @@ import org.janelia.model.domain.interfaces.IsParent;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.support.SearchType;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * A generic node in a domain object tree. 

@@ -1,9 +1,6 @@
 package org.janelia.model.util;
 
-import org.janelia.model.access.domain.DomainDAO;
 import org.reflections.ReflectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -19,8 +16,6 @@ import java.util.Set;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class ReflectionHelper {
-
-    private static final Logger log = LoggerFactory.getLogger(DomainDAO.class);
 
     private static final Class[] EMPTY_ARGS_TYPES = {};
     private static final Object[] EMPTY_ARGS_VALUES = {};

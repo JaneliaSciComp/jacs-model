@@ -17,10 +17,6 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.support.MongoMapped;
-import org.janelia.model.domain.support.SearchAttribute;
-import org.janelia.model.domain.support.SearchType;
-import org.janelia.model.security.Subject;
 import org.janelia.model.domain.enums.AlignmentScoreType;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.gui.search.Filter;
@@ -37,8 +33,13 @@ import org.janelia.model.domain.interfaces.HasIdentifier;
 import org.janelia.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.domain.support.MongoMapped;
+import org.janelia.model.domain.support.SearchAttribute;
+import org.janelia.model.domain.support.SearchType;
+import org.janelia.model.security.Subject;
 import org.janelia.model.util.ModelStringUtil;
 import org.janelia.model.util.ReflectionHelper;
+import org.janelia.model.util.ReflectionsFixer;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
@@ -64,7 +65,7 @@ public class DomainUtils {
 
     private static final Logger log = LoggerFactory.getLogger(DomainUtils.class);
 
-    private static final String DOMAIN_OBJECT_PACKAGE_NAME = "org.janelia.it.jacs.model.domain";
+    private static final String DOMAIN_OBJECT_PACKAGE_NAME = "org.janelia.model.domain";
 
     private static final BiMap<String, Class<? extends DomainObject>> typeClasses = HashBiMap.create();
     private static final Multimap<Class<? extends DomainObject>, Class<? extends DomainObject>> subClasses = ArrayListMultimap.create();
@@ -81,10 +82,11 @@ public class DomainUtils {
      */
     private static void registerAnnotatedClasses() {
         
-        Reflections reflections = new Reflections(DOMAIN_OBJECT_PACKAGE_NAME);
+        log.info("Scanning domain object package: {}", DOMAIN_OBJECT_PACKAGE_NAME);
+        Reflections reflections = ReflectionsFixer.getReflections(DOMAIN_OBJECT_PACKAGE_NAME, DomainObject.class);
+        
         for (Class<?> clazz : reflections.getTypesAnnotatedWith(MongoMapped.class)) {
             Class<? extends DomainObject> nodeClass = (Class<? extends DomainObject>)clazz;
-            log.info("Checking "+nodeClass);
             MongoMapped annotation = nodeClass.getAnnotation(MongoMapped.class);
             try {
                 String collectionName = annotation.collectionName();
@@ -212,7 +214,7 @@ public class DomainUtils {
             clazz = Class.forName(className);
         }
         catch (ClassNotFoundException e) {
-            throw new RuntimeException("Unknown domain object class: "+className);
+            throw new RuntimeException("Domain object class not found: "+className);
         }
         if (!DomainObject.class.isAssignableFrom(clazz)) {
             throw new RuntimeException("Not a domain object class: "+className);

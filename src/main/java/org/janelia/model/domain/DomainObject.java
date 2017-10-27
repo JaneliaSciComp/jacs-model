@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.Set;
 
 import org.janelia.model.domain.interfaces.HasIdentifier;
+
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**

@@ -1,13 +1,21 @@
 package org.janelia.model.domain.sample;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.enums.PipelineStatus;
+import org.janelia.model.domain.interfaces.HasIdentifier;
+import org.janelia.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.model.domain.support.MongoMapped;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
  * Stores information about pipeline status transitions

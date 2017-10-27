@@ -3,8 +3,8 @@ package org.janelia.model.domain.sample;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchType;

@@ -2,16 +2,16 @@ package org.janelia.model.domain.sample;
 
 import java.util.Date;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.interfaces.HasAnatomicalArea;
+import org.janelia.model.domain.support.ReprocessOnChange;
 import org.janelia.model.domain.support.SAGEAttribute;
 import org.janelia.model.domain.support.SearchAttribute;
-import org.janelia.model.domain.support.ReprocessOnChange;
 import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.support.SearchType;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * A 3d image stack in LSM format, usually output from a microscope. 

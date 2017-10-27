@@ -2,6 +2,8 @@ package org.janelia.model.domain.gui.search.criteria;
 
 import org.janelia.model.domain.Reference;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
 public class TreeNodeCriteria extends Criteria {
 
     private String treeNodeName;

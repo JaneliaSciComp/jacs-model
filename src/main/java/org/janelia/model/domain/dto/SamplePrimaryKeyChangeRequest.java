@@ -4,7 +4,9 @@ import java.util.List;
 
 /**
  * Parameter for the changeSamplePrimaryKey web service.
- *
+ * 
+ * @see org.janelia.it.jacs.compute.wsrest.process.SAGEWebService
+ * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SamplePrimaryKeyChangeRequest {
