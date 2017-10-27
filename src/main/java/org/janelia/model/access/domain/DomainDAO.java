@@ -2146,7 +2146,7 @@ public class DomainDAO {
     }
 
     // add SampleIds to order as they get processed
-    public void addSampleIdsToOrder(String orderNo, Long[] sampleIds) throws Exception {
+    public void addSampleIdsToOrder(String orderNo, List<Long> sampleIds) throws Exception {
         intakeOrdersCollection.update("{orderNo: #}", orderNo).with("{$push: { sampleIds: { $each: # } } }", sampleIds);
     }
 
