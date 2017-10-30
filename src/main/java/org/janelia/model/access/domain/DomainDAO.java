@@ -1637,6 +1637,9 @@ public class DomainDAO {
 
     public TreeNode getOrCreateDefaultFolder(String subjectKey, String folderName) throws Exception {
         Workspace defaultWorkspace = getDefaultWorkspace(subjectKey);
+        if (defaultWorkspace==null) {
+            throw new IllegalStateException("Subject does not have a default workspace: "+subjectKey);
+        }
         TreeNode folder = DomainUtils.findObjectByTypeAndName(getUserDomainObjects(subjectKey, defaultWorkspace.getChildren()), TreeNode.class, folderName);
         if (folder==null) {
             log.debug("Existing folder named {} and owned by {} was not found in the default workspace. Creating one now.", folderName, subjectKey);
