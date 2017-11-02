@@ -68,6 +68,8 @@ public class SubjectDAOTest {
     
     @Test
     public void testGetSubjects() throws Exception {
+        dao.createUser(testUser, testUserFullName, null);
+        dao.createGroup(testGroup, testGroupFullName);
         boolean hasUsers = false;
         boolean hasGroups = false;
         for(Subject subject : dao.getSubjects()) {
@@ -76,10 +78,14 @@ public class SubjectDAOTest {
         }
         assertTrue(hasUsers);
         assertTrue(hasGroups);
+        dao.removeUser(testUser);
+        dao.removeGroup(testGroup);
     }
 
     @Test
     public void testGetUsers() throws Exception {
+        dao.createUser(testUser, testUserFullName, null);
+        dao.createGroup(testGroup, testGroupFullName);
         boolean hasUsers = false;
         boolean hasGroups = false;
         for(Subject subject : dao.getUsers()) {
@@ -88,10 +94,14 @@ public class SubjectDAOTest {
         }
         assertTrue(hasUsers);
         assertFalse(hasGroups);
+        dao.removeUser(testUser);
+        dao.removeGroup(testGroup);
     }
 
     @Test
     public void testGetGroups() throws Exception {
+        dao.createUser(testUser, testUserFullName, null);
+        dao.createGroup(testGroup, testGroupFullName);
         boolean hasUsers = false;
         boolean hasGroups = false;
         for(Subject subject : dao.getGroups()) {
@@ -100,6 +110,8 @@ public class SubjectDAOTest {
         }
         assertFalse(hasUsers);
         assertTrue(hasGroups);
+        dao.removeUser(testUser);
+        dao.removeGroup(testGroup);
     }
 
     @Test
