@@ -69,11 +69,14 @@ dependencies {
             GUAVA_LIB,
             MONGODB_DRIVER_LIB,
             JONGO_LIB,
-            HIBERNATE_LIB,
             COMMONS_LANG_LIB,
             JACKSON_CORE_LIB,
             JACKSON_ANNOTATIONS_LIB,
             JAMA_LIB
+
+    compile (HIBERNATE_LIB) {
+        exclude group: 'javax.transaction'
+    }
 
     testCompile JUNIT_LIB
 }
