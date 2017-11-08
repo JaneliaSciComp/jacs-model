@@ -3,6 +3,7 @@ version '1.0.0'
 
 apply plugin: 'java'
 apply plugin: 'idea'
+apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -79,6 +80,27 @@ dependencies {
     }
 
     testCompile JUNIT_LIB
+}
+
+publishing {
+    publications {
+        mavenJar(MavenPublication) {
+            groupId 'org.janelia'
+            artifactId 'jacs-model'
+            version '1.0'
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            // change to point to your repo, e.g. http://my.org/repo
+            url "http://maven.int.janelia.org/nexus/content/repositories/thirdparty"
+            credentials {
+                username "deployment"
+                password "deploymentpw"
+            }
+        }
+    }
 }
 
 task wrapper(type: Wrapper) {
