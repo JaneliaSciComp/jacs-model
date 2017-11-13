@@ -1317,6 +1317,30 @@ public class DomainDAO {
         }
     }
 
+    public List<LSMImage> getInactiveLsmsBySampleId(String subjectKey, Long sampleId) {
+        log.debug("getInactiveLsmsBySampleId({}, {})", subjectKey, sampleId);
+        String refStr = "Sample#"+sampleId;
+        Set<String> subjects = getReaderSet(subjectKey);
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            return toList(imageCollection.find("{sampleRef:#,sageSynced:false}", refStr).as(LSMImage.class));
+        }
+        else {
+            return toList(imageCollection.find("{sampleRef:#,sageSynced:false,readers:{$in:#}}", refStr, subjects).as(LSMImage.class));
+        }
+    }
+
+    public List<LSMImage> getAllLsmsBySampleId(String subjectKey, Long sampleId) {
+        log.debug("getAllLsmsBySampleId({}, {})", subjectKey, sampleId);
+        String refStr = "Sample#"+sampleId;
+        Set<String> subjects = getReaderSet(subjectKey);
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            return toList(imageCollection.find("{sampleRef:#}", refStr).as(LSMImage.class));
+        }
+        else {
+            return toList(imageCollection.find("{sampleRef:#,readers:{$in:#}}", refStr, subjects).as(LSMImage.class));
+        }
+    }
+
     public LSMImage getActiveLsmBySageId(String subjectKey, Integer sageId) {
         log.debug("getActiveLsmBySageId({}, {})", subjectKey, sageId);
         Set<String> subjects = getReaderSet(subjectKey);
@@ -1411,6 +1435,73 @@ public class DomainDAO {
         else {
             return treeNodeCollection.findOne("{'children':#,readers:{$in:#}}", refStr, subjects).as(TreeNode.class);
         }
+    }
+
+    public List<Subject> getMembersByGroupId(String groupId) {
+        log.debug("getMembersByGroupId({})", groupId);
+        String refstr = "group:" + groupId;
+        return toList(subjectCollection.find("{userGroupRoles.groupKey:#}", refstr).as(Subject.class));
+    }
+
+    public List<Sample> getSamplesByDataSet(String dataset, int pageNumber, int pageSize, String sortBy) {
+        log.debug("getSamplesByDataSet({})", dataset);
+        List<Sample> samples = toList(sampleCollection.find("{dataSet:#}", dataset).sort("{"+sortBy+":1}").skip(pageSize * (pageNumber - 1)).limit(pageSize).as(Sample.class));
+        return samples;
+    }
+
+    public boolean isAdmin(String user) {
+        log.debug("isAdmin({})", user);
+        return (toList(subjectCollection.find("{userGroupRoles.groupKey:'group:admin', name:#}",user).as(Subject.class)).size() != 0);
+    }
+
+    public List<Sample> getRecentSamples(String subjectKey) {
+        log.debug("getRecentSamples({})");
+        Set<String> subjects = getReaderSet(subjectKey);
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            return toList(sampleCollection.find().sort("{creationDate: -1}").limit(100).as(Sample.class));
+        }
+        else {
+            return toList(sampleCollection.find("{readers:{$in:#}}", subjects).sort("{creationDate: -1}").limit(100).as(Sample.class));
+        }
+    }
+
+    public HashMap<Subject, Integer> getGroupNames() {
+        log.debug("getGroupNames");
+        HashMap<Subject,Integer> hmap = new HashMap<>();
+        List<Subject> c = subjectCollection.distinct("userGroupRoles.groupKey").as(Subject.class);
+        for (int i = 0; i < c.size(); i++) {
+            Integer count = subjectCollection.find("{userGroupRoles.groupKey:#}", c.get(i)).as(Subject.class).count();
+            hmap.put(c.get(i),count);
+        }
+        return hmap;
+    }
+
+    public HashMap<String, String> getDataSetsByGroupName(String groupName) {
+        log.debug("getDatasets({})", groupName);
+        String refstr = "group:" + groupName;
+        HashMap<String, String> hmap = new HashMap<>();
+
+        for (DataSet dataSet : getDomainObjects(refstr, DataSet.class)) {
+            if(groupName.equals("admin")){
+                hmap.put(dataSet.getName(),"admin" );
+            }
+            else{
+                String owner = dataSet.getOwnerKey();
+                Set<String> writers = dataSet.getWriters();
+                Set<String> readers = dataSet.getReaders();
+
+                if (owner.contains(refstr)){
+                    hmap.put(dataSet.getName(), "Owner");
+                }
+                else if (writers.contains(refstr)){
+                    hmap.put(dataSet.getName(), "Writer");
+                }
+                else if (readers.contains(refstr)){
+                    hmap.put(dataSet.getName(), "Reader");
+                }
+            }
+        }
+        return hmap;
     }
 
     /**

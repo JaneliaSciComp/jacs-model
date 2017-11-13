@@ -173,6 +173,10 @@ public class DomainUtils {
     public static Class<? extends DomainObject> getBaseClass(String collectionName) {
         return typeClasses.get(collectionName);
     }
+
+    public static Set<Class<? extends DomainObject>> getSubClasses(String collectionName) {
+        return getSubClasses(getBaseClass(collectionName));
+    }
     
     public static Set<Class<? extends DomainObject>> getSubClasses(Class<? extends DomainObject> objectClass) {
         Set<Class<? extends DomainObject>> classes = new HashSet<>();
@@ -372,7 +376,74 @@ public class DomainUtils {
 
         return attrs;
     }
-    
+
+
+    // returns all the Search Mappings for all domain objects
+    public static  HashMap<String, List<String>>  getAllSearchAttributes() {
+        HashMap<String, List<String>> hmap = new HashMap<>();
+
+
+        Reflections reflections = new Reflections(DOMAIN_OBJECT_PACKAGE_NAME);
+        Set<Class<?>> ann1 = reflections.getTypesAnnotatedWith(SearchType.class);
+        Set<Class<?>> ann2 = reflections.getTypesAnnotatedWith(MongoMapped.class);
+// replace ann1 with getSearchClasses
+        for (Class<?> searchClass : ann1) {
+            log.trace("Getting search attributes for class {}", searchClass.getSimpleName());
+            // Look for annotated fields
+            for (Field field : ReflectionUtils.getFields(searchClass)) {
+                SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
+                if (searchAttributeAnnot != null) {
+                    try {
+                        log.trace("Attribute {} with field {} found for class {}", searchAttributeAnnot.label(), field.getName(), searchClass.getSimpleName());
+                        List<String> attrs = new ArrayList<>();
+                        if (!searchAttributeAnnot.key().isEmpty()) {
+                            attrs.add("key: " + searchAttributeAnnot.key());
+                        }
+                        if (!searchAttributeAnnot.label().isEmpty()) {
+                            attrs.add("label: " + searchAttributeAnnot.label());
+                        }
+                        if (!searchAttributeAnnot.facet().isEmpty()) {
+                            attrs.add("facet: " + searchAttributeAnnot.facet());
+                        }
+                        hmap.put(field.getName(), attrs);
+                    }
+                    catch (Exception e) {
+                        log.warn("Error getting field " + field.getName() + " on " + searchClass.getName(), e);
+                    }
+                }
+            }
+
+            for (Class<?> searchClass2 : ann2) {
+                log.trace("Getting search attributes for class {}", searchClass2.getSimpleName());
+                // Look for annotated fields
+                for (Field field : ReflectionUtils.getFields(searchClass2)) {
+                    SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
+                    if (searchAttributeAnnot != null) {
+                        try {
+                            log.trace("Attribute {} with field {} found for class {}", searchAttributeAnnot.label(), field.getName(), searchClass.getSimpleName());
+                            List<String> attrs = new ArrayList<>();
+                            if (!searchAttributeAnnot.key().isEmpty()) {
+                                attrs.add("key: " + searchAttributeAnnot.key());
+                            }
+                            if (!searchAttributeAnnot.label().isEmpty()) {
+                                attrs.add("label: " + searchAttributeAnnot.label());
+                            }
+                            if (!searchAttributeAnnot.facet().isEmpty()) {
+                                attrs.add("facet: " + searchAttributeAnnot.facet());
+                            }
+                            hmap.put(field.getName(), attrs);
+                        }
+                        catch (Exception e) {
+                            log.warn("Error getting field " + field.getName() + " on " + searchClass.getName(), e);
+                        }
+                    }
+                }
+            }
+
+        }
+        return hmap;
+    }
+
     /**
      * Returns the subject name part of a given subject key. For example, for "group:flylight", this returns "flylight".
      * For convenience, if you pass in something without a colon, like "flylight", it returns "flylight".
