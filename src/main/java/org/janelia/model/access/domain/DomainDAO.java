@@ -1437,9 +1437,9 @@ public class DomainDAO {
         }
     }
 
-    public List<Subject> getMembersByGroupId(String groupId) {
-        log.debug("getMembersByGroupId({})", groupId);
-        String refstr = "group:" + groupId;
+    public List<Subject> getMembersByGroupKey(String groupKey) {
+        log.debug("getMembersByGroupId({})", groupKey);
+        String refstr = "group:" + groupKey;
         return toList(subjectCollection.find("{userGroupRoles.groupKey:#}", refstr).as(Subject.class));
     }
 
@@ -1449,9 +1449,9 @@ public class DomainDAO {
         return samples;
     }
 
-    public boolean isAdmin(String user) {
-        log.debug("isAdmin({})", user);
-        return (toList(subjectCollection.find("{userGroupRoles.groupKey:'group:admin', name:#}",user).as(Subject.class)).size() != 0);
+    public boolean isAdmin(String subjectKey) {
+        log.debug("isAdmin({})", subjectKey);
+        return subjectCollection.count("{userGroupRoles.groupKey:'group:admin', key:#}", subjectKey) != 0;
     }
 
     public List<Sample> getRecentSamples(String subjectKey) {
