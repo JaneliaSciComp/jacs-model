@@ -488,13 +488,27 @@ public class DomainDAO {
 
     public void setPreferenceValue(String subjectKey, String category, String key, Object value) throws Exception {
         Preference preference = getPreference(subjectKey, category, key);
-        if (preference == null) {
-            preference = new Preference(subjectKey, category, key, value);
+        if (value==null) {
+            if (preference==null) {
+                log.warn("Cannot remove {}'s preference for {}:{} because it cannot be found", subjectKey, category, key);
+            }
+            else {
+                // Null value means that the preference should be deleted
+                preferenceCollection.remove("{_id:#,subjectKey:#}", preference.getId(), subjectKey);
+            }
+            return;
         }
         else {
-            preference.setValue(value);
+            if (preference == null) {
+                // Create a new preference
+                preference = new Preference(subjectKey, category, key, value);
+            }
+            else {
+                // Update existing preference
+                preference.setValue(value);
+            }
+            save(subjectKey, preference);
         }
-        save(subjectKey, preference);
     }
 	
     /**
@@ -514,7 +528,8 @@ public class DomainDAO {
             preferenceCollection.insert(preference);
         }
         else {
-        	WriteResult result = preferenceCollection.update("{_id:#,subjectKey:#}", preference.getId(), subjectKey).with(preference);
+            // The placeholder is important here. Without it, nulls would not be set (see https://github.com/bguerout/jongo/issues/231)
+        	WriteResult result = preferenceCollection.update("{_id:#,subjectKey:#}", preference.getId(), subjectKey).with("#", preference);
             if (result.getN() != 1) {
                 throw new IllegalStateException("Updated " + result.getN() + " records instead of one: preference#" + preference.getId());
             }
@@ -1548,9 +1563,10 @@ public class DomainDAO {
             else {
                 Set<String> subjects = getWriterSet(subjectKey);
                 domainObject.setUpdatedDate(now);
-                
-                // At least one of the writers must match
-                WriteResult result = collection.update("{_id:#,writers:{$in:#}}", domainObject.getId(), subjects).with(domainObject);
+
+                // The placeholder is important here. Without it, nulls would not be set (see https://github.com/bguerout/jongo/issues/231)
+                WriteResult result = collection.update("{_id:#,writers:{$in:#}}", domainObject.getId(), subjects).with("#",domainObject);
+
                 if (result.getN() != 1) {
                     throw new IllegalStateException("Updated " + result.getN() + " records instead of one: " + collectionName + "#" + domainObject.getId());
                 }
