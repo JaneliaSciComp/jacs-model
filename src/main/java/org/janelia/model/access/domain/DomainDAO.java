@@ -1862,7 +1862,7 @@ public class DomainDAO {
         saveImpl(subjectKey, treeNode);
 
         for (Reference ref : added) {
-            addPermissions(treeNode.getOwnerKey(), ref.getTargetClassName(), ref.getTargetId(), treeNode, false);
+            addPermissions(treeNode.getOwnerKey(), ref.getTargetClassName(), ref.getTargetId(), treeNode, false,false);
         }
 
         return getDomainObject(subjectKey, treeNode);
@@ -1943,13 +1943,21 @@ public class DomainDAO {
             log.warn("Could not delete property " + collectionName + "." + propName);
         }
     }
-    
+
     public void addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean forceChildUpdates) throws Exception {
-        log.debug("addPermissions({}, className={}, id={}, permissionTemplate={}, forceChildUpdates={})", ownerKey, className, id, permissionTemplate, forceChildUpdates);
-        changePermissions(ownerKey, className, Arrays.asList(id), permissionTemplate.getReaders(), permissionTemplate.getWriters(), true, forceChildUpdates, false);
+        addPermissions(ownerKey, className, id, permissionTemplate, true, forceChildUpdates);
     }
-    
+
+    public void addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean allowWriters, boolean forceChildUpdates) throws Exception {
+        log.debug("addPermissions({}, className={}, id={}, permissionTemplate={}, forceChildUpdates={})", ownerKey, className, id, permissionTemplate, forceChildUpdates);
+        changePermissions(ownerKey, className, Arrays.asList(id), permissionTemplate.getReaders(), permissionTemplate.getWriters(), true, allowWriters, forceChildUpdates, false);
+    }
+
     public void setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception {
+        setPermissions(ownerKey, className, id, grantee, read, write, true, forceChildUpdates);
+    }
+
+    public void setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean allowWriters, boolean forceChildUpdates) throws Exception {
 
         DomainObject targetObject = getDomainObject(ownerKey, className, id);
         
@@ -1991,29 +1999,44 @@ public class DomainDAO {
         }
 
         if (!readAdd.isEmpty() || !writeAdd.isEmpty()) {
-            changePermissions(ownerKey, className, Arrays.asList(id), readAdd, writeAdd, true, forceChildUpdates, true);
+            changePermissions(ownerKey, className, Arrays.asList(id), readAdd, writeAdd, true, allowWriters, forceChildUpdates, true);
         }
         
         if (!readRemove.isEmpty() || !writeRemove.isEmpty()) {
-            changePermissions(ownerKey, className, Arrays.asList(id), readRemove, writeRemove, false, forceChildUpdates, true);
+            changePermissions(ownerKey, className, Arrays.asList(id), readRemove, writeRemove, false, allowWriters, forceChildUpdates, true);
         }
     }
-    
+
+
+    /**
+     * Change the permissions on the specified objects and their "children", to the given reader/writer sets.
+     * @param subjectKey Current user
+     * @param className name of the class of parent objects
+     * @param ids ids of the parent objects
+     * @param readers subject keys to add or remove from reader sets
+     * @param writers subject keys to add or remove from writer sets
+     * @param grant if true, grant permissions, else, revoke them
+     * @param allowWriters Update objects where the current user has write permission. If this is false, only update objects where the current user is the owner.
+     * @param forceChildUpdates Update all child objects even if no updates were required to the parent objects
+     * @param createSharedDataLinks Create links to the parent objects in the readers' Shared Data directory
+     * @throws Exception
+     */
     private void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers, 
-            boolean grant, boolean forceChildUpdates, boolean createSharedDataLinks) throws Exception {
-        changePermissions(subjectKey, className, ids, readers, writers, grant, forceChildUpdates, createSharedDataLinks, new HashSet<Long>());
+            boolean grant,  boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks) throws Exception {
+        changePermissions(subjectKey, className, ids, readers, writers, grant, allowWriters, forceChildUpdates, createSharedDataLinks, new HashSet<>());
     }
-    
+
     private void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers, 
-            boolean grant, boolean forceChildUpdates, boolean createSharedDataLinks, Set<Long> visited) throws Exception {
+            boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks, Set<Long> visited) throws Exception {
 
-        Set<String> subjects = getWriterSet(subjectKey);
         String logIds = DomainUtils.abbr(ids);
-
+        String updateQueryClause = allowWriters ? "writers:{$in:#}" : "ownerKey:#";
         String collectionName = DomainUtils.getCollectionName(className);
         String op = grant ? "$addToSet" : "$pull";
         String iter = grant ? "$each" : "$in";
         String withClause = "{"+op+":{readers:{"+iter+":#},writers:{"+iter+":#}}}";
+
+        Object updateQueryParam = allowWriters ? getWriterSet(subjectKey) : subjectKey;
 
         Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(className);
         List<Reference> objectRefs = new ArrayList<>();
@@ -2031,7 +2054,7 @@ public class DomainDAO {
         if (readers.isEmpty() && writers.isEmpty()) return;
 
         MongoCollection collection = getCollectionByName(collectionName);
-        WriteResult wr = collection.update("{_id:{$in:#},writers:{$in:#}}", ids, subjects).multi().with(withClause, readers, writers);
+        WriteResult wr = collection.update("{_id:{$in:#},"+updateQueryClause+"}", ids, updateQueryParam).multi().with(withClause, readers, writers);
 
         log.debug("Changing permissions on {} documents", wr.getN());
 
@@ -2049,7 +2072,7 @@ public class DomainDAO {
                     }
                     visited.add(id);
                     
-                    TreeNode node = collection.findOne("{_id:#,writers:{$in:#}}", id, subjects).as(TreeNode.class);
+                    TreeNode node = collection.findOne("{_id:#,"+updateQueryClause+"}", id, updateQueryParam).as(TreeNode.class);
                     if (node == null) {
                         log.warn("Could not find folder with id=" + id);
                     }
@@ -2061,7 +2084,7 @@ public class DomainDAO {
 
                         for (String refClassName : groupedIds.keySet()) {
                             Collection<Long> refIds = groupedIds.get(refClassName);
-                            changePermissions(subjectKey, refClassName, refIds, readers, writers, grant, forceChildUpdates, false, visited);
+                            changePermissions(subjectKey, refClassName, refIds, readers, writers, grant, forceChildUpdates, allowWriters,false, visited);
                         }
                     }
                 }
@@ -2072,10 +2095,10 @@ public class DomainDAO {
 
                 List<String> sampleRefs = DomainUtils.getRefStrings(objectRefs);
 
-                WriteResult wr1 = fragmentCollection.update("{sampleRef:{$in:#},writers:{$in:#}}", sampleRefs, subjects).multi().with(withClause, readers, writers);
+                WriteResult wr1 = fragmentCollection.update("{sampleRef:{$in:#},"+updateQueryClause+"}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} fragments", wr1.getN());
 
-                WriteResult wr2 = imageCollection.update("{sampleRef:{$in:#},writers:{$in:#}}", sampleRefs, subjects).multi().with(withClause, readers, writers);
+                WriteResult wr2 = imageCollection.update("{sampleRef:{$in:#},"+updateQueryClause+"}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} lsms", wr2.getN());
 
             }
@@ -2085,7 +2108,7 @@ public class DomainDAO {
                     
                     // Retrieve the data set in order to find its identifier
 
-                    DataSet dataSet = collection.findOne("{_id:#,writers:{$in:#}}", id, subjects).as(DataSet.class);
+                    DataSet dataSet = collection.findOne("{_id:#,"+updateQueryClause+"}", id, updateQueryParam).as(DataSet.class);
                     if (dataSet == null) {
                         throw new IllegalArgumentException("Could not find an writeable data set with id=" + id);
                     }
@@ -2097,13 +2120,13 @@ public class DomainDAO {
                     }
 
                     // This could just call changePermissions recursively, but batching is far more efficient.
-                    WriteResult wr1 = sampleCollection.update("{dataSet:#,writers:{$in:#}}", dataSet.getIdentifier(), subjects).multi().with(withClause, readers, writers);
+                    WriteResult wr1 = sampleCollection.update("{dataSet:#,"+updateQueryClause+"}", dataSet.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
                     log.trace("Changed permissions on {} samples",wr1.getN());
 
-                    WriteResult wr2 = fragmentCollection.update("{sampleRef:{$in:#},writers:{$in:#}}", sampleRefs, subjects).multi().with(withClause, readers, writers);
+                    WriteResult wr2 = fragmentCollection.update("{sampleRef:{$in:#},"+updateQueryClause+"}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
                     log.trace("Updated permissions on {} fragments", wr2.getN());
 
-                    WriteResult wr3 = imageCollection.update("{sampleRef:{$in:#},writers:{$in:#}}", sampleRefs, subjects).multi().with(withClause, readers, writers);
+                    WriteResult wr3 = imageCollection.update("{sampleRef:{$in:#},"+updateQueryClause+"}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
                     log.trace("Updated permissions on {} lsms", wr3.getN());
 
                     // JW-25275: Automatically create data set filters when sharing data sets
@@ -2139,12 +2162,12 @@ public class DomainDAO {
                     sampleIds.add(workspace.getSampleId());
                 }
                 
-                WriteResult wr1 = tmSampleCollection.update("{_id:{$in:#},writers:{$in:#}}", sampleIds, subjects).multi().with(withClause, readers, writers);
+                WriteResult wr1 = tmSampleCollection.update("{_id:{$in:#},"+updateQueryClause+"}", sampleIds, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} TmSamples", wr1.getN());
 
                 List<String> workspaceRefs = DomainUtils.getRefStrings(objectRefs);
                 log.trace("Changing permissions on the TmNeurons associated with the TmWorkspaces: {}", workspaceRefs);
-                WriteResult wr2 = tmNeuronCollection.update("{workspaceRef:{$in:#},writers:{$in:#}}", workspaceRefs, subjects).multi().with(withClause, readers, writers);
+                WriteResult wr2 = tmNeuronCollection.update("{workspaceRef:{$in:#},"+updateQueryClause+"}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} TmNeurons", wr2.getN());
             }
         }
