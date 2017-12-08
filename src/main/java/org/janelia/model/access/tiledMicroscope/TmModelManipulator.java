@@ -42,6 +42,7 @@ public class TmModelManipulator {
     private final IdSource idSource;
     
     private final Map<Long, TmNeuronMetadata> neuronMap = new LinkedHashMap<>();
+    private final Map<String, TmNeuronMetadata> neuronsInWaiting = new HashMap<>();
 
     public TmModelManipulator(TmModelAdapter dataSource) {
         this(dataSource, new IdSource());
@@ -58,6 +59,14 @@ public class TmModelManipulator {
 
     public void addNeuron(TmNeuronMetadata neuron) {
         neuronMap.put(neuron.getId(), neuron);
+    }
+
+    /**
+     * neurons submitted for creation are waiting around for callback from message server
+     * store in a map by name for async updating when callback from message server arrives
+     */
+    public void addNeuronInWaiting(TmNeuronMetadata neuron) {
+        neuronsInWaiting.put(neuron.getName(), neuron);
     }
 
     public TmNeuronMetadata removeNeuron(TmNeuronMetadata neuron) {
@@ -93,18 +102,17 @@ public class TmModelManipulator {
         if (workspace == null || name == null) {
             throw new IllegalStateException("Tiled Neuron must be created in a valid workspace.");
         }
-        TmNeuronMetadata neuron = createTiledMicroscopeNeuron(new TmNeuronMetadata(workspace, name));
-        addNeuron(neuron);
+        TmNeuronMetadata neuron = new TmNeuronMetadata(workspace, name);
+        createTiledMicroscopeNeuron(neuron);
+        addNeuronInWaiting(neuron);
         return neuron;
     }
 
-    private TmNeuronMetadata createTiledMicroscopeNeuron(TmNeuronMetadata neuron) throws Exception {
+    private void createTiledMicroscopeNeuron(TmNeuronMetadata neuron) throws Exception {
         if (dataSource == null) {
             throw new IllegalStateException("Cannot create neuron without data source.");
         }
-        TmNeuronMetadata savedNeuron = dataSource.asyncCreateNeuron(neuron).get();
-        log.info("Created Neuron: "+savedNeuron);
-        return savedNeuron;
+        dataSource.asyncCreateNeuron(neuron);
     }
     
     /**
@@ -444,12 +452,12 @@ public class TmModelManipulator {
     }
 
 
-    public ListenableFuture<TmNeuronMetadata> saveNeuronMetadata(TmNeuronMetadata neuron) throws Exception {
-        return dataSource.asyncSaveNeuronMetadata(neuron);
+    public void saveNeuronMetadata(TmNeuronMetadata neuron) throws Exception {
+        dataSource.asyncSaveNeuronMetadata(neuron);
     }
     
-    public ListenableFuture<TmNeuronMetadata> saveNeuronData(TmNeuronMetadata neuron) throws Exception {
-        return dataSource.asyncSaveNeuron(neuron);
+    public void saveNeuronData(TmNeuronMetadata neuron) throws Exception {
+        dataSource.asyncSaveNeuron(neuron);
     }
     
     private static final String UNREMOVE_NEURON_WARN_FMT = "Attempted to remove neuron %d that was not in workspace %d.";
