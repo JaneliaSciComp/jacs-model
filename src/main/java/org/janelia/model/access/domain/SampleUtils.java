@@ -54,17 +54,18 @@ public class SampleUtils {
      * @param objective
      * @param area
      * @param aligned
+     * @param resultClass
      * @param resultName
-     * @param alignSpace
      * @param groupName
      * @return
      */
-    public static List<HasFiles> getMatchingResults(Sample sample, String objective, String area, Boolean aligned, String resultName, String groupName) {
+    public static List<HasFiles> getMatchingResults(Sample sample, String objective, String area, Boolean aligned, String resultClass, String resultName, String groupName) {
 
         log.debug("Getting result '{}' from {}",resultName,sample.getName());
         log.trace("  Objective: {}",objective);
         log.trace("  Area: {}",area);
         log.trace("  Aligned: {}",aligned);
+        log.trace("  Result class: {}",resultClass);
         log.trace("  Result name: {}",resultName);
         log.trace("  Group name: {}",groupName);
 
@@ -74,14 +75,14 @@ public class SampleUtils {
             for(int i=objectiveSamples.size()-1; i>=0; i--) {
                 ObjectiveSample objectiveSample = objectiveSamples.get(i);
                 log.debug("Testing objective: "+objectiveSample.getObjective());
-                chosenResults.addAll(getMatchingResults(objectiveSample, area, aligned, resultName, groupName));
+                chosenResults.addAll(getMatchingResults(objectiveSample, area, aligned, resultClass, resultName, groupName));
             }
         }
         else {
             ObjectiveSample objectiveSample = sample.getObjectiveSample(objective);
             if (objectiveSample!=null) {
                 log.debug("Testing objective: "+objectiveSample.getObjective());
-                chosenResults.addAll(getMatchingResults(objectiveSample, area, aligned, resultName, groupName));
+                chosenResults.addAll(getMatchingResults(objectiveSample, area, aligned, resultClass, resultName, groupName));
             }
         }
         
@@ -107,7 +108,7 @@ public class SampleUtils {
         return finalResults;
     }
 
-    public static Collection<HasFiles> getMatchingResults(ObjectiveSample objectiveSample, String area, Boolean aligned, String resultName, String groupName) {
+    public static Collection<HasFiles> getMatchingResults(ObjectiveSample objectiveSample, String area, Boolean aligned, String resultClass, String resultName, String groupName) {
 
         // Use hash map to de-duplicate denormalized results
         Map<String,HasFiles> chosenResults = new LinkedHashMap<>();
@@ -138,51 +139,55 @@ public class SampleUtils {
                 if (aligned==null || aligned==isAligned) {
                     log.debug("    Found result matching align="+aligned);
 
-                    String pipelineResultName = null;
-                    if (pipelineResult instanceof SampleAlignmentResult) {
-                        SampleAlignmentResult alignmentResult = (SampleAlignmentResult)pipelineResult;
-                        if (StringUtils.isBlank(alignmentResult.getAlignmentSpace())) {
-                            // If the alignment space is empty, fallback on the result name. 
-                            // This shouldn't happen, but it does for legacy or broken data. 
-                            pipelineResultName = pipelineResult.getName();
+                    if (resultClass==null || StringUtils.equals(pipelineResult.getClass().getName(), resultClass)) {
+                        log.debug("    Found result matching resultClass=" + resultClass);
+
+                        String pipelineResultName = null;
+                        if (pipelineResult instanceof SampleAlignmentResult) {
+                            SampleAlignmentResult alignmentResult = (SampleAlignmentResult) pipelineResult;
+                            if (StringUtils.isBlank(alignmentResult.getAlignmentSpace())) {
+                                // If the alignment space is empty, fallback on the result name.
+                                // This shouldn't happen, but it does for legacy or broken data.
+                                pipelineResultName = pipelineResult.getName();
+                            }
+                            else {
+                                pipelineResultName = alignmentResult.getAlignmentSpace();
+                            }
                         }
                         else {
-                            pipelineResultName = alignmentResult.getAlignmentSpace();    
+                            pipelineResultName = pipelineResult.getName();
                         }
-                    }
-                    else {
-                        pipelineResultName = pipelineResult.getName();
-                    }
-                    
-                    if (resultName == null || StringUtils.equals(pipelineResultName, resultName)) {
-                        log.debug("    Found result matching resultName="+resultName);
-                        
-                        if (groupName == null) {
-                            if (area == null) {
-                                chosenResults.put(pipelineResult.getId().toString(), pipelineResult);    
-                            }
-                            else if (pipelineResult instanceof HasAnatomicalArea) {
-                                HasAnatomicalArea aaResult = (HasAnatomicalArea)pipelineResult;
-                                if (StringUtils.equals(area, aaResult.getAnatomicalArea())) {
-                                    chosenResults.put(pipelineResult.getId().toString(), pipelineResult);    
+
+                        if (resultName == null || StringUtils.equals(pipelineResultName, resultName)) {
+                            log.debug("    Found result matching resultName=" + resultName);
+
+                            if (groupName == null) {
+                                if (area == null) {
+                                    chosenResults.put(pipelineResult.getId().toString(), pipelineResult);
                                 }
-                            }
-                            else if (pipelineResult instanceof SamplePostProcessingResult) {
-                                HasFileGroups hasGroups = (HasFileGroups) pipelineResult;
-                                for (FileGroup fileGroup : hasGroups.getGroups()) {
-                                    String key = fileGroup.getKey(); // Could be an area or a tile name
-                                    if (validAreas.contains(key) || validTiles.contains(key)) {
-                                        chosenResults.put(pipelineResult.getId()+"~"+key, fileGroup);
+                                else if (pipelineResult instanceof HasAnatomicalArea) {
+                                    HasAnatomicalArea aaResult = (HasAnatomicalArea) pipelineResult;
+                                    if (StringUtils.equals(area, aaResult.getAnatomicalArea())) {
+                                        chosenResults.put(pipelineResult.getId().toString(), pipelineResult);
+                                    }
+                                }
+                                else if (pipelineResult instanceof SamplePostProcessingResult) {
+                                    HasFileGroups hasGroups = (HasFileGroups) pipelineResult;
+                                    for (FileGroup fileGroup : hasGroups.getGroups()) {
+                                        String key = fileGroup.getKey(); // Could be an area or a tile name
+                                        if (validAreas.contains(key) || validTiles.contains(key)) {
+                                            chosenResults.put(pipelineResult.getId() + "~" + key, fileGroup);
+                                        }
                                     }
                                 }
                             }
-                        }
-                        else if (pipelineResult instanceof HasFileGroups) {
-                            HasFileGroups hasGroups = (HasFileGroups) pipelineResult;
-                            HasFiles hasFiles = hasGroups.getGroup(groupName);
-                            if (hasFiles != null) {
-                                log.debug("    Found group: " + groupName);
-                                chosenResults.put(pipelineResult.getId()+"~"+groupName, hasFiles);
+                            else if (pipelineResult instanceof HasFileGroups) {
+                                HasFileGroups hasGroups = (HasFileGroups) pipelineResult;
+                                HasFiles hasFiles = hasGroups.getGroup(groupName);
+                                if (hasFiles != null) {
+                                    log.debug("    Found group: " + groupName);
+                                    chosenResults.put(pipelineResult.getId() + "~" + groupName, hasFiles);
+                                }
                             }
                         }
                     }

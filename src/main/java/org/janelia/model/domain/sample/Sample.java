@@ -118,7 +118,16 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     @SearchAttribute(key="status_txt",label="Status",facet="status_s")
     private String status;
-    
+
+    @SearchAttribute(key="error_type_txt",label="Error Type",facet="error_type_s")
+    private String errorType;
+
+    @SearchAttribute(key="error_op_txt",label="Error Operation",facet="error_op_s")
+    private String errorOperation;
+
+    @SearchAttribute(key="error_desc_txt",label="Error Description")
+    private String errorDescription;
+
     @SearchAttribute(key="visited_b",label="Visited")
     private Boolean visited = false;
     
@@ -404,6 +413,30 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getErrorType() {
+        return errorType;
+    }
+
+    public void setErrorType(String errorType) {
+        this.errorType = errorType;
+    }
+
+    public String getErrorOperation() {
+        return errorOperation;
+    }
+
+    public void setErrorOperation(String errorOperation) {
+        this.errorOperation = errorOperation;
+    }
+
+    public String getErrorDescription() {
+        return errorDescription;
+    }
+
+    public void setErrorDescription(String errorDescription) {
+        this.errorDescription = errorDescription;
     }
 
     public Boolean getSageSynced() {
