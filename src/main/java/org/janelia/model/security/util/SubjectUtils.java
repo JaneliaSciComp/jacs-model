@@ -1,6 +1,9 @@
 package org.janelia.model.security.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.domain.enums.SubjectRole;
+import org.janelia.model.security.Subject;
+import org.janelia.model.security.User;
 
 /**
  * Utility methods for dealing with Subjects (User and Groups)
@@ -21,5 +24,18 @@ public class SubjectUtils {
             }
         }
         return subjectNameOrKey;
+    }
+
+    public static boolean subjectIsInGroup(Subject subject, String groupKey) {
+        if (subject==null) return false;
+        if (subject instanceof User) {
+            User user = (User)subject;
+            return user.hasGroupRead(groupKey);
+        }
+        return false;
+    }
+
+    public static boolean isAdmin(Subject subject) {
+        return subjectIsInGroup(subject, SubjectRole.Admin.getRole());
     }
 }
