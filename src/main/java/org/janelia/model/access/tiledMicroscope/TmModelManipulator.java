@@ -1,5 +1,6 @@
 package org.janelia.model.access.tiledMicroscope;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,8 +42,8 @@ public class TmModelManipulator {
     private final TmModelAdapter dataSource;
     private final IdSource idSource;
     
-    private final Map<Long, TmNeuronMetadata> neuronMap = new LinkedHashMap<>();
-    private final Map<String, List> neuronsInWaiting = new HashMap<>();
+    private final Map<Long, TmNeuronMetadata> neuronMap = new ConcurrentHashMap<>();
+    private final Map<String, List> neuronsInWaiting = new ConcurrentHashMap<>();
 
     public TmModelManipulator(TmModelAdapter dataSource) {
         this(dataSource, new IdSource());
