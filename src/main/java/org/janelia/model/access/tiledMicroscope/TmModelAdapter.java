@@ -17,12 +17,12 @@ public interface TmModelAdapter {
 
     List<TmNeuronMetadata> loadNeurons(TmWorkspace workspace) throws Exception;
 
-    void asyncCreateNeuron(TmNeuronMetadata tmNeuronMetadata) throws Exception;
+    ListenableFuture<TmNeuronMetadata> asyncCreateNeuron(TmNeuronMetadata tmNeuronMetadata) throws Exception;
 
-    void asyncSaveNeuronMetadata(TmNeuronMetadata neuron) throws Exception;
+    ListenableFuture<TmNeuronMetadata> asyncSaveNeuronMetadata(TmNeuronMetadata neuron) throws Exception;
 
-    void asyncSaveNeuron(TmNeuronMetadata neuron) throws Exception;
+    ListenableFuture<TmNeuronMetadata> asyncSaveNeuron(TmNeuronMetadata neuron) throws Exception;
 
-    void asyncDeleteNeuron(TmNeuronMetadata neuronMetadata) throws Exception;
+    ListenableFuture<TmNeuronMetadata> asyncDeleteNeuron(TmNeuronMetadata neuronMetadata) throws Exception;
 
 }
