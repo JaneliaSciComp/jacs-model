@@ -1,5 +1,7 @@
 package org.janelia.model.access.tiledMicroscope;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -21,7 +23,6 @@ import org.janelia.model.util.IdSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Manages the relationships, additions and deletions from Tiled Microscope
@@ -41,7 +42,8 @@ public class TmModelManipulator {
     private final TmModelAdapter dataSource;
     private final IdSource idSource;
     
-    private final Map<Long, TmNeuronMetadata> neuronMap = new LinkedHashMap<>();
+    private final Map<Long, TmNeuronMetadata> neuronMap = new ConcurrentHashMap<>();
+    private final Map<String, List> neuronsInWaiting = new ConcurrentHashMap<>();
 
     public TmModelManipulator(TmModelAdapter dataSource) {
         this(dataSource, new IdSource());
@@ -58,6 +60,14 @@ public class TmModelManipulator {
 
     public void addNeuron(TmNeuronMetadata neuron) {
         neuronMap.put(neuron.getId(), neuron);
+    }
+
+    /**
+     * neurons submitted for creation are waiting around for callback from message server
+     * store in a map by name for async updating when callback from message server arrives
+     */
+    public void addNeuronInWaiting(String name, List neuronData) {
+        neuronsInWaiting.put(name, neuronData);
     }
 
     public TmNeuronMetadata removeNeuron(TmNeuronMetadata neuron) {
@@ -80,31 +90,73 @@ public class TmModelManipulator {
         }
     }
 
+    public void mergeCreatedNeuron(TmNeuronMetadata newNeuron) {
+        String key = newNeuron.getName();
+        if (this.neuronsInWaiting.containsKey(newNeuron.getName())) {
+            addNeuron(newNeuron);
+            List neuronData = neuronsInWaiting.get(newNeuron.getName());
+
+            // check if callbacks
+            if (neuronData.size()>1) {
+                Consumer<Map<String,Object>> callback = (Consumer<Map<String,Object>>)neuronData.get(1);
+                Map<String,Object> parameters = (Map<String,Object>)neuronData.get(2);
+                parameters.put("neuron", newNeuron);
+                callback.accept(parameters);
+            }
+            neuronsInWaiting.remove(neuronsInWaiting);
+        }
+    }
+
     /**
      * Makes a new neuron.
-     * 
+     *
      * @todo may need to add create, update dates + ownerKey
      * @param workspace will contain this neuron.
      * @param name of new neuron.
      * @return that neuron
-     * @throws Exception 
+     * @throws Exception
      */
     public TmNeuronMetadata createTiledMicroscopeNeuron(TmWorkspace workspace, String name) throws Exception {
         if (workspace == null || name == null) {
             throw new IllegalStateException("Tiled Neuron must be created in a valid workspace.");
         }
-        TmNeuronMetadata neuron = createTiledMicroscopeNeuron(new TmNeuronMetadata(workspace, name));
-        addNeuron(neuron);
+        TmNeuronMetadata neuron = new TmNeuronMetadata(workspace, name);
+        List neuronList = new ArrayList();
+        neuronList.add(neuron);
+        addNeuronInWaiting(name, neuronList);
+        createTiledMicroscopeNeuron(neuron);
         return neuron;
     }
 
-    private TmNeuronMetadata createTiledMicroscopeNeuron(TmNeuronMetadata neuron) throws Exception {
+    /**
+     * adds a callback for finish async activities, like SWC import
+     * @param workspace
+     * @param name
+     * @return
+     * @throws Exception
+     */
+    public TmNeuronMetadata createTiledMicroscopeNeuron(TmWorkspace workspace,
+                                                        String name,
+                                                        Consumer<Map<String,Object>> callback,
+                                                        Map<String,Object> parameters) throws Exception {
+        if (workspace == null || name == null) {
+            throw new IllegalStateException("Tiled Neuron must be created in a valid workspace.");
+        }
+        TmNeuronMetadata neuron = new TmNeuronMetadata(workspace, name);
+        List neuronList = new ArrayList();
+        neuronList.add(neuron);
+        neuronList.add(callback);
+        neuronList.add(parameters);
+        addNeuronInWaiting(name, neuronList);
+        createTiledMicroscopeNeuron(neuron);
+        return neuron;
+    }
+
+    private void createTiledMicroscopeNeuron(TmNeuronMetadata neuron) throws Exception {
         if (dataSource == null) {
             throw new IllegalStateException("Cannot create neuron without data source.");
         }
-        TmNeuronMetadata savedNeuron = dataSource.asyncCreateNeuron(neuron).get();
-        log.info("Created Neuron: "+savedNeuron);
-        return savedNeuron;
+        dataSource.asyncCreateNeuron(neuron);
     }
     
     /**
@@ -112,9 +164,6 @@ public class TmModelManipulator {
      * 
      * @todo may need to add create, update dates + ownerKey
      * @param tmNeuronMetadata add path to this.
-     * @param annotationID1 end point annotations.
-     * @param annotationID2
-     * @param pointlist
      * @return the anchored path thus created.
      * @throws Exception 
      */
@@ -444,12 +493,12 @@ public class TmModelManipulator {
     }
 
 
-    public ListenableFuture<TmNeuronMetadata> saveNeuronMetadata(TmNeuronMetadata neuron) throws Exception {
-        return dataSource.asyncSaveNeuronMetadata(neuron);
+    public void saveNeuronMetadata(TmNeuronMetadata neuron) throws Exception {
+        dataSource.asyncSaveNeuronMetadata(neuron);
     }
     
-    public ListenableFuture<TmNeuronMetadata> saveNeuronData(TmNeuronMetadata neuron) throws Exception {
-        return dataSource.asyncSaveNeuron(neuron);
+    public void saveNeuronData(TmNeuronMetadata neuron) throws Exception {
+        dataSource.asyncSaveNeuron(neuron);
     }
     
     private static final String UNREMOVE_NEURON_WARN_FMT = "Attempted to remove neuron %d that was not in workspace %d.";
