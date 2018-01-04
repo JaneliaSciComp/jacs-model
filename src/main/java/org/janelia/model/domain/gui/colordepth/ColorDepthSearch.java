@@ -1,5 +1,6 @@
 package org.janelia.model.domain.gui.colordepth;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.interfaces.IsParent;
 import org.janelia.model.domain.support.MongoMapped;
@@ -45,6 +46,7 @@ public class ColorDepthSearch extends AbstractDomainObject implements IsParent {
         this.complete = complete;
     }
 
+    @JsonIgnore
     public boolean isSearchComplete() {
         return complete!=null && complete;
     }
