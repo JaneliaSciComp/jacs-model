@@ -10,6 +10,7 @@ import java.util.Map;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasIdentifier;
+import org.janelia.model.domain.interfaces.HasName;
 import org.janelia.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.model.domain.interfaces.HasResults;
 
@@ -23,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
-public class PipelineResult implements HasRelativeFiles, HasIdentifier, HasResults, Serializable {
+public class PipelineResult implements HasRelativeFiles, HasIdentifier, HasResults, HasName, Serializable {
 
     private Long id;
     private String name;

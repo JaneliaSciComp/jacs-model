@@ -1,6 +1,7 @@
 package org.janelia.model.domain.gui.colordepth;
 
 import org.janelia.model.domain.interfaces.HasFilepath;
+import org.janelia.model.domain.interfaces.HasName;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,12 +13,13 @@ import java.util.List;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ColorDepthMask implements HasFilepath {
+public class ColorDepthMask implements HasFilepath, HasName {
 
     private String name;
     private String filepath;
     private List<ColorDepthResult> results = new ArrayList<>();
 
+    @Override
     public String getName() {
         return name;
     }

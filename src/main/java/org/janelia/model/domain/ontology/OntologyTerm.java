@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.janelia.model.domain.interfaces.HasIdentifier;
+import org.janelia.model.domain.interfaces.HasName;
 import org.jongo.marshall.jackson.oid.MongoId;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -13,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
-public abstract class OntologyTerm implements HasIdentifier, Serializable {
+public abstract class OntologyTerm implements HasIdentifier, HasName, Serializable {
     
     @MongoId
     private Long id;

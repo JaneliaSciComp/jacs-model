@@ -3,6 +3,7 @@ package org.janelia.model.security;
 import java.io.Serializable;
 
 import org.janelia.model.domain.interfaces.HasIdentifier;
+import org.janelia.model.domain.interfaces.HasName;
 import org.janelia.model.domain.support.MongoMapped;
 import org.jongo.marshall.jackson.oid.MongoId;
 
@@ -16,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  */
 @MongoMapped(collectionName="subject",label="Subject")
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
-public abstract class Subject implements HasIdentifier, Serializable {
+public abstract class Subject implements HasIdentifier, HasName, Serializable {
     
     public static final String ADMIN_KEY = "group:admin";
     public static final String USERS_KEY = "group:workstation_users";

@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.interfaces.HasImageStack;
+import org.janelia.model.domain.interfaces.HasName;
 import org.janelia.model.domain.interfaces.HasResults;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -16,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SamplePipelineRun implements HasResults, Serializable {
+public class SamplePipelineRun implements HasResults, HasName, Serializable {
 
     private Long id;
     private String name;

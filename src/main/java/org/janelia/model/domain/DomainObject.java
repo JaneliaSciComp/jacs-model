@@ -6,6 +6,7 @@ import java.util.Set;
 import org.janelia.model.domain.interfaces.HasIdentifier;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.janelia.model.domain.interfaces.HasName;
 
 /**
  * A domain object is anything stored at the top level of a collection. 
@@ -14,14 +15,16 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
-public interface DomainObject extends HasIdentifier {
+public interface DomainObject extends HasIdentifier, HasName {
 
     /** Returns a Globally Unique Identifier for the object */
+    @Override
     public Long getId();
 
     public void setId(Long id);
 
     /** Returns a user-readable, non-unique label for the object instance */
+    @Override
     public String getName();
 
     public void setName(String name);

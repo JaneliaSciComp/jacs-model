@@ -9,8 +9,9 @@ import org.janelia.model.domain.interfaces.HasFiles;
 import org.janelia.model.domain.interfaces.HasIdentifier;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.janelia.model.domain.interfaces.HasName;
 
-public class Compartment implements HasIdentifier, HasFiles, Serializable {
+public class Compartment implements HasIdentifier, HasFiles, HasName, Serializable {
 
     private Long id;
     private String name;

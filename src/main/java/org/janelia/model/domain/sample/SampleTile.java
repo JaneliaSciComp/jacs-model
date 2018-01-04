@@ -8,6 +8,7 @@ import java.util.Map;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasFiles;
+import org.janelia.model.domain.interfaces.HasName;
 import org.janelia.model.domain.support.SearchTraversal;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -18,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleTile implements HasFiles, Serializable {
+public class SampleTile implements HasFiles, HasName, Serializable {
 
     private String name;
     private String anatomicalArea;
