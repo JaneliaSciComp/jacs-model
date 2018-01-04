@@ -46,8 +46,6 @@ public class DataSet extends AbstractDomainObject {
     @SearchAttribute(key="usage_bytes_l",label="Disk Space Usage (Bytes)")
     private Long diskSpaceUsage;
 
-    private String colorDepthMipPath;
-    
     public String getIdentifier() {
         return identifier;
     }
@@ -133,13 +131,5 @@ public class DataSet extends AbstractDomainObject {
     @SearchAttribute(key="usage_humans_t",label="Disk Space Usage")
     public String getDiskSpaceUsageForHumans() {
         return diskSpaceUsage==null ? null : DomainUtils.formatBytesForHumans(diskSpaceUsage);
-    }
-
-    public String getColorDepthMipPath() {
-        return colorDepthMipPath;
-    }
-
-    public void setColorDepthMipPath(String colorDepthMipPath) {
-        this.colorDepthMipPath = colorDepthMipPath;
     }
 }
