@@ -1,14 +1,7 @@
 package org.janelia.model.domain.tiledMicroscope;
 
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
@@ -371,25 +364,19 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     @JsonIgnore
     public List<TmGeoAnnotation> getSubTreeList(TmGeoAnnotation annotation) {
         checkNeuronDataLoaded();
+        // this method needs to be nonrecursive, because input can get
+        //  large enough to cause a stack overflow
         ArrayList<TmGeoAnnotation> subtreeList = new ArrayList<>();
-        appendSubTreeList(subtreeList, annotation);
+        ArrayDeque<TmGeoAnnotation> stack = new ArrayDeque<>();
+        stack.addFirst(annotation);
+        while (stack.size() > 0) {
+            TmGeoAnnotation ann = stack.removeFirst();
+            subtreeList.add(ann);
+            for (TmGeoAnnotation child: getChildrenOf(ann)) {
+                stack.addFirst(child);
+            }
+        }
         return subtreeList;
-    }
-
-    private void appendSubTreeList(List<TmGeoAnnotation> annList, TmGeoAnnotation ann) {
-        checkNeuronDataLoaded();
-        if (ann == null) {
-            // For this to happen (below), one of the children of a
-            // annotation would have to be null, for "a" in the method call
-            // becomes "ann" in the argument list.
-            System.out.println("Null annotation in TmNeuronData@" + System.identityHashCode(this));
-            new Exception("recursed into null").printStackTrace();
-            return;
-        }
-        annList.add(ann);
-        for (TmGeoAnnotation a: getChildrenOf(ann)) {
-            appendSubTreeList(annList, a);
-        }
     }
 
     public List<String> checkRepairNeuron() {
