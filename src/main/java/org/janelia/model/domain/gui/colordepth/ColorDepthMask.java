@@ -6,8 +6,10 @@ import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasFilepath;
+import org.janelia.model.domain.interfaces.HasFiles;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
+import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.support.SearchType;
 import org.janelia.model.domain.workspace.Node;
 
@@ -23,7 +25,10 @@ import java.util.Map;
  */
 @MongoMapped(collectionName="colorDepthMask",label="Color Depth Mask")
 @SearchType(key="colorDepthMask",label="Color Depth Mask")
-public class ColorDepthMask extends AbstractDomainObject implements Node, HasFilepath {
+public class ColorDepthMask extends AbstractDomainObject implements Node, HasFilepath, HasFiles {
+
+    @SearchTraversal({ColorDepthMask.class})
+    private Reference sourceSampleRef;
 
     @SearchAttribute(key="filepath_txt",label="Filepath")
     private String filepath;
@@ -32,6 +37,14 @@ public class ColorDepthMask extends AbstractDomainObject implements Node, HasFil
     private Integer maskThreshold;
 
     private List<Reference> children = new ArrayList<>();
+
+    public Reference getSample() {
+        return sourceSampleRef;
+    }
+
+    public void setSample(Reference sample) {
+        this.sourceSampleRef = sample;
+    }
 
     @Override
     public String getFilepath() {
