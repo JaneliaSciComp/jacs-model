@@ -6,6 +6,7 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasFilepath;
 import org.janelia.model.domain.interfaces.HasFiles;
+import org.janelia.model.domain.sample.Sample;
 
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -19,14 +20,26 @@ import java.util.regex.Pattern;
  */
 public class ColorDepthMatch implements HasFilepath, HasFiles {
 
+    private Reference maskRef;
     private String filepath;
-    private Reference sampleRef;
     private Integer score;
     private Double scorePercent;
 
     @JsonIgnore
     // This is calculated from filepath and cached, but never persisted
-    private Integer channelNumber;
+    private transient Reference sampleRef;
+
+    @JsonIgnore
+    // This is calculated from filepath and cached, but never persisted
+    private transient Integer channelNumber;
+
+    public Reference getMaskRef() {
+        return maskRef;
+    }
+
+    public void setMaskRef(Reference maskRef) {
+        this.maskRef = maskRef;
+    }
 
     @Override
     public String getFilepath() {
@@ -36,29 +49,6 @@ public class ColorDepthMatch implements HasFilepath, HasFiles {
     @Override
     public void setFilepath(String filepath) {
         this.filepath = filepath;
-    }
-
-    public Reference getSample() {
-        return sampleRef;
-    }
-
-    public void setSample(Reference sample) {
-        this.sampleRef = sample;
-    }
-
-    @JsonIgnore
-    public Integer getChannelNumber() {
-        if (channelNumber==null) {
-            Pattern p = Pattern.compile(".*?-CH(?<channelNum>\\d)_CDM\\.\\w+$");
-            Matcher m = p.matcher(filepath);
-            if (m.matches()) {
-                channelNumber = new Integer(m.group("channelNum"));
-            }
-            else {
-                throw new IllegalStateException("Color depth projection file has no channel number: "+filepath);
-            }
-        }
-        return channelNumber;
     }
 
     public Integer getScore() {
@@ -80,5 +70,29 @@ public class ColorDepthMatch implements HasFilepath, HasFiles {
     @JsonIgnore
     public Map<FileType, String> getFiles() {
         return ImmutableMap.of(FileType.Unclassified2d, filepath);
+    }
+
+    @JsonIgnore
+    public Reference getSample() {
+        if (sampleRef==null) parse();
+        return sampleRef;
+    }
+
+    @JsonIgnore
+    public Integer getChannelNumber() {
+        if (channelNumber==null) parse();
+        return channelNumber;
+    }
+
+    private void parse() {
+        Pattern p = Pattern.compile(".*?-(?<sampleId>\\d+)-CH(?<channelNum>\\d)_CDM\\.\\w+$");
+        Matcher m = p.matcher(filepath);
+        if (m.matches()) {
+            sampleRef = Reference.createFor(Sample.class, new Long(m.group("sampleId")));
+            channelNumber = new Integer(m.group("channelNum"));
+        }
+        else {
+            throw new IllegalStateException("Misnamed color depth file: "+filepath);
+        }
     }
 }

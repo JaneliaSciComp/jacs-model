@@ -4,10 +4,12 @@ import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.support.MongoMapped;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * The result of running a ColorDepthSearch on the cluster. Each mask has a list of ColorDepthResults associated
+ * The result of running a ColorDepthSearch on the cluster. Each search mask has a list of ColorDepthResults associated
  * with it.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -15,13 +17,34 @@ import java.util.Map;
 @MongoMapped(collectionName="colorDepthResult",label="Color Depth Result")
 public class ColorDepthResult extends AbstractDomainObject {
 
-    private Map<Reference,ColorDepthMatch> matches;
+    private List<ColorDepthMatch> matches = new ArrayList<>();
 
-    public Map<Reference, ColorDepthMatch> getMatches() {
+    public ColorDepthResult() {
+    }
+
+    public ColorDepthResult(List<ColorDepthMatch> matches) {
+        this.matches = matches;
+    }
+
+    public List<ColorDepthMatch> getMatches() {
         return matches;
     }
 
-    public void setMatches(Map<Reference, ColorDepthMatch> matches) {
+    public void setMatches(List<ColorDepthMatch> matches) {
+        if (matches==null) throw new IllegalArgumentException("Property cannot be null");
         this.matches = matches;
     }
+
+    public void addMatch(ColorDepthMatch match) {
+        matches.add(match);
+    }
+
+    public List<ColorDepthMatch> getMaskMatches(ColorDepthMask mask) {
+        return getMaskMatches(Reference.createFor(mask));
+    }
+
+    public List<ColorDepthMatch> getMaskMatches(Reference maskRef) {
+        return matches.stream().filter(match -> match.getMaskRef().equals(maskRef)).collect(Collectors.toList());
+    }
+
 }
