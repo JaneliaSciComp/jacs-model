@@ -55,6 +55,15 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         return copy;
     }
 
+    public void merge(TmNeuronMetadata neuron) {
+        this.setName(neuron.getName());
+        this.setWorkspaceRef(neuron.getWorkspaceRef());
+        this.setVisible(neuron.isVisible());
+        this.setColorHex(neuron.getColorHex());
+        this.setTags(new HashSet<String>(neuron.getTags()));
+        this.setNeuronData(neuron.getNeuronData());
+    }
+
     @SearchAttribute(key="workspace_id_l",label="Workspace GUID")
     @JsonIgnore
     public Long getWorkspaceId() {
