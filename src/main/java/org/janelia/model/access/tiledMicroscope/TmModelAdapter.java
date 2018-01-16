@@ -1,6 +1,7 @@
 package org.janelia.model.access.tiledMicroscope;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
@@ -24,5 +25,7 @@ public interface TmModelAdapter {
     void asyncSaveNeuron(TmNeuronMetadata neuron) throws Exception;
 
     void asyncDeleteNeuron(TmNeuronMetadata neuronMetadata) throws Exception;
+
+    CompletableFuture<Boolean> requestOwnership(TmNeuronMetadata neuronMetadata) throws Exception;
 
 }

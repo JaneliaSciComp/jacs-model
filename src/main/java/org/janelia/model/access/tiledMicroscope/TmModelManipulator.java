@@ -1,5 +1,6 @@
 package org.janelia.model.access.tiledMicroscope;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.ArrayList;
@@ -7,7 +8,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +44,7 @@ public class TmModelManipulator {
     
     private final Map<Long, TmNeuronMetadata> neuronMap = new ConcurrentHashMap<>();
     private final Map<String, List> neuronsInWaiting = new ConcurrentHashMap<>();
+    private CompletableFuture<Boolean> ownershipRequest;
 
     public TmModelManipulator(TmModelAdapter dataSource) {
         this(dataSource, new IdSource());
@@ -59,7 +60,13 @@ public class TmModelManipulator {
     }
 
     public void addNeuron(TmNeuronMetadata neuron) {
-        neuronMap.put(neuron.getId(), neuron);
+        // if neuron exists, do a deep merge so references throughout Horta/LVV
+        // pick up the changes
+        if (neuronMap.containsKey(neuron.getId())) {
+            neuronMap.get(neuron.getId()).merge(neuron);
+        } else {
+            neuronMap.put(neuron.getId(), neuron);
+        }
     }
 
     /**
@@ -106,6 +113,30 @@ public class TmModelManipulator {
             neuronsInWaiting.remove(neuronsInWaiting);
         }
     }
+
+    /**
+     * We make an ownership request to take ownership of this neuron; we'd like to perform a fast
+     * block in this case in the calling function and fulfill the future (hopefully rapidly)
+     * when the approval request comes in from the NeuronBroker.
+     * @param neuron
+     * @throws Exception
+     */
+    public CompletableFuture<Boolean> requestOwnershipChange(TmNeuronMetadata neuron) throws Exception {
+        ownershipRequest = dataSource.requestOwnership(neuron);
+        return ownershipRequest;
+    }
+
+    /**
+     * We complete the ownership request future once we get the decision from the NeuronBroker
+     * @param decision
+     * @throws Exception
+     */
+    public void completeOwnershipRequest(boolean decision) {
+        if (ownershipRequest!=null) {
+            ownershipRequest.complete(new Boolean(decision));
+        }
+    }
+
 
     /**
      * Makes a new neuron.
