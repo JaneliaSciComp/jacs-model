@@ -2362,6 +2362,18 @@ public class DomainDAO {
             throw new Exception("Could not update disk space usage for DataSet " +dataSetIdentifier);
         }
     }
+
+    public void addColorDepthSearchMask(String subjectKey, Long searchId, ColorDepthMask mask) {
+        Set<String> subjects = getWriterSet(subjectKey);
+        Reference ref = Reference.createFor(mask);
+        colorDepthSearchCollection.update("{_id:#, writers:{$in:#}}", searchId, subjects).with("{$push: { masks: # } }", ref);
+    }
+
+    public void addColorDepthSearchResult(String subjectKey, Long searchId, ColorDepthResult result) {
+        Set<String> subjects = getWriterSet(subjectKey);
+        Reference ref = Reference.createFor(result);
+        colorDepthSearchCollection.update("{_id:#, writers:{$in:#}}", searchId, subjects).with("{$push: { results: # } }", ref);
+    }
     
     public <T extends DomainObject> List<T> fullTextSearch(String subjectKey, Class<T> domainClass, String text) {
 
