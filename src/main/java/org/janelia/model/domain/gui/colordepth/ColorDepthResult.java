@@ -6,7 +6,6 @@ import org.janelia.model.domain.support.MongoMapped;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * The result of running a ColorDepthSearch on the cluster. Each search mask has a list of ColorDepthResults associated
@@ -44,7 +43,18 @@ public class ColorDepthResult extends AbstractDomainObject {
     }
 
     public List<ColorDepthMatch> getMaskMatches(Reference maskRef) {
-        return matches.stream().filter(match -> match.getMaskRef().equals(maskRef)).collect(Collectors.toList());
+
+        // Can't use java 8 syntax in JACSv1 :(
+        //return matches.stream().filter(match -> match.getMaskRef().equals(maskRef)).collect(Collectors.toList());
+
+        List<ColorDepthMatch> matches = new ArrayList<>();
+        for (ColorDepthMatch match : matches) {
+            if (match.getMaskRef().equals(maskRef)) {
+                matches.add(match);
+            }
+        }
+
+        return matches;
     }
 
 }
