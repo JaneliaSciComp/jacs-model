@@ -43,6 +43,10 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     @JsonIgnore
     transient private TmNeuronData neuronData;
 
+    @JsonIgnore
+    transient private boolean synced;
+    transient private int syncLevel = 0;
+
     public TmNeuronMetadata() {
     }
 
@@ -69,6 +73,31 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         this.setColorHex(neuron.getColorHex());
         this.setTags(new HashSet<String>(neuron.getTags()));
         this.setNeuronData(neuron.getNeuronData());
+    }
+
+    @JsonIgnore
+    public int getSyncLevel() {
+        return syncLevel;
+    }
+
+    @JsonIgnore
+    public synchronized void decrementSyncLevel() {
+        this.syncLevel--;
+    }
+
+    @JsonIgnore
+    public synchronized void incrementSyncLevel() {
+        this.syncLevel++;
+    }
+
+    @JsonIgnore
+    public boolean isSynced() {
+        return synced;
+    }
+
+    @JsonIgnore
+    public void setSynced(boolean synced) {
+        this.synced = synced;
     }
 
     @SearchAttribute(key="workspace_id_l",label="Workspace GUID")
