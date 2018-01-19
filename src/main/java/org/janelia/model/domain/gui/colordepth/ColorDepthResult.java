@@ -47,14 +47,14 @@ public class ColorDepthResult extends AbstractDomainObject {
         // Can't use java 8 syntax in JACSv1 :(
         //return matches.stream().filter(match -> match.getMaskRef().equals(maskRef)).collect(Collectors.toList());
 
-        List<ColorDepthMatch> matches = new ArrayList<>();
+        List<ColorDepthMatch> maskMatches = new ArrayList<>();
         for (ColorDepthMatch match : matches) {
             if (match.getMaskRef().equals(maskRef)) {
-                matches.add(match);
+                maskMatches.add(match);
             }
         }
 
-        return matches;
+        return maskMatches;
     }
 
 }
