@@ -559,17 +559,23 @@ public class DomainDAO {
     public List<Reference> getContainerReferences(DomainObject domainObject) throws Exception {
 
         log.trace("Checking to see whether  " + domainObject.getId() + " has any parent references");
-        if (domainObject.getId() == null) {
+        if (domainObject == null || domainObject.getId() == null) {
             return null;
         }
 
         String refStr = Reference.createFor(domainObject).toString();
         List<Reference> refList = new ArrayList<>();
-        MongoCursor<TreeNode> treeCursor = treeNodeCollection.find("{children:#}", refStr).as(TreeNode.class);
-        for (TreeNode item : treeCursor) {
-            Reference newRef = Reference.createFor(item.getClass(), item.getId());
-            refList.add(newRef);
+
+        // TODO: the node implementations should be decoupled from this method
+
+        for (TreeNode item : treeNodeCollection.find("{children:#}", refStr).as(TreeNode.class)) {
+            refList.add(Reference.createFor(item));
         }
+
+        for (ColorDepthMask item : colorDepthMaskCollection.find("{children:#}", refStr).as(ColorDepthMask.class)) {
+            refList.add(Reference.createFor(item));
+        }
+
         return refList;
     }
 
