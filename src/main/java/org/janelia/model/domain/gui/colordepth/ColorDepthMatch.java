@@ -8,6 +8,7 @@ import org.janelia.model.domain.interfaces.HasFilepath;
 import org.janelia.model.domain.interfaces.HasFiles;
 import org.janelia.model.domain.sample.Sample;
 
+import java.io.File;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,12 +26,15 @@ public class ColorDepthMatch implements HasFilepath, HasFiles {
     private Integer score;
     private Double scorePercent;
 
+    // These fields are calculated from filepath and cached, but never persisted
+
     @JsonIgnore
-    // This is calculated from filepath and cached, but never persisted
+    private transient String dataSet;
+
+    @JsonIgnore
     private transient Reference sampleRef;
 
     @JsonIgnore
-    // This is calculated from filepath and cached, but never persisted
     private transient Integer channelNumber;
 
     public Reference getMaskRef() {
@@ -73,6 +77,12 @@ public class ColorDepthMatch implements HasFilepath, HasFiles {
     }
 
     @JsonIgnore
+    public String getDataSet() {
+        if (dataSet==null) parse();
+        return dataSet;
+    }
+
+    @JsonIgnore
     public Reference getSample() {
         if (sampleRef==null) parse();
         return sampleRef;
@@ -85,6 +95,10 @@ public class ColorDepthMatch implements HasFilepath, HasFiles {
     }
 
     private void parse() {
+
+        File file = new File(filepath);
+        this.dataSet = file.getParentFile().getName();
+
         Pattern p = Pattern.compile(".*?-(?<sampleId>\\d+)-CH(?<channelNum>\\d)_CDM\\.\\w+$");
         Matcher m = p.matcher(filepath);
         if (m.matches()) {
