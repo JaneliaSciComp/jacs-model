@@ -1,5 +1,6 @@
 package org.janelia.model.domain.gui.colordepth;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.interfaces.IsParent;
@@ -23,21 +24,7 @@ public class ColorDepthSearch extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="alignment_space_txt",label="Alignment Space",facet="alignment_space_s")
     private String alignmentSpace;
 
-    private List<String> dataSets = new ArrayList<>();
-
-    private List<Reference> masks = new ArrayList<>();
-
-    /** Background threshold for data (0-255) */
-    @SearchAttribute(key="threshold_i",label="Threshold for Data")
-    private Integer dataThreshold;
-
-    /** % of Positive PX Threshold (0-100%) */
-    @SearchAttribute(key="pct_positive_d",label="% of Positive PX Threshold")
-    private Double pctPositivePixels;
-
-    /** Pix Color Fluctuation, 1.18 per slice */
-    @SearchAttribute(key="fluctuation_d",label="Pix Color Fluctuation")
-    private Double pixColorFluctuation;
+    private ColorDepthParameters parameters = new ColorDepthParameters();
 
     /** List of results, one for each run */
     private List<Reference> results = new ArrayList<>();
@@ -50,49 +37,13 @@ public class ColorDepthSearch extends AbstractDomainObject implements IsParent {
         this.alignmentSpace = alignmentSpace;
     }
 
-    public List<String> getDataSets() {
-        return dataSets;
+    public ColorDepthParameters getParameters() {
+        return parameters;
     }
 
-    public void setDataSets(List<String> dataSets) {
-        this.dataSets = dataSets;
-    }
-
-    public Integer getDataThreshold() {
-        return dataThreshold;
-    }
-
-    public void setDataThreshold(Integer dataThreshold) {
-        this.dataThreshold = dataThreshold;
-    }
-
-    public Double getPctPositivePixels() {
-        return pctPositivePixels;
-    }
-
-    public void setPctPositivePixels(Double pctPositivePixels) {
-        this.pctPositivePixels = pctPositivePixels;
-    }
-
-    public Double getPixColorFluctuation() {
-        return pixColorFluctuation;
-    }
-
-    public void setPixColorFluctuation(Double pixColorFluctuation) {
-        this.pixColorFluctuation = pixColorFluctuation;
-    }
-
-    public List<Reference> getMasks() {
-        return masks;
-    }
-
-    public void setMasks(List<Reference> masks) {
-        if (masks==null) throw new IllegalArgumentException("Property cannot be null");
-        this.masks = masks;
-    }
-
-    public void addMask(Reference mask) {
-        masks.add(mask);
+    public void setParameters(ColorDepthParameters parameters) {
+        if (parameters==null) throw new IllegalArgumentException("Property cannot be null");
+        this.parameters = parameters;
     }
 
     public List<Reference> getResults() {
@@ -103,4 +54,33 @@ public class ColorDepthSearch extends AbstractDomainObject implements IsParent {
         if (results==null) throw new IllegalArgumentException("Property cannot be null");
         this.results = results;
     }
+
+    @JsonIgnore
+    public List<String> getDataSets() {
+        return parameters.getDataSets();
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="threshold_i",label="Threshold for Data")
+    public Integer getDataThreshold() {
+        return parameters.getDataThreshold();
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="pct_positive_d",label="% of Positive PX Threshold")
+    public Double getPctPositivePixels() {
+        return parameters.getPctPositivePixels();
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="fluctuation_d",label="Pix Color Fluctuation")
+    public Double getPixColorFluctuation() {
+        return parameters.getPixColorFluctuation();
+    }
+
+    @JsonIgnore
+    public List<Reference> getMasks() {
+        return parameters.getMasks();
+    }
+
 }

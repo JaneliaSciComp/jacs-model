@@ -16,13 +16,27 @@ import java.util.List;
 @MongoMapped(collectionName="colorDepthResult",label="Color Depth Result")
 public class ColorDepthResult extends AbstractDomainObject {
 
+    /** Properties of the search at the time that this search was run */
+    private ColorDepthParameters parameters;
+
+    /** All the returns of the search */
     private List<ColorDepthMatch> matches = new ArrayList<>();
 
     public ColorDepthResult() {
     }
 
-    public ColorDepthResult(List<ColorDepthMatch> matches) {
+    public ColorDepthResult(ColorDepthParameters parameters, List<ColorDepthMatch> matches) {
+        this.parameters = parameters;
         this.matches = matches;
+    }
+
+    public ColorDepthParameters getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(ColorDepthParameters parameters) {
+        if (parameters==null) throw new IllegalArgumentException("Property cannot be null");
+        this.parameters = parameters;
     }
 
     public List<ColorDepthMatch> getMatches() {

@@ -1,7 +1,9 @@
 package org.janelia.model.domain.sample;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.AbstractDomainObject;
@@ -25,8 +27,6 @@ public class DataSet extends AbstractDomainObject {
 
     @SearchAttribute(key="sample_name_pattern_txt",label="Sample Name Pattern")
     private String sampleNamePattern;
-    
-    private String extraStitchBlendParams;
 
     @SearchAttribute(key="sage_synced_b",label="SAGE Synchronized",facet="sage_synced_b")
     private boolean sageSync;
@@ -45,6 +45,8 @@ public class DataSet extends AbstractDomainObject {
 
     @SearchAttribute(key="usage_bytes_l",label="Disk Space Usage (Bytes)")
     private Long diskSpaceUsage;
+
+    private Map<String,Integer> colorDepthCounts = new HashMap<>();
 
     public String getIdentifier() {
         return identifier;
@@ -103,14 +105,6 @@ public class DataSet extends AbstractDomainObject {
         this.neuronSeparationSupported = neuronSeparationSupported;
     }
 
-    public String getExtraStitchBlendParams() {
-        return extraStitchBlendParams;
-    }
-
-    public void setExtraStitchBlendParams(String extraStitchBlendParams) {
-        this.extraStitchBlendParams = extraStitchBlendParams;
-    }
-
     public void setBasicPostProcessingSupported(boolean flag) {
         this.basicPostProcessingSupported = flag;
     }
@@ -131,5 +125,14 @@ public class DataSet extends AbstractDomainObject {
     @SearchAttribute(key="usage_humans_t",label="Disk Space Usage")
     public String getDiskSpaceUsageForHumans() {
         return diskSpaceUsage==null ? null : DomainUtils.formatBytesForHumans(diskSpaceUsage);
+    }
+
+    public Map<String, Integer> getColorDepthCounts() {
+        return colorDepthCounts;
+    }
+
+    public void setColorDepthCounts(Map<String, Integer> colorDepthCounts) {
+        if (colorDepthCounts==null) throw new IllegalArgumentException("Property cannot be null");
+        this.colorDepthCounts = colorDepthCounts;
     }
 }

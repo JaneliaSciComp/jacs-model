@@ -1111,7 +1111,12 @@ public class DomainDAO {
             return dataSetCollection.findOne("{readers:{$in:#},identifier:#}", subjects, dataSetIdentifier).as(DataSet.class);
         }
     }
-    
+
+    public List<DataSet> getDataSetsWithColorDepthImages(String subjectKey, String alignmentSpace) {
+        // subjectKey is ignored, because all users can known about the existence of all data sets
+        return toList(dataSetCollection.find("{'colorDepthCounts."+alignmentSpace+"':{$exists:1}}").as(DataSet.class));
+    }
+
     public DataSet createDataSet(String subjectKey, DataSet dataSet) throws Exception {
         
         DataSet saved = save(subjectKey, dataSet);
@@ -2105,6 +2110,18 @@ public class DomainDAO {
                     }
                 }
             }
+            if (ColorDepthSearch.class.isAssignableFrom(clazz)) {
+                for (ColorDepthSearch search : getDomainObjectsAs(objectRefs, ColorDepthSearch.class)) {
+
+                    log.trace("Changing permissions on all masks and results associated with {}", search);
+
+                    WriteResult wr1 = colorDepthMaskCollection.update("{_id:{$in:#},"+updateQueryClause+"}", search.getMasks(), updateQueryParam).multi().with(withClause, readers, writers);
+                    log.trace("Updated permissions on {} masks", wr1.getN());
+
+                    WriteResult wr2 = colorDepthResultCollection.update("{_id:{$in:#},"+updateQueryClause+"}", search.getResults(), updateQueryParam).multi().with(withClause, readers, writers);
+                    log.trace("Updated permissions on {} results", wr2.getN());
+                }
+            }
             else if ("sample".equals(collectionName)) {
 
                 log.trace("Changing permissions on all fragments and lsms associated with samples: {}", logIds);
@@ -2123,7 +2140,6 @@ public class DomainDAO {
                 for (Long id : ids) {
                     
                     // Retrieve the data set in order to find its identifier
-
                     DataSet dataSet = collection.findOne("{_id:#,"+updateQueryClause+"}", id, updateQueryParam).as(DataSet.class);
                     if (dataSet == null) {
                         throw new IllegalArgumentException("Could not find an writeable data set with id=" + id);
@@ -2380,7 +2396,7 @@ public class DomainDAO {
         Reference ref = Reference.createFor(result);
         colorDepthSearchCollection.update("{_id:#, writers:{$in:#}}", searchId, subjects).with("{$push: { results: # } }", ref);
     }
-    
+
     public <T extends DomainObject> List<T> fullTextSearch(String subjectKey, Class<T> domainClass, String text) {
 
         String collectionName = DomainUtils.getCollectionName(domainClass);

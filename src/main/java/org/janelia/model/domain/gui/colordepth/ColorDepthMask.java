@@ -30,6 +30,9 @@ public class ColorDepthMask extends AbstractDomainObject implements Node, HasFil
     @SearchTraversal({ColorDepthMask.class})
     private Reference sourceSampleRef;
 
+    @SearchAttribute(key="alignment_space_txt",label="Alignment Space",facet="alignment_space_s")
+    private String alignmentSpace;
+
     @SearchAttribute(key="filepath_txt",label="Filepath")
     private String filepath;
 
@@ -44,6 +47,14 @@ public class ColorDepthMask extends AbstractDomainObject implements Node, HasFil
 
     public void setSample(Reference sample) {
         this.sourceSampleRef = sample;
+    }
+
+    public String getAlignmentSpace() {
+        return alignmentSpace;
+    }
+
+    public void setAlignmentSpace(String alignmentSpace) {
+        this.alignmentSpace = alignmentSpace;
     }
 
     @Override
