@@ -37,6 +37,10 @@ public class ColorDepthMatch implements HasFilepath, HasFiles {
     @JsonIgnore
     private transient Integer channelNumber;
 
+    @JsonIgnore
+    private transient boolean parsed;
+
+
     public Reference getMaskRef() {
         return maskRef;
     }
@@ -53,6 +57,7 @@ public class ColorDepthMatch implements HasFilepath, HasFiles {
     @Override
     public void setFilepath(String filepath) {
         this.filepath = filepath;
+        this.parsed = false; // We need to reparse the filepath since it changed
     }
 
     public Integer getScore() {
@@ -78,23 +83,25 @@ public class ColorDepthMatch implements HasFilepath, HasFiles {
 
     @JsonIgnore
     public String getDataSet() {
-        if (dataSet==null) parse();
+        parse();
         return dataSet;
     }
 
     @JsonIgnore
     public Reference getSample() {
-        if (sampleRef==null) parse();
+        parse();
         return sampleRef;
     }
 
     @JsonIgnore
     public Integer getChannelNumber() {
-        if (channelNumber==null) parse();
+        parse();
         return channelNumber;
     }
 
     private void parse() {
+
+        if (parsed) return;
 
         File file = new File(filepath);
         this.dataSet = file.getParentFile().getName();
@@ -106,7 +113,10 @@ public class ColorDepthMatch implements HasFilepath, HasFiles {
             channelNumber = new Integer(m.group("channelNum"));
         }
         else {
-            throw new IllegalStateException("Misnamed color depth file: "+filepath);
+            sampleRef = null;
+            channelNumber = null;
         }
+
+        this.parsed = true;
     }
 }
