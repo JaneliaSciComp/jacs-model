@@ -38,6 +38,9 @@ public class ColorDepthMatch implements HasFilepath, HasFiles {
     private transient Integer channelNumber;
 
     @JsonIgnore
+    private transient File file;
+
+    @JsonIgnore
     private transient boolean parsed;
 
 
@@ -99,11 +102,16 @@ public class ColorDepthMatch implements HasFilepath, HasFiles {
         return channelNumber;
     }
 
+    @JsonIgnore
+    public File getFile() {
+        return file;
+    }
+
     private void parse() {
 
         if (parsed) return;
 
-        File file = new File(filepath);
+        this.file = new File(filepath);
         this.dataSet = file.getParentFile().getName();
 
         Pattern p = Pattern.compile(".*?-(?<sampleId>\\d+)-CH(?<channelNum>\\d)_CDM\\.\\w+$");
