@@ -74,10 +74,10 @@ public class TmNeuronTagMap {
         if (userNeuronTags!=null) {
             userNeuronTags.remove(tag);
             if (userNeuronTags.isEmpty()) {
-                System.out.println ("ASDAFDS");
                 userTags.remove(neuron.getId());
+            } else {
+                userTags.put(neuron.getId(), userNeuronTags);
             }
-            userTags.put(neuron.getId(),userNeuronTags);
         }
 
     }
