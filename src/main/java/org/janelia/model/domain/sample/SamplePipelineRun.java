@@ -93,7 +93,7 @@ public class SamplePipelineRun implements HasResults, HasName, Serializable {
     }
 
     @JsonIgnore
-    public HasImageStack getLatestAlignmentResult() {
+    public SampleAlignmentResult getLatestAlignmentResult() {
         return getLatestResultOfType(SampleAlignmentResult.class);
     }
 

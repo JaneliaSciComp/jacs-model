@@ -26,6 +26,9 @@ import org.janelia.model.domain.enums.OrderStatus;
 import org.janelia.model.domain.enums.PipelineStatus;
 import org.janelia.model.domain.gui.alignment_board.AlignmentBoard;
 import org.janelia.model.domain.gui.alignment_board.AlignmentContext;
+import org.janelia.model.domain.gui.colordepth.ColorDepthMask;
+import org.janelia.model.domain.gui.colordepth.ColorDepthResult;
+import org.janelia.model.domain.gui.colordepth.ColorDepthSearch;
 import org.janelia.model.domain.gui.search.Filter;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.ontology.Annotation;
@@ -48,6 +51,7 @@ import org.janelia.model.domain.screen.FlyLine;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
@@ -113,7 +117,9 @@ public class DomainDAO {
     protected MongoCollection tmSampleCollection;
     protected MongoCollection tmWorkspaceCollection;
     protected MongoCollection tmNeuronCollection;
-
+    protected MongoCollection colorDepthMaskCollection;
+    protected MongoCollection colorDepthSearchCollection;
+    protected MongoCollection colorDepthResultCollection;
 
     public DomainDAO(String serverUrl, String databaseName) throws UnknownHostException {
         this(serverUrl, databaseName, null, null);
@@ -171,6 +177,10 @@ public class DomainDAO {
         this.tmSampleCollection = getCollectionByClass(TmSample.class);
         this.tmWorkspaceCollection = getCollectionByClass(TmWorkspace.class);
         this.tmNeuronCollection = getCollectionByClass(TmNeuronMetadata.class);
+        this.colorDepthMaskCollection = getCollectionByClass(ColorDepthMask.class);
+        this.colorDepthSearchCollection = getCollectionByClass(ColorDepthSearch.class);
+        this.colorDepthResultCollection = getCollectionByClass(ColorDepthResult.class);
+
     }
 
     public final MongoCollection getCollectionByClass(Class<?> domainClass) {
@@ -549,17 +559,23 @@ public class DomainDAO {
     public List<Reference> getContainerReferences(DomainObject domainObject) throws Exception {
 
         log.trace("Checking to see whether  " + domainObject.getId() + " has any parent references");
-        if (domainObject.getId() == null) {
+        if (domainObject == null || domainObject.getId() == null) {
             return null;
         }
 
         String refStr = Reference.createFor(domainObject).toString();
         List<Reference> refList = new ArrayList<>();
-        MongoCursor<TreeNode> treeCursor = treeNodeCollection.find("{children:#}", refStr).as(TreeNode.class);
-        for (TreeNode item : treeCursor) {
-            Reference newRef = Reference.createFor(item.getClass(), item.getId());
-            refList.add(newRef);
+
+        // TODO: the node implementations should be decoupled from this method
+
+        for (TreeNode item : treeNodeCollection.find("{children:#}", refStr).as(TreeNode.class)) {
+            refList.add(Reference.createFor(item));
         }
+
+        for (ColorDepthMask item : colorDepthMaskCollection.find("{children:#}", refStr).as(ColorDepthMask.class)) {
+            refList.add(Reference.createFor(item));
+        }
+
         return refList;
     }
 
@@ -1095,7 +1111,12 @@ public class DomainDAO {
             return dataSetCollection.findOne("{readers:{$in:#},identifier:#}", subjects, dataSetIdentifier).as(DataSet.class);
         }
     }
-    
+
+    public List<DataSet> getDataSetsWithColorDepthImages(String subjectKey, String alignmentSpace) {
+        // subjectKey is ignored, because all users can known about the existence of all data sets
+        return toList(dataSetCollection.find("{'colorDepthCounts."+alignmentSpace+"':{$exists:1}}").as(DataSet.class));
+    }
+
     public DataSet createDataSet(String subjectKey, DataSet dataSet) throws Exception {
         
         DataSet saved = save(subjectKey, dataSet);
@@ -1435,23 +1456,6 @@ public class DomainDAO {
         return null;
     }
 
-    public TreeNode getTreeNodeById(String subjectKey, Long id) {
-        log.debug("getTreeNodeById({}, {})", subjectKey, id);
-        return getDomainObject(subjectKey, TreeNode.class, id);
-    }
-
-    public TreeNode getParentTreeNodes(String subjectKey, Reference ref) {
-        log.debug("getParentTreeNodes({}, {})", subjectKey, ref);
-        String refStr = ref.toString();
-        Set<String> subjects = getReaderSet(subjectKey);
-        if (subjects == null) {
-            return treeNodeCollection.findOne("{'children':#}", refStr).as(TreeNode.class);
-        }
-        else {
-            return treeNodeCollection.findOne("{'children':#,readers:{$in:#}}", refStr, subjects).as(TreeNode.class);
-        }
-    }
-
     public List<Subject> getMembersByGroupKey(String groupKey) {
         log.debug("getMembersByGroupId({})", groupKey);
         String refstr = "group:" + groupKey;
@@ -1742,6 +1746,23 @@ public class DomainDAO {
         return getDomainObject(subjectKey, ontology);
     }
 
+    public TreeNode getTreeNodeById(String subjectKey, Long id) {
+        log.debug("getTreeNodeById({}, {})", subjectKey, id);
+        return getDomainObject(subjectKey, TreeNode.class, id);
+    }
+
+    public TreeNode getParentTreeNodes(String subjectKey, Reference ref) {
+        log.debug("getParentTreeNodes({}, {})", subjectKey, ref);
+        String refStr = ref.toString();
+        Set<String> subjects = getReaderSet(subjectKey);
+        if (subjects == null) {
+            return treeNodeCollection.findOne("{'children':#}", refStr).as(TreeNode.class);
+        }
+        else {
+            return treeNodeCollection.findOne("{'children':#,readers:{$in:#}}", refStr, subjects).as(TreeNode.class);
+        }
+    }
+
     public TreeNode getOrCreateDefaultFolder(String subjectKey, String folderName) throws Exception {
         Workspace defaultWorkspace = getDefaultWorkspace(subjectKey);
         if (defaultWorkspace==null) {
@@ -1758,28 +1779,28 @@ public class DomainDAO {
         return folder;
     }
     
-    public TreeNode reorderChildren(String subjectKey, TreeNode treeNodeArg, int[] order) throws Exception {
+    public <T extends Node> T reorderChildren(String subjectKey, T nodeArg, int[] order) throws Exception {
 
-        TreeNode treeNode = getDomainObject(subjectKey, TreeNode.class, treeNodeArg.getId());
-        if (treeNode == null) {
-            throw new IllegalArgumentException("Tree node not found: " + treeNodeArg.getId());
+        T node = getDomainObject(subjectKey, nodeArg);
+        if (node == null) {
+            throw new IllegalArgumentException("Tree node not found: " + nodeArg.getId());
         }
 
-        log.debug("reorderChildren({}, TreeNode#{}, order={})", subjectKey, treeNode.getId(), order);
+        log.debug("reorderChildren({}, {}, order={})", subjectKey, node, order);
 
-        if (!treeNode.hasChildren()) {
-            log.warn("Tree node has no children to reorder: " + treeNode.getId());
-            return treeNode;
+        if (!node.hasChildren()) {
+            log.warn("Tree node has no children to reorder: " + node.getId());
+            return node;
         }
 
-        List<Reference> references = new ArrayList<>(treeNode.getChildren());
+        List<Reference> references = new ArrayList<>(node.getChildren());
 
         if (references.size() != order.length) {
             throw new IllegalArgumentException("Order array must be the same size as the child array (" + order.length + "!=" + references.size() + ")");
         }
 
         if (log.isTraceEnabled()) {
-            log.trace("{} has the following references: ", treeNode.getName());
+            log.trace("{} has the following references: ", node.getName());
             for (Reference reference : references) {
                 log.trace("  {}#{}", reference.getTargetClassName(), reference.getTargetId());
             }
@@ -1797,14 +1818,14 @@ public class DomainDAO {
             references.set(i, null);
         }
 
-        treeNode.getChildren().clear();
+        node.getChildren().clear();
         for (Reference ref : reordered) {
-            treeNode.getChildren().add(ref);
+            node.getChildren().add(ref);
         }
         for (Reference ref : references) {
             if (ref != null) {
                 log.warn("Adding broken ref to collection " + ref.getTargetClassName() + " at the end");
-                treeNode.getChildren().add(ref);
+                node.getChildren().add(ref);
             }
         }
 
@@ -1812,29 +1833,29 @@ public class DomainDAO {
             throw new IllegalStateException("Reordered children have new size " + references.size() + " (was " + originalSize + ")");
         }
 
-        saveImpl(subjectKey, treeNode);
-        return getDomainObject(subjectKey, treeNode);
+        saveImpl(subjectKey, node);
+        return getDomainObject(subjectKey, node);
     }
 
-    public List<DomainObject> getChildren(String subjectKey, TreeNode treeNode) {
-        return getDomainObjects(subjectKey, treeNode.getChildren());
+    public List<DomainObject> getChildren(String subjectKey, Node node) {
+        return getDomainObjects(subjectKey, node.getChildren());
     }
 
-    public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception {
-        return addChildren(subjectKey, treeNodeArg, references, null);
+    public <T extends Node> T addChildren(String subjectKey, T nodeArg, Collection<Reference> references) throws Exception {
+        return addChildren(subjectKey, nodeArg, references, null);
     }
 
-    public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references, Integer index) throws Exception {
+    public <T extends Node> T addChildren(String subjectKey, T nodeArg, Collection<Reference> references, Integer index) throws Exception {
         if (references == null) {
             throw new IllegalArgumentException("Cannot add null children");
         }
-        TreeNode treeNode = getDomainObject(subjectKey, TreeNode.class, treeNodeArg.getId());
-        if (treeNode == null) {
-            throw new IllegalArgumentException("Tree node not found: " + treeNodeArg.getId());
+        T node = getDomainObject(subjectKey, nodeArg);
+        if (node == null) {
+            throw new IllegalArgumentException("Tree node not found: " + nodeArg.getId());
         }
-        log.debug("addChildren({}, TreeNode#{}, references={}, index={})", subjectKey, treeNode.getId(), abbr(references), index);
+        log.debug("addChildren({}, {}, references={}, index={})", subjectKey, node, abbr(references), index);
         Set<String> refs = new HashSet<>();
-        for (Reference reference : treeNode.getChildren()) {
+        for (Reference reference : node.getChildren()) {
             refs.add(reference.toString());
         }
         int i = 0;
@@ -1847,36 +1868,36 @@ public class DomainDAO {
                 throw new IllegalArgumentException("Cannot add child without a target class name");
             }
             if (refs.contains(ref.toString())) {
-                log.trace("TreeNode#{} already contains {}, skipping add." , treeNode.getId(), ref);
+                log.trace("{} already contains {}, skipping add." , node, ref);
                 continue;
             }
             if (index != null) {
-                treeNode.insertChild(index + i, ref);
+                node.insertChild(index + i, ref);
             }
             else {
-                treeNode.addChild(ref);
+                node.addChild(ref);
             }
             added.add(ref);
             i++;
         }
-        saveImpl(subjectKey, treeNode);
+        saveImpl(subjectKey, node);
 
         for (Reference ref : added) {
-            addPermissions(treeNode.getOwnerKey(), ref.getTargetClassName(), ref.getTargetId(), treeNode, false,false);
+            addPermissions(node.getOwnerKey(), ref.getTargetClassName(), ref.getTargetId(), node, false,false);
         }
 
-        return getDomainObject(subjectKey, treeNode);
+        return getDomainObject(subjectKey, node);
     }
 
-    public TreeNode removeChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception {
+    public <T extends Node> T removeChildren(String subjectKey, T nodeArg, Collection<Reference> references) throws Exception {
         if (references == null) {
             throw new IllegalArgumentException("Cannot remove null children");
         }
-        TreeNode treeNode = getDomainObject(subjectKey, TreeNode.class, treeNodeArg.getId());
-        if (treeNode == null) {
-            throw new IllegalArgumentException("Tree node not found: " + treeNodeArg.getId());
+        T node = getDomainObject(subjectKey, nodeArg);
+        if (node == null) {
+            throw new IllegalArgumentException("Tree node not found: " + nodeArg.getId());
         }
-        log.debug("removeChildren({}, TreeNode#{}, references={})", subjectKey, treeNode.getId(), abbr(references));
+        log.debug("removeChildren({}, {}, references={})", subjectKey, node, abbr(references));
         for (Reference ref : references) {
             if (ref.getTargetId() == null) {
                 throw new IllegalArgumentException("Cannot add child without an id");
@@ -1884,28 +1905,28 @@ public class DomainDAO {
             if (ref.getTargetClassName() == null) {
                 throw new IllegalArgumentException("Cannot add child without a target class name");
             }
-            treeNode.removeChild(ref);
+            node.removeChild(ref);
         }
-        saveImpl(subjectKey, treeNode);
-        return getDomainObject(subjectKey, treeNode);
+        saveImpl(subjectKey, node);
+        return getDomainObject(subjectKey, node);
     }
 
-    public TreeNode removeReference(String subjectKey, TreeNode treeNodeArg, Reference reference) throws Exception {
-        TreeNode treeNode = getDomainObject(subjectKey, TreeNode.class, treeNodeArg.getId());
-        if (treeNode == null) {
-            throw new IllegalArgumentException("Tree node not found: " + treeNodeArg.getId());
+    public <T extends Node> T removeReference(String subjectKey, T nodeArg, Reference reference) throws Exception {
+        T node = getDomainObject(subjectKey, nodeArg);
+        if (node == null) {
+            throw new IllegalArgumentException("Tree node not found: " + nodeArg.getId());
         }
-        log.debug("removeReference({}, TreeNode#{}, {})", subjectKey, treeNode.getId(), reference);
-        if (treeNode.hasChildren()) {
-            for (Iterator<Reference> i = treeNode.getChildren().iterator(); i.hasNext();) {
+        log.debug("removeReference({}, {}, {})", subjectKey, node, reference);
+        if (node.hasChildren()) {
+            for (Iterator<Reference> i = node.getChildren().iterator(); i.hasNext();) {
                 Reference iref = i.next();
                 if (iref.equals(reference)) {
                     i.remove();
                 }
             }
-            saveImpl(subjectKey, treeNode);
+            saveImpl(subjectKey, node);
         }
-        return getDomainObject(subjectKey, treeNode);
+        return getDomainObject(subjectKey, node);
     }
 
     public <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue) throws Exception {
@@ -2062,19 +2083,19 @@ public class DomainDAO {
             // Update related objects
             // TODO: this class shouldn't know about these domain object classes, it should delegate somewhere else.
             
-            if ("treeNode".equals(collectionName)) {
-                log.trace("Changing permissions on all members of the folders: {}", logIds);
-                for (Long id : ids) {
+            if (Node.class.isAssignableFrom(clazz)) {
+                log.trace("Changing permissions on all members of the nodes: {}", logIds);
+                for (Long nodeId : ids) {
                     
-                    if (visited.contains(id)) {
-                        log.trace("Already visited folder with id="+id);
+                    if (visited.contains(nodeId)) {
+                        log.trace("Already visited folder with id="+nodeId);
                         continue;
                     }
-                    visited.add(id);
+                    visited.add(nodeId);
                     
-                    TreeNode node = collection.findOne("{_id:#,"+updateQueryClause+"}", id, updateQueryParam).as(TreeNode.class);
+                    Node node = (Node)collection.findOne("{_id:#,"+updateQueryClause+"}", nodeId, updateQueryParam).as(clazz);
                     if (node == null) {
-                        log.warn("Could not find folder with id=" + id);
+                        log.warn("Could not find node with id=" + nodeId);
                     }
                     else if (node.hasChildren()) {
                         Multimap<String, Long> groupedIds = HashMultimap.create();
@@ -2087,6 +2108,18 @@ public class DomainDAO {
                             changePermissions(subjectKey, refClassName, refIds, readers, writers, grant, forceChildUpdates, allowWriters,false, visited);
                         }
                     }
+                }
+            }
+            if (ColorDepthSearch.class.isAssignableFrom(clazz)) {
+                for (ColorDepthSearch search : getDomainObjectsAs(objectRefs, ColorDepthSearch.class)) {
+
+                    log.trace("Changing permissions on all masks and results associated with {}", search);
+
+                    WriteResult wr1 = colorDepthMaskCollection.update("{_id:{$in:#},"+updateQueryClause+"}", search.getMasks(), updateQueryParam).multi().with(withClause, readers, writers);
+                    log.trace("Updated permissions on {} masks", wr1.getN());
+
+                    WriteResult wr2 = colorDepthResultCollection.update("{_id:{$in:#},"+updateQueryClause+"}", search.getResults(), updateQueryParam).multi().with(withClause, readers, writers);
+                    log.trace("Updated permissions on {} results", wr2.getN());
                 }
             }
             else if ("sample".equals(collectionName)) {
@@ -2107,7 +2140,6 @@ public class DomainDAO {
                 for (Long id : ids) {
                     
                     // Retrieve the data set in order to find its identifier
-
                     DataSet dataSet = collection.findOne("{_id:#,"+updateQueryClause+"}", id, updateQueryParam).as(DataSet.class);
                     if (dataSet == null) {
                         throw new IllegalArgumentException("Could not find an writeable data set with id=" + id);
@@ -2179,7 +2211,7 @@ public class DomainDAO {
             grantees.addAll(writers);
             
             // TODO: need a better way to specify the object classes that can be added to Shared Data
-            if (clazz.isAssignableFrom(TreeNode.class) 
+            if (clazz.isAssignableFrom(TreeNode.class)
                     || clazz.isAssignableFrom(Filter.class) 
                     || clazz.isAssignableFrom(Sample.class) 
                     || clazz.isAssignableFrom(NeuronFragment.class) 
@@ -2352,7 +2384,19 @@ public class DomainDAO {
             throw new Exception("Could not update disk space usage for DataSet " +dataSetIdentifier);
         }
     }
-    
+
+    public void addColorDepthSearchMask(String subjectKey, Long searchId, ColorDepthMask mask) {
+        Set<String> subjects = getWriterSet(subjectKey);
+        Reference ref = Reference.createFor(mask);
+        colorDepthSearchCollection.update("{_id:#, writers:{$in:#}}", searchId, subjects).with("{$push: { masks: # } }", ref);
+    }
+
+    public void addColorDepthSearchResult(String subjectKey, Long searchId, ColorDepthResult result) {
+        Set<String> subjects = getWriterSet(subjectKey);
+        Reference ref = Reference.createFor(result);
+        colorDepthSearchCollection.update("{_id:#, writers:{$in:#}}", searchId, subjects).with("{$push: { results: # } }", ref);
+    }
+
     public <T extends DomainObject> List<T> fullTextSearch(String subjectKey, Class<T> domainClass, String text) {
 
         String collectionName = DomainUtils.getCollectionName(domainClass);

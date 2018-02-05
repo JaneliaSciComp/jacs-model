@@ -24,7 +24,9 @@ public class DomainConstants {
     public static final String NAME_ALIGNMENT_BOARDS                 = "Alignment Boards";
     public static final String NAME_RETIRED_DATA                     = "Retired Data";
     public static final String NAME_BLOCKED_DATA                     = "Blocked Data";
-    
+    public static final String NAME_COLOR_DEPTH_SEARCHES             = "Color Depth Searches";
+    public static final String NAME_COLOR_DEPTH_MASKS                = "Color Depth Masks";
+
     public static final String PREFERENCE_CATEGORY_SAMPLE_RESULT = "SampleResult";
     public static final String PREFERENCE_CATEGORY_IMAGE_TYPE = "ImageType";
     public static final String PREFERENCE_CATEGORY_TABLE_COLUMNS = "TableColumns";

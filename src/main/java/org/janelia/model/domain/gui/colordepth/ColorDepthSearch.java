@@ -2,10 +2,10 @@ package org.janelia.model.domain.gui.colordepth;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.interfaces.IsParent;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
-import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.support.SearchType;
 
 import java.util.ArrayList;
@@ -24,11 +24,10 @@ public class ColorDepthSearch extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="alignment_space_txt",label="Alignment Space",facet="alignment_space_s")
     private String alignmentSpace;
 
-    @SearchAttribute(key="complete_b",label="Search Complete",facet="complete_b")
-    private Boolean complete = false;
+    private ColorDepthParameters parameters = new ColorDepthParameters();
 
-    @SearchTraversal({})
-    private List<ColorDepthMask> masks = new ArrayList<>();
+    /** List of results, one for each run */
+    private List<Reference> results = new ArrayList<>();
 
     public String getAlignmentSpace() {
         return alignmentSpace;
@@ -38,30 +37,50 @@ public class ColorDepthSearch extends AbstractDomainObject implements IsParent {
         this.alignmentSpace = alignmentSpace;
     }
 
-    public Boolean isComplete() {
-        return complete;
+    public ColorDepthParameters getParameters() {
+        return parameters;
     }
 
-    public void setComplete(Boolean complete) {
-        this.complete = complete;
+    public void setParameters(ColorDepthParameters parameters) {
+        if (parameters==null) throw new IllegalArgumentException("Property cannot be null");
+        this.parameters = parameters;
+    }
+
+    public List<Reference> getResults() {
+        return results;
+    }
+
+    public void setResults(List<Reference> results) {
+        if (results==null) throw new IllegalArgumentException("Property cannot be null");
+        this.results = results;
     }
 
     @JsonIgnore
-    public boolean isSearchComplete() {
-        return complete!=null && complete;
+    public List<String> getDataSets() {
+        return parameters.getDataSets();
     }
 
-    public List<ColorDepthMask> getMasks() {
-        return masks;
+    @JsonIgnore
+    @SearchAttribute(key="threshold_i",label="Threshold for Data")
+    public Integer getDataThreshold() {
+        return parameters.getDataThreshold();
     }
 
-    public void setMasks(List<ColorDepthMask> masks) {
-        if (masks==null) throw new IllegalArgumentException("Property cannot be null");
-        this.masks = masks;
+    @JsonIgnore
+    @SearchAttribute(key="pct_positive_d",label="% of Positive PX Threshold")
+    public Double getPctPositivePixels() {
+        return parameters.getPctPositivePixels();
     }
 
-    public void addMask(ColorDepthMask mask) {
-        masks.add(mask);
+    @JsonIgnore
+    @SearchAttribute(key="fluctuation_d",label="Pix Color Fluctuation")
+    public Double getPixColorFluctuation() {
+        return parameters.getPixColorFluctuation();
+    }
+
+    @JsonIgnore
+    public List<Reference> getMasks() {
+        return parameters.getMasks();
     }
 
 }

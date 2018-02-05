@@ -1,65 +1,74 @@
 package org.janelia.model.domain.gui.colordepth;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.interfaces.HasFilepath;
+import org.janelia.model.domain.support.MongoMapped;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * A color depth search is batched so that searches use the Spark cluster efficiently. Therefore, each
- * search runs against several masks in the same alignment space.
+ * The result of running a ColorDepthSearch on the cluster. Each search mask has a list of ColorDepthResults associated
+ * with it.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ColorDepthResult implements HasFilepath {
+@MongoMapped(collectionName="colorDepthResult",label="Color Depth Result")
+public class ColorDepthResult extends AbstractDomainObject {
 
-    private String filepath;
-    private Reference sampleRef;
-    private Double matchScore;
+    /** Properties of the search at the time that this search was run */
+    private ColorDepthParameters parameters;
 
-    @JsonIgnore
-    private Integer channelNumber;
+    /** All the returns of the search */
+    private List<ColorDepthMatch> matches = new ArrayList<>();
 
-    @Override
-    public String getFilepath() {
-        return filepath;
+    public ColorDepthResult() {
     }
 
-    @Override
-    public void setFilepath(String filepath) {
-        this.filepath = filepath;
+    public ColorDepthResult(ColorDepthParameters parameters, List<ColorDepthMatch> matches) {
+        this.parameters = parameters;
+        this.matches = matches;
     }
 
-    public Reference getSample() {
-        return sampleRef;
+    public ColorDepthParameters getParameters() {
+        return parameters;
     }
 
-    public void setSample(Reference sample) {
-        this.sampleRef = sample;
+    public void setParameters(ColorDepthParameters parameters) {
+        if (parameters==null) throw new IllegalArgumentException("Property cannot be null");
+        this.parameters = parameters;
     }
 
-    @JsonIgnore
-    public Integer getChannelNumber() {
-        if (channelNumber==null) {
-            Pattern p = Pattern.compile(".*?-CH(?<channelNum>\\d)_CDM\\.\\w+$");
-            Matcher m = p.matcher(filepath);
-            if (m.matches()) {
-                channelNumber = new Integer(m.group("channelNum"));
-            }
-            else {
-                throw new IllegalStateException("Color depth projection file has no channel number: "+filepath);
+    public List<ColorDepthMatch> getMatches() {
+        return matches;
+    }
+
+    public void setMatches(List<ColorDepthMatch> matches) {
+        if (matches==null) throw new IllegalArgumentException("Property cannot be null");
+        this.matches = matches;
+    }
+
+    public void addMatch(ColorDepthMatch match) {
+        matches.add(match);
+    }
+
+    public List<ColorDepthMatch> getMaskMatches(ColorDepthMask mask) {
+        return getMaskMatches(Reference.createFor(mask));
+    }
+
+    public List<ColorDepthMatch> getMaskMatches(Reference maskRef) {
+
+        // Can't use java 8 syntax in JACSv1 :(
+        //return matches.stream().filter(match -> match.getMaskRef().equals(maskRef)).collect(Collectors.toList());
+
+        List<ColorDepthMatch> maskMatches = new ArrayList<>();
+        for (ColorDepthMatch match : matches) {
+            if (match.getMaskRef().equals(maskRef)) {
+                maskMatches.add(match);
             }
         }
-        return channelNumber;
+
+        return maskMatches;
     }
 
-    public Double getMatchScore() {
-        return matchScore;
-    }
-
-    public void setMatchScore(Double matchScore) {
-        this.matchScore = matchScore;
-    }
 }

@@ -127,10 +127,20 @@ public class DomainUtils {
             }
         }
 
-        Collections.sort(searchClasses, (Class<?> o1, Class<?> o2) -> {
-            final String l1 = o1.getAnnotation(SearchType.class).label();
-            final String l2 = o2.getAnnotation(SearchType.class).label();
-            return l1.compareTo(l2);
+        // Can't use Java 8 syntax in JACSv1 :(
+//        Collections.sort(searchClasses, (Class<?> o1, Class<?> o2) -> {
+//            final String l1 = o1.getAnnotation(SearchType.class).label();
+//            final String l2 = o2.getAnnotation(SearchType.class).label();
+//            return l1.compareTo(l2);
+//        });
+
+        Collections.sort(searchClasses, new Comparator<Class<? extends DomainObject>>() {
+            @Override
+            public int compare(Class<? extends DomainObject> o1, Class<? extends DomainObject> o2) {
+                final String l1 = o1.getAnnotation(SearchType.class).label();
+                final String l2 = o2.getAnnotation(SearchType.class).label();
+                return l1.compareTo(l2);
+            }
         });
 
         for(Class<?> searchClazz : searchClasses) {
@@ -810,15 +820,23 @@ public class DomainUtils {
         }
         return objectMap;
     }
-    
+
     public static ListMultimap<Long,Annotation> getAnnotationsByDomainObjectId(Collection<Annotation> annotations) {
-        ListMultimap<Long,Annotation> annotationsByDomainObjectId = ArrayListMultimap.<Long,Annotation>create();
+        ListMultimap<Long,Annotation> annotationsByDomainObjectId = ArrayListMultimap.create();
         for(Annotation annotation : annotations) {
             annotationsByDomainObjectId.put(annotation.getTarget().getTargetId(), annotation);
         }
         return annotationsByDomainObjectId;
     }
-    
+
+    public static ListMultimap<Reference,Annotation> getAnnotationsByDomainObjectReference(Collection<Annotation> annotations) {
+        ListMultimap<Reference,Annotation> annotationsByDomainObjectId = ArrayListMultimap.create();
+        for(Annotation annotation : annotations) {
+            annotationsByDomainObjectId.put(annotation.getTarget(), annotation);
+        }
+        return annotationsByDomainObjectId;
+    }
+
     /**
      * There are better ways of deep cloning, but this is easier for now. 
      */

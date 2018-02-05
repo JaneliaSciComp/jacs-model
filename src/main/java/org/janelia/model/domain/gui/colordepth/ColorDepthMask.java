@@ -1,31 +1,60 @@
 package org.janelia.model.domain.gui.colordepth;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.ImmutableMap;
+import org.janelia.model.domain.AbstractDomainObject;
+import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasFilepath;
-import org.janelia.model.domain.interfaces.HasName;
+import org.janelia.model.domain.interfaces.HasFiles;
+import org.janelia.model.domain.support.MongoMapped;
+import org.janelia.model.domain.support.SearchAttribute;
+import org.janelia.model.domain.support.SearchTraversal;
+import org.janelia.model.domain.support.SearchType;
+import org.janelia.model.domain.workspace.Node;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
- * A color depth mask is an image file which is used to search against the
- * color depth image database. It has an internal id which is only used in the context
- * of a ColorDepthSearch.
+ * A color depth mask is an image file which is used to search against the color depth image database.
+ * It is also a node which can be used to organize color depth search matches
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ColorDepthMask implements HasFilepath, HasName {
+@MongoMapped(collectionName="colorDepthMask",label="Color Depth Mask")
+@SearchType(key="colorDepthMask",label="Color Depth Mask")
+public class ColorDepthMask extends AbstractDomainObject implements Node, HasFilepath, HasFiles {
 
-    private String name;
+    @SearchTraversal({ColorDepthMask.class})
+    private Reference sourceSampleRef;
+
+    @SearchAttribute(key="alignment_space_txt",label="Alignment Space",facet="alignment_space_s")
+    private String alignmentSpace;
+
+    @SearchAttribute(key="filepath_txt",label="Filepath")
     private String filepath;
-    private List<ColorDepthResult> results = new ArrayList<>();
 
-    @Override
-    public String getName() {
-        return name;
+    @SearchAttribute(key="threshold_i",label="Threshold for Mask")
+    private Integer maskThreshold;
+
+    private List<Reference> children = new ArrayList<>();
+
+    public Reference getSample() {
+        return sourceSampleRef;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setSample(Reference sample) {
+        this.sourceSampleRef = sample;
+    }
+
+    public String getAlignmentSpace() {
+        return alignmentSpace;
+    }
+
+    public void setAlignmentSpace(String alignmentSpace) {
+        this.alignmentSpace = alignmentSpace;
     }
 
     @Override
@@ -38,16 +67,27 @@ public class ColorDepthMask implements HasFilepath, HasName {
         this.filepath = filepath;
     }
 
-    public List<ColorDepthResult> getResults() {
-        return results;
+    public Integer getMaskThreshold() {
+        return maskThreshold;
     }
 
-    public void setResults(List<ColorDepthResult> results) {
-        if (results==null) throw new IllegalArgumentException("Property cannot be null");
-        this.results = results;
+    public void setMaskThreshold(Integer maskThreshold) {
+        this.maskThreshold = maskThreshold;
     }
 
-    public void addResult(ColorDepthResult result) {
-        results.add(result);
+    @Override
+    public List<Reference> getChildren() {
+        return children;
+    }
+
+    @Override
+    public void setChildren(List<Reference> children) {
+        if (children==null) throw new IllegalArgumentException("Property cannot be null");
+        this.children = children;
+    }
+
+    @JsonIgnore
+    public Map<FileType, String> getFiles() {
+        return ImmutableMap.of(FileType.Unclassified2d, filepath);
     }
 }
