@@ -118,6 +118,8 @@ public class TmModelManipulator {
      * We make an ownership request to take ownership of this neuron; we'd like to perform a fast
      * block in this case in the calling function and fulfill the future (hopefully rapidly)
      * when the approval request comes in from the NeuronBroker.
+     *
+     * This version is used when the requester doesn't have ownership and an explicit decision is needed.
      * @param neuron
      * @throws Exception
      */
@@ -137,6 +139,14 @@ public class TmModelManipulator {
         }
     }
 
+    /**
+     * ownership change request; this version expects to happen immediately (user already
+     * has authority to change the owner (they own it or it's a common neuron)
+     */
+    public CompletableFuture<Boolean> requestAssignmentChange(TmNeuronMetadata neuron, String userKey) throws Exception {
+        ownershipRequest = dataSource.requestAssignment(neuron, userKey);
+        return ownershipRequest;
+    }
 
     /**
      * Makes a new neuron.
