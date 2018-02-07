@@ -59,7 +59,7 @@ public class ColorDepthResult extends AbstractDomainObject {
     public List<ColorDepthMatch> getMaskMatches(Reference maskRef) {
 
         // Can't use java 8 syntax in JACSv1 :(
-        //return matches.stream().filter(match -> match.getMaskRef().equals(maskRef)).collect(Collectors.toList());
+        //return matches.stream().filter(match -> match.getProxyObject().equals(maskRef)).collect(Collectors.toList());
 
         List<ColorDepthMatch> maskMatches = new ArrayList<>();
         for (ColorDepthMatch match : matches) {
