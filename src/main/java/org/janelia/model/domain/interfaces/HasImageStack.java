@@ -1,5 +1,6 @@
 package org.janelia.model.domain.interfaces;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
 
@@ -10,10 +11,12 @@ import org.janelia.model.domain.enums.FileType;
  */
 public interface HasImageStack extends HasFiles {
 
+    @JsonIgnore
     default String getLosslessStack() {
         return DomainUtils.getFilepath(this, FileType.LosslessStack);
     }
 
+    @JsonIgnore
     default String getVisuallyLosslessStack() {
         return DomainUtils.getFilepath(this, FileType.VisuallyLosslessStack);
     }
