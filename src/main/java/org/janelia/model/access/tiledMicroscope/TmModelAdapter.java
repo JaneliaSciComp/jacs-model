@@ -30,4 +30,8 @@ public interface TmModelAdapter {
 
     CompletableFuture<Boolean> requestAssignment(TmNeuronMetadata neuronMetadata, String targetUser) throws Exception;
 
+    CompletableFuture<Boolean> requestOwnership(TmNeuronMetadata neuronMetadata) throws Exception;
+
+    CompletableFuture<Boolean> requestAssignment(TmNeuronMetadata neuronMetadata, String targetUser) throws Exception;
+
 }
