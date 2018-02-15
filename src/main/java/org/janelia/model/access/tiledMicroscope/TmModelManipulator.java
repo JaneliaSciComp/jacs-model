@@ -43,8 +43,8 @@ public class TmModelManipulator {
     private final IdSource idSource;
     
     private final Map<Long, TmNeuronMetadata> neuronMap = new ConcurrentHashMap<>();
-    private final Map<String, List> neuronsInWaiting = new ConcurrentHashMap<>();
     private CompletableFuture<Boolean> ownershipRequest;
+    private CompletableFuture<TmNeuronMetadata> createNeuronRequest;
 
     public TmModelManipulator(TmModelAdapter dataSource) {
         this(dataSource, new IdSource());
@@ -60,21 +60,7 @@ public class TmModelManipulator {
     }
 
     public void addNeuron(TmNeuronMetadata neuron) {
-        // if neuron exists, do a deep merge so references throughout Horta/LVV
-        // pick up the changes
-        if (neuronMap.containsKey(neuron.getId())) {
-            neuronMap.get(neuron.getId()).merge(neuron);
-        } else {
-            neuronMap.put(neuron.getId(), neuron);
-        }
-    }
-
-    /**
-     * neurons submitted for creation are waiting around for callback from message server
-     * store in a map by name for async updating when callback from message server arrives
-     */
-    public void addNeuronInWaiting(String name, List neuronData) {
-        neuronsInWaiting.put(name, neuronData);
+        neuronMap.put(neuron.getId(), neuron);
     }
 
     public TmNeuronMetadata removeNeuron(TmNeuronMetadata neuron) {
@@ -94,23 +80,6 @@ public class TmModelManipulator {
         neuronMap.clear();
         for(TmNeuronMetadata neuron : dataSource.loadNeurons(workspace)) {
             addNeuron(neuron);
-        }
-    }
-
-    public void mergeCreatedNeuron(TmNeuronMetadata newNeuron) {
-        String key = newNeuron.getName();
-        if (this.neuronsInWaiting.containsKey(newNeuron.getName())) {
-            addNeuron(newNeuron);
-            List neuronData = neuronsInWaiting.get(newNeuron.getName());
-
-            // check if callbacks
-            if (neuronData.size()>1) {
-                Consumer<Map<String,Object>> callback = (Consumer<Map<String,Object>>)neuronData.get(1);
-                Map<String,Object> parameters = (Map<String,Object>)neuronData.get(2);
-                parameters.put("neuron", newNeuron);
-                callback.accept(parameters);
-            }
-            neuronsInWaiting.remove(neuronsInWaiting);
         }
     }
 
@@ -157,47 +126,34 @@ public class TmModelManipulator {
      * @return that neuron
      * @throws Exception
      */
-    public TmNeuronMetadata createTiledMicroscopeNeuron(TmWorkspace workspace, String name) throws Exception {
+    public CompletableFuture<TmNeuronMetadata> createTiledMicroscopeNeuron(TmWorkspace workspace, String name) throws Exception {
         if (workspace == null || name == null) {
             throw new IllegalStateException("Tiled Neuron must be created in a valid workspace.");
         }
         TmNeuronMetadata neuron = new TmNeuronMetadata(workspace, name);
         List neuronList = new ArrayList();
         neuronList.add(neuron);
-        addNeuronInWaiting(name, neuronList);
-        createTiledMicroscopeNeuron(neuron);
-        return neuron;
+        createNeuronRequest = createTiledMicroscopeNeuron(neuron);
+        return createNeuronRequest;
     }
 
     /**
-     * adds a callback for finish async activities, like SWC import
-     * @param workspace
-     * @param name
-     * @return
+     * We complete the ownership request future once we get the decision from the NeuronBroker
+     * @param updatedNeuron neuron created by the message server and broadcast back
      * @throws Exception
      */
-    public TmNeuronMetadata createTiledMicroscopeNeuron(TmWorkspace workspace,
-                                                        String name,
-                                                        Consumer<Map<String,Object>> callback,
-                                                        Map<String,Object> parameters) throws Exception {
-        if (workspace == null || name == null) {
-            throw new IllegalStateException("Tiled Neuron must be created in a valid workspace.");
+    public void completeCreateNeuron(TmNeuronMetadata updatedNeuron) {
+        addNeuron(updatedNeuron);
+        if (createNeuronRequest!=null) {
+            createNeuronRequest.complete(updatedNeuron);
         }
-        TmNeuronMetadata neuron = new TmNeuronMetadata(workspace, name);
-        List neuronList = new ArrayList();
-        neuronList.add(neuron);
-        neuronList.add(callback);
-        neuronList.add(parameters);
-        addNeuronInWaiting(name, neuronList);
-        createTiledMicroscopeNeuron(neuron);
-        return neuron;
     }
 
-    private void createTiledMicroscopeNeuron(TmNeuronMetadata neuron) throws Exception {
+    private CompletableFuture<TmNeuronMetadata> createTiledMicroscopeNeuron(TmNeuronMetadata neuron) throws Exception {
         if (dataSource == null) {
             throw new IllegalStateException("Cannot create neuron without data source.");
         }
-        dataSource.asyncCreateNeuron(neuron);
+        return dataSource.asyncCreateNeuron(neuron);
     }
     
     /**
