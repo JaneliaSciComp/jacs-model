@@ -2110,6 +2110,7 @@ public class DomainDAO {
                     }
                 }
             }
+
             if (ColorDepthSearch.class.isAssignableFrom(clazz)) {
                 for (ColorDepthSearch search : getDomainObjectsAs(objectRefs, ColorDepthSearch.class)) {
 
@@ -2134,6 +2135,16 @@ public class DomainDAO {
                 WriteResult wr2 = imageCollection.update("{sampleRef:{$in:#},"+updateQueryClause+"}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} lsms", wr2.getN());
 
+            }
+            else if ("fragment".equals(collectionName)) {
+
+                Set<Long> sampleIds = new HashSet<>();
+                for (NeuronFragment fragment : getDomainObjectsAs(subjectKey, objectRefs, NeuronFragment.class)) {
+                    sampleIds.add(fragment.getSample().getTargetId());
+                }
+
+                log.trace("Changing permissions on {} samples associated with fragments: {}", sampleIds.size(), logIds);
+                changePermissions(subjectKey, Sample.class.getName(), sampleIds, readers, writers, grant, allowWriters, forceChildUpdates, false);
             }
             else if ("dataSet".equals(collectionName)) {
                 log.trace("Changing permissions on all samples and LSMs of the data sets: {}", logIds);
