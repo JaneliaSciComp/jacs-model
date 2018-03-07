@@ -1225,17 +1225,17 @@ public class DomainDAO {
     
     // Samples by data set
 
-    public List<Sample> getActiveSamplesForDataSet(String subjectKey, String dataSetIdentifier) {
-        return getSamplesForDataSet(subjectKey, dataSetIdentifier, true);
+    public List<Sample> getActiveSamplesByDataSet(String subjectKey, String dataSetIdentifier) {
+        return getSamplesByDataSet(subjectKey, dataSetIdentifier, true);
     }
 
-    public List<Sample> getSamplesForDataSet(String subjectKey, String dataSetIdentifier) {
-        return getSamplesForDataSet(subjectKey, dataSetIdentifier, false);
+    public List<Sample> getSamplesByDataSet(String subjectKey, String dataSetIdentifier) {
+        return getSamplesByDataSet(subjectKey, dataSetIdentifier, false);
     }
 
-    private List<Sample> getSamplesForDataSet(String subjectKey, String dataSetIdentifier, boolean activeOnly) {
+    private List<Sample> getSamplesByDataSet(String subjectKey, String dataSetIdentifier, boolean activeOnly) {
 
-        log.debug("getActiveSamplesForDataSet({}, dataSetIdentifier={})", subjectKey, dataSetIdentifier);
+        log.debug("getActiveSamplesByDataSet({}, dataSetIdentifier={})", subjectKey, dataSetIdentifier);
 
         long start = System.currentTimeMillis();
         Set<String> subjects = getReaderSet(subjectKey);
@@ -1255,17 +1255,17 @@ public class DomainDAO {
 
     // LSMSs by data set
 
-    public List<LSMImage> getActiveLsmsForDataSet(String subjectKey, String dataSetIdentifier) {
-        return getLsmsForDataSet(subjectKey, dataSetIdentifier, true);
+    public List<LSMImage> getActiveLsmsByDataSet(String subjectKey, String dataSetIdentifier) {
+        return getLsmsByDataSet(subjectKey, dataSetIdentifier, true);
     }
 
-    public List<LSMImage> getLsmsForDataSet(String subjectKey, String dataSetIdentifier) {
-        return getLsmsForDataSet(subjectKey, dataSetIdentifier, false);
+    public List<LSMImage> getLsmsByDataSet(String subjectKey, String dataSetIdentifier) {
+        return getLsmsByDataSet(subjectKey, dataSetIdentifier, false);
     }
 
-    private List<LSMImage> getLsmsForDataSet(String subjectKey, String dataSetIdentifier, boolean activeOnly) {
+    private List<LSMImage> getLsmsByDataSet(String subjectKey, String dataSetIdentifier, boolean activeOnly) {
 
-        log.debug("getActiveLsmsForDataSet({}, dataSetIdentifier={})", subjectKey, dataSetIdentifier);
+        log.debug("getActiveLsmsByDataSet({}, dataSetIdentifier={})", subjectKey, dataSetIdentifier);
 
         long start = System.currentTimeMillis();
         Set<String> subjects = getReaderSet(subjectKey);
@@ -1276,6 +1276,45 @@ public class DomainDAO {
         }
         else {
             cursor = imageCollection.find("{dataSet:#"+(activeOnly?",sageSynced:true":"")+",readers:{$in:#}}", dataSetIdentifier, subjects).as(LSMImage.class);
+        }
+
+        List<LSMImage> list = toList(cursor);
+        log.trace("Getting " + list.size() + " LSMImage objects took " + (System.currentTimeMillis() - start) + " ms");
+        return list;
+    }
+
+    // LSMSs by slide code
+
+    public List<LSMImage> getActiveLsmsBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
+        return getLsmsBySlideCode(subjectKey, dataSetIdentifier, slideCode, true);
+    }
+
+    public List<LSMImage> getLsmsBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
+        return getLsmsBySlideCode(subjectKey, dataSetIdentifier, slideCode, false);
+    }
+
+    /**
+     * Returns the LSMs associated with a given slide code.
+     * @param subjectKey authorization key; if null system level privileges are assumed
+     * @param dataSetIdentifier data set filter, if null returns all LSMs across multiple data sets
+     * @param slideCode required parameter
+     * @param activeOnly if true, only those LSMs with sageSynced=true are returned
+     * @return list of matching LSM images
+     */
+    private List<LSMImage> getLsmsBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode, boolean activeOnly) {
+
+        log.debug("getActiveLsmsBySlideCode({}, dataSetIdentifier={}, slideCode={})", subjectKey, dataSetIdentifier, slideCode);
+
+        long start = System.currentTimeMillis();
+        Set<String> subjects = getReaderSet(subjectKey);
+        String dataSetFilter = dataSetIdentifier==null?"":"dataSet:'"+dataSetIdentifier+"', ";
+
+        MongoCursor<LSMImage> cursor;
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            cursor = imageCollection.find("{"+dataSetFilter+"slideCode:#"+(activeOnly?",sageSynced:true":"")+"}", slideCode).as(LSMImage.class);
+        }
+        else {
+            cursor = imageCollection.find("{"+dataSetFilter+"slideCode:#"+(activeOnly?",sageSynced:true":"")+",readers:{$in:#}}", slideCode, subjects).as(LSMImage.class);
         }
 
         List<LSMImage> list = toList(cursor);
@@ -1300,19 +1339,23 @@ public class DomainDAO {
         return list.get(0);
     }
 
+    /**
+     * Same as getLsmsBySlideCode, but for Samples.
+     */
     private List<Sample> getSamplesBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode, boolean activeOnly) {
 
         log.debug("getActiveSampleBySlideCode({}, dataSetIdentifier={}, slideCode={})", subjectKey, dataSetIdentifier, slideCode);
 
         long start = System.currentTimeMillis();
         Set<String> subjects = getReaderSet(subjectKey);
+        String dataSetFilter = dataSetIdentifier==null?"":"dataSet:'"+dataSetIdentifier+"', ";
 
         MongoCursor<Sample> cursor;
         if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
-            cursor = sampleCollection.find("{dataSet:#,slideCode:#"+(activeOnly?",sageSynced:true":"")+"}", dataSetIdentifier, slideCode).as(Sample.class);
+            cursor = sampleCollection.find("{"+dataSetFilter+"slideCode:#"+(activeOnly?",sageSynced:true":"")+"}", slideCode).as(Sample.class);
         }
         else {
-            cursor = sampleCollection.find("{dataSet:#,slideCode:#"+(activeOnly?",sageSynced:true":"")+",readers:{$in:#}}", dataSetIdentifier, slideCode, subjects).as(Sample.class);
+            cursor = sampleCollection.find("{"+dataSetFilter+"slideCode:#"+(activeOnly?",sageSynced:true":"")+",readers:{$in:#}}", slideCode, subjects).as(Sample.class);
         }
 
         List<Sample> list = toList(cursor);
