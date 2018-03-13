@@ -6,6 +6,7 @@ import java.util.Map;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasRelativeFiles;
+import org.janelia.model.domain.interfaces.IsAligned;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SAGEAttribute;
 import org.janelia.model.domain.support.SearchAttribute;
@@ -18,7 +19,7 @@ import org.janelia.model.domain.support.SearchType;
  */
 @MongoMapped(collectionName="image",label="Image")
 @SearchType(key="image",label="Image")
-public class Image extends AbstractDomainObject implements HasRelativeFiles {
+public class Image extends AbstractDomainObject implements HasRelativeFiles, IsAligned {
 
     @SearchAttribute(key="filepath_txt",label="File Path")
     private String filepath;
@@ -35,7 +36,10 @@ public class Image extends AbstractDomainObject implements HasRelativeFiles {
     @SAGEAttribute(cvName="light_imagery", termName="channels")
     @SearchAttribute(key="num_channels_i",label="Num Channels", facet="num_channels_i")
     private Integer numChannels;
-    
+
+    @SearchAttribute(key="alignment_s",label="Alignment Space", facet="alignment_s")
+    private String alignmentSpace;
+
     private Map<FileType, String> files = new HashMap<>();
 
     @Override
@@ -63,6 +67,14 @@ public class Image extends AbstractDomainObject implements HasRelativeFiles {
         this.opticalResolution = opticalResolution;
     }
 
+    public String getObjective() {
+        return objective;
+    }
+
+    public void setObjective(String objective) {
+        this.objective = objective;
+    }
+
     public Integer getNumChannels() {
         return numChannels;
     }
@@ -71,12 +83,12 @@ public class Image extends AbstractDomainObject implements HasRelativeFiles {
         this.numChannels = numChannels;
     }
 
-    public String getObjective() {
-        return objective;
+    public String getAlignmentSpace() {
+        return alignmentSpace;
     }
 
-    public void setObjective(String objective) {
-        this.objective = objective;
+    public void setAlignmentSpace(String alignmentSpace) {
+        this.alignmentSpace = alignmentSpace;
     }
 
     @Override
