@@ -71,7 +71,7 @@ public class SampleLockTests {
 
         // Lock the samples
         List<SampleLock> locks = new ArrayList<>();
-        for(Sample sample : dao.getSamplesForDataSet(testUser, testDataSetIdentifier)) {
+        for(Sample sample : dao.getSamplesByDataSet(testUser, testDataSetIdentifier)) {
             SampleLock lock = dao.lockSample(testUser, sample.getId(), testTaskId, lockDescription);
             assertNotNull(lock);
             assertEquals(testUser, lock.getOwnerKey());

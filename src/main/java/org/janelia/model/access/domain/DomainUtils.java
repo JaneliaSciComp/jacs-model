@@ -760,6 +760,19 @@ public class DomainUtils {
     }
 
     /**
+     * Generate a list of ids for the given references.
+     * @param references
+     * @return
+     */
+    public static List<Long> getIdsFromReferences(Collection<Reference> references) {
+        List<Long> ids = new ArrayList<>();
+        for(Reference ref : references) {
+            ids.add(ref.getTargetId());
+        }
+        return ids;
+    }
+
+    /**
      * Convert Reference objects to reference strings using their toString methods.
      * @param objectRefs
      * @return

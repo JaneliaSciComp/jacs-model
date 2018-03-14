@@ -1,11 +1,13 @@
 package org.janelia.model.access.tiledMicroscope;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,7 +23,6 @@ import org.janelia.model.util.IdSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Manages the relationships, additions and deletions from Tiled Microscope
@@ -41,7 +42,9 @@ public class TmModelManipulator {
     private final TmModelAdapter dataSource;
     private final IdSource idSource;
     
-    private final Map<Long, TmNeuronMetadata> neuronMap = new LinkedHashMap<>();
+    private final Map<Long, TmNeuronMetadata> neuronMap = new ConcurrentHashMap<>();
+    private CompletableFuture<Boolean> ownershipRequest;
+    private CompletableFuture<TmNeuronMetadata> createNeuronRequest;
 
     public TmModelManipulator(TmModelAdapter dataSource) {
         this(dataSource, new IdSource());
@@ -81,30 +84,76 @@ public class TmModelManipulator {
     }
 
     /**
+     * We make an ownership request to take ownership of this neuron; we'd like to perform a fast
+     * block in this case in the calling function and fulfill the future (hopefully rapidly)
+     * when the approval request comes in from the NeuronBroker.
+     *
+     * This version is used when the requester doesn't have ownership and an explicit decision is needed.
+     * @param neuron
+     * @throws Exception
+     */
+    public CompletableFuture<Boolean> requestOwnershipChange(TmNeuronMetadata neuron) throws Exception {
+        ownershipRequest = dataSource.requestOwnership(neuron);
+        return ownershipRequest;
+    }
+
+    /**
+     * We complete the ownership request future once we get the decision from the NeuronBroker
+     * @param decision
+     * @throws Exception
+     */
+    public void completeOwnershipRequest(boolean decision) {
+        if (ownershipRequest!=null) {
+            ownershipRequest.complete(new Boolean(decision));
+        }
+    }
+
+    /**
+     * ownership change request; this version expects to happen immediately (user already
+     * has authority to change the owner (they own it or it's a common neuron)
+     */
+    public CompletableFuture<Boolean> requestAssignmentChange(TmNeuronMetadata neuron, String userKey) throws Exception {
+        ownershipRequest = dataSource.requestAssignment(neuron, userKey);
+        return ownershipRequest;
+    }
+
+    /**
      * Makes a new neuron.
-     * 
+     *
      * @todo may need to add create, update dates + ownerKey
      * @param workspace will contain this neuron.
      * @param name of new neuron.
      * @return that neuron
-     * @throws Exception 
+     * @throws Exception
      */
-    public TmNeuronMetadata createTiledMicroscopeNeuron(TmWorkspace workspace, String name) throws Exception {
+    public CompletableFuture<TmNeuronMetadata> createTiledMicroscopeNeuron(TmWorkspace workspace, String name) throws Exception {
         if (workspace == null || name == null) {
             throw new IllegalStateException("Tiled Neuron must be created in a valid workspace.");
         }
-        TmNeuronMetadata neuron = createTiledMicroscopeNeuron(new TmNeuronMetadata(workspace, name));
-        addNeuron(neuron);
-        return neuron;
+        TmNeuronMetadata neuron = new TmNeuronMetadata(workspace, name);
+        List neuronList = new ArrayList();
+        neuronList.add(neuron);
+        createNeuronRequest = createTiledMicroscopeNeuron(neuron);
+        return createNeuronRequest;
     }
 
-    private TmNeuronMetadata createTiledMicroscopeNeuron(TmNeuronMetadata neuron) throws Exception {
+    /**
+     * We complete the ownership request future once we get the decision from the NeuronBroker
+     * @param updatedNeuron neuron created by the message server and broadcast back
+     * @throws Exception
+     */
+    public void completeCreateNeuron(TmNeuronMetadata updatedNeuron) {
+        addNeuron(updatedNeuron);
+        if (createNeuronRequest!=null) {
+            createNeuronRequest.complete(updatedNeuron);
+        }
+    }
+
+    private CompletableFuture<TmNeuronMetadata> createTiledMicroscopeNeuron(TmNeuronMetadata neuron) throws Exception {
         if (dataSource == null) {
             throw new IllegalStateException("Cannot create neuron without data source.");
         }
-        TmNeuronMetadata savedNeuron = dataSource.asyncCreateNeuron(neuron).get();
-        log.info("Created Neuron: "+savedNeuron);
-        return savedNeuron;
+        return dataSource.asyncCreateNeuron(neuron);
     }
     
     /**
@@ -112,9 +161,6 @@ public class TmModelManipulator {
      * 
      * @todo may need to add create, update dates + ownerKey
      * @param tmNeuronMetadata add path to this.
-     * @param annotationID1 end point annotations.
-     * @param annotationID2
-     * @param pointlist
      * @return the anchored path thus created.
      * @throws Exception 
      */
@@ -444,12 +490,12 @@ public class TmModelManipulator {
     }
 
 
-    public ListenableFuture<TmNeuronMetadata> saveNeuronMetadata(TmNeuronMetadata neuron) throws Exception {
-        return dataSource.asyncSaveNeuronMetadata(neuron);
+    public void saveNeuronMetadata(TmNeuronMetadata neuron) throws Exception {
+        dataSource.asyncSaveNeuronMetadata(neuron);
     }
     
-    public ListenableFuture<TmNeuronMetadata> saveNeuronData(TmNeuronMetadata neuron) throws Exception {
-        return dataSource.asyncSaveNeuron(neuron);
+    public void saveNeuronData(TmNeuronMetadata neuron) throws Exception {
+        dataSource.asyncSaveNeuron(neuron);
     }
     
     private static final String UNREMOVE_NEURON_WARN_FMT = "Attempted to remove neuron %d that was not in workspace %d.";

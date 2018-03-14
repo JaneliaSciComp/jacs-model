@@ -6,13 +6,14 @@ import java.util.Map;
 import org.janelia.model.domain.enums.AlignmentScoreType;
 import org.janelia.model.domain.interfaces.HasAnatomicalArea;
 import org.janelia.model.domain.interfaces.HasImageStack;
+import org.janelia.model.domain.interfaces.IsAligned;
 
 /**
  * The result of running an alignment algorithm on a sample. 
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleAlignmentResult extends PipelineResult implements HasAnatomicalArea, HasImageStack {
+public class SampleAlignmentResult extends PipelineResult implements HasAnatomicalArea, HasImageStack, IsAligned {
 
 	private String anatomicalArea;
     private String imageSize;

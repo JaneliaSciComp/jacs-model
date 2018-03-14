@@ -134,8 +134,11 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="sage_synced_b",label="SAGE Synchronized",facet="sage_synced_b")
     private Boolean sageSynced = false;
 
-    @SearchAttribute(key="compression_txt",label="Compression Type")
+    @SearchAttribute(key="comp_txt",label="Stack Compression")
     private String compressionType;
+
+    @SearchAttribute(key="ncomp_txt",label="Separation Compression")
+    private String separationCompressionType;
 
     @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     @SAGEAttribute(cvName="image_query", termName="create_date")
@@ -459,7 +462,15 @@ public class Sample extends AbstractDomainObject implements IsParent {
     public void setCompressionType(String compressionType) {
         this.compressionType = compressionType;
     }
-    
+
+    public String getSeparationCompressionType() {
+        return separationCompressionType;
+    }
+
+    public void setSeparationCompressionType(String separationCompressionType) {
+        this.separationCompressionType = separationCompressionType;
+    }
+
     public Date getTmogDate() {
         return tmogDate;
     }
