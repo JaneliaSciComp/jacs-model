@@ -13,6 +13,8 @@ public class NeuronSeparation extends PipelineResult {
     @SearchTraversal({Sample.class})
     private ReverseReference fragments;
 
+    private String compressionType;
+
     private Boolean hasWeights = false;
 
     public ReverseReference getFragmentsReference() {
@@ -21,6 +23,14 @@ public class NeuronSeparation extends PipelineResult {
 
     public void setFragmentsReference(ReverseReference fragmentsReference) {
         this.fragments = fragmentsReference;
+    }
+
+    public String getCompressionType() {
+        return compressionType;
+    }
+
+    public void setCompressionType(String compressionType) {
+        this.compressionType = compressionType;
     }
 
     public Boolean getHasWeights() {

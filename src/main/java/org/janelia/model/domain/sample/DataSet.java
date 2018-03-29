@@ -46,6 +46,12 @@ public class DataSet extends AbstractDomainObject {
     @SearchAttribute(key="usage_bytes_l",label="Disk Space Usage (Bytes)")
     private Long diskSpaceUsage;
 
+    @SearchAttribute(key="comp_txt",label="Stack Compression")
+    private String defaultCompressionType;
+
+    @SearchAttribute(key="ncomp_txt",label="Separation Compression")
+    private String defaultSeparationCompressionType;
+
     private Map<String,Integer> colorDepthCounts = new HashMap<>();
 
     public String getIdentifier() {
@@ -125,6 +131,22 @@ public class DataSet extends AbstractDomainObject {
     @SearchAttribute(key="usage_humans_t",label="Disk Space Usage")
     public String getDiskSpaceUsageForHumans() {
         return diskSpaceUsage==null ? null : DomainUtils.formatBytesForHumans(diskSpaceUsage);
+    }
+
+    public String getDefaultCompressionType() {
+        return defaultCompressionType;
+    }
+
+    public void setDefaultCompressionType(String defaultCompressionType) {
+        this.defaultCompressionType = defaultCompressionType;
+    }
+
+    public String getDefaultSeparationCompressionType() {
+        return defaultSeparationCompressionType;
+    }
+
+    public void setDefaultSeparationCompressionType(String defaultSeparationCompressionType) {
+        this.defaultSeparationCompressionType = defaultSeparationCompressionType;
     }
 
     public Map<String, Integer> getColorDepthCounts() {

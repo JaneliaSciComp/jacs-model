@@ -1991,7 +1991,7 @@ public class DomainDAO {
         log.debug("updateProperty({}, {}, name={}, value={})",subjectKey, Reference.createFor(domainObject), propName, propValue);
         String collectionName = DomainUtils.getCollectionName(className);
         MongoCollection collection = getCollectionByName(collectionName);
-        WriteResult wr = collection.update("{_id:#,writers:{$in:#}}", domainObject.getId(), subjects).with("{$set: {" + propName + ":#, updatedDate:#}}", propValue, new Date());
+        WriteResult wr = collection.update("{_id:#,writers:{$in:#}}", domainObject.getId(), subjects).with("{$set: {'" + propName + "':#, updatedDate:#}}", propValue, new Date());
         if (wr.getN() != 1) {
             throw new Exception("Could not update " + collectionName + "#" + domainObject.getId() + "." + propName);
         }
