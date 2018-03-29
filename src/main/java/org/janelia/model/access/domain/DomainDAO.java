@@ -1897,9 +1897,10 @@ public class DomainDAO {
             throw new IllegalArgumentException("Tree node not found: " + nodeArg.getId());
         }
         log.debug("addChildren({}, {}, references={}, index={})", subjectKey, node, abbr(references), index);
-        Set<String> refs = new HashSet<>();
-        for (Reference reference : node.getChildren()) {
-            refs.add(reference.toString());
+        // Keep track of children in a set for faster 'contains' lookups
+        Set<Reference> childRefs = new HashSet<>();
+        for (Reference ref : node.getChildren()) {
+            childRefs.add(ref);
         }
         int i = 0;
         List<Reference> added = new ArrayList<>();
@@ -1910,7 +1911,7 @@ public class DomainDAO {
             if (ref.getTargetClassName() == null) {
                 throw new IllegalArgumentException("Cannot add child without a target class name");
             }
-            if (refs.contains(ref.toString())) {
+            if (childRefs.contains(ref)) {
                 log.trace("{} already contains {}, skipping add." , node, ref);
                 continue;
             }
@@ -1921,6 +1922,7 @@ public class DomainDAO {
                 node.addChild(ref);
             }
             added.add(ref);
+            childRefs.add(ref);
             i++;
         }
         saveImpl(subjectKey, node);
