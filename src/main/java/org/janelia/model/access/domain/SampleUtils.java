@@ -215,7 +215,11 @@ public class SampleUtils {
         if (neuronFragment==null) return null;
 
         for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
-            for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
+
+            List<SamplePipelineRun> runs = objectiveSample.getPipelineRuns();
+            for(int i=runs.size()-1; i>=0; i--) {
+                SamplePipelineRun run = runs.get(i);
+
                 if (run!=null && run.getResults()!=null) {
                     for(PipelineResult result : run.getResults()) {
                         if (result!=null && result.getResults()!=null) {
@@ -251,5 +255,22 @@ public class SampleUtils {
         }
 
         return scores;
+    }
+
+    public static Collection<String> getAlignmentSpaces(Collection<Sample> samples) {
+
+        Set<String> alignmentSpaces = new TreeSet<>();
+
+        for (Sample sample : samples) {
+            for (ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+                for (SamplePipelineRun samplePipelineRun : objectiveSample.getPipelineRuns()) {
+                    for (SampleAlignmentResult sampleAlignmentResult : samplePipelineRun.getAlignmentResults()) {
+                        alignmentSpaces.add(sampleAlignmentResult.getAlignmentSpace());
+                    }
+                }
+            }
+        }
+
+        return alignmentSpaces;
     }
 }
