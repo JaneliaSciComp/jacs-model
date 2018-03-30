@@ -3,17 +3,7 @@ package org.janelia.model.access.domain;
 import static org.janelia.model.access.domain.DomainUtils.abbr;
 
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.DomainConstants;
@@ -453,12 +443,15 @@ public class DomainDAO {
     public List<Workspace> getWorkspaces(String subjectKey) {
         log.debug("getWorkspaces({})", subjectKey);
         Set<String> subjects = getReaderSet(subjectKey);
+        List<Workspace> workspaces;
         if (subjects == null) {
-            return toList(treeNodeCollection.find("{class:#}", Workspace.class.getName()).as(Workspace.class));
+            workspaces = toList(treeNodeCollection.find("{class:#}", Workspace.class.getName()).as(Workspace.class));
         }
         else {
-            return toList(treeNodeCollection.find("{class:#,readers:{$in:#}}", Workspace.class.getName(), subjects).as(Workspace.class));
+            workspaces = toList(treeNodeCollection.find("{class:#,readers:{$in:#}}", Workspace.class.getName(), subjects).as(Workspace.class));
         }
+        Collections.sort(workspaces, new DomainObjectComparator(subjectKey));
+        return workspaces;
     }
     
     public Workspace getDefaultWorkspace(String subjectKey) {
@@ -1013,7 +1006,9 @@ public class DomainDAO {
     public List<Ontology> getOntologies(String subjectKey) {
         log.debug("getOntologies({})", subjectKey);
         Set<String> subjects = getReaderSet(subjectKey);
-        return toList(ontologyCollection.find("{readers:{$in:#}}", subjects).as(Ontology.class));
+        List<Ontology> ontologies = toList(ontologyCollection.find("{readers:{$in:#}}", subjects).as(Ontology.class));
+        Collections.sort(ontologies, new DomainObjectComparator(subjectKey));
+        return ontologies;
     }
 
     public OntologyTerm getErrorOntologyCategory() {
@@ -1081,12 +1076,15 @@ public class DomainDAO {
     public List<DataSet> getDataSets(String subjectKey) {
         log.debug("getDataSets({})", subjectKey);
         Set<String> subjects = getReaderSet(subjectKey);
+        List<DataSet> dataSets;
         if (subjects == null) {
-            return toList(dataSetCollection.find().as(DataSet.class));
+            dataSets = toList(dataSetCollection.find().as(DataSet.class));
         }
         else {
-            return toList(dataSetCollection.find("{readers:{$in:#}}", subjects).as(DataSet.class));
+            dataSets = toList(dataSetCollection.find("{readers:{$in:#}}", subjects).as(DataSet.class));
         }
+        Collections.sort(dataSets, new DomainObjectComparator(subjectKey));
+        return dataSets;
     }
 
     public List<DataSet> getUserDataSets(String subjectKey) {
@@ -1114,7 +1112,9 @@ public class DomainDAO {
 
     public List<DataSet> getDataSetsWithColorDepthImages(String subjectKey, String alignmentSpace) {
         // subjectKey is ignored, because all users can known about the existence of all data sets
-        return toList(dataSetCollection.find("{'colorDepthCounts."+alignmentSpace+"':{$exists:1}}").as(DataSet.class));
+        List<DataSet> dataSets = toList(dataSetCollection.find("{'colorDepthCounts."+alignmentSpace+"':{$exists:1}}").as(DataSet.class));
+        Collections.sort(dataSets, new DomainObjectComparator(subjectKey));
+        return dataSets;
     }
 
     public DataSet createDataSet(String subjectKey, DataSet dataSet) throws Exception {
@@ -2392,12 +2392,15 @@ public class DomainDAO {
     public List<LineRelease> getLineReleases(String subjectKey) {
         log.debug("getLineReleases({})", subjectKey);
         Set<String> subjects = getReaderSet(subjectKey);
+        List<LineRelease> releases;
         if (subjects == null) {
-            return toList(releaseCollection.find().as(LineRelease.class));
+            releases = toList(releaseCollection.find().as(LineRelease.class));
         }
         else {
-            return toList(releaseCollection.find("{readers:{$in:#}}", subjects).as(LineRelease.class));
+            releases = toList(releaseCollection.find("{readers:{$in:#}}", subjects).as(LineRelease.class));
         }
+        Collections.sort(releases, new DomainObjectComparator(subjectKey));
+        return releases;
     }
 
     public LineRelease createLineRelease(String subjectKey, String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception {
