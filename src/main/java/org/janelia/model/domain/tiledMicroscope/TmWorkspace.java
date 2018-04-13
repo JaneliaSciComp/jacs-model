@@ -8,6 +8,9 @@ import org.janelia.model.domain.support.SearchType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Tile microscope workspace for annotating a TmSample.
  *
@@ -27,6 +30,7 @@ public class TmWorkspace extends AbstractDomainObject {
     
     private TmColorModel colorModel;
     private TmColorModel colorModel3d;
+    private List<TmObjectMesh> objectMeshList;
 
     public TmWorkspace() {
     }
@@ -98,5 +102,19 @@ public class TmWorkspace extends AbstractDomainObject {
 
     public void setColorModel3d(TmColorModel colorModel3d) {
         this.colorModel3d = colorModel3d;
+    }
+
+    public void addObjectMesh (TmObjectMesh objectMesh) {
+        if (objectMeshList==null)
+            objectMeshList = new ArrayList<TmObjectMesh>();
+        objectMeshList.add(objectMesh);
+    }
+
+    public List<TmObjectMesh> getObjectMeshList() {
+        return objectMeshList;
+    }
+
+    public void setObjectMesh(List<TmObjectMesh> objectMeshList) {
+        this.objectMeshList = objectMeshList;
     }
 }
