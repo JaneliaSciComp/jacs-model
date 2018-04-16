@@ -31,6 +31,7 @@ import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.*;
+import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.jongo.*;
 import org.jongo.marshall.jackson.JacksonMapper;
@@ -211,18 +212,7 @@ public class DomainDAO {
         if (subject == null) {
             throw new IllegalArgumentException("No such subject: " + subjectKey);
         }
-        Set<String> groups = new HashSet<>();
-        groups.add(subjectKey);
-        if (subject instanceof User) {
-            User user = (User)subject;
-            for(UserGroupRole role : user.getUserGroupRoles()) {
-                if (role.getRole().isRead()) {
-                    groups.add(role.getGroupKey());
-                }
-            }
-        }
-        groups.add(subjectKey);
-        return groups;
+        return SubjectUtils.getReaderSet(subject);
     }
 
     /**
@@ -235,18 +225,7 @@ public class DomainDAO {
         if (subject == null) {
             throw new IllegalArgumentException("No such subject: " + subjectKey);
         }
-        Set<String> groups = new HashSet<>();
-        groups.add(subjectKey);
-        if (subject instanceof User) {
-            User user = (User)subject;
-            for(UserGroupRole role : user.getUserGroupRoles()) {
-                if (role.getRole().isWrite()) {
-                    groups.add(role.getGroupKey());
-                }
-            }
-        }
-        groups.add(subjectKey);
-        return groups;
+        return SubjectUtils.getWriterSet(subject);
     }
 
     public Subject getSubjectByKey(String subjectKey) {
