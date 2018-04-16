@@ -1,16 +1,15 @@
 package org.janelia.model.access.domain;
 
-import static org.janelia.model.access.domain.DomainUtils.abbr;
-
-import java.net.UnknownHostException;
-import java.util.*;
-
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
+import com.mongodb.*;
+import com.mongodb.client.MongoDatabase;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.model.domain.DomainConstants;
-import org.janelia.model.domain.DomainObject;
-import org.janelia.model.domain.Preference;
-import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.ReverseReference;
+import org.bson.Document;
+import org.janelia.model.domain.*;
 import org.janelia.model.domain.compartments.CompartmentSet;
 import org.janelia.model.domain.enums.OrderStatus;
 import org.janelia.model.domain.enums.PipelineStatus;
@@ -21,22 +20,9 @@ import org.janelia.model.domain.gui.colordepth.ColorDepthResult;
 import org.janelia.model.domain.gui.colordepth.ColorDepthSearch;
 import org.janelia.model.domain.gui.search.Filter;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
-import org.janelia.model.domain.ontology.Annotation;
-import org.janelia.model.domain.ontology.Category;
-import org.janelia.model.domain.ontology.EnumItem;
-import org.janelia.model.domain.ontology.Ontology;
-import org.janelia.model.domain.ontology.OntologyTerm;
-import org.janelia.model.domain.ontology.OntologyTermReference;
+import org.janelia.model.domain.ontology.*;
 import org.janelia.model.domain.orders.IntakeOrder;
-import org.janelia.model.domain.sample.DataSet;
-import org.janelia.model.domain.sample.Image;
-import org.janelia.model.domain.sample.LSMImage;
-import org.janelia.model.domain.sample.LineRelease;
-import org.janelia.model.domain.sample.NeuronFragment;
-import org.janelia.model.domain.sample.NeuronSeparation;
-import org.janelia.model.domain.sample.Sample;
-import org.janelia.model.domain.sample.SampleLock;
-import org.janelia.model.domain.sample.StatusTransition;
+import org.janelia.model.domain.sample.*;
 import org.janelia.model.domain.screen.FlyLine;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
@@ -44,34 +30,16 @@ import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
-import org.janelia.model.security.Group;
-import org.janelia.model.security.GroupRole;
-import org.janelia.model.security.Subject;
-import org.janelia.model.security.User;
-import org.janelia.model.security.UserGroupRole;
+import org.janelia.model.security.*;
 import org.janelia.model.util.TimebasedIdentifierGenerator;
-import org.jongo.Aggregate;
-import org.jongo.Jongo;
-import org.jongo.MongoCollection;
-import org.jongo.MongoCursor;
-import org.jongo.ResultHandler;
+import org.jongo.*;
 import org.jongo.marshall.jackson.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
-import com.mongodb.DBObject;
-import com.mongodb.DuplicateKeyException;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoCredential;
-import com.mongodb.MongoException;
-import com.mongodb.ServerAddress;
-import com.mongodb.WriteConcern;
-import com.mongodb.WriteResult;
+import java.util.*;
+
+import static org.janelia.model.access.domain.DomainUtils.abbr;
 
 /**
  * Data access object for the domain object model.
@@ -111,27 +79,28 @@ public class DomainDAO {
     protected MongoCollection colorDepthSearchCollection;
     protected MongoCollection colorDepthResultCollection;
 
-    public DomainDAO(String serverUrl, String databaseName) throws UnknownHostException {
+    public DomainDAO(String serverUrl, String databaseName) {
         this(serverUrl, databaseName, null, null);
     }
 
-    public DomainDAO(String serverUrl, String databaseName, String username, String password) throws UnknownHostException {
+    public DomainDAO(String serverUrl, String databaseName, String username, String password) {
 
         List<ServerAddress> members = new ArrayList<>();
         for (String serverMember : serverUrl.split(",")) {
             members.add(new ServerAddress(serverMember));
         }
 
+        MongoClientOptions options = MongoClientOptions.builder().writeConcern(WriteConcern.JOURNALED).build();
+
         if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
             MongoCredential credential = MongoCredential.createMongoCRCredential(username, databaseName, password.toCharArray());
-            this.m = new MongoClient(members, Arrays.asList(credential));
+            this.m = new MongoClient(members, Arrays.asList(credential), options);
             log.info("Connected to MongoDB (" + databaseName + "@" + serverUrl + ") as user " + username);
         } else {
-            this.m = new MongoClient(members);
+            this.m = new MongoClient(members, options);
             log.info("Connected to MongoDB (" + databaseName + "@" + serverUrl + ")");
         }
 
-        m.setWriteConcern(WriteConcern.JOURNALED);
         init(m, databaseName);
     }
 
@@ -173,6 +142,11 @@ public class DomainDAO {
 
     }
 
+    public com.mongodb.client.MongoCollection<Document> getNativeCollection(String collectionName) {
+        MongoDatabase db = m.getDatabase(databaseName);
+        return db.getCollection(collectionName);
+    }
+
     public final MongoCollection getCollectionByClass(Class<?> domainClass) {
         String collectionName = DomainUtils.getCollectionName(domainClass);
         return jongo.getCollection(collectionName);
@@ -185,16 +159,12 @@ public class DomainDAO {
         return jongo.getCollection(collectionName);
     }
 
-    public Jongo getJongo() {
-        return jongo;
-    }
-
     public MongoClient getMongo() {
         return m;
     }
 
-    public void setWriteConcern(WriteConcern writeConcern) {
-        m.setWriteConcern(writeConcern);
+    public Jongo getJongo() {
+        return jongo;
     }
 
     // Subjects
