@@ -1,7 +1,5 @@
 package org.janelia.model.domain;
 
-import java.net.UnknownHostException;
-
 import org.janelia.model.access.domain.DomainDAO;
 
 /**
@@ -18,13 +16,8 @@ public class DomainDAOManager {
     protected DomainDAO dao;
 
     private DomainDAOManager() {
-        try {
-            // TODO: in the future we should use a mock database for this
-            this.dao = new DomainDAO(databaseHost, databaseName);
-        }
-        catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+        // TODO: in the future we should use a mock database for this
+        this.dao = new DomainDAO(databaseHost, databaseName);
     }
 
     public static DomainDAOManager getInstance() {
