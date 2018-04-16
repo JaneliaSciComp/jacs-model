@@ -11,20 +11,12 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.enums.AlignmentScoreType;
 import org.janelia.model.domain.interfaces.HasAnatomicalArea;
 import org.janelia.model.domain.interfaces.HasFileGroups;
 import org.janelia.model.domain.interfaces.HasFiles;
-import org.janelia.model.domain.sample.FileGroup;
-import org.janelia.model.domain.sample.NeuronFragment;
-import org.janelia.model.domain.sample.NeuronSeparation;
-import org.janelia.model.domain.sample.ObjectiveSample;
-import org.janelia.model.domain.sample.PipelineResult;
-import org.janelia.model.domain.sample.Sample;
-import org.janelia.model.domain.sample.SampleAlignmentResult;
-import org.janelia.model.domain.sample.SamplePipelineRun;
-import org.janelia.model.domain.sample.SamplePostProcessingResult;
-import org.janelia.model.domain.sample.SampleTile;
+import org.janelia.model.domain.sample.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -272,5 +264,67 @@ public class SampleUtils {
         }
 
         return alignmentSpaces;
+    }
+
+    public static String getUnalignedCompression(DataSet dataSet, Sample sample) {
+
+        String compression = null;
+        if (sample!=null) {
+            sample.getUnalignedCompressionType();
+        }
+
+        if (compression==null && dataSet!=null) {
+            compression = dataSet.getUnalignedCompressionType();
+        }
+
+        if (compression==null) {
+            compression = DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS;
+        }
+
+        return compression;
+    }
+
+    public static String getAlignedCompression(DataSet dataSet, Sample sample) {
+
+        String compression = null;
+        if (sample!=null) {
+            sample.getAlignedCompressionType();
+        }
+
+        if (compression==null && dataSet!=null) {
+            compression = dataSet.getAlignedCompressionType();
+        }
+
+        if (compression==null) {
+            compression = DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS;
+        }
+
+        return compression;
+    }
+
+    public static String getSeparationCompression(DataSet dataSet, Sample sample) {
+
+        String compression = null;
+        if (sample!=null) {
+            sample.getSeparationCompressionType();
+        }
+
+        if (compression==null && dataSet!=null) {
+            compression = dataSet.getSeparationCompressionType();
+        }
+
+        if (compression==null) {
+            compression = DomainConstants.VALUE_COMPRESSION_LOSSLESS;
+        }
+
+        return compression;
+    }
+
+    public static boolean isLossless(String compression) {
+        return (compression.equals(DomainConstants.VALUE_COMPRESSION_LOSSLESS_AND_H5J) || compression.equals(DomainConstants.VALUE_COMPRESSION_LOSSLESS));
+    }
+
+    public static boolean isVisuallyLossless(String compression) {
+        return (compression.equals(DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS) || compression.equals(DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS_AND_PBD));
     }
 }
