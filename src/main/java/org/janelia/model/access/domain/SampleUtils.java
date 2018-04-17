@@ -270,7 +270,7 @@ public class SampleUtils {
 
         String compression = null;
         if (sample!=null) {
-            sample.getUnalignedCompressionType();
+            compression = sample.getUnalignedCompressionType();
         }
 
         if (compression==null && dataSet!=null) {
@@ -288,7 +288,7 @@ public class SampleUtils {
 
         String compression = null;
         if (sample!=null) {
-            sample.getAlignedCompressionType();
+            compression = sample.getAlignedCompressionType();
         }
 
         if (compression==null && dataSet!=null) {
@@ -306,7 +306,7 @@ public class SampleUtils {
 
         String compression = null;
         if (sample!=null) {
-            sample.getSeparationCompressionType();
+            compression = sample.getSeparationCompressionType();
         }
 
         if (compression==null && dataSet!=null) {
