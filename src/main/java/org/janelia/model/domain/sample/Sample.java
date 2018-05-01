@@ -157,7 +157,15 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     @SearchAttribute(key="usage_bytes_l",label="Disk Space Usage (Bytes)")
     private Long diskSpaceUsage;
-    
+
+    @SAGEAttribute(cvName="light_imagery", termName="probe_set")
+    @SearchAttribute(key="probeset_id_txt",label="Probe Set Identifier")
+    private String probeSetIdentifier;
+
+    @SAGEAttribute(cvName="image_query", termName="probe_set_def")
+    @SearchAttribute(key="probeset_txt",label="Probe Set")
+    private String probeSet;
+
     @JsonProperty
     public List<ObjectiveSample> getObjectiveSamples() {
         return objectiveSamples;
@@ -568,4 +576,19 @@ public class Sample extends AbstractDomainObject implements IsParent {
         return diskSpaceUsage==null ? null : DomainUtils.formatBytesForHumans(diskSpaceUsage);
     }
 
+    public String getProbeSetIdentifier() {
+        return probeSetIdentifier;
+    }
+
+    public void setProbeSetIdentifier(String probeSetIdentifier) {
+        this.probeSetIdentifier = probeSetIdentifier;
+    }
+
+    public String getProbeSet() {
+        return probeSet;
+    }
+
+    public void setProbeSet(String probeSet) {
+        this.probeSet = probeSet;
+    }
 }
