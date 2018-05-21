@@ -8,6 +8,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.AbstractDomainObject;
+import org.janelia.model.domain.enums.ImagingProtocol;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchType;
@@ -26,16 +27,22 @@ public class DataSet extends AbstractDomainObject {
     @SearchAttribute(key="identifier_txt",label="Data Set Identifier")
     private String identifier;
 
+    @SearchAttribute(key="proto_txt",label="Imaging Protocol",facet="proto_s")
+    private ImagingProtocol imagingProtocol;
+
     @SearchAttribute(key="sample_name_pattern_txt",label="Sample Name Pattern")
     private String sampleNamePattern;
 
     @SearchAttribute(key="sage_synced_b",label="SAGE Synchronized",facet="sage_synced_b")
     private boolean sageSync;
-    
+
+    @Deprecated
     private boolean neuronSeparationSupported = true;
-    
+
+    @Deprecated
     private boolean basicPostProcessingSupported = false;
-    
+
+    @Deprecated
     private List<String> pipelineProcesses = new ArrayList<>();
 
     @SearchAttribute(key="sage_config_txt",label="SAGE Config Path")
@@ -57,6 +64,14 @@ public class DataSet extends AbstractDomainObject {
 
     public void setIdentifier(String identifier) {
         this.identifier = identifier;
+    }
+
+    public ImagingProtocol getImagingProtocol() {
+        return imagingProtocol;
+    }
+
+    public void setImagingProtocol(ImagingProtocol imagingProtocol) {
+        this.imagingProtocol = imagingProtocol;
     }
 
     public String getSampleNamePattern() {

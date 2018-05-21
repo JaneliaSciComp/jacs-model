@@ -55,6 +55,7 @@ dependencies {
 
         // scientific computing
         JAMA_LIB = "gov.nist.math:jama:1.0.3"
+        DAGOBAH_LIB = "org.janelia:dagobah:1.0.0"
 
         // testing
         JUNIT_LIB = "junit:junit:4.12"
@@ -73,7 +74,8 @@ dependencies {
             COMMONS_LANG_LIB,
             JACKSON_CORE_LIB,
             JACKSON_ANNOTATIONS_LIB,
-            JAMA_LIB
+            JAMA_LIB,
+            DAGOBAH_LIB
 
     compile (HIBERNATE_LIB) {
         exclude group: 'javax.transaction'

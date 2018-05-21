@@ -17,7 +17,7 @@ public enum AlignmentAlgorithm implements NamedEnum {
 
 	private String name;
 	
-	private AlignmentAlgorithm(String name) {
+	AlignmentAlgorithm(String name) {
 		this.name = name;
 	}
 	
