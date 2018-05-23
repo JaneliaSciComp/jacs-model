@@ -572,7 +572,7 @@ public class DomainUtils {
         if (filepath==null) return null;
         if (result==null) return filepath;
         String parentFilepath = result.getFilepath();
-        if (parentFilepath==null) throw new IllegalArgumentException("Result "+filepath+" has null parent filepath");
+        if (parentFilepath==null) return filepath;
         String prefix = parentFilepath.endsWith("/") ? parentFilepath : parentFilepath+"/";
         if (!filepath.startsWith(prefix)) {
             return filepath;
