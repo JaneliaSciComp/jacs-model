@@ -3,30 +3,50 @@ package org.janelia.model.domain.workflow;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.janelia.model.domain.AbstractDomainObject;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasAnatomicalArea;
+import org.janelia.model.domain.interfaces.HasFiles;
 import org.janelia.model.domain.interfaces.HasImageStack;
-import org.janelia.model.domain.interfaces.HasRelativeFiles;
+import org.janelia.model.domain.sample.LSMImage;
+import org.janelia.model.domain.support.SearchTraversal;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
-public class WorkflowImage extends AbstractDomainObject implements HasAnatomicalArea, HasImageStack, HasRelativeFiles  {
+public class WorkflowImage extends AbstractDomainObject implements HasAnatomicalArea, HasImageStack, HasFiles {
 
-    private String filepath;
+    private static final String TILE_STITCHED = "stitched";
+
+    @SearchTraversal({})
+    private Reference sampleRef;
+
+    private String objective;
     private String imageSize;
     private String opticalResolution;
+
+    // Used for stitching
     private String anatomicalArea;
     private String tile;
+
+    // Used for normalization
     private String channelSpec;
     private String channelColors;
+
+    // Used for distortion correction
+    private String microscope;
+    private Date captureDate;
+
+    // Used for alignment
+    private String gender;
+
+    // For related files on disk
     private Map<FileType, String> files = new HashMap<>();
+
+    // Temporary files which can be deleted when the pipeline is finished
     private Set<FileType> deleteOnExit = new HashSet<>();
 
     /** Empty constructor for deserialization */
@@ -35,25 +55,80 @@ public class WorkflowImage extends AbstractDomainObject implements HasAnatomical
 
     /** Copy constructor */
     public WorkflowImage(WorkflowImage image) {
-        this.filepath = image.getFilepath();
+        this.sampleRef = image.getSample();
+        this.objective = image.getObjective();
         this.imageSize = image.getImageSize();
         this.opticalResolution = image.getOpticalResolution();
         this.anatomicalArea = image.getAnatomicalArea();
         this.tile = image.getTile();
         this.channelSpec = image.getChannelSpec();
         this.channelColors = image.getChannelColors();
+        this.microscope = image.getMicroscope();
+        this.captureDate = image.getCaptureDate();
+        this.gender = image.getGender();
         this.files = new HashMap<>(image.getFiles());
         this.deleteOnExit = new HashSet<>(image.getDeleteOnExit());
     }
 
-    @Override
-    public String getFilepath() {
-        return filepath;
+    /** Copy constructor */
+    public WorkflowImage(LSMImage lsm) {
+        this.sampleRef = lsm.getSample();
+        this.objective = lsm.getObjective();
+        this.imageSize = lsm.getImageSize();
+        this.opticalResolution = lsm.getOpticalResolution();
+        this.anatomicalArea = lsm.getAnatomicalArea();
+        this.tile = lsm.getTile();
+        this.channelSpec = lsm.getChanSpec();
+        this.channelColors = lsm.getChannelColors();
+        this.microscope = lsm.getMicroscope();
+        this.captureDate = lsm.getCaptureDate();
+        this.gender = lsm.getGender();
+        this.files = new HashMap<>(lsm.getFiles());
+        files.put(FileType.LosslessStack, lsm.getFilepath());
     }
 
-    @Override
-    public void setFilepath(String filepath) {
-        this.filepath = filepath;
+    public boolean isStitched() {
+        return TILE_STITCHED.equals(tile);
+    }
+
+    public Reference getSample() {
+        return sampleRef;
+    }
+
+    public void setSample(Reference sampleRef) {
+        this.sampleRef = sampleRef;
+    }
+
+    public String getObjective() {
+        return objective;
+    }
+
+    public void setObjective(String objective) {
+        this.objective = objective;
+    }
+
+    public String getMicroscope() {
+        return microscope;
+    }
+
+    public void setMicroscope(String microscope) {
+        this.microscope = microscope;
+    }
+
+    public Date getCaptureDate() {
+        return captureDate;
+    }
+
+    public void setCaptureDate(Date captureDate) {
+        this.captureDate = captureDate;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     @Override

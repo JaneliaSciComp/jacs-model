@@ -3,6 +3,8 @@ package org.janelia.model.domain.workflow;
 import org.janelia.dagobah.Task;
 import org.janelia.dagobah.TaskStatus;
 import org.janelia.model.domain.AbstractDomainObject;
+import org.janelia.model.domain.support.MongoMapped;
+import org.janelia.model.domain.support.SearchType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,14 +12,25 @@ import java.util.Map;
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@MongoMapped(collectionName="workflowTask",label="Workflow Task")
+@SearchType(key="workflowTask",label="Workflow Task")
 public class WorkflowTask extends AbstractDomainObject implements Task {
 
+    private Long workflowId;
     private boolean hasEffects = false;
     private boolean force = false;
     private TaskStatus status = TaskStatus.Pending;
     private Map<String,Object> inputs = new HashMap<>();
     private Map<String,Object> outputs = new HashMap<>();
     private String serviceClass;
+
+    public Long getWorkflowId() {
+        return workflowId;
+    }
+
+    public void setWorkflowId(Long workflowId) {
+        this.workflowId = workflowId;
+    }
 
     @Override
     public long getNodeId() {

@@ -1,14 +1,11 @@
 package org.janelia.model.access.domain;
 
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.mongodb.*;
-import com.mongodb.client.MongoDatabase;
 import org.apache.commons.lang3.StringUtils;
-import org.bson.Document;
 import org.janelia.model.domain.*;
 import org.janelia.model.domain.compartments.CompartmentSet;
 import org.janelia.model.domain.enums.OrderStatus;
@@ -33,8 +30,10 @@ import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.*;
 import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.util.TimebasedIdentifierGenerator;
-import org.jongo.*;
-import org.jongo.marshall.jackson.JacksonMapper;
+import org.jongo.Aggregate;
+import org.jongo.MongoCollection;
+import org.jongo.MongoCursor;
+import org.jongo.ResultHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,14 +46,9 @@ import static org.janelia.model.access.domain.DomainUtils.abbr;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class DomainDAO {
+public class DomainDAO extends BaseDAO {
 
     private static final Logger log = LoggerFactory.getLogger(DomainDAO.class);
-
-    protected MongoClient m;
-    protected Jongo jongo;
-
-    protected String databaseName;
 
     protected MongoCollection preferenceCollection;
     protected MongoCollection alignmentBoardCollection;
@@ -85,6 +79,12 @@ public class DomainDAO {
     }
 
     public DomainDAO(String serverUrl, String databaseName, String username, String password) {
+        super(connect(serverUrl, databaseName, username, password), databaseName);
+    }
+
+    private static MongoClient connect(String serverUrl, String databaseName, String username, String password) {
+
+        MongoClient mongoClient;
 
         List<ServerAddress> members = new ArrayList<>();
         for (String serverMember : serverUrl.split(",")) {
@@ -95,28 +95,22 @@ public class DomainDAO {
 
         if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
             MongoCredential credential = MongoCredential.createMongoCRCredential(username, databaseName, password.toCharArray());
-            this.m = new MongoClient(members, Arrays.asList(credential), options);
+            mongoClient = new MongoClient(members, Arrays.asList(credential), options);
             log.info("Connected to MongoDB (" + databaseName + "@" + serverUrl + ") as user " + username);
         } else {
-            this.m = new MongoClient(members, options);
+            mongoClient = new MongoClient(members, options);
             log.info("Connected to MongoDB (" + databaseName + "@" + serverUrl + ")");
         }
 
-        init(m, databaseName);
+        return mongoClient;
     }
 
-    public DomainDAO(MongoClient m, String databaseName) {
-        init(m, databaseName);
+    public DomainDAO(MongoClient mongoClient, String databaseName) {
+        super(mongoClient, databaseName);
+        init();
     }
 
-    private final void init(MongoClient m, String databaseName) {
-        this.m = m;
-        this.databaseName = databaseName;
-        this.jongo = new Jongo(m.getDB(databaseName),
-                new JacksonMapper.Builder()
-                .enable(MapperFeature.AUTO_DETECT_GETTERS)
-                .enable(MapperFeature.AUTO_DETECT_SETTERS)
-                .build());
+    private final void init() {
         this.alignmentBoardCollection = getCollectionByClass(AlignmentBoard.class);
         this.alignmentContextCollection = getCollectionByClass(AlignmentContext.class);
         this.annotationCollection = getCollectionByClass(Annotation.class);
@@ -140,32 +134,6 @@ public class DomainDAO {
         this.colorDepthMaskCollection = getCollectionByClass(ColorDepthMask.class);
         this.colorDepthSearchCollection = getCollectionByClass(ColorDepthSearch.class);
         this.colorDepthResultCollection = getCollectionByClass(ColorDepthResult.class);
-
-    }
-
-    public com.mongodb.client.MongoCollection<Document> getNativeCollection(String collectionName) {
-        MongoDatabase db = m.getDatabase(databaseName);
-        return db.getCollection(collectionName);
-    }
-
-    public final MongoCollection getCollectionByClass(Class<?> domainClass) {
-        String collectionName = DomainUtils.getCollectionName(domainClass);
-        return jongo.getCollection(collectionName);
-    }
-
-    public MongoCollection getCollectionByName(String collectionName) {
-        if (collectionName == null) {
-            throw new IllegalArgumentException("collectionName argument may not be null");
-        }
-        return jongo.getCollection(collectionName);
-    }
-
-    public MongoClient getMongo() {
-        return m;
-    }
-
-    public Jongo getJongo() {
-        return jongo;
     }
 
     // Subjects
@@ -579,17 +547,6 @@ public class DomainDAO {
         log.trace("Getting " + list.size() + " TreeNode objects took " + (System.currentTimeMillis() - start) + " ms");
         return list;
     }
-    
-    /**
-     * Create a list of the result set in iteration order.
-     */
-    public <T> List<T> toList(MongoCursor<? extends T> cursor) {
-        List<T> list = new ArrayList<>();
-        for (T item : cursor) {
-            list.add(item);
-        }
-        return list;
-    }
 
     /**
      * Create a list of the result set in the order of the given id list. If ids is null then
@@ -667,6 +624,14 @@ public class DomainDAO {
     
     public <T extends DomainObject> List<T> getDomainObjectsAs(List<Reference> references, Class<T> clazz) {
         return getDomainObjectsAs(null, references, clazz);
+    }
+
+    public <T extends DomainObject> List<T> getDomainObjectsAs(String subjectKey, List<Reference> references) {
+        List<T> list = new ArrayList<>();
+        for (DomainObject object : getDomainObjects(subjectKey, references)) {
+            list.add((T) object);
+        }
+        return list;
     }
 
     public <T extends DomainObject> List<T> getDomainObjectsAs(String subjectKey, List<Reference> references, Class<T> clazz) {
@@ -2332,10 +2297,6 @@ public class DomainDAO {
     private static String getAccessor(String prefix, String attributeName) {
         String firstChar = attributeName.substring(0, 1).toUpperCase();
         return prefix + firstChar + attributeName.substring(1);
-    }
-
-    public Long getNewId() {
-        return TimebasedIdentifierGenerator.generateIdList(1).get(0);
     }
 
     public List<LineRelease> getLineReleases(String subjectKey) {
