@@ -2352,6 +2352,19 @@ public class DomainDAO {
         return releases;
     }
 
+    public List<LineRelease> getLineReleasesbyName(String subjectKey) {
+        log.debug("getLineReleasesbyName({})", subjectKey);
+        List<LineRelease> releases;
+        if (subjectKey == null) {
+            releases = toList(releaseCollection.find().as(LineRelease.class));
+        }
+        else {
+            releases = toList(releaseCollection.find("{name: #}", subjectKey).as(LineRelease.class));
+        }
+        Collections.sort(releases, new DomainObjectComparator(subjectKey));
+        return releases;
+    }
+
     public LineRelease createLineRelease(String subjectKey, String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception {
         log.debug("createLineRelease({}, name={}, releaseDate={}, lagTimeMonths={}, dataSets={})", subjectKey, name, dataSets);
         LineRelease release = new LineRelease();
