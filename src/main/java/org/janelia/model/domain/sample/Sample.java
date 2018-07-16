@@ -239,11 +239,9 @@ public class Sample extends AbstractDomainObject implements IsParent {
 	public List<Reference> getLsmReferences() {
 		List<Reference> refs = new ArrayList<>();
         for(ObjectiveSample objectiveSample : getObjectiveSamples()) {
-        	for(SampleTile sampleTile : objectiveSample.getTiles()) {
-        		refs.addAll(sampleTile.getLsmReferences());
-        	}
+            refs.addAll(objectiveSample.getLsmReferences());
         }
-		return refs;
+		return Collections.unmodifiableList(refs);
 	}
 
     public String getAge() {

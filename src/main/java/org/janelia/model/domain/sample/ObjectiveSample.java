@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.janelia.model.domain.Reference;
 import org.janelia.model.util.ModelStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -190,5 +191,14 @@ public class ObjectiveSample implements Serializable {
     @JsonIgnore
     public String getName() {
         return getParent().getName()+"~"+getObjective();
+    }
+
+    @JsonIgnore
+    public List<Reference> getLsmReferences() {
+        List<Reference> refs = new ArrayList<>();
+        for(SampleTile sampleTile : getTiles()) {
+            refs.addAll(sampleTile.getLsmReferences());
+        }
+        return Collections.unmodifiableList(refs);
     }
 }

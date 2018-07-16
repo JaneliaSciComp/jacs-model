@@ -50,7 +50,7 @@ public class ChanSpecUtils {
     public static List<String> convertChanSpecToList(String chanSpec) { 
         int s = 0;
         int r = 0;
-        List<String> channelList = new ArrayList<String>();
+        List<String> channelList = new ArrayList<>();
         for(int sourceIndex=0; sourceIndex<chanSpec.length(); sourceIndex++) {
             char imageChanCode = chanSpec.charAt(sourceIndex);
             switch (imageChanCode) {
@@ -68,7 +68,22 @@ public class ChanSpecUtils {
         }
         return channelList;
     }
-    
+
+    /**
+     * Convert from a list of channel identifiers (e.g. ["s0","s1","r0"]) to a channel specification (e.g. "ssr").
+     * @param chanList a list of unique identifiers, each prepended with either "s" for signal or "r" for reference.
+     * @return a channel specification (e.g. "ssr")
+     */
+    public static String convertListToChanSpec(List<String> chanList) {
+
+        StringBuilder chanSpec = new StringBuilder();
+        for (String s : chanList) {
+            chanSpec.append(s.charAt(0));
+        }
+
+        return chanSpec.toString();
+    }
+
     /**
      * Get a comma-separated list of one-indexed channel indexes of reference channels (normally just one) in a given channel specification.
      * @param chanSpec a channel specification (e.g. "ssr")
