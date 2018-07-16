@@ -2352,8 +2352,8 @@ public class DomainDAO {
         return releases;
     }
 
-    public List<LineRelease> getLineReleasesbyName(String subjectKey) {
-        log.debug("getLineReleasesbyName({})", subjectKey);
+    public List<LineRelease> getLineReleasesByName(String subjectKey) {
+        log.debug("getLineReleasesByName({})", subjectKey);
         List<LineRelease> releases;
         if (subjectKey == null) {
             releases = toList(releaseCollection.find().as(LineRelease.class));
