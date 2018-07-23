@@ -1,17 +1,15 @@
 package org.janelia.model.domain.sample;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.domain.interfaces.HasName;
+import org.janelia.model.domain.interfaces.HasResults;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import org.janelia.model.access.domain.DomainUtils;
-import org.janelia.model.domain.interfaces.HasImageStack;
-import org.janelia.model.domain.interfaces.HasName;
-import org.janelia.model.domain.interfaces.HasResults;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * A single run of the pipeline on an ObjectiveSample. 
  * 

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.support.MongoMapped;
@@ -45,6 +46,8 @@ public class DataSet extends AbstractDomainObject {
 
     @SearchAttribute(key="usage_bytes_l",label="Disk Space Usage (Bytes)")
     private Long diskSpaceUsage;
+
+    private CompressionStrategy compressionStrategy;
 
     private Map<String,Integer> colorDepthCounts = new HashMap<>();
 
@@ -125,6 +128,59 @@ public class DataSet extends AbstractDomainObject {
     @SearchAttribute(key="usage_humans_t",label="Disk Space Usage")
     public String getDiskSpaceUsageForHumans() {
         return diskSpaceUsage==null ? null : DomainUtils.formatBytesForHumans(diskSpaceUsage);
+    }
+
+    public CompressionStrategy getCompressionStrategy() {
+        return compressionStrategy;
+    }
+
+    public void setCompressionStrategy(CompressionStrategy compressionStrategy) {
+        this.compressionStrategy = compressionStrategy;
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="comp_txt",label="Compression for Unaligned Stacks")
+    public String getUnalignedCompressionType() {
+        if (compressionStrategy==null) return null;
+        return compressionStrategy.getUnaligned();
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="comp_txt",label="Compression for Aligned Stacks")
+    public String getAlignedCompressionType() {
+        if (compressionStrategy==null) return null;
+        return compressionStrategy.getAligned();
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="ncomp_txt",label="Compression for Separations")
+    public String getSeparationCompressionType() {
+        if (compressionStrategy==null) return null;
+        return compressionStrategy.getSeparation();
+    }
+
+    @JsonIgnore
+    public void setUnalignedCompressionType(String compressionType) {
+        if (compressionStrategy==null) {
+            this.compressionStrategy = new CompressionStrategy();
+        }
+        compressionStrategy.setUnaligned(compressionType);
+    }
+
+    @JsonIgnore
+    public void setAlignedCompressionType(String compressionType) {
+        if (compressionStrategy==null) {
+            this.compressionStrategy = new CompressionStrategy();
+        }
+        compressionStrategy.setAligned(compressionType);
+    }
+
+    @JsonIgnore
+    public void setSeparationCompressionType(String compressionType) {
+        if (compressionStrategy==null) {
+            this.compressionStrategy = new CompressionStrategy();
+        }
+        compressionStrategy.setSeparation(compressionType);
     }
 
     public Map<String, Integer> getColorDepthCounts() {

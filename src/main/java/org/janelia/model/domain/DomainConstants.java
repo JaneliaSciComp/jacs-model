@@ -16,6 +16,8 @@ public class DomainConstants {
     public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS_AND_PBD = "Visually Lossless and PBD";
     public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS = "Visually Lossless";
 
+    public static final String NO_CONSENSUS = "No Consensus";
+
     public static final String NAME_DEFAULT_WORKSPACE                = "Home";
     public static final String NAME_SHARED_DATA                      = "Shared Data";
     public static final String NAME_SPLIT_PICKING                    = "Split Picking";
@@ -38,7 +40,6 @@ public class DomainConstants {
     public static final String PREFERENCE_CATEGORY_MOUSELIGHT = "MouseLight";
     public static final String PREFERENCE_CATEGORY_MOUSELIGHT_TAGS = "MouseLight_Tags";
     public static final String PREFERENCE_CATEGORY_MUST_HAVE_IMAGE = "MustHaveImage";
-    
     public static final String PREFERENCE_NAME_SAMPLE_ROOTS = "SampleRoots";
 
     public static final String MOUSELIGHT_GROUP_KEY = "group:mouselight";

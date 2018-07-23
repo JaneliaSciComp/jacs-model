@@ -37,7 +37,7 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier, HasResul
     private String message;
     private transient SamplePipelineRun parentRun;
     private transient PipelineResult parentResult;
-    
+
     @JsonIgnore
     public SamplePipelineRun getParentRun() {
         if (parentRun==null && parentResult!=null) {
@@ -192,15 +192,18 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier, HasResul
         if (files==null) throw new IllegalArgumentException("Property cannot be null");
         this.files = files;
     }
-    
-    public void setPurged(Boolean purged) {
-        this.purged = purged;
-    }
 
     public Boolean getPurged() {
         return purged;
     }
 
+    public void setPurged(Boolean purged) {
+        this.purged = purged;
+    }
+
+    /**
+     * Returns the error messages for any non-fatal errors that occured during processing of this result.
+     */
     public String getMessage() {
         return message;
     }

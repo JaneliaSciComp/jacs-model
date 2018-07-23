@@ -5,8 +5,7 @@ import org.janelia.model.domain.enums.NamedEnum;
 public enum MergeAlgorithm implements NamedEnum {
 
 	FLYLIGHT("FlyLight LSM Pair Merge (3/2 to 4 channels)"),
-	FLYLIGHT_ORDERED("FlyLight LSM Pair Merge (Consistent Ordering)"),
-	DISTORTION_CORRECTION_MERGE("FlyLight LSM Pair Merge with Distortion Correction (Consistent Ordering)");
+	FLYLIGHT_ORDERED("FlyLight LSM Pair Merge (Consistent Ordering)");
     
 	private String name;
 	

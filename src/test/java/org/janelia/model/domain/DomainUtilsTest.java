@@ -121,11 +121,9 @@ public class DomainUtilsTest {
         Sample sample = new Sample();
         sample.setId(23L);
         sample.setAge("A");
-        sample.setCompressionType("G");
-        
+
         Assert.assertEquals(23L, DomainUtils.getAttributeValue(sample, "id")); 
-        Assert.assertEquals("A", DomainUtils.getAttributeValue(sample, "age")); 
-        Assert.assertEquals("G", DomainUtils.getAttributeValue(sample, "compressionType"));
+        Assert.assertEquals("A", DomainUtils.getAttributeValue(sample, "age"));
     }
 
     @Test

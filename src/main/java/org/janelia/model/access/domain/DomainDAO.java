@@ -1,26 +1,15 @@
 package org.janelia.model.access.domain;
 
-import static org.janelia.model.access.domain.DomainUtils.abbr;
-
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
+import com.mongodb.*;
+import com.mongodb.client.MongoDatabase;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.model.domain.DomainConstants;
-import org.janelia.model.domain.DomainObject;
-import org.janelia.model.domain.Preference;
-import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.ReverseReference;
+import org.bson.Document;
+import org.janelia.model.domain.*;
 import org.janelia.model.domain.compartments.CompartmentSet;
 import org.janelia.model.domain.enums.OrderStatus;
 import org.janelia.model.domain.enums.PipelineStatus;
@@ -31,22 +20,9 @@ import org.janelia.model.domain.gui.colordepth.ColorDepthResult;
 import org.janelia.model.domain.gui.colordepth.ColorDepthSearch;
 import org.janelia.model.domain.gui.search.Filter;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
-import org.janelia.model.domain.ontology.Annotation;
-import org.janelia.model.domain.ontology.Category;
-import org.janelia.model.domain.ontology.EnumItem;
-import org.janelia.model.domain.ontology.Ontology;
-import org.janelia.model.domain.ontology.OntologyTerm;
-import org.janelia.model.domain.ontology.OntologyTermReference;
+import org.janelia.model.domain.ontology.*;
 import org.janelia.model.domain.orders.IntakeOrder;
-import org.janelia.model.domain.sample.DataSet;
-import org.janelia.model.domain.sample.Image;
-import org.janelia.model.domain.sample.LSMImage;
-import org.janelia.model.domain.sample.LineRelease;
-import org.janelia.model.domain.sample.NeuronFragment;
-import org.janelia.model.domain.sample.NeuronSeparation;
-import org.janelia.model.domain.sample.Sample;
-import org.janelia.model.domain.sample.SampleLock;
-import org.janelia.model.domain.sample.StatusTransition;
+import org.janelia.model.domain.sample.*;
 import org.janelia.model.domain.screen.FlyLine;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
@@ -54,34 +30,17 @@ import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
-import org.janelia.model.security.Group;
-import org.janelia.model.security.GroupRole;
-import org.janelia.model.security.Subject;
-import org.janelia.model.security.User;
-import org.janelia.model.security.UserGroupRole;
+import org.janelia.model.security.*;
+import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.util.TimebasedIdentifierGenerator;
-import org.jongo.Aggregate;
-import org.jongo.Jongo;
-import org.jongo.MongoCollection;
-import org.jongo.MongoCursor;
-import org.jongo.ResultHandler;
+import org.jongo.*;
 import org.jongo.marshall.jackson.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
-import com.mongodb.DBObject;
-import com.mongodb.DuplicateKeyException;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoCredential;
-import com.mongodb.MongoException;
-import com.mongodb.ServerAddress;
-import com.mongodb.WriteConcern;
-import com.mongodb.WriteResult;
+import java.util.*;
+
+import static org.janelia.model.access.domain.DomainUtils.abbr;
 
 /**
  * Data access object for the domain object model.
@@ -121,27 +80,28 @@ public class DomainDAO {
     protected MongoCollection colorDepthSearchCollection;
     protected MongoCollection colorDepthResultCollection;
 
-    public DomainDAO(String serverUrl, String databaseName) throws UnknownHostException {
+    public DomainDAO(String serverUrl, String databaseName) {
         this(serverUrl, databaseName, null, null);
     }
 
-    public DomainDAO(String serverUrl, String databaseName, String username, String password) throws UnknownHostException {
+    public DomainDAO(String serverUrl, String databaseName, String username, String password) {
 
         List<ServerAddress> members = new ArrayList<>();
         for (String serverMember : serverUrl.split(",")) {
             members.add(new ServerAddress(serverMember));
         }
 
+        MongoClientOptions options = MongoClientOptions.builder().writeConcern(WriteConcern.JOURNALED).build();
+
         if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
             MongoCredential credential = MongoCredential.createMongoCRCredential(username, databaseName, password.toCharArray());
-            this.m = new MongoClient(members, Arrays.asList(credential));
+            this.m = new MongoClient(members, Arrays.asList(credential), options);
             log.info("Connected to MongoDB (" + databaseName + "@" + serverUrl + ") as user " + username);
         } else {
-            this.m = new MongoClient(members);
+            this.m = new MongoClient(members, options);
             log.info("Connected to MongoDB (" + databaseName + "@" + serverUrl + ")");
         }
 
-        m.setWriteConcern(WriteConcern.JOURNALED);
         init(m, databaseName);
     }
 
@@ -183,6 +143,11 @@ public class DomainDAO {
 
     }
 
+    public com.mongodb.client.MongoCollection<Document> getNativeCollection(String collectionName) {
+        MongoDatabase db = m.getDatabase(databaseName);
+        return db.getCollection(collectionName);
+    }
+
     public final MongoCollection getCollectionByClass(Class<?> domainClass) {
         String collectionName = DomainUtils.getCollectionName(domainClass);
         return jongo.getCollection(collectionName);
@@ -195,16 +160,12 @@ public class DomainDAO {
         return jongo.getCollection(collectionName);
     }
 
-    public Jongo getJongo() {
-        return jongo;
-    }
-
     public MongoClient getMongo() {
         return m;
     }
 
-    public void setWriteConcern(WriteConcern writeConcern) {
-        m.setWriteConcern(writeConcern);
+    public Jongo getJongo() {
+        return jongo;
     }
 
     // Subjects
@@ -251,18 +212,7 @@ public class DomainDAO {
         if (subject == null) {
             throw new IllegalArgumentException("No such subject: " + subjectKey);
         }
-        Set<String> groups = new HashSet<>();
-        groups.add(subjectKey);
-        if (subject instanceof User) {
-            User user = (User)subject;
-            for(UserGroupRole role : user.getUserGroupRoles()) {
-                if (role.getRole().isRead()) {
-                    groups.add(role.getGroupKey());
-                }
-            }
-        }
-        groups.add(subjectKey);
-        return groups;
+        return SubjectUtils.getReaderSet(subject);
     }
 
     /**
@@ -275,18 +225,7 @@ public class DomainDAO {
         if (subject == null) {
             throw new IllegalArgumentException("No such subject: " + subjectKey);
         }
-        Set<String> groups = new HashSet<>();
-        groups.add(subjectKey);
-        if (subject instanceof User) {
-            User user = (User)subject;
-            for(UserGroupRole role : user.getUserGroupRoles()) {
-                if (role.getRole().isWrite()) {
-                    groups.add(role.getGroupKey());
-                }
-            }
-        }
-        groups.add(subjectKey);
-        return groups;
+        return SubjectUtils.getWriterSet(subject);
     }
 
     public Subject getSubjectByKey(String subjectKey) {
@@ -453,12 +392,15 @@ public class DomainDAO {
     public List<Workspace> getWorkspaces(String subjectKey) {
         log.debug("getWorkspaces({})", subjectKey);
         Set<String> subjects = getReaderSet(subjectKey);
+        List<Workspace> workspaces;
         if (subjects == null) {
-            return toList(treeNodeCollection.find("{class:#}", Workspace.class.getName()).as(Workspace.class));
+            workspaces = toList(treeNodeCollection.find("{class:#}", Workspace.class.getName()).as(Workspace.class));
         }
         else {
-            return toList(treeNodeCollection.find("{class:#,readers:{$in:#}}", Workspace.class.getName(), subjects).as(Workspace.class));
+            workspaces = toList(treeNodeCollection.find("{class:#,readers:{$in:#}}", Workspace.class.getName(), subjects).as(Workspace.class));
         }
+        Collections.sort(workspaces, new DomainObjectComparator(subjectKey));
+        return workspaces;
     }
     
     public Workspace getDefaultWorkspace(String subjectKey) {
@@ -1013,7 +955,9 @@ public class DomainDAO {
     public List<Ontology> getOntologies(String subjectKey) {
         log.debug("getOntologies({})", subjectKey);
         Set<String> subjects = getReaderSet(subjectKey);
-        return toList(ontologyCollection.find("{readers:{$in:#}}", subjects).as(Ontology.class));
+        List<Ontology> ontologies = toList(ontologyCollection.find("{readers:{$in:#}}", subjects).as(Ontology.class));
+        Collections.sort(ontologies, new DomainObjectComparator(subjectKey));
+        return ontologies;
     }
 
     public OntologyTerm getErrorOntologyCategory() {
@@ -1081,12 +1025,15 @@ public class DomainDAO {
     public List<DataSet> getDataSets(String subjectKey) {
         log.debug("getDataSets({})", subjectKey);
         Set<String> subjects = getReaderSet(subjectKey);
+        List<DataSet> dataSets;
         if (subjects == null) {
-            return toList(dataSetCollection.find().as(DataSet.class));
+            dataSets = toList(dataSetCollection.find().as(DataSet.class));
         }
         else {
-            return toList(dataSetCollection.find("{readers:{$in:#}}", subjects).as(DataSet.class));
+            dataSets = toList(dataSetCollection.find("{readers:{$in:#}}", subjects).as(DataSet.class));
         }
+        Collections.sort(dataSets, new DomainObjectComparator(subjectKey));
+        return dataSets;
     }
 
     public List<DataSet> getUserDataSets(String subjectKey) {
@@ -1114,7 +1061,9 @@ public class DomainDAO {
 
     public List<DataSet> getDataSetsWithColorDepthImages(String subjectKey, String alignmentSpace) {
         // subjectKey is ignored, because all users can known about the existence of all data sets
-        return toList(dataSetCollection.find("{'colorDepthCounts."+alignmentSpace+"':{$exists:1}}").as(DataSet.class));
+        List<DataSet> dataSets = toList(dataSetCollection.find("{'colorDepthCounts."+alignmentSpace+"':{$exists:1}}").as(DataSet.class));
+        Collections.sort(dataSets, new DomainObjectComparator(subjectKey));
+        return dataSets;
     }
 
     public DataSet createDataSet(String subjectKey, DataSet dataSet) throws Exception {
@@ -1897,9 +1846,10 @@ public class DomainDAO {
             throw new IllegalArgumentException("Tree node not found: " + nodeArg.getId());
         }
         log.debug("addChildren({}, {}, references={}, index={})", subjectKey, node, abbr(references), index);
-        Set<String> refs = new HashSet<>();
-        for (Reference reference : node.getChildren()) {
-            refs.add(reference.toString());
+        // Keep track of children in a set for faster 'contains' lookups
+        Set<Reference> childRefs = new HashSet<>();
+        for (Reference ref : node.getChildren()) {
+            childRefs.add(ref);
         }
         int i = 0;
         List<Reference> added = new ArrayList<>();
@@ -1910,7 +1860,7 @@ public class DomainDAO {
             if (ref.getTargetClassName() == null) {
                 throw new IllegalArgumentException("Cannot add child without a target class name");
             }
-            if (refs.contains(ref.toString())) {
+            if (childRefs.contains(ref)) {
                 log.trace("{} already contains {}, skipping add." , node, ref);
                 continue;
             }
@@ -1921,6 +1871,7 @@ public class DomainDAO {
                 node.addChild(ref);
             }
             added.add(ref);
+            childRefs.add(ref);
             i++;
         }
         saveImpl(subjectKey, node);
@@ -1991,7 +1942,7 @@ public class DomainDAO {
         log.debug("updateProperty({}, {}, name={}, value={})",subjectKey, Reference.createFor(domainObject), propName, propValue);
         String collectionName = DomainUtils.getCollectionName(className);
         MongoCollection collection = getCollectionByName(collectionName);
-        WriteResult wr = collection.update("{_id:#,writers:{$in:#}}", domainObject.getId(), subjects).with("{$set: {" + propName + ":#, updatedDate:#}}", propValue, new Date());
+        WriteResult wr = collection.update("{_id:#,writers:{$in:#}}", domainObject.getId(), subjects).with("{$set: {'" + propName + "':#, updatedDate:#}}", propValue, new Date());
         if (wr.getN() != 1) {
             throw new Exception("Could not update " + collectionName + "#" + domainObject.getId() + "." + propName);
         }
@@ -2390,12 +2341,15 @@ public class DomainDAO {
     public List<LineRelease> getLineReleases(String subjectKey) {
         log.debug("getLineReleases({})", subjectKey);
         Set<String> subjects = getReaderSet(subjectKey);
+        List<LineRelease> releases;
         if (subjects == null) {
-            return toList(releaseCollection.find().as(LineRelease.class));
+            releases = toList(releaseCollection.find().as(LineRelease.class));
         }
         else {
-            return toList(releaseCollection.find("{readers:{$in:#}}", subjects).as(LineRelease.class));
+            releases = toList(releaseCollection.find("{readers:{$in:#}}", subjects).as(LineRelease.class));
         }
+        Collections.sort(releases, new DomainObjectComparator(subjectKey));
+        return releases;
     }
 
     public LineRelease createLineRelease(String subjectKey, String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception {

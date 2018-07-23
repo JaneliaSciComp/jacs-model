@@ -33,7 +33,7 @@ public class DomainObjectTests {
         Assert.assertEquals("Annotation",(new Annotation()).getType());
         Assert.assertEquals("Compartment Set",(new CompartmentSet()).getType());
         Assert.assertEquals("Data Set",(new DataSet()).getType());
-        Assert.assertEquals("Filter",(new Filter()).getType());
+        Assert.assertEquals("Search",(new Filter()).getType());
         Assert.assertEquals("Fly Line",(new FlyLine()).getType());
         Assert.assertEquals("Image",(new Image()).getType());
         Assert.assertEquals("LSM Image",(new LSMImage()).getType());

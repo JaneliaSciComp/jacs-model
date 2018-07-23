@@ -134,11 +134,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="sage_synced_b",label="SAGE Synchronized",facet="sage_synced_b")
     private Boolean sageSynced = false;
 
-    @SearchAttribute(key="comp_txt",label="Stack Compression")
-    private String compressionType;
-
-    @SearchAttribute(key="ncomp_txt",label="Separation Compression")
-    private String separationCompressionType;
+    private CompressionStrategy compressionStrategy;
 
     @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     @SAGEAttribute(cvName="image_query", termName="create_date")
@@ -161,7 +157,19 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     @SearchAttribute(key="usage_bytes_l",label="Disk Space Usage (Bytes)")
     private Long diskSpaceUsage;
-    
+
+    @SAGEAttribute(cvName="light_imagery", termName="probe_set")
+    @SearchAttribute(key="probeset_id_txt",label="Probe Set Identifier")
+    private String probeSetIdentifier;
+
+    @SAGEAttribute(cvName="image_query", termName="probe_set_def")
+    @SearchAttribute(key="probeset_txt",label="Probe Set")
+    private String probeSet;
+
+    @SAGEAttribute(cvName="light_imagery", termName="animal_id")
+    @SearchAttribute(key="animal_id_s",label="User's Animal Id")
+    private String animalId;
+
     @JsonProperty
     public List<ObjectiveSample> getObjectiveSamples() {
         return objectiveSamples;
@@ -454,21 +462,58 @@ public class Sample extends AbstractDomainObject implements IsParent {
     public boolean isSampleSageSynced() {
         return getSageSynced()!=null && getSageSynced();
     }
-    
-    public String getCompressionType() {
-        return compressionType;
+
+    public CompressionStrategy getCompressionStrategy() {
+        return compressionStrategy;
     }
 
-    public void setCompressionType(String compressionType) {
-        this.compressionType = compressionType;
+    public void setCompressionStrategy(CompressionStrategy compressionStrategy) {
+        this.compressionStrategy = compressionStrategy;
     }
 
+    @JsonIgnore
+    @SearchAttribute(key="comp_txt",label="Compression for Unaligned Stacks")
+    public String getUnalignedCompressionType() {
+        if (compressionStrategy==null) return null;
+        return compressionStrategy.getUnaligned();
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="comp_txt",label="Compression for Aligned Stacks")
+    public String getAlignedCompressionType() {
+        if (compressionStrategy==null) return null;
+        return compressionStrategy.getAligned();
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="ncomp_txt",label="Compression for Separations")
     public String getSeparationCompressionType() {
-        return separationCompressionType;
+        if (compressionStrategy==null) return null;
+        return compressionStrategy.getSeparation();
     }
 
-    public void setSeparationCompressionType(String separationCompressionType) {
-        this.separationCompressionType = separationCompressionType;
+    @JsonIgnore
+    public void setUnalignedCompressionType(String compressionType) {
+        if (compressionStrategy==null) {
+            this.compressionStrategy = new CompressionStrategy();
+        }
+        compressionStrategy.setUnaligned(compressionType);
+    }
+
+    @JsonIgnore
+    public void setAlignedCompressionType(String compressionType) {
+        if (compressionStrategy==null) {
+            this.compressionStrategy = new CompressionStrategy();
+        }
+        compressionStrategy.setAligned(compressionType);
+    }
+
+    @JsonIgnore
+    public void setSeparationCompressionType(String compressionType) {
+        if (compressionStrategy==null) {
+            this.compressionStrategy = new CompressionStrategy();
+        }
+        compressionStrategy.setSeparation(compressionType);
     }
 
     public Date getTmogDate() {
@@ -535,4 +580,27 @@ public class Sample extends AbstractDomainObject implements IsParent {
         return diskSpaceUsage==null ? null : DomainUtils.formatBytesForHumans(diskSpaceUsage);
     }
 
+    public String getProbeSetIdentifier() {
+        return probeSetIdentifier;
+    }
+
+    public void setProbeSetIdentifier(String probeSetIdentifier) {
+        this.probeSetIdentifier = probeSetIdentifier;
+    }
+
+    public String getProbeSet() {
+        return probeSet;
+    }
+
+    public void setProbeSet(String probeSet) {
+        this.probeSet = probeSet;
+    }
+
+    public String getAnimalId() {
+        return animalId;
+    }
+
+    public void setAnimalId(String animalId) {
+        this.animalId = animalId;
+    }
 }

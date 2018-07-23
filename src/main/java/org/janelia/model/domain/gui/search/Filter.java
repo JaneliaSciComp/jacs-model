@@ -15,8 +15,8 @@ import org.janelia.model.domain.support.SearchType;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName="filter",label="Filter")
-@SearchType(key="filter",label="Filter")
+@MongoMapped(collectionName="filter",label="Search")
+@SearchType(key="filter",label="Search")
 public class Filter extends AbstractDomainObject implements IsParent, Filtering {
 
     @SearchAttribute(key="search_class_txt",label="Search Class")

@@ -357,6 +357,18 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="linehide_txt",label="Hide Line?",display=false)
     private String lineHide;
 
+    @SAGEAttribute(cvName="light_imagery", termName="probe_set")
+    @SearchAttribute(key="probeset_id_txt",label="Probe Set Identifier",facet="probeset_id_s")
+    private String probeSetIdentifier;
+
+    @SAGEAttribute(cvName="image_query", termName="probe_set_def")
+    @SearchAttribute(key="probeset_txt",label="Probe Set")
+    private String probeSet;
+
+    @SAGEAttribute(cvName="light_imagery", termName="animal_id")
+    @SearchAttribute(key="animal_id_s",label="User's Animal Id")
+    private String animalId;
+
 	public Reference getSample() {
         return sampleRef;
     }
@@ -1023,5 +1035,29 @@ public class LSMImage extends Image implements HasAnatomicalArea {
 
     public void setLineHide(String lineHide) {
         this.lineHide = lineHide;
+    }
+
+    public String getProbeSetIdentifier() {
+        return probeSetIdentifier;
+    }
+
+    public void setProbeSetIdentifier(String probeSetIdentifier) {
+        this.probeSetIdentifier = probeSetIdentifier;
+    }
+
+    public String getProbeSet() {
+        return probeSet;
+    }
+
+    public void setProbeSet(String probeSet) {
+        this.probeSet = probeSet;
+    }
+
+    public String getAnimalId() {
+        return animalId;
+    }
+
+    public void setAnimalId(String animalId) {
+        this.animalId = animalId;
     }
 }

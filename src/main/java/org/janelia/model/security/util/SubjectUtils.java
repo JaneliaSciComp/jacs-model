@@ -5,6 +5,9 @@ import org.janelia.model.domain.enums.SubjectRole;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Utility methods for dealing with Subjects (User and Groups)
  *
@@ -38,4 +41,27 @@ public class SubjectUtils {
     public static boolean isAdmin(Subject subject) {
         return subjectIsInGroup(subject, SubjectRole.Admin.getRole());
     }
+
+    public static Set<String> getReaderSet(Subject subject) {
+        Set<String> set = new HashSet<>();
+        if (subject==null) return set;
+        set.add(subject.getKey());
+        if (subject instanceof User) {
+            User user = (User)subject;
+            set.addAll(user.getReadGroups());
+        }
+        return set;
+    }
+
+    public static Set<String> getWriterSet(Subject subject) {
+        Set<String> set = new HashSet<>();
+        if (subject==null) return set;
+        set.add(subject.getKey());
+        if (subject instanceof User) {
+            User user = (User)subject;
+            set.addAll(user.getWriteGroups());
+        }
+        return set;
+    }
+
 }
