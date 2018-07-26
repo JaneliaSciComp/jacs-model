@@ -2371,12 +2371,18 @@ public class DomainDAO {
 
         log.debug("updateDataSetDiskspaceUsage({})", dataSetIdentifier);
         
-        Aggregate.ResultsIterator<Long> results = sampleCollection.aggregate("{$match: {\"dataSet\": \"" + dataSetIdentifier + "\"}}")
+        Aggregate.ResultsIterator<Long> results = sampleCollection
+                .aggregate("{$match: {\"dataSet\": \"" + dataSetIdentifier + "\"}}")
                 .and("{$group: {_id:\"sum\",count:{$sum:\"$diskSpaceUsage\"}}}").map(new ResultHandler<Long>() {
                     @Override
                     public Long map(DBObject result) {
                         log.trace("Got result: {}", result);
-                        return (Long)result.get("count");
+                        // Count is usually a Long, but can be an Integer when it's zero. Let's play it safe.
+                        Number count = (Number)result.get("count");
+                        if (count==null) {
+                            return 0L;
+                        }
+                        return count.longValue();
                     }
                 });
 
