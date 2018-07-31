@@ -365,6 +365,10 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="probeset_txt",label="Probe Set")
     private String probeSet;
 
+    @SAGEAttribute(cvName="light_imagery", termName="animal_id")
+    @SearchAttribute(key="animal_id_s",label="User's Animal Id")
+    private String animalId;
+
 	public Reference getSample() {
         return sampleRef;
     }
@@ -1047,5 +1051,13 @@ public class LSMImage extends Image implements HasAnatomicalArea {
 
     public void setProbeSet(String probeSet) {
         this.probeSet = probeSet;
+    }
+
+    public String getAnimalId() {
+        return animalId;
+    }
+
+    public void setAnimalId(String animalId) {
+        this.animalId = animalId;
     }
 }

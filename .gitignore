@@ -3,6 +3,4 @@
 hs_err_pid*
 out
 .gradle
-gradle
-gradlew*
-
+build

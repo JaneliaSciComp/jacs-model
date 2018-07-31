@@ -166,6 +166,10 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="probeset_txt",label="Probe Set")
     private String probeSet;
 
+    @SAGEAttribute(cvName="light_imagery", termName="animal_id")
+    @SearchAttribute(key="animal_id_s",label="User's Animal Id")
+    private String animalId;
+
     @JsonProperty
     public List<ObjectiveSample> getObjectiveSamples() {
         return objectiveSamples;
@@ -588,5 +592,13 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     public void setProbeSet(String probeSet) {
         this.probeSet = probeSet;
+    }
+
+    public String getAnimalId() {
+        return animalId;
+    }
+
+    public void setAnimalId(String animalId) {
+        this.animalId = animalId;
     }
 }
