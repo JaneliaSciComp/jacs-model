@@ -40,6 +40,8 @@ public class Image extends AbstractDomainObject implements HasRelativeFiles, IsA
     @SearchAttribute(key="alignment_s",label="Alignment Space", facet="alignment_s")
     private String alignmentSpace;
 
+    private Boolean userDataFlag;
+
     private Map<FileType, String> files = new HashMap<>();
 
     @Override
@@ -89,6 +91,14 @@ public class Image extends AbstractDomainObject implements HasRelativeFiles, IsA
 
     public void setAlignmentSpace(String alignmentSpace) {
         this.alignmentSpace = alignmentSpace;
+    }
+
+    public Boolean getUserDataFlag() {
+        return userDataFlag;
+    }
+
+    public void setUserDataFlag(Boolean userDataFlag) {
+        this.userDataFlag = userDataFlag;
     }
 
     @Override
