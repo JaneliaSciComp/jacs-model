@@ -3,6 +3,7 @@ package org.janelia.model.domain.compute;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.support.MongoMapped;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,7 +18,7 @@ public class ContainerizedService extends AbstractDomainObject {
     private String version;
     private String description;
     private String harnessClass;
-    private List<ContainerizedApp> apps;
+    private List<ContainerizedApp> apps = new ArrayList<>();
 
     public String getName() {
         return name;
@@ -56,6 +57,7 @@ public class ContainerizedService extends AbstractDomainObject {
     }
 
     public void setApps(List<ContainerizedApp> apps) {
+        if (apps==null) throw new IllegalArgumentException("Property cannot be null");
         this.apps = apps;
     }
 
