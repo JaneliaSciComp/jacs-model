@@ -37,6 +37,7 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier, HasResul
     private Boolean purged = false;
     private String message;
     private Reference containerRef;
+    private String containerApp;
     private transient SamplePipelineRun parentRun;
     private transient PipelineResult parentResult;
 
@@ -220,5 +221,13 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier, HasResul
 
     public void setContainerRef(Reference containerRef) {
         this.containerRef = containerRef;
+    }
+
+    public String getContainerApp() {
+        return containerApp;
+    }
+
+    public void setContainerApp(String containerApp) {
+        this.containerApp = containerApp;
     }
 }
