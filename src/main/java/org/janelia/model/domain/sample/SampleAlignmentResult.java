@@ -24,6 +24,7 @@ public class SampleAlignmentResult extends PipelineResult implements HasAnatomic
     private String alignmentSpace;
     private String boundingBox;
     private Map<AlignmentScoreType, String> scores = new HashMap<>();
+    private Long bridgeParentAlignmentId;
 
     @Override
     public String getAnatomicalArea() {
@@ -101,5 +102,13 @@ public class SampleAlignmentResult extends PipelineResult implements HasAnatomic
     public void setScores(Map<AlignmentScoreType, String> scores) {
         if (scores==null) throw new IllegalArgumentException("Property cannot be null");
         this.scores = scores;
+    }
+
+    public Long getBridgeParentAlignmentId() {
+        return bridgeParentAlignmentId;
+    }
+
+    public void setBridgeParentAlignmentId(Long bridgeParentAlignmentId) {
+        this.bridgeParentAlignmentId = bridgeParentAlignmentId;
     }
 }

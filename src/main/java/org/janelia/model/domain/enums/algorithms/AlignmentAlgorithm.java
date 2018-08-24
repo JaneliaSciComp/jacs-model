@@ -2,6 +2,10 @@ package org.janelia.model.domain.enums.algorithms;
 
 import org.janelia.model.domain.enums.NamedEnum;
 
+/**
+ * @deprecated "This is no longer used. Instead, you should use a ConstainerizedSevice."
+ */
+@Deprecated()
 public enum AlignmentAlgorithm implements NamedEnum {
 
 	CENTRAL("Peng Central Brain 40x Alignment"),

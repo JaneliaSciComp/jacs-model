@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasIdentifier;
 import org.janelia.model.domain.interfaces.HasName;
@@ -35,6 +36,8 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier, HasResul
     private Map<FileType, String> files = new HashMap<>();
     private Boolean purged = false;
     private String message;
+    private Reference containerRef;
+    private String containerApp;
     private transient SamplePipelineRun parentRun;
     private transient PipelineResult parentResult;
 
@@ -210,5 +213,21 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier, HasResul
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public Reference getContainerRef() {
+        return containerRef;
+    }
+
+    public void setContainerRef(Reference containerRef) {
+        this.containerRef = containerRef;
+    }
+
+    public String getContainerApp() {
+        return containerApp;
+    }
+
+    public void setContainerApp(String containerApp) {
+        this.containerApp = containerApp;
     }
 }

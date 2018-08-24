@@ -2313,6 +2313,19 @@ public class DomainDAO extends BaseDAO {
         return releases;
     }
 
+    public List<LineRelease> getLineReleasesByName(String subjectKey) {
+        log.debug("getLineReleasesByName({})", subjectKey);
+        List<LineRelease> releases;
+        if (subjectKey == null) {
+            releases = toList(releaseCollection.find().as(LineRelease.class));
+        }
+        else {
+            releases = toList(releaseCollection.find("{name: #}", subjectKey).as(LineRelease.class));
+        }
+        Collections.sort(releases, new DomainObjectComparator(subjectKey));
+        return releases;
+    }
+
     public LineRelease createLineRelease(String subjectKey, String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception {
         log.debug("createLineRelease({}, name={}, releaseDate={}, lagTimeMonths={}, dataSets={})", subjectKey, name, dataSets);
         LineRelease release = new LineRelease();
@@ -2332,12 +2345,18 @@ public class DomainDAO extends BaseDAO {
 
         log.debug("updateDataSetDiskspaceUsage({})", dataSetIdentifier);
         
-        Aggregate.ResultsIterator<Long> results = sampleCollection.aggregate("{$match: {\"dataSet\": \"" + dataSetIdentifier + "\"}}")
+        Aggregate.ResultsIterator<Long> results = sampleCollection
+                .aggregate("{$match: {\"dataSet\": \"" + dataSetIdentifier + "\"}}")
                 .and("{$group: {_id:\"sum\",count:{$sum:\"$diskSpaceUsage\"}}}").map(new ResultHandler<Long>() {
                     @Override
                     public Long map(DBObject result) {
                         log.trace("Got result: {}", result);
-                        return (Long)result.get("count");
+                        // Count is usually a Long, but can be an Integer when it's zero. Let's play it safe.
+                        Number count = (Number)result.get("count");
+                        if (count==null) {
+                            return 0L;
+                        }
+                        return count.longValue();
                     }
                 });
 
