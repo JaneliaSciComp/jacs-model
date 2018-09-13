@@ -38,6 +38,7 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier, HasResul
     private String message;
     private Reference containerRef;
     private String containerApp;
+    private Integer relativeOrder;
     private transient SamplePipelineRun parentRun;
     private transient PipelineResult parentResult;
 
@@ -229,5 +230,13 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier, HasResul
 
     public void setContainerApp(String containerApp) {
         this.containerApp = containerApp;
+    }
+
+    public Integer getRelativeOrder() {
+        return relativeOrder;
+    }
+
+    public void setRelativeOrder(Integer relativeOrder) {
+        this.relativeOrder = relativeOrder;
     }
 }

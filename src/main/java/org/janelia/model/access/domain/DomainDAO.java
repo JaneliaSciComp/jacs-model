@@ -29,7 +29,6 @@ import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.*;
 import org.janelia.model.security.util.SubjectUtils;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.jongo.Aggregate;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
@@ -1050,7 +1049,7 @@ public class DomainDAO extends BaseDAO {
     // Sample locks
     
     /**
-     * Attempts to lock a sample for the given task id an owner. The caller must check the return value of this method. If null is returned,
+     * Attempts to lock a sample for the given task id and owner. The caller must check the return value of this method. If null is returned,
      * then the sample could not be locked. Only if a non-null SampleLock is returned can the sample be considered locked.
      * @param subjectKey
      * @param sampleId
@@ -1136,7 +1135,7 @@ public class DomainDAO extends BaseDAO {
         log.debug("Task {} ({}) removed lock on {}", taskId, subjectKey, sampleId);
         return true;
     }
-    
+
     // Samples by data set
 
     public List<Sample> getActiveSamplesByDataSet(String subjectKey, String dataSetIdentifier) {

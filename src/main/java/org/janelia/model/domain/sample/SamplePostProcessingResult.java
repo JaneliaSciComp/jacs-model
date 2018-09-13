@@ -44,6 +44,14 @@ public class SamplePostProcessingResult extends PipelineResult implements HasFil
 		return null;
 	}
 
+	@JsonIgnore
+	public void addGroup(FileGroup group) {
+		if (getGroupKeys().contains(group.getKey())) {
+			throw new IllegalArgumentException("Duplicate group key: "+group.getKey());
+		}
+		groups.add(group);
+	}
+
     @Override
 	public List<FileGroup> getGroups() {
 		return groups;

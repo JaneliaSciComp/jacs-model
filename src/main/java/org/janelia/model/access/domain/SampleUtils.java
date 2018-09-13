@@ -13,6 +13,7 @@ import java.util.TreeSet;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.enums.AlignmentScoreType;
+import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasAnatomicalArea;
 import org.janelia.model.domain.interfaces.HasFileGroups;
 import org.janelia.model.domain.interfaces.HasFiles;

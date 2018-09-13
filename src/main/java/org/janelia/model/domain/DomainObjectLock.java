@@ -1,21 +1,18 @@
-package org.janelia.model.domain.sample;
+package org.janelia.model.domain;
 
-import java.util.Date;
-
-import org.janelia.model.domain.Reference;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.janelia.model.domain.support.MongoMapped;
 import org.jongo.marshall.jackson.oid.MongoId;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import java.util.Date;
 
 /**
- * Database lock for running Sample pipelines. Only one pipeline can run on a sample on a given time.
- * In other words, pipelines lock the sample from start to finish.
+ * Database lock for writing to a domain object. Lock the object before fetching it.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName="sampleLock",label="Sample Lock")
-public class SampleLock {
+@MongoMapped(collectionName="objectLock",label="Domain Object Lock")
+public class DomainObjectLock {
     
     @MongoId
     private String id;
@@ -27,7 +24,7 @@ public class SampleLock {
     
     private Long taskId;
     
-    private Reference sampleRef;
+    private Reference objectRef;
     
     private String description;
 
@@ -63,12 +60,12 @@ public class SampleLock {
         this.taskId = taskId;
     }
 
-    public Reference getSampleRef() {
-        return sampleRef;
+    public Reference getObjectRef() {
+        return objectRef;
     }
 
-    public void setSampleRef(Reference sampleRef) {
-        this.sampleRef = sampleRef;
+    public void setObjectRef(Reference objectRef) {
+        this.objectRef = objectRef;
     }
 
     public String getDescription() {
@@ -103,9 +100,9 @@ public class SampleLock {
             builder.append(taskId);
             builder.append(", ");
         }
-        if (sampleRef != null) {
-            builder.append("sampleRef=");
-            builder.append(sampleRef);
+        if (objectRef != null) {
+            builder.append("objectRef=");
+            builder.append(objectRef);
             builder.append(", ");
         }
         if (description != null) {

@@ -35,6 +35,7 @@ public class WorkflowImage extends AbstractDomainObject implements HasAnatomical
     // Used for normalization
     private String channelSpec;
     private String channelColors;
+    private String channelDyeNames;
 
     // Used for distortion correction
     private String microscope;
@@ -55,6 +56,8 @@ public class WorkflowImage extends AbstractDomainObject implements HasAnatomical
 
     /** Copy constructor */
     public WorkflowImage(WorkflowImage image) {
+        this.setName(image.getName());
+        this.setOwnerKey(image.getOwnerKey());
         this.sampleRef = image.getSample();
         this.objective = image.getObjective();
         this.imageSize = image.getImageSize();
@@ -72,6 +75,8 @@ public class WorkflowImage extends AbstractDomainObject implements HasAnatomical
 
     /** Copy constructor */
     public WorkflowImage(LSMImage lsm) {
+        this.setName(lsm.getName());
+        this.setOwnerKey(lsm.getOwnerKey());
         this.sampleRef = lsm.getSample();
         this.objective = lsm.getObjective();
         this.imageSize = lsm.getImageSize();
@@ -80,6 +85,7 @@ public class WorkflowImage extends AbstractDomainObject implements HasAnatomical
         this.tile = lsm.getTile();
         this.channelSpec = lsm.getChanSpec();
         this.channelColors = lsm.getChannelColors();
+        this.channelDyeNames = lsm.getChannelDyeNames();
         this.microscope = lsm.getMicroscope();
         this.captureDate = lsm.getCaptureDate();
         this.gender = lsm.getGender();
@@ -182,6 +188,14 @@ public class WorkflowImage extends AbstractDomainObject implements HasAnatomical
 
     public void setChannelColors(String channelColors) {
         this.channelColors = channelColors;
+    }
+
+    public String getChannelDyeNames() {
+        return channelDyeNames;
+    }
+
+    public void setChannelDyeNames(String channelDyeNames) {
+        this.channelDyeNames = channelDyeNames;
     }
 
     @Override

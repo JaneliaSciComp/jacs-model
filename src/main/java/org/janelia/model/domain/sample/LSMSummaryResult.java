@@ -1,13 +1,9 @@
 package org.janelia.model.domain.sample;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.interfaces.HasFileGroups;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.*;
 
 /**
  * Summary files for all of the LSMs in an ObjectiveSample.
@@ -15,10 +11,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-
 public class LSMSummaryResult extends PipelineResult implements HasFileGroups {
 
     private List<FileGroup> groups = new ArrayList<>();
+    private Map<String,String> brightnessCompensation = new HashMap<>();
 
     @Override
     @JsonIgnore
@@ -58,5 +54,12 @@ public class LSMSummaryResult extends PipelineResult implements HasFileGroups {
         this.groups = groups;
     }
 
+    public Map<String, String> getBrightnessCompensation() {
+        return brightnessCompensation;
+    }
 
+    public void setBrightnessCompensation(Map<String, String> brightnessCompensation) {
+        if (brightnessCompensation==null) throw new IllegalArgumentException("Property cannot be null");
+        this.brightnessCompensation = brightnessCompensation;
+    }
 }

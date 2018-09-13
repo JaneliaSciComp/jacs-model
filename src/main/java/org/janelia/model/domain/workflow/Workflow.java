@@ -16,6 +16,7 @@ public class Workflow extends AbstractDomainObject {
 
     private List<Reference> tasks = new ArrayList<>();
     private Map<Long,Set<Long>> edges = new HashMap<>();
+    private Map<String,Object> globals = new HashMap<>();
 
     public List<Reference> getTasks() {
         return tasks;
@@ -33,5 +34,13 @@ public class Workflow extends AbstractDomainObject {
     public void setEdges(Map<Long, Set<Long>> edges) {
         if (edges==null) throw new IllegalArgumentException("Property cannot be null");
         this.edges = edges;
+    }
+
+    public Map<String, Object> getGlobals() {
+        return globals;
+    }
+
+    public void setGlobals(Map<String, Object> globals) {
+        this.globals = globals;
     }
 }

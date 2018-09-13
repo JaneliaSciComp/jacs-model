@@ -248,6 +248,17 @@ public class Sample extends AbstractDomainObject implements IsParent {
 		return Collections.unmodifiableList(refs);
 	}
 
+    @JsonIgnore
+    public SamplePipelineRun getRunById(Long pipelineRunId) {
+        for(ObjectiveSample objectiveSample : getObjectiveSamples()) {
+            SamplePipelineRun run = objectiveSample.getRunById(pipelineRunId);
+            if (run!=null) {
+                return run;
+            }
+        }
+        return null;
+    }
+
     public String getAge() {
         return age;
     }

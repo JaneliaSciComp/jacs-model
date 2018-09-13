@@ -49,7 +49,7 @@ public class WorkflowDAO extends BaseDAO {
 
         // Ensure all tasks have been persisted
         for (WorkflowTask workflowTask : dag.getNodes()) {
-            workflowTask.setWorkflowId(getNewId());
+            workflowTask.setWorkflowId(workflow.getId());
             saveTask(workflowTask);
         }
 
