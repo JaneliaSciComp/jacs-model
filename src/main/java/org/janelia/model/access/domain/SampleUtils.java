@@ -314,7 +314,7 @@ public class SampleUtils {
         }
 
         if (compression==null) {
-            compression = DomainConstants.VALUE_COMPRESSION_LOSSLESS;
+            compression = DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS;
         }
 
         return compression;
