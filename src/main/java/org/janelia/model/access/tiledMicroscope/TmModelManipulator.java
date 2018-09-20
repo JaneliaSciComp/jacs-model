@@ -202,13 +202,14 @@ public class TmModelManipulator {
         rtnVal.setParentId(parentAnnotationId);
         rtnVal.setId(idSource.next());
 
-        // If non-root, add this as a child of its parent.
+        // If non-root, add this as a child of its parent, and set its radius, too
         if (parentAnnotationId != null) {
             TmGeoAnnotation parent = tmNeuronMetadata.getGeoAnnotationMap().get(parentAnnotationId);
             // Parent might be the neuron itself, if this is a root.
             // Otherwise, ensure the inter-annotation linkage.
             if (parent != null) {
                 parent.addChild(rtnVal);
+                rtnVal.setRadius(parent.getRadius());
             }
         }
 		// Handle root geo annotations.
