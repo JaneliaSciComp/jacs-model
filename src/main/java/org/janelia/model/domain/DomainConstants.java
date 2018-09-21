@@ -13,8 +13,9 @@ public class DomainConstants {
 
     public static final String VALUE_COMPRESSION_LOSSLESS = "Lossless";
     public static final String VALUE_COMPRESSION_LOSSLESS_AND_H5J = "Lossless and H5J";
-    public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS_AND_PBD = "Visually Lossless and PBD";
+    public static final String VALUE_COMPRESSION_LOSSLESS_AND_H5J_12BIT = "Lossless and H5J (12-bit)";
     public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS = "Visually Lossless";
+    public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS_12BIT = "Visually Lossless (12-bit)";
 
     public static final String NO_CONSENSUS = "No Consensus";
 

@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.access.domain.SampleUtils;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.interfaces.IsParent;
@@ -470,24 +471,42 @@ public class Sample extends AbstractDomainObject implements IsParent {
     }
 
     @JsonIgnore
-    @SearchAttribute(key="comp_txt",label="Compression for Unaligned Stacks")
     public String getUnalignedCompressionType() {
         if (compressionStrategy==null) return null;
         return compressionStrategy.getUnaligned();
     }
 
     @JsonIgnore
-    @SearchAttribute(key="comp_txt",label="Compression for Aligned Stacks")
     public String getAlignedCompressionType() {
         if (compressionStrategy==null) return null;
         return compressionStrategy.getAligned();
     }
 
     @JsonIgnore
-    @SearchAttribute(key="ncomp_txt",label="Compression for Separations")
     public String getSeparationCompressionType() {
         if (compressionStrategy==null) return null;
         return compressionStrategy.getSeparation();
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="comp_unaligned_txt",label="Compression for Unaligned Stacks")
+    public String getUnalignedCompressionLabel() {
+        String type = getUnalignedCompressionType();
+        return type==null?null:SampleUtils.getCompressionLabel(type);
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="comp_aligned_txt",label="Compression for Aligned Stacks")
+    public String getAlignedCompressionLabel() {
+        String type = getAlignedCompressionType();
+        return type==null?null:SampleUtils.getCompressionLabel(type);
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="comp_sep_txt",label="Compression for Separations")
+    public String getSeparationCompressionLabel() {
+        String type = getSeparationCompressionType();
+        return type==null?null:SampleUtils.getCompressionLabel(type);
     }
 
     @JsonIgnore

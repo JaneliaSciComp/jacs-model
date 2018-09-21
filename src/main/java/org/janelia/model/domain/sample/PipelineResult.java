@@ -38,6 +38,7 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier, HasResul
     private String message;
     private Reference containerRef;
     private String containerApp;
+    private String compressionType;
     private transient SamplePipelineRun parentRun;
     private transient PipelineResult parentResult;
 
@@ -229,5 +230,13 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier, HasResul
 
     public void setContainerApp(String containerApp) {
         this.containerApp = containerApp;
+    }
+
+    public String getCompressionType() {
+        return compressionType;
+    }
+
+    public void setCompressionType(String compressionType) {
+        this.compressionType = compressionType;
     }
 }

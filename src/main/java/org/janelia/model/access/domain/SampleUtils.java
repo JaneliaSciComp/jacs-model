@@ -278,7 +278,8 @@ public class SampleUtils {
         }
 
         if (compression==null) {
-            compression = DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS;
+            // Default
+            compression = DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS_12BIT;
         }
 
         return compression;
@@ -296,7 +297,8 @@ public class SampleUtils {
         }
 
         if (compression==null) {
-            compression = DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS;
+            // Default
+            compression = DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS_12BIT;
         }
 
         return compression;
@@ -314,17 +316,32 @@ public class SampleUtils {
         }
 
         if (compression==null) {
-            compression = DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS;
+            // Default
+            compression = DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS_12BIT;
         }
 
         return compression;
     }
 
     public static boolean isLossless(String compression) {
-        return (compression.equals(DomainConstants.VALUE_COMPRESSION_LOSSLESS_AND_H5J) || compression.equals(DomainConstants.VALUE_COMPRESSION_LOSSLESS));
+        return (compression.equals(DomainConstants.VALUE_COMPRESSION_LOSSLESS_AND_H5J) ||
+                compression.equals(DomainConstants.VALUE_COMPRESSION_LOSSLESS_AND_H5J_12BIT) ||
+                compression.equals(DomainConstants.VALUE_COMPRESSION_LOSSLESS));
     }
 
     public static boolean isVisuallyLossless(String compression) {
-        return (compression.equals(DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS) || compression.equals(DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS_AND_PBD));
+        return (compression.equals(DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS) ||
+                compression.equals(DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS_12BIT));
+    }
+
+    public static String getCompressionLabel(String compression) {
+        switch (compression) {
+            case DomainConstants.VALUE_COMPRESSION_LOSSLESS: return "Lossless";
+            case DomainConstants.VALUE_COMPRESSION_LOSSLESS_AND_H5J: return "Lossless and H5J (8-bit)";
+            case DomainConstants.VALUE_COMPRESSION_LOSSLESS_AND_H5J_12BIT: return "Lossless and H5J (12-bit)";
+            case DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS: return "Visually Lossless (8-bit)";
+            case DomainConstants.VALUE_COMPRESSION_VISUALLY_LOSSLESS_12BIT: return "Visually Lossless (12-bit)";
+            default: throw new IllegalArgumentException("Not a valid compression type: "+compression);
+        }
     }
 }
