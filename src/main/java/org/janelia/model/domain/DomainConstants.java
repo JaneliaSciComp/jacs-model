@@ -41,6 +41,7 @@ public class DomainConstants {
     public static final String PREFERENCE_CATEGORY_MOUSELIGHT = "MouseLight";
     public static final String PREFERENCE_CATEGORY_MOUSELIGHT_TAGS = "MouseLight_Tags";
     public static final String PREFERENCE_CATEGORY_MUST_HAVE_IMAGE = "MustHaveImage";
+    public static final String PREFERENCE_CATEGORY_SHOW_VT_LINE_NAMES = "ShowVtLineNames";
     public static final String PREFERENCE_NAME_SAMPLE_ROOTS = "SampleRoots";
 
     public static final String MOUSELIGHT_GROUP_KEY = "group:mouselight";
