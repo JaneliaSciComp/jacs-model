@@ -127,13 +127,6 @@ public class DomainUtils {
             }
         }
 
-        // Can't use Java 8 syntax in JACSv1 :(
-//        Collections.sort(searchClasses, (Class<?> o1, Class<?> o2) -> {
-//            final String l1 = o1.getAnnotation(SearchType.class).label();
-//            final String l2 = o2.getAnnotation(SearchType.class).label();
-//            return l1.compareTo(l2);
-//        });
-
         Collections.sort(searchClasses, new Comparator<Class<? extends DomainObject>>() {
             @Override
             public int compare(Class<? extends DomainObject> o1, Class<? extends DomainObject> o2) {
@@ -270,6 +263,17 @@ public class DomainUtils {
             return mongoMapped.label();
         }
         return ModelStringUtil.splitCamelCase(domainClass.getSimpleName());
+    }
+
+    public static <A extends java.lang.annotation.Annotation> A inspectTypeAnnotation(Class<?> objectClass, Class<A> annotationClass) {
+        A annotation = null;
+        for(Class<?> clazz = objectClass; clazz != null; clazz = clazz.getSuperclass()) {
+            if (clazz.isAnnotationPresent(annotationClass)) {
+                annotation = clazz.getAnnotation(annotationClass);
+                break;
+            }
+        }
+        return annotation;
     }
 
     @SuppressWarnings("unchecked")

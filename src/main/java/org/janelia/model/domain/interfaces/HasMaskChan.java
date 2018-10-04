@@ -8,8 +8,8 @@ package org.janelia.model.domain.interfaces;
  */
 public interface HasMaskChan {
 
-    public abstract String getMaskFilepath();
+    String getMaskFilepath();
 
-    public abstract String getChanFilepath();
+    String getChanFilepath();
 
 }

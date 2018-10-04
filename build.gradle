@@ -25,6 +25,11 @@ dependencies {
         LOGBACK_CORE_LIB = "ch.qos.logback:logback-core:${LOGBACK_VERSION}"
         LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:${LOGBACK_VERSION}"
 
+        // dependency injection
+        JAVAX_INJECT_API_LIB = "javax.inject:javax.inject:1"
+        JAVAX_ENTERPRISE_VERSION = "2.0"
+        CDI_API_LIB = "javax.enterprise:cdi-api:${JAVAX_ENTERPRISE_VERSION}"
+
         // protobuf
         PROTOSTUFF_VERSION = "1.3.8"
         PROTOSTUFF_API_LIB = "io.protostuff:protostuff-api:${PROTOSTUFF_VERSION}"
@@ -33,12 +38,12 @@ dependencies {
 
         // utilities
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.9-RC1"
-        GUAVA_LIB = "com.google.guava:guava:19.0"
+        GUAVA_LIB = "com.google.guava:guava:26.0-jre"
 
         // database
-        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:3.4.2"
+        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:3.5.0"
         MYSQL_DRIVER_LIB = "mysql:mysql-connector-java:5.1.42"
-        JONGO_LIB = "org.jongo:jongo:1.3.0"
+        JONGO_LIB = "org.jongo:jongo:1.4.0"
         HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
 
         // apache commons
@@ -46,7 +51,7 @@ dependencies {
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:4.1"
 
         // JSON
-        JACKSON_VERSION = "2.8.8"
+        JACKSON_VERSION = "2.9.5"
         JACKSON_CORE_LIB = "com.fasterxml.jackson.core:jackson-core:${JACKSON_VERSION}"
         JACKSON_ANNOTATIONS_LIB = "com.fasterxml.jackson.core:jackson-annotations:${JACKSON_VERSION}"
         JACKSON_DATABIND_LIB = "com.fasterxml.jackson.core:jackson-databind:${JACKSON_VERSION}"
@@ -63,6 +68,7 @@ dependencies {
     compile SLF4J_LIB,
             LOGBACK_CORE_LIB,
             LOGBACK_CLASSIC_LIB,
+            JAVAX_INJECT_API_LIB,
             PROTOSTUFF_API_LIB,
             PROTOSTUFF_CORE_LIB,
             PROTOSTUFF_RUNTIME_LIB,
@@ -71,6 +77,7 @@ dependencies {
             MONGODB_DRIVER_LIB,
             JONGO_LIB,
             COMMONS_LANG_LIB,
+            COMMONS_COLLECTIONS_LIB,
             JACKSON_CORE_LIB,
             JACKSON_ANNOTATIONS_LIB,
             JAMA_LIB
@@ -104,5 +111,5 @@ publishing {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.1"
+    gradleVersion = "4.10.2"
 }

@@ -6,8 +6,7 @@ package org.janelia.model.domain.interfaces;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public interface HasFilepath {
+    String getFilepath();
 
-    public abstract String getFilepath();
-
-    public void setFilepath(String filepath);
+    void setFilepath(String filepath);
 }

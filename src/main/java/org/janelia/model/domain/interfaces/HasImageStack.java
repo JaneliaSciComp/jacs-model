@@ -21,14 +21,14 @@ public interface HasImageStack extends HasFiles {
         return DomainUtils.getFilepath(this, FileType.VisuallyLosslessStack);
     }
 
-    public String getAnatomicalArea();
+    String getAnatomicalArea();
 
-    public String getImageSize();
+    String getImageSize();
 
-    public String getOpticalResolution();
+    String getOpticalResolution();
 
-    public String getChannelColors();
+    String getChannelColors();
 
-    public String getChannelSpec();
+    String getChannelSpec();
 
 }

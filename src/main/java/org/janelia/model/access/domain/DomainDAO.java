@@ -432,8 +432,7 @@ public class DomainDAO {
         Preference preference = getPreference(subjectKey, category, key);
         if (preference == null) {
             return null;
-        }
-        else {
+        } else {
             return preference.getValue();
         }
     }

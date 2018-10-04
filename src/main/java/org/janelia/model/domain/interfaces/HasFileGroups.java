@@ -11,10 +11,9 @@ import org.janelia.model.domain.sample.FileGroup;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public interface HasFileGroups {
-
-    public Set<String> getGroupKeys();
+    Set<String> getGroupKeys();
     
-    public FileGroup getGroup(String key);
+    FileGroup getGroup(String key);
     
-    public List<FileGroup> getGroups();
+    List<FileGroup> getGroups();
 }
