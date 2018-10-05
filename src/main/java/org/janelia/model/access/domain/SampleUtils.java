@@ -121,6 +121,8 @@ public class SampleUtils {
             SamplePipelineRun run = runs.get(i);
             log.debug("  Testing run: " + run.getId());
 
+            boolean matchedResultName = false;
+
             // Walk results backwards to get latest first
             List<PipelineResult> results = run.getResults();
             for (int j = results.size()-1; j>=0; j--) {
@@ -150,8 +152,14 @@ public class SampleUtils {
                             pipelineResultName = pipelineResult.getName();
                         }
 
-                        if (resultName == null || StringUtils.equals(pipelineResultName, resultName)) {
+                        boolean matchingResultName = StringUtils.equals(pipelineResultName, resultName);
+
+                        if (resultName == null || (!matchedResultName && matchingResultName)) {
                             log.debug("    Found result matching resultName=" + resultName);
+                            if (matchingResultName) {
+                                // Return only one result with the same name
+                                matchedResultName = true;
+                            }
 
                             if (groupName == null) {
                                 if (area == null) {
