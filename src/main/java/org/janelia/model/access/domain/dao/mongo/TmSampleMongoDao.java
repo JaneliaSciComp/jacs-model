@@ -4,6 +4,7 @@ import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.domain.DomainConstants;
+import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.workspace.TreeNode;
@@ -45,4 +46,18 @@ public class TmSampleMongoDao extends AbstractPermissionAwareDomainMongoDao<TmSa
             throw new IllegalStateException(e);
         }
     }
+
+    @Override
+    public void removeTmSample(String subjectKey, Long tmSampleId) {
+        Reference ref = Reference.createFor(TmSample.class, tmSampleId);
+        DomainObject domainObj = domainDao.getDomainObject(subjectKey, ref);
+        if (domainObj != null) {
+            try {
+                domainDao.remove(subjectKey, domainObj);
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        }
+    }
+
 }
