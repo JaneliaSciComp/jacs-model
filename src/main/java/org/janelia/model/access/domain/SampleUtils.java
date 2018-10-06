@@ -1,15 +1,5 @@
 package org.janelia.model.access.domain;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.enums.AlignmentScoreType;
@@ -19,6 +9,10 @@ import org.janelia.model.domain.interfaces.HasFiles;
 import org.janelia.model.domain.sample.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Utilities for dealing with Samples, Neuron Fragments, and other related objects.
@@ -37,6 +31,21 @@ public class SampleUtils {
         if (o1==null || o2==null) return false;
         if (o1.getId()==null || o2.getId()==null) return false;
         return o1.getId().equals(o2.getId());
+    }
+
+    /**
+     * Returns the fragment part of a line name. For example, "BJD_100A01_AE_01" -> "BJD_100A01"
+     * @param lineName line name from Sample or LSMImage
+     * @return fragment or null if fragment cannot be extracted
+     */
+    public static String getFragFromLineName(String lineName) {
+
+        Pattern p = Pattern.compile("^([A-Z]+_.+?)_.+$");
+        Matcher m = p.matcher(lineName);
+        if (!m.matches()) {
+            return null;
+        }
+        return m.group(1);
     }
 
     /**
