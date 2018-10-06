@@ -14,8 +14,6 @@ import java.util.Arrays;
 
 /**
  * TmSample Mongo DAO.
- *
- * @param <T> type of the element
  */
 public class TmSampleMongoDao extends AbstractPermissionAwareDomainMongoDao<TmSample> implements TmSampleDao {
     private final DomainDAO domainDao;

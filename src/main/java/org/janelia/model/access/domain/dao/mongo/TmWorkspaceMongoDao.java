@@ -10,8 +10,6 @@ import java.util.List;
 
 /**
  * TmWorkspace Mongo DAO.
- *
- * @param <T> type of the element
  */
 public class TmWorkspaceMongoDao extends AbstractPermissionAwareDomainMongoDao<TmWorkspace> implements TmWorkspaceDao {
     private final DomainDAO domainDao;
