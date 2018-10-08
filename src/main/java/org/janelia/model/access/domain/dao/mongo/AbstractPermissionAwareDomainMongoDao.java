@@ -1,25 +1,22 @@
 package org.janelia.model.access.domain.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
-import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
-import org.janelia.model.access.domain.dao.EntityUtils;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.domain.DomainObject;
-import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.security.Subject;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Abstract Domain DAO that can handle entity access.
@@ -59,7 +56,7 @@ public abstract class AbstractPermissionAwareDomainMongoDao<T extends DomainObje
         }
     }
 
-    private Bson createSubjectReadPermissionFilter(String subjectKey) {
+    Bson createSubjectReadPermissionFilter(String subjectKey) {
         Set<String> readers = subjectDao.getReaderSetByKey(subjectKey);
         if (CollectionUtils.isEmpty(readers)) {
             // only include entities that have no reader restrictions
@@ -67,6 +64,26 @@ public abstract class AbstractPermissionAwareDomainMongoDao<T extends DomainObje
                     Filters.eq("ownerKey", subjectKey),
                     Filters.exists("readers", false)
             );
+        } else if (readers.contains(Subject.ADMIN_KEY)) {
+            return Filters.and(); // simply ignore the filtering in this case
+        } else {
+            return Filters.or(
+                    Filters.eq("ownerKey", subjectKey),
+                    Filters.in("readers", readers)
+            );
+        }
+    }
+
+    Bson createSubjectWritePermissionFilter(String subjectKey) {
+        Set<String> readers = subjectDao.getWriterSetByKey(subjectKey);
+        if (CollectionUtils.isEmpty(readers)) {
+            // only include entities that have no reader restrictions
+            return Filters.or(
+                    Filters.eq("ownerKey", subjectKey),
+                    Filters.exists("readers", false)
+            );
+        } else if (readers.contains(Subject.ADMIN_KEY)) {
+            return Filters.and(); // simply ignore the filtering in this case
         } else {
             return Filters.or(
                     Filters.eq("ownerKey", subjectKey),
@@ -101,5 +118,15 @@ public abstract class AbstractPermissionAwareDomainMongoDao<T extends DomainObje
     @Override
     public void delete(T entity) {
         MongoDaoHelper.delete(mongoCollection, entity.getId());
+    }
+
+    @Override
+    public long deleteByIdAndSubjectKey(Long id, String subjectKey) {
+        if (id == null) {
+            return 0;
+        } else {
+            return MongoDaoHelper.deleteMatchingRecords(mongoCollection,
+                    Filters.and(MongoDaoHelper.createFilterById(id), createSubjectWritePermissionFilter(subjectKey)));
+        }
     }
 }

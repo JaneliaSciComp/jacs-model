@@ -117,4 +117,9 @@ public class TmWorkspace extends AbstractDomainObject {
     public void setObjectMesh(List<TmObjectMesh> objectMeshList) {
         this.objectMeshList = objectMeshList;
     }
+
+    public TmWorkspace rename(String newName) {
+        this.setName(newName);
+        return this;
+    }
 }

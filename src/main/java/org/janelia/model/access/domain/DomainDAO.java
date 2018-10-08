@@ -1554,8 +1554,7 @@ public class DomainDAO {
                 domainObject.setUpdatedDate(now);
                 collection.save(domainObject);
                 log.trace("Created new object " + domainObject);
-            }
-            else {
+            } else {
                 Set<String> subjects = getWriterSet(subjectKey);
                 domainObject.setUpdatedDate(now);
 
@@ -1605,8 +1604,7 @@ public class DomainDAO {
         WriteResult result;
         if (subjects == null) {
             result = collection.remove("{_id:#}", domainObject.getId());
-        }
-        else {
+        } else {
             result = collection.remove("{_id:#,writers:{$in:#}}", domainObject.getId(), subjects);
         }
 

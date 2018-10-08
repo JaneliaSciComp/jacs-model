@@ -13,7 +13,7 @@ import javax.inject.Inject;
 import java.util.Arrays;
 
 /**
- * TmSample Mongo DAO.
+ * {@link TmSample} Mongo DAO.
  */
 public class TmSampleMongoDao extends AbstractPermissionAwareDomainMongoDao<TmSample> implements TmSampleDao {
     private final DomainDAO domainDao;

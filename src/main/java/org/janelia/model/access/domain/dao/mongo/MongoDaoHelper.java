@@ -3,6 +3,7 @@ package org.janelia.model.access.domain.dao.mongo;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.result.DeleteResult;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bson.conversions.Bson;
 
@@ -55,8 +56,17 @@ class MongoDaoHelper {
         return Filters.and(filters);
     }
 
-    static <T, I> void delete(MongoCollection<T> mongoCollection, I entityId) {
-        mongoCollection.deleteOne(createFilterById(entityId));
+    static <T, I> long delete(MongoCollection<T> mongoCollection, I entityId) {
+        DeleteResult result = mongoCollection.deleteOne(createFilterById(entityId));
+        return result.getDeletedCount();
+    }
+
+    static <T> long deleteMatchingRecords(MongoCollection<T> mongoCollection, Bson matchingCriteria) {
+        if (matchingCriteria == null) {
+            throw new IllegalArgumentException("An empty matching criteria will delete all records");
+        }
+        DeleteResult result = mongoCollection.deleteMany(matchingCriteria);
+        return result.getDeletedCount();
     }
 
 }
