@@ -14,4 +14,5 @@ public interface TmNeuronMetadataDao extends DomainObjectDao<TmNeuronMetadata> {
     TmNeuronMetadata createTmNeuronInWorkspace(String subjectKey, TmNeuronMetadata neuronMetadata, TmWorkspace workspace, InputStream neuronPoints);
     List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(String subjectKey, Long workspaceId);
     List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace);
+    void updateNeuronPoints(TmNeuronMetadata neuron, InputStream neuronPoints);
 }

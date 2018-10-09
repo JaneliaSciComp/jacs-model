@@ -1,5 +1,6 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.dao.TmSampleDao;
@@ -19,8 +20,8 @@ public class TmSampleMongoDao extends AbstractPermissionAwareDomainMongoDao<TmSa
     private final DomainDAO domainDao;
 
     @Inject
-    TmSampleMongoDao(MongoDatabase mongoDatabase, DomainDAO domainDao) {
-        super(mongoDatabase);
+    TmSampleMongoDao(MongoDatabase mongoDatabase, ObjectMapper objectMapper, DomainDAO domainDao) {
+        super(mongoDatabase, objectMapper);
         this.domainDao = domainDao;
     }
 

@@ -1,5 +1,6 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoDatabase;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.model.access.domain.DomainDAO;
@@ -32,8 +33,8 @@ public class TmWorkspaceMongoDao extends AbstractPermissionAwareDomainMongoDao<T
     private final TmNeuronMetadataDao tmNeuronMetadataDao;
 
     @Inject
-    TmWorkspaceMongoDao(MongoDatabase mongoDatabase, DomainDAO domainDao, TmNeuronMetadataDao tmNeuronMetadataDao) {
-        super(mongoDatabase);
+    TmWorkspaceMongoDao(MongoDatabase mongoDatabase, ObjectMapper objectMapper, DomainDAO domainDao, TmNeuronMetadataDao tmNeuronMetadataDao) {
+        super(mongoDatabase, objectMapper);
         this.domainDao = domainDao;
         this.tmNeuronMetadataDao = tmNeuronMetadataDao;
     }

@@ -1,22 +1,32 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
+import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.security.Subject;
+import org.janelia.model.util.ReflectionUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.mongodb.client.model.Filters.eq;
 
 /**
  * Abstract Domain DAO that can handle entity access.
@@ -28,10 +38,12 @@ public abstract class AbstractPermissionAwareDomainMongoDao<T extends DomainObje
         implements DomainObjectDao<T> {
 
     private final SubjectDao subjectDao;
+    private final ObjectMapper objectMapper;
 
-    AbstractPermissionAwareDomainMongoDao(MongoDatabase mongoDatabase) {
+    AbstractPermissionAwareDomainMongoDao(MongoDatabase mongoDatabase, ObjectMapper objectMapper) {
         super(mongoDatabase);
-        subjectDao = new SubjectMongoDao(mongoDatabase);
+        this.subjectDao = new SubjectMongoDao(mongoDatabase);
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -93,6 +105,45 @@ public abstract class AbstractPermissionAwareDomainMongoDao<T extends DomainObje
                     Filters.eq("ownerKey", subjectKey),
                     Filters.in("readers", readers)
             );
+        }
+    }
+
+    @Override
+    public T saveWithSubjectKey(T entity, String subjectKey) {
+        Date now = new Date();
+        if (entity.getId() == null) {
+            entity.setId(createNewId());
+            entity.setOwnerKey(subjectKey);
+            entity.getReaders().add(subjectKey);
+            entity.getWriters().add(subjectKey);
+            entity.setCreationDate(now);
+            entity.setUpdatedDate(now);
+            mongoCollection.insertOne(entity);
+        } else {
+            entity.setUpdatedDate(now);
+            mongoCollection.updateOne(
+                    Filters.and(MongoDaoHelper.createFilterById(entity.getId()),
+                            createSubjectWritePermissionFilter(subjectKey)),
+                    Updates.combine(getEntityUpdates(entity))
+            );
+        }
+        return entity;
+    }
+
+    private List<Bson> getEntityUpdates(T entity) {
+        try {
+            String jsonEntity = objectMapper.writeValueAsString(entity);
+            Document bsonEntity = Document.parse(jsonEntity);
+            return bsonEntity.entrySet().stream().map(e -> {
+                Object value = e.getValue();
+                if (value == null) {
+                    return Updates.unset(e.getKey());
+                } else {
+                    return Updates.set(e.getKey(), e.getValue());
+                }
+            }).collect(Collectors.toList());
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
         }
     }
 

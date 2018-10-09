@@ -1,5 +1,6 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.mongodb.client.MongoDatabase;
@@ -34,8 +35,8 @@ public class TmNeuronMetadataMongoDao extends AbstractPermissionAwareDomainMongo
     private final TmNeuronBufferDao tmNeuronBufferDao;
 
     @Inject
-    TmNeuronMetadataMongoDao(MongoDatabase mongoDatabase, DomainDAO domainDao, TmNeuronBufferDao tmNeuronBufferDao) {
-        super(mongoDatabase);
+    TmNeuronMetadataMongoDao(MongoDatabase mongoDatabase, ObjectMapper objectMapper, DomainDAO domainDao, TmNeuronBufferDao tmNeuronBufferDao) {
+        super(mongoDatabase, objectMapper);
         this.domainDao = domainDao;
         this.tmNeuronBufferDao = tmNeuronBufferDao;
     }
@@ -127,9 +128,14 @@ public class TmNeuronMetadataMongoDao extends AbstractPermissionAwareDomainMongo
             neuron.setWriters(Sets.newHashSet(neuron.getOwnerKey()));
         }
         try {
-            return domainDao.save(neuron.getOwnerKey(), neuron);
+            return saveWithSubjectKey(neuron, neuron.getOwnerKey());
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @Override
+    public void updateNeuronPoints(TmNeuronMetadata neuron, InputStream neuronPoints) {
+        tmNeuronBufferDao.updateNeuronWorkspacePoints(neuron.getId(), neuron.getWorkspaceId(), neuronPoints);
     }
 }

@@ -27,4 +27,12 @@ public interface DomainObjectDao<T extends DomainObject> extends ReadWriteDao<T,
      * @return
      */
     long deleteByIdAndSubjectKey(Long id, String subjectKey);
+
+    /**
+     * Save object by subjectKey
+     * @param entity
+     * @param subjectKey
+     * @return the persisted instance
+     */
+    T saveWithSubjectKey(T entity, String subjectKey);
 }
