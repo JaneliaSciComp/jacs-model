@@ -72,6 +72,18 @@ public abstract class AbstractPermissionAwareDomainMongoDao<T extends DomainObje
         }
     }
 
+    @Override
+    public List<T> findByIdsAndSubjectKey(List<Long> ids, String subjectKey) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        } else {
+            return find(MongoDaoHelper.createFilterCriteria(
+                    ImmutableList.of(MongoDaoHelper.createFilterByIds(ids), createSubjectReadPermissionFilter(subjectKey))),
+                    null, 0, -1,
+                    getEntityType());
+        }
+    }
+
     Bson createSubjectReadPermissionFilter(String subjectKey) {
         Set<String> readers = subjectDao.getReaderSetByKey(subjectKey);
         if (CollectionUtils.isEmpty(readers)) {

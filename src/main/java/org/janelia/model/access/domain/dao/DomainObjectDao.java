@@ -21,6 +21,14 @@ public interface DomainObjectDao<T extends DomainObject> extends ReadWriteDao<T,
     T findByIdAndSubjectKey(Long id, String subjectKey);
 
     /**
+     * Finds entities by ids and subjectKey.
+     * @param ids
+     * @param subjectKey
+     * @return
+     */
+    List<T> findByIdsAndSubjectKey(List<Long> ids, String subjectKey);
+
+    /**
      * Delete the entity by id if the specified subjectKey has write permissions
      * @param id
      * @param subjectKey

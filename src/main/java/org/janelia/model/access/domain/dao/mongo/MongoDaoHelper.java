@@ -1,16 +1,30 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.google.common.collect.ImmutableList;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.bson.conversions.Bson;
+import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
+import org.janelia.model.access.domain.dao.DaoUpdateResult;
+import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
+import org.janelia.model.access.domain.dao.RemoveFieldValueHandler;
+import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -38,9 +52,13 @@ class MongoDaoHelper {
         return Filters.eq("_id", id);
     }
 
+    static <I> Bson createFilterByIds(Collection<I> ids) {
+        return Filters.in("_id", ids);
+    }
+
     static <I, T, R> List<R> findByIds(Collection<I> ids, MongoCollection<T> mongoCollection, Class<R> documentType) {
         if (CollectionUtils.isNotEmpty(ids)) {
-            return find(Filters.in("_id", ids), null, 0, 0, mongoCollection, documentType);
+            return find(createFilterByIds(ids), null, 0, 0, mongoCollection, documentType);
         } else {
             return Collections.emptyList();
         }
@@ -82,6 +100,46 @@ class MongoDaoHelper {
         }
         DeleteResult result = mongoCollection.deleteMany(matchingCriteria);
         return result.getDeletedCount();
+    }
+
+    static <T> DaoUpdateResult updateMany(MongoCollection<T> mongoCollection, Bson matchFilter, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate, UpdateOptions updateOptions) {
+        if (MapUtils.isEmpty(fieldsToUpdate)) {
+            return new DaoUpdateResult(0, 0);
+        } else {
+            List<Bson> bsonUpdates = fieldsToUpdate.entrySet().stream()
+                    .map(e -> getFieldUpdate(e.getKey(), e.getValue()))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            UpdateResult result = mongoCollection.updateMany(matchFilter, Updates.combine(bsonUpdates), updateOptions);
+            return new DaoUpdateResult(result.getMatchedCount(), result.getModifiedCount());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Bson getFieldUpdate(String fieldName, EntityFieldValueHandler<?> valueHandler) {
+        if (valueHandler == null || valueHandler.getFieldValue() == null || valueHandler instanceof RemoveFieldValueHandler) {
+            return Updates.unset(fieldName);
+        } else if (valueHandler instanceof AppendFieldValueHandler) {
+            Object value = valueHandler.getFieldValue();
+            if (value instanceof Iterable) {
+                if (Set.class.isAssignableFrom(value.getClass())) {
+                    return Updates.addEachToSet(fieldName, ImmutableList.copyOf((Iterable) value));
+                } else {
+                    return Updates.pushEach(fieldName, ImmutableList.copyOf((Iterable) value));
+                }
+            } else {
+                return Updates.push(fieldName, value);
+            }
+        } else if (valueHandler instanceof RemoveItemsFieldValueHandler) {
+            Object value = valueHandler.getFieldValue();
+            if (value instanceof Iterable) {
+                return Updates.pullAll(fieldName, ImmutableList.copyOf((Iterable) value));
+            } else {
+                return Updates.pull(fieldName, value);
+            }
+        } else {
+            return Updates.set(fieldName, valueHandler.getFieldValue());
+        }
     }
 
 }

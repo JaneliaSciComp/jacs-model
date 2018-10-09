@@ -2,8 +2,11 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.UpdateOptions;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bson.conversions.Bson;
+import org.janelia.model.access.domain.dao.DaoUpdateResult;
+import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.EntityUtils;
 import org.janelia.model.access.domain.dao.ReadWriteDao;
 import org.janelia.model.domain.interfaces.HasIdentifier;
@@ -11,6 +14,7 @@ import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract Mongo DAO.
@@ -67,4 +71,12 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> implements ReadW
     public void delete(T entity) {
         MongoDaoHelper.delete(mongoCollection, entity.getId());
     }
+
+    @Override
+    public DaoUpdateResult update(Long entityId, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+        UpdateOptions updateOptions = new UpdateOptions();
+        updateOptions.upsert(false);
+        return MongoDaoHelper.updateMany(mongoCollection, MongoDaoHelper.createFilterById(entityId), fieldsToUpdate, updateOptions);
+    }
+
 }

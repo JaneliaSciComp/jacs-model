@@ -2,16 +2,25 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.UpdateOptions;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
+import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
+import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
+import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.dto.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.slf4j.Logger;
@@ -135,7 +144,60 @@ public class TmNeuronMetadataMongoDao extends AbstractPermissionAwareDomainMongo
     }
 
     @Override
+    public void removeTmNeuron(Long neuronId, String subjectKey) {
+        deleteByIdAndSubjectKey(neuronId, subjectKey);
+        tmNeuronBufferDao.deleteNeuronPoints(neuronId);
+    }
+
+    @Override
     public void updateNeuronPoints(TmNeuronMetadata neuron, InputStream neuronPoints) {
         tmNeuronBufferDao.updateNeuronWorkspacePoints(neuron.getId(), neuron.getWorkspaceId(), neuronPoints);
+    }
+
+    @Override
+    public void updateNeuronStyles(BulkNeuronStyleUpdate bulkNeuronStyleUpdate, String subjectKey) {
+        ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatesBuilder = ImmutableMap.builder();
+        if (bulkNeuronStyleUpdate.getVisible() != null) {
+            updatesBuilder.put("visible", new SetFieldValueHandler<>(bulkNeuronStyleUpdate.getVisible()));
+        }
+        if (StringUtils.isNotBlank(bulkNeuronStyleUpdate.getColorHex())) {
+            updatesBuilder.put("colorHex", new SetFieldValueHandler<>(bulkNeuronStyleUpdate.getColorHex()));
+        }
+        updatesBuilder.put("updatedDate", new SetFieldValueHandler<>(new Date()));
+        Map<String, EntityFieldValueHandler<?>> updates = updatesBuilder.build();
+        UpdateOptions updateOptions = new UpdateOptions();
+        updateOptions.upsert(false);
+        MongoDaoHelper.updateMany(
+                mongoCollection,
+                MongoDaoHelper.createFilterCriteria(
+                        ImmutableList.of(
+                                MongoDaoHelper.createFilterByIds(bulkNeuronStyleUpdate.getNeuronIds()),
+                                createSubjectWritePermissionFilter(subjectKey))
+                        ),
+                updates,
+                updateOptions);
+    }
+
+    @Override
+    public void updateNeuronTagsTagsForNeurons(List<Long> neuronIds, List<String> tags, boolean tagState, String subjectKey) {
+        ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatesBuilder = ImmutableMap.builder();
+        if (tagState) {
+            updatesBuilder.put("tags", new AppendFieldValueHandler<>(ImmutableSet.copyOf(tags)));
+        } else {
+            updatesBuilder.put("tags", new RemoveItemsFieldValueHandler<>(ImmutableSet.copyOf(tags)));
+        }
+        updatesBuilder.put("updatedDate", new SetFieldValueHandler<>(new Date()));
+        Map<String, EntityFieldValueHandler<?>> updates = updatesBuilder.build();
+        UpdateOptions updateOptions = new UpdateOptions();
+        updateOptions.upsert(false);
+        MongoDaoHelper.updateMany(
+                mongoCollection,
+                MongoDaoHelper.createFilterCriteria(
+                        ImmutableList.of(
+                                MongoDaoHelper.createFilterByIds(neuronIds),
+                                createSubjectWritePermissionFilter(subjectKey))
+                ),
+                updates,
+                updateOptions);
     }
 }

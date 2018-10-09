@@ -1,6 +1,7 @@
 package org.janelia.model.access.domain.dao;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Read/Write data access spec.
@@ -12,4 +13,5 @@ public interface ReadWriteDao<T, I> extends ReadOnlyDao<T, I> {
     void save(T entity);
     void saveAll(Collection<T> entities);
     void delete(T entity);
+    DaoUpdateResult update(I entityId, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate);
 }
