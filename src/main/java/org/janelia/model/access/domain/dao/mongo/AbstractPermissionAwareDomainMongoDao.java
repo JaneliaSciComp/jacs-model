@@ -45,14 +45,18 @@ public abstract class AbstractPermissionAwareDomainMongoDao<T extends DomainObje
 
     @Override
     public T findByIdAndSubjectKey(Long id, String subjectKey) {
-        List<T> entities = find(MongoDaoHelper.createFilterCriteria(
-                ImmutableList.of(MongoDaoHelper.createFilterById(id), createSubjectReadPermissionFilter(subjectKey))),
-                null, 0, -1,
-                getEntityType());
-        if (CollectionUtils.isNotEmpty(entities)) {
-            return entities.get(0);
-        } else {
+        if (id == null) {
             return null;
+        } else {
+            List<T> entities = find(MongoDaoHelper.createFilterCriteria(
+                    ImmutableList.of(MongoDaoHelper.createFilterById(id), createSubjectReadPermissionFilter(subjectKey))),
+                    null, 0, -1,
+                    getEntityType());
+            if (CollectionUtils.isNotEmpty(entities)) {
+                return entities.get(0);
+            } else {
+                return null;
+            }
         }
     }
 

@@ -19,8 +19,19 @@ import java.util.List;
 class MongoDaoHelper {
 
     static <I, T, R> R findById(I id, MongoCollection<T> mongoCollection, Class<R> documentType) {
-        List<R> entityDocs = find(Filters.eq("_id", id), null, 0, 2, mongoCollection, documentType);
-        return CollectionUtils.isNotEmpty(entityDocs) ? entityDocs.get(0) : null;
+        if (id == null) {
+            return null;
+        } else {
+            List<R> entityDocs = find(
+                    Filters.eq("_id", id),
+                    null,
+                    0,
+                    2,
+                    mongoCollection,
+                    documentType
+            );
+            return CollectionUtils.isNotEmpty(entityDocs) ? entityDocs.get(0) : null;
+        }
     }
 
     static <I> Bson createFilterById(I id) {
@@ -57,8 +68,12 @@ class MongoDaoHelper {
     }
 
     static <T, I> long delete(MongoCollection<T> mongoCollection, I entityId) {
-        DeleteResult result = mongoCollection.deleteOne(createFilterById(entityId));
-        return result.getDeletedCount();
+        if (entityId == null) {
+            return 0;
+        } else {
+            DeleteResult result = mongoCollection.deleteOne(createFilterById(entityId));
+            return result.getDeletedCount();
+        }
     }
 
     static <T> long deleteMatchingRecords(MongoCollection<T> mongoCollection, Bson matchingCriteria) {
