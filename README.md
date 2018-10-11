@@ -11,6 +11,9 @@ Run the unit tests:
 Build the jar:
 `gradle jar`
 
+Publish the jar to the local maven repo:
+`gradle publishToMavenLocal`
+
 ## Summary
 
 This module contains common domain models and DAOs which can be used to access data stored in the JACS databases.
