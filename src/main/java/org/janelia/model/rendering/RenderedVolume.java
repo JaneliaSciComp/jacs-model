@@ -8,26 +8,51 @@ import java.util.Optional;
 
 public class RenderedVolume {
 
-    private static final int[] DEFAULT_TILE_SIZE = new int[] {1024, 1024, 1};
+    private final RenderingType renderingType;
+    private final int[] originVoxel;
+    private final int[] volumeSizeInVoxels;
+    private final double[] microsPerVoxel;
+    private final int numZoomLevels;
+    private final TileInfo xyTileInfo;
+    private final TileInfo yzTileInfo;
+    private final TileInfo zxTileInfo;
 
-    private int[] origin = new int[] {0, 0, 0};
-    private int[] volumeSizeInVoxels = new int[] {0, 0, 0};
-    private volatile int[] tileSizeInVoxels = DEFAULT_TILE_SIZE;
-    private double[] voxelResolutionInMicroMeters = new double[] {1., 1., 1.};
-    private int maxZoomLevel = 0;
-    private int bitDepth;
-    private int channelCount;
-    private int intensityMax = 255;
-    private int intensityMin = 0;
-    private RenderingType renderingType = RenderingType.QUADTREE;
-    private boolean[] orthoViews = new boolean[] {
-            false /* X slices (yz views) */,
-            false /* Y slices (zx views) */ ,
-            true /* Z slices (xy views) */
-    };
+    RenderedVolume(RenderingType renderingType,
+                   int[] originVoxel,
+                   int[] volumeSizeInVoxels,
+                   double[] microsPerVoxel,
+                   int numZoomLevels,
+                   TileInfo xyTileInfo,
+                   TileInfo yzTileInfo,
+                   TileInfo zxTileInfo) {
+        this.renderingType = renderingType;
+        this.originVoxel = originVoxel;
+        this.volumeSizeInVoxels = volumeSizeInVoxels;
+        this.microsPerVoxel = microsPerVoxel;
+        this.numZoomLevels = numZoomLevels;
+        this.xyTileInfo= xyTileInfo;
+        this.yzTileInfo = yzTileInfo;
+        this.zxTileInfo = zxTileInfo;
+    }
+
+    public int getNumZoomLevels() {
+        return numZoomLevels;
+    }
+
+    public boolean hasXSlices() {
+        return yzTileInfo != null;
+    }
+
+    public boolean hasYSlices() {
+        return zxTileInfo != null;
+    }
+
+    public boolean hasZSlices() {
+        return xyTileInfo != null;
+    }
 
     public Optional<Path> getTilePath(TileIndex tileIndex) {
-        int depth = maxZoomLevel - tileIndex.getZoom();
+        int depth = numZoomLevels - tileIndex.getZoom();
         if (depth < 0) {
             return Optional.empty();
         }
@@ -36,7 +61,7 @@ public class RenderedVolume {
         List<String> pathComps = new ArrayList<>();
         // start at lowest zoom to build up octree coordinates
         for (int d = 1; d < depth - 1; ++d) {
-            int scale = 1 << (maxZoomLevel - d);
+            int scale = 1 << (numZoomLevels - d);
             int ds[] = {
                     tile[0] / scale,
                     tile[1] / scale,

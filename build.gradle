@@ -11,6 +11,9 @@ targetCompatibility = 1.8
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        url "http://maven.int.janelia.org/nexus/content/groups/public/"
+    }
     flatDir {
         dirs "${rootDir}/projectrepository"
     }
@@ -27,8 +30,6 @@ dependencies {
 
         // dependency injection
         JAVAX_INJECT_API_LIB = "javax.inject:javax.inject:1"
-        JAVAX_ENTERPRISE_VERSION = "2.0"
-        CDI_API_LIB = "javax.enterprise:cdi-api:${JAVAX_ENTERPRISE_VERSION}"
 
         // protobuf
         PROTOSTUFF_VERSION = "1.3.8"
@@ -58,6 +59,10 @@ dependencies {
         JACKSON_DATATYPE_JODA_LIB = "com.fasterxml.jackson.datatype:jackson-datatype-joda:${JACKSON_VERSION}"
         JACKSON_JAXRS_JSON_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${JACKSON_VERSION}"
 
+        // codecs
+        JAI_CORE_LIB = "javax.media:jai-core:1.1.3"
+        JAI_CODEC_LIB = "com.sun.media:jai-codec:1.1.3"
+
         // scientific computing
         JAMA_LIB = "gov.nist.math:jama:1.0.3"
 
@@ -80,6 +85,8 @@ dependencies {
             COMMONS_COLLECTIONS_LIB,
             JACKSON_CORE_LIB,
             JACKSON_ANNOTATIONS_LIB,
+            JAI_CORE_LIB,
+            JAI_CODEC_LIB,
             JAMA_LIB
 
     compile (HIBERNATE_LIB) {
