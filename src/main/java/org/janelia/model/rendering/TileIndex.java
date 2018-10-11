@@ -33,6 +33,27 @@ public class TileIndex {
 		return new TileIndex(xTile, yTile, zTile, zoom, sliceAxis, renderingType);
 	}
 
+	public static TileIndex fromRavelerTileCoord(int xTile, int yTile, int zTile,
+												 int zoom,
+												 CoordinateAxis sliceAxis,
+												 RenderingType renderingType,
+												 TileInfo tileInfo) {
+		int zoomFactor = 1 << zoom;
+		switch (sliceAxis) {
+			case X:
+				return new TileIndex(xTile / tileInfo.getVolumeSize()[CoordinateAxis.X.index()] / zoomFactor, yTile, zTile,
+						zoom, sliceAxis, renderingType);
+			case Y:
+				return new TileIndex(xTile, yTile / tileInfo.getVolumeSize()[CoordinateAxis.Y.index()] / zoomFactor, zTile,
+						zoom, sliceAxis, renderingType);
+			case Z:
+				return new TileIndex(xTile, yTile, zTile / tileInfo.getVolumeSize()[CoordinateAxis.Z.index()] / zoomFactor,
+						zoom, sliceAxis, renderingType);
+			default:
+				throw new IllegalArgumentException("Invalid slice axis " + sliceAxis);
+		}
+	}
+
 	private final int xyz[] = new int[3];
 	private final int zoom;
 	private final int canonicalSlice; // Uniquified on octree zoom level
@@ -56,6 +77,10 @@ public class TileIndex {
 
 	public int getZoom() {
 		return zoom;
+	}
+
+	public int getZoomFactor() {
+		return 1 << zoom;
 	}
 
 	public CoordinateAxis getSliceAxis() {

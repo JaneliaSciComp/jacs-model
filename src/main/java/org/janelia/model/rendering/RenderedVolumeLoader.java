@@ -16,17 +16,14 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.util.ArrayList;
+import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class RenderedVolumeLoader {
 
@@ -46,7 +43,6 @@ public class RenderedVolumeLoader {
                                         .map(tileInfo -> tileInfo.getVolumeSize())
                                         .orElseGet(() -> new int[] {0, 0, 0});
                                 int[] volumeSizeInVoxels = Arrays.stream(tileVolumeDims).map(tileDim -> tileDim * scaleFactor).toArray();
-
                                 TileInfo xyTileInfo = tileInfos[CoordinateAxis.Z.index()];
                                 TileInfo zxTileInfo = tileInfos[CoordinateAxis.Y.index()];
                                 TileInfo yzTileInfo = tileInfos[CoordinateAxis.X.index()];

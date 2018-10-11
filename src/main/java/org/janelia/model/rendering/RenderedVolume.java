@@ -39,6 +39,31 @@ public class RenderedVolume {
         return numZoomLevels;
     }
 
+    public TileInfo getTileInfo(CoordinateAxis sliceAxis) {
+        switch (sliceAxis) {
+            case X:
+                return yzTileInfo;
+            case Y:
+                return zxTileInfo;
+            case Z:
+                return xyTileInfo;
+            default:
+                throw new IllegalArgumentException("Invalid slice axis " + sliceAxis);
+        }
+    }
+
+    public TileInfo getXyTileInfo() {
+        return xyTileInfo;
+    }
+
+    public TileInfo getYzTileInfo() {
+        return yzTileInfo;
+    }
+
+    public TileInfo getZxTileInfo() {
+        return zxTileInfo;
+    }
+
     public boolean hasXSlices() {
         return yzTileInfo != null;
     }
