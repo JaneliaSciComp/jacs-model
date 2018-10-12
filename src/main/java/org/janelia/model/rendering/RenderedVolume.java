@@ -12,7 +12,7 @@ public class RenderedVolume {
     private final RenderingType renderingType;
     private final int[] originVoxel;
     private final int[] volumeSizeInVoxels;
-    private final double[] microsPerVoxel;
+    private final double[] micromsPerVoxel;
     private final int numZoomLevels;
     private final TileInfo xyTileInfo;
     private final TileInfo yzTileInfo;
@@ -22,7 +22,7 @@ public class RenderedVolume {
                    RenderingType renderingType,
                    int[] originVoxel,
                    int[] volumeSizeInVoxels,
-                   double[] microsPerVoxel,
+                   double[] micromsPerVoxel,
                    int numZoomLevels,
                    TileInfo xyTileInfo,
                    TileInfo yzTileInfo,
@@ -31,7 +31,7 @@ public class RenderedVolume {
         this.renderingType = renderingType;
         this.originVoxel = originVoxel;
         this.volumeSizeInVoxels = volumeSizeInVoxels;
-        this.microsPerVoxel = microsPerVoxel;
+        this.micromsPerVoxel = micromsPerVoxel;
         this.numZoomLevels = numZoomLevels;
         this.xyTileInfo= xyTileInfo;
         this.yzTileInfo = yzTileInfo;
@@ -42,20 +42,36 @@ public class RenderedVolume {
         return basePath;
     }
 
+    public RenderingType getRenderingType() {
+        return renderingType;
+    }
+
     public int getNumZoomLevels() {
         return numZoomLevels;
     }
 
-    public TileInfo getTileInfo(CoordinateAxis sliceAxis) {
+    public int[] getOriginVoxel() {
+        return originVoxel;
+    }
+
+    public int[] getVolumeSizeInVoxels() {
+        return volumeSizeInVoxels;
+    }
+
+    public double[] getMicromsPerVoxel() {
+        return micromsPerVoxel;
+    }
+
+    public Optional<TileInfo> getTileInfo(CoordinateAxis sliceAxis) {
         switch (sliceAxis) {
             case X:
-                return yzTileInfo;
+                return yzTileInfo == null ? Optional.empty() : Optional.of(yzTileInfo);
             case Y:
-                return zxTileInfo;
+                return zxTileInfo == null ? Optional.empty() : Optional.of(zxTileInfo);
             case Z:
-                return xyTileInfo;
+                return xyTileInfo == null ? Optional.empty() : Optional.of(xyTileInfo);
             default:
-                throw new IllegalArgumentException("Invalid slice axis " + sliceAxis);
+                return Optional.empty();
         }
     }
 
@@ -99,8 +115,7 @@ public class RenderedVolume {
                     tile[1] / scale,
                     tile[2] / scale
             };
-            // Each dimension makes a binary contribution to the
-            // octree index.
+            // Each dimension makes a binary contribution to the octree index.
             // Check if the index is valid
             for (int index : ds) {
                 if (index < 0) {

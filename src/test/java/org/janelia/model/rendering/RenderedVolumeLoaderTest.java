@@ -85,6 +85,24 @@ public class RenderedVolumeLoaderTest {
         assertTrue(rv.hasZSlices());
     }
 
+    @Test
+    public void loadXYSlice() {
+        prepareTestDataFiles("transform.txt", "default.0.tif", "default.1.tif");
+        byte[] sliceBytes = RenderedVolumeLoader.loadFrom(testDirectory)
+                .flatMap(rv -> rv.getTileInfo(CoordinateAxis.Z)
+                        .map(tileInfo -> TileIndex.fromTileCoord(
+                                0,
+                                0,
+                                0,
+                                rv.getNumZoomLevels() - 1,
+                                CoordinateAxis.Z,
+                                0))
+                        .flatMap(tileIndex -> RenderedVolumeLoader.loadSlice(rv, tileIndex)))
+                .orElse(null);
+        assertNotNull(sliceBytes);
+
+    }
+
     private void prepareTestDataFiles(String... testDataFileNames) {
         try {
             Path testDataDir = Paths.get(TEST_DATADIR);

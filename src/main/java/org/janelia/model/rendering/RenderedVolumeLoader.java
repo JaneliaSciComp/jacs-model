@@ -14,6 +14,7 @@ import javax.media.jai.RenderedImageAdapter;
 import java.awt.*;
 import java.awt.image.ColorModel;
 import java.awt.image.RenderedImage;
+import java.awt.image.renderable.ParameterBlock;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
@@ -36,24 +37,26 @@ public class RenderedVolumeLoader {
     private static final String YZ_CH_TIFF_PATTERN = "YZ.%s.tif";
     private static final String ZX_CH_TIFF_PATTERN = "ZX.%s.tif";
 
-    public static void loadSlice(RenderedVolume renderedVolume, TileIndex tileIndex, int channelCount) {
-        renderedVolume.getRelativeTilePath(tileIndex)
-                .map(relativeTilePath -> {
-                    ParameterBlockJAI combinedChannels =
-                            IntStream.range(0, channelCount)
-                                    .mapToObj(channel -> renderedVolume.getBasePath()
-                                            .resolve(relativeTilePath)
-                                            .resolve(getFilenameForChannel(tileIndex.getSliceAxis(), channel)))
+    public static Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileIndex tileIndex) {
+        return renderedVolume.getTileInfo(tileIndex.getSliceAxis())
+                .flatMap(tileInfo -> renderedVolume.getRelativeTilePath(tileIndex)
+                        .map(relativeTilePath -> IntStream.range(0, tileInfo.getChannelCount())
+                                .mapToObj(channel -> renderedVolume.getBasePath()
+                                        .resolve(relativeTilePath)
+                                        .resolve(getFilenameForChannel(tileIndex.getSliceAxis(), channel)))
+                                .collect(Collectors.toList()))
+                        .map(channelFiles -> {
+                            ParameterBlockJAI combinedChannelsPB = channelFiles.stream()
                                     .map(channelFile -> readImage(channelFile, tileIndex.getSliceIndex()))
                                     .reduce(new ParameterBlockJAI("bandmerge"),
                                             (pb, im) -> {
                                                 pb.addSource(im);
                                                 return pb;
                                             },
-                                            (pb1, pb2) -> pb2)
-                            ;
-                    return JAI.create("bandmerge", combinedChannels, null);
-                });
+                                            (pb1, pb2) -> pb2);
+                            return ImageUtils.renderedImageToBytes(JAI.create("bandmerge", combinedChannelsPB, null));
+                        })
+                );
     }
 
     public static Optional<RenderedVolume> loadFrom(Path basePath) {
@@ -218,7 +221,8 @@ public class RenderedVolumeLoader {
     }
 
     private static RenderedImage readImage(Path tiffPath, int pageNumber) {
-        try (SeekableStream tiffStream = new FileSeekableStream(tiffPath.toFile())) {
+        try {
+            SeekableStream tiffStream = new FileSeekableStream(tiffPath.toFile());
             ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
             return decoder.decodeAsRenderedImage(pageNumber);
         } catch (IOException e) {
