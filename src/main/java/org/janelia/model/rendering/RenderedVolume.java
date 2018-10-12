@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public class RenderedVolume {
 
+    private final Path basePath;
     private final RenderingType renderingType;
     private final int[] originVoxel;
     private final int[] volumeSizeInVoxels;
@@ -17,7 +18,8 @@ public class RenderedVolume {
     private final TileInfo yzTileInfo;
     private final TileInfo zxTileInfo;
 
-    RenderedVolume(RenderingType renderingType,
+    RenderedVolume(Path basePath,
+                   RenderingType renderingType,
                    int[] originVoxel,
                    int[] volumeSizeInVoxels,
                    double[] microsPerVoxel,
@@ -25,6 +27,7 @@ public class RenderedVolume {
                    TileInfo xyTileInfo,
                    TileInfo yzTileInfo,
                    TileInfo zxTileInfo) {
+        this.basePath = basePath;
         this.renderingType = renderingType;
         this.originVoxel = originVoxel;
         this.volumeSizeInVoxels = volumeSizeInVoxels;
@@ -33,6 +36,10 @@ public class RenderedVolume {
         this.xyTileInfo= xyTileInfo;
         this.yzTileInfo = yzTileInfo;
         this.zxTileInfo = zxTileInfo;
+    }
+
+    Path getBasePath() {
+        return basePath;
     }
 
     public int getNumZoomLevels() {
@@ -76,7 +83,7 @@ public class RenderedVolume {
         return xyTileInfo != null;
     }
 
-    public Optional<Path> getTilePath(TileIndex tileIndex) {
+    public Optional<Path> getRelativeTilePath(TileIndex tileIndex) {
         int depth = numZoomLevels - tileIndex.getZoom();
         if (depth < 0) {
             return Optional.empty();
@@ -85,8 +92,8 @@ public class RenderedVolume {
 
         List<String> pathComps = new ArrayList<>();
         // start at lowest zoom to build up octree coordinates
-        for (int d = 1; d < depth - 1; ++d) {
-            int scale = 1 << (numZoomLevels - d);
+        for (int d = 0; d < depth - 1; ++d) {
+            int scale = 1 << (depth - d - 2);
             int ds[] = {
                     tile[0] / scale,
                     tile[1] / scale,

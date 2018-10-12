@@ -8,15 +8,18 @@ import com.sun.media.jai.codec.SeekableStream;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.media.jai.JAI;
+import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.RenderedImageAdapter;
+import java.awt.*;
 import java.awt.image.ColorModel;
+import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class RenderedVolumeLoader {
 
@@ -31,6 +35,26 @@ public class RenderedVolumeLoader {
     private static final String XY_CH_TIFF_PATTERN = "default.%s.tif";
     private static final String YZ_CH_TIFF_PATTERN = "YZ.%s.tif";
     private static final String ZX_CH_TIFF_PATTERN = "ZX.%s.tif";
+
+    public static void loadSlice(RenderedVolume renderedVolume, TileIndex tileIndex, int channelCount) {
+        renderedVolume.getRelativeTilePath(tileIndex)
+                .map(relativeTilePath -> {
+                    ParameterBlockJAI combinedChannels =
+                            IntStream.range(0, channelCount)
+                                    .mapToObj(channel -> renderedVolume.getBasePath()
+                                            .resolve(relativeTilePath)
+                                            .resolve(getFilenameForChannel(tileIndex.getSliceAxis(), channel)))
+                                    .map(channelFile -> readImage(channelFile, tileIndex.getSliceIndex()))
+                                    .reduce(new ParameterBlockJAI("bandmerge"),
+                                            (pb, im) -> {
+                                                pb.addSource(im);
+                                                return pb;
+                                            },
+                                            (pb1, pb2) -> pb2)
+                            ;
+                    return JAI.create("bandmerge", combinedChannels, null);
+                });
+    }
 
     public static Optional<RenderedVolume> loadFrom(Path basePath) {
         return loadVolumeSizeAndCoord(basePath)
@@ -46,7 +70,8 @@ public class RenderedVolumeLoader {
                                 TileInfo xyTileInfo = tileInfos[CoordinateAxis.Z.index()];
                                 TileInfo zxTileInfo = tileInfos[CoordinateAxis.Y.index()];
                                 TileInfo yzTileInfo = tileInfos[CoordinateAxis.X.index()];
-                                return new RenderedVolume(RenderingType.OCTREE,
+                                return new RenderedVolume(basePath,
+                                        RenderingType.OCTREE,
                                         coord.getOriginVoxel(),
                                         volumeSizeInVoxels,
                                         coord.getHighestResMicromsPerVoxel(),
@@ -184,11 +209,33 @@ public class RenderedVolumeLoader {
             ColorModel colorModel = ria.getColorModel();
             return new TileInfo(sliceAxis,
                     nChannels,
-                    new int[] {sx, sy, sz},
+                    new int[]{sx, sy, sz},
                     colorModel.getPixelSize(),
                     colorModel.getColorSpace().isCS_sRGB());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    private static RenderedImage readImage(Path tiffPath, int pageNumber) {
+        try (SeekableStream tiffStream = new FileSeekableStream(tiffPath.toFile())) {
+            ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
+            return decoder.decodeAsRenderedImage(pageNumber);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static String getFilenameForChannel(CoordinateAxis sliceAxis, int channelNumber) {
+        switch (sliceAxis) {
+            case X:
+                return String.format(YZ_CH_TIFF_PATTERN, channelNumber);
+            case Y:
+                return String.format(ZX_CH_TIFF_PATTERN, channelNumber);
+            case Z:
+                return String.format(XY_CH_TIFF_PATTERN, channelNumber);
+            default:
+                throw new IllegalArgumentException("Invalid slice axis " + sliceAxis);
         }
     }
 }
