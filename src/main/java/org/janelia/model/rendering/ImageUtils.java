@@ -52,7 +52,6 @@ class ImageUtils {
         int byteBufferSize = (Integer.SIZE / 8) * 8 + (Float.SIZE / 8) + imageByteCount;
         byte[] dataBytesArray = new byte[byteBufferSize];
         ByteBuffer dataBytesBuffer = ByteBuffer.wrap(dataBytesArray);
-        dataBytesBuffer.order(ByteOrder.nativeOrder());
 
         dataBytesBuffer.putInt(mipmapLevel);
         dataBytesBuffer.putInt(width);
