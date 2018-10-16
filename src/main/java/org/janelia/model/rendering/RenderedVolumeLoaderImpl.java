@@ -90,10 +90,13 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
 
     private Optional<RawCoord> loadVolumeSizeAndCoord(Path basePath) {
         try {
-            PathMatcher transformFileMatcher = FileSystems.getDefault().getPathMatcher("glob:**/" + TRANSFORM_FILE_NAME);
-            return Files.find(basePath, 1, (p, a) -> transformFileMatcher.matches(p))
-                    .findFirst()
-                    .map(p -> parseTransformFile(p));
+            Path transformFilePath = basePath.resolve(TRANSFORM_FILE_NAME);
+            if (Files.exists(transformFilePath)) {
+                return Optional.of(parseTransformFile(transformFilePath));
+            } else {
+                LOG.warn("No transform file found in {} folder", basePath);
+                return Optional.empty();
+            }
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }
