@@ -40,7 +40,22 @@ public class SampleUtils {
      */
     public static String getFragFromLineName(String lineName) {
 
-        Pattern p = Pattern.compile("^([A-Z]+_.+?)_.+$");
+        Pattern p = Pattern.compile("^([A-Z]+_.+?)(_.+)?$");
+        Matcher m = p.matcher(lineName);
+        if (!m.matches()) {
+            return null;
+        }
+        return m.group(1);
+    }
+
+    /**
+     * Returns the plate and well part of a line name. For example, "BJD_100A01_AE_01" -> "100A01"
+     * @param lineName line name from Sample or LSMImage
+     * @return plate and well or null if it cannot be extracted
+     */
+    public static String getPlateWellFromLineName(String lineName) {
+
+        Pattern p = Pattern.compile("^[A-Z]+_(.+?)(_.+)?$");
         Matcher m = p.matcher(lineName);
         if (!m.matches()) {
             return null;
