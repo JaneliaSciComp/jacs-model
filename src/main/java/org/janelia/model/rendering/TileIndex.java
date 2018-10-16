@@ -30,8 +30,9 @@ public class TileIndex {
 				return new TileIndex(xTile / tileInfo.getVolumeSize()[CoordinateAxis.X.index()] / zoomFactor, yTile, zTile,
 						zoom, sliceAxis, (xTile / zoomFactor) % tileInfo.getNumPages());
 			case Y:
+				// Raveller y is flipped so flip when slicing in Y
 				return new TileIndex(xTile, yTile / tileInfo.getVolumeSize()[CoordinateAxis.Y.index()] / zoomFactor, zTile,
-						zoom, sliceAxis, (yTile / zoomFactor) % tileInfo.getNumPages());
+						zoom, sliceAxis, tileInfo.getNumPages() - ((yTile / zoomFactor) % tileInfo.getNumPages()) - 1);
 			case Z:
 				return new TileIndex(xTile, yTile, zTile / tileInfo.getVolumeSize()[CoordinateAxis.Z.index()] / zoomFactor,
 						zoom, sliceAxis, (zTile / zoomFactor) % tileInfo.getNumPages());
