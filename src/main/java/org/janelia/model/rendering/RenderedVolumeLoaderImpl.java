@@ -81,7 +81,10 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                         })
                         .flatMap(channelFiles -> channelFiles.stream()
                                     .filter(channelFile -> channelFile.toFile().exists())
-                                    .map(channelFile -> readImage(channelFile, tileIndex.getSliceIndex()))
+                                    .map(channelFile -> {
+                                        LOG.error("Read TIFF file {} for tile {}", channelFile, tileIndex);
+                                        return readImage(channelFile, tileIndex.getSliceIndex());
+                                    })
                                     .reduce(Optional.<ParameterBlock>empty(),
                                             (opb, im) -> opb
                                                     .map(pb -> Optional.of(pb.addSource(im)))
@@ -232,11 +235,11 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
 
     private RenderedImage readImage(Path tiffPath, int pageNumber) {
         try {
-            LOG.debug("Read from TIFF image {}, page {}", tiffPath, pageNumber);
             SeekableStream tiffStream = new FileSeekableStream(tiffPath.toFile());
             ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
             return decoder.decodeAsRenderedImage(pageNumber);
         } catch (IOException e) {
+            LOG.error("Error reading TIFF image {}, page {}", tiffPath, pageNumber, e);
             throw new UncheckedIOException(e);
         }
     }
