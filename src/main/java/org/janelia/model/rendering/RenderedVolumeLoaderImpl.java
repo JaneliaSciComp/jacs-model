@@ -82,7 +82,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                         .flatMap(channelFiles -> channelFiles.stream()
                                     .filter(channelFile -> channelFile.toFile().exists())
                                     .map(channelFile -> {
-                                        LOG.error("Read TIFF file {} for tile {}", channelFile, tileIndex);
+                                        LOG.debug("Read TIFF file {} for tile {}", channelFile, tileIndex);
                                         return readImage(channelFile, tileIndex.getSliceIndex());
                                     })
                                     .reduce(Optional.<ParameterBlock>empty(),
