@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -55,6 +56,7 @@ public class RenderedVolumeLoaderImplTest {
         assertFalse(rv.hasXSlices());
         assertFalse(rv.hasYSlices());
         assertTrue(rv.hasZSlices());
+        assertArrayEquals(new int[] {234764, 50122, 27931}, rv.getOriginVoxel());
     }
 
     @Test

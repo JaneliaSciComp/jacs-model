@@ -1,8 +1,12 @@
 package org.janelia.model.rendering;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Streams;
 
 import java.util.Arrays;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class RawCoord {
     private int[] originInNanos = new int[3];
@@ -38,9 +42,11 @@ public class RawCoord {
     }
 
     int[] getOriginVoxel() {
-        double scaleFactor = getScaleFactor();
-        return Arrays.stream(originInNanos)
-                .map(originCoord -> (int) (originCoord / scaleFactor))
-                .toArray();
+        double[] res = getHighestResMicromsPerVoxel();
+        int[] originVoxel = new int[originInNanos.length];
+        for (int i = 0; i < originVoxel.length; i++) {
+            originVoxel[i] = (int) (originInNanos[i] / (1000 * res[i])); // nanometers to voxels
+        }
+        return originVoxel;
     }
 }
