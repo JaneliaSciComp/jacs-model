@@ -132,7 +132,7 @@ public class RenderedVolume {
 
             // Octree coordinates are in z-order
             int octreeCoord = 1 + ds[0]
-                    + 2 * ds[1]
+                    + 2 * (1 - ds[1]) // Raveler Y is at bottom; octree Y is at top
                     + 4 * ds[2];
             pathComps.add(String.valueOf(octreeCoord));
         }
