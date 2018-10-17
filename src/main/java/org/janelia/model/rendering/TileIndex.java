@@ -13,7 +13,7 @@ import java.util.Arrays;
  */
 public class TileIndex {
 
-	public static TileIndex fromTileCoord(int xTile, int yTile, int zTile,
+	static TileIndex fromTileCoord(int xTile, int yTile, int zTile,
 										  int zoom,
 										  CoordinateAxis sliceAxis,
 										  int sliceIndex) {
@@ -27,14 +27,14 @@ public class TileIndex {
 		int zoomFactor = 1 << zoom;
 		switch (sliceAxis) {
 			case X:
-				return new TileIndex(xTile / tileInfo.getVolumeSize()[CoordinateAxis.X.index()] / zoomFactor, yTile, zTile,
+				return fromTileCoord(xTile / tileInfo.getVolumeSize()[CoordinateAxis.X.index()] / zoomFactor, yTile, zTile,
 						zoom, sliceAxis, (xTile / zoomFactor) % tileInfo.getNumPages());
 			case Y:
 				// Raveller y is flipped so flip when slicing in Y
-				return new TileIndex(xTile, yTile / tileInfo.getVolumeSize()[CoordinateAxis.Y.index()] / zoomFactor, zTile,
+				return fromTileCoord(xTile, yTile / tileInfo.getVolumeSize()[CoordinateAxis.Y.index()] / zoomFactor, zTile,
 						zoom, sliceAxis, tileInfo.getNumPages() - ((yTile / zoomFactor) % tileInfo.getNumPages()) - 1);
 			case Z:
-				return new TileIndex(xTile, yTile, zTile / tileInfo.getVolumeSize()[CoordinateAxis.Z.index()] / zoomFactor,
+				return fromTileCoord(xTile, yTile, zTile / tileInfo.getVolumeSize()[CoordinateAxis.Z.index()] / zoomFactor,
 						zoom, sliceAxis, (zTile / zoomFactor) % tileInfo.getNumPages());
 			default:
 				throw new IllegalArgumentException("Invalid slice axis " + sliceAxis);
