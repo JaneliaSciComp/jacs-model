@@ -15,6 +15,7 @@ import org.janelia.model.domain.interfaces.IsAligned;
  */
 public class SampleAlignmentResult extends PipelineResult implements HasAnatomicalArea, HasImageStack, IsAligned {
 
+    private String legacyName;
 	private String anatomicalArea;
     private String imageSize;
     private String opticalResolution;
@@ -25,6 +26,14 @@ public class SampleAlignmentResult extends PipelineResult implements HasAnatomic
     private String boundingBox;
     private Map<AlignmentScoreType, String> scores = new HashMap<>();
     private Long bridgeParentAlignmentId;
+
+    public String getLegacyName() {
+        return legacyName;
+    }
+
+    public void setLegacyName(String legacyName) {
+        this.legacyName = legacyName;
+    }
 
     @Override
     public String getAnatomicalArea() {

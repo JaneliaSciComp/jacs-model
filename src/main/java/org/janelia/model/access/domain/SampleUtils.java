@@ -160,21 +160,7 @@ public class SampleUtils {
                     if (resultClass==null || StringUtils.equals(pipelineResult.getClass().getName(), resultClass)) {
                         log.debug("    Found result matching resultClass=" + resultClass);
 
-                        String pipelineResultName = null;
-                        if (pipelineResult instanceof SampleAlignmentResult) {
-                            SampleAlignmentResult alignmentResult = (SampleAlignmentResult) pipelineResult;
-                            if (StringUtils.isBlank(alignmentResult.getAlignmentSpace())) {
-                                // If the alignment space is empty, fallback on the result name.
-                                // This shouldn't happen, but it does for legacy or broken data.
-                                pipelineResultName = pipelineResult.getName();
-                            }
-                            else {
-                                pipelineResultName = alignmentResult.getAlignmentSpace();
-                            }
-                        }
-                        else {
-                            pipelineResultName = pipelineResult.getName();
-                        }
+                        String pipelineResultName = pipelineResult.getName();
 
                         boolean matchingResultName = StringUtils.equals(pipelineResultName, resultName);
 
