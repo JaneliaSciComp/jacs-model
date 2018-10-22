@@ -2,7 +2,6 @@ package org.janelia.model.domain.tiledMicroscope;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.janelia.model.domain.Reference;
 
 import java.util.List;
 
@@ -23,7 +22,7 @@ public interface TmReviewItem {
     @JsonIgnore
     public List<Object> getReviewItems();
     @JsonIgnore
-    public String getWorkspaceRef();
+    public Long getWorkspaceId();
     @JsonIgnore
     public void addReviewItem(Object item);
 }

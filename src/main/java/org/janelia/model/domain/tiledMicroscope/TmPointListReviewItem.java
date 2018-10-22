@@ -9,7 +9,7 @@ import java.util.List;
 
 public class TmPointListReviewItem implements TmReviewItem {
     private String pathname;
-    private String workspaceRef;
+    private Long workspaceId;
     private List<List<Long>> pointList  = new ArrayList<>();
     private boolean reviewed;
 
@@ -46,12 +46,12 @@ public class TmPointListReviewItem implements TmReviewItem {
 
     @JsonIgnore
     @Override
-    public String getWorkspaceRef() {
-        return workspaceRef;
+    public Long getWorkspaceId() {
+        return workspaceId;
     }
 
     @JsonIgnore
-    public void setWorkspaceRef(String workspaceRef) {
-        this.workspaceRef = workspaceRef;
+    public void setWorkspaceId(Long workspaceId) {
+        this.workspaceId = workspaceId;
     }
 }

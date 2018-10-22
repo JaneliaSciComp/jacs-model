@@ -9,8 +9,8 @@ import java.util.List;
 
 public class TmNeuronReviewItem implements TmReviewItem {
     private String pathname;
-    private String workspaceRef;
-    private String neuronRef;
+    private Long workspaceId;
+    private Long neuronId;
     private List<Long> annotationIds = new ArrayList<>();
     private boolean reviewed;
 
@@ -47,23 +47,23 @@ public class TmNeuronReviewItem implements TmReviewItem {
 
     @JsonIgnore
     @Override
-    public String getWorkspaceRef() {
-        return workspaceRef;
+    public Long getWorkspaceId() {
+        return workspaceId;
     }
 
     @JsonIgnore
-    public void setWorkspaceRef(String workspaceRef) {
-        this.workspaceRef = workspaceRef;
+    public void setWorkspaceId(Long workspaceRef) {
+        this.workspaceId = workspaceId;
     }
 
     @JsonIgnore
-    public String getNeuronRef() {
-        return neuronRef;
+    public Long getNeuronId() {
+        return neuronId;
     }
 
     @JsonIgnore
-    public void setNeuronRef(String neuronRef) {
-        this.neuronRef = neuronRef;
+    public void setNeuronId(Long neuronId) {
+        this.neuronId = neuronId;
     }
 
 }
