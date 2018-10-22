@@ -45,6 +45,7 @@ public class TmPointListReviewItem implements TmReviewItem {
     }
 
     @JsonIgnore
+    @Override
     public String getWorkspaceRef() {
         return workspaceRef;
     }

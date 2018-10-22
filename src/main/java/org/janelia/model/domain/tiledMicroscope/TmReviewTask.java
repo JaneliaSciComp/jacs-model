@@ -1,6 +1,7 @@
 package org.janelia.model.domain.tiledMicroscope;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.security.Subject;
 import java.util.*;
 
@@ -11,12 +12,12 @@ import java.util.*;
  * review is of a neuron, so it needs to capture appropriate metadata,
  * while the semi-automated tasks are mostly point driven reviews.
  */
-public class TmReviewTask {
+public class TmReviewTask extends AbstractDomainObject {
     private String category;
     private Boolean completed = false;
     private List<Map<String,String>> reviewerHistory = new ArrayList<>();
     private String title;
-    private Subject owner;
+    private String ownerKey;
     private List<TmReviewItem> reviewItems;
 
     public TmReviewTask() {}
@@ -62,13 +63,13 @@ public class TmReviewTask {
     }
 
     @JsonIgnore
-    public Subject getOwner() {
-        return owner;
+    public String getOwner() {
+        return ownerKey;
     }
 
     @JsonIgnore
-    public void setOwner(Subject owner) {
-        this.owner = owner;
+    public void setOwner(String owner) {
+        this.ownerKey = owner;
     }
 
     @JsonIgnore

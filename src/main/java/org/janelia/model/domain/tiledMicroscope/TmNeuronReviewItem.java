@@ -46,6 +46,7 @@ public class TmNeuronReviewItem implements TmReviewItem {
     }
 
     @JsonIgnore
+    @Override
     public String getWorkspaceRef() {
         return workspaceRef;
     }

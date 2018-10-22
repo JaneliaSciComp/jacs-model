@@ -23,5 +23,7 @@ public interface TmReviewItem {
     @JsonIgnore
     public List<Object> getReviewItems();
     @JsonIgnore
+    public String getWorkspaceRef();
+    @JsonIgnore
     public void addReviewItem(Object item);
 }
