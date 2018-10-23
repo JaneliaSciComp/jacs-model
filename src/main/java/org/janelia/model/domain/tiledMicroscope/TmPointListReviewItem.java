@@ -2,14 +2,14 @@ package org.janelia.model.domain.tiledMicroscope;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@JsonTypeName("pointlistreview")
 public class TmPointListReviewItem implements TmReviewItem {
     private String pathname;
-    private Long workspaceId;
+    private String workspaceRef;
     private List<List<Long>> pointList  = new ArrayList<>();
     private boolean reviewed;
 
@@ -46,12 +46,13 @@ public class TmPointListReviewItem implements TmReviewItem {
 
     @JsonIgnore
     @Override
-    public Long getWorkspaceId() {
-        return workspaceId;
+    public String getWorkspaceRef() {
+        return workspaceRef;
     }
 
     @JsonIgnore
-    public void setWorkspaceId(Long workspaceId) {
-        this.workspaceId = workspaceId;
+    @Override
+    public void setWorkspaceRef(String workspaceRef) {
+        this.workspaceRef = workspaceRef;
     }
 }

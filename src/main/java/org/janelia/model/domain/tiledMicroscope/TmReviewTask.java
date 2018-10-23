@@ -2,7 +2,7 @@ package org.janelia.model.domain.tiledMicroscope;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
-import org.janelia.model.security.Subject;
+import org.janelia.model.domain.support.MongoMapped;
 import java.util.*;
 
 /**
@@ -12,72 +12,53 @@ import java.util.*;
  * review is of a neuron, so it needs to capture appropriate metadata,
  * while the semi-automated tasks are mostly point driven reviews.
  */
+
+@MongoMapped(collectionName="tmReviewTask",label="Tiled Microscope Review Tasks")
 public class TmReviewTask extends AbstractDomainObject {
     private String category;
     private Boolean completed = false;
     private List<Map<String,String>> reviewerHistory = new ArrayList<>();
     private String title;
-    private String ownerKey;
-    private List<TmReviewItem> reviewItems;
+    private List<TmReviewItem> reviewItems = new ArrayList<>();
 
     public TmReviewTask() {}
 
-    @JsonIgnore
     public String getCategory() {
         return category;
     }
 
-    @JsonIgnore
     public void setCategory(String category) {
         this.category = category;
     }
 
-    @JsonIgnore
     public Boolean getCompleted() {
         return completed;
     }
 
-    @JsonIgnore
     public void setCompleted(Boolean completed) {
         this.completed = completed;
     }
 
-    @JsonIgnore
     public List<Map<String, String>> getReviewerHistory() {
         return reviewerHistory;
     }
 
-    @JsonIgnore
     public void addReviewerHistory(Map<String, String> historyItem) {
         reviewerHistory.add(historyItem);
     }
 
-    @JsonIgnore
     public String getTitle() {
         return title;
     }
 
-    @JsonIgnore
     public void setTitle(String title) {
         this.title = title;
     }
 
-    @JsonIgnore
-    public String getOwner() {
-        return ownerKey;
-    }
-
-    @JsonIgnore
-    public void setOwner(String owner) {
-        this.ownerKey = owner;
-    }
-
-    @JsonIgnore
     public List<TmReviewItem> getReviewItems() {
         return reviewItems;
     }
 
-    @JsonIgnore
     public void addReviewItem(TmReviewItem reviewItem) {
         reviewItems.add(reviewItem);
     }

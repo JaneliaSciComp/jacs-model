@@ -2,14 +2,14 @@ package org.janelia.model.domain.tiledMicroscope;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@JsonTypeName("neuronreview")
 public class TmNeuronReviewItem implements TmReviewItem {
     private String pathname;
-    private Long workspaceId;
+    private String workspaceRef;
     private Long neuronId;
     private List<Long> annotationIds = new ArrayList<>();
     private boolean reviewed;
@@ -40,28 +40,26 @@ public class TmNeuronReviewItem implements TmReviewItem {
     }
 
     @Override
+    @JsonIgnore
     public void addReviewItem(Object item) {
         annotationIds.add((Long)item);
 
     }
 
-    @JsonIgnore
     @Override
-    public Long getWorkspaceId() {
-        return workspaceId;
+    public String getWorkspaceRef() {
+        return workspaceRef;
     }
 
-    @JsonIgnore
-    public void setWorkspaceId(Long workspaceRef) {
-        this.workspaceId = workspaceId;
+    @Override
+    public void setWorkspaceRef(String workspaceRef) {
+        this.workspaceRef = workspaceRef;
     }
 
-    @JsonIgnore
     public Long getNeuronId() {
         return neuronId;
     }
 
-    @JsonIgnore
     public void setNeuronId(Long neuronId) {
         this.neuronId = neuronId;
     }

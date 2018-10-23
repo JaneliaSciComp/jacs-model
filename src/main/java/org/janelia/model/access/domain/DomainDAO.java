@@ -24,6 +24,7 @@ import org.janelia.model.domain.ontology.*;
 import org.janelia.model.domain.orders.IntakeOrder;
 import org.janelia.model.domain.sample.*;
 import org.janelia.model.domain.screen.FlyLine;
+import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
@@ -76,6 +77,7 @@ public class DomainDAO {
     protected MongoCollection tmSampleCollection;
     protected MongoCollection tmWorkspaceCollection;
     protected MongoCollection tmNeuronCollection;
+    protected MongoCollection tmReviewTaskCollection;
     protected MongoCollection colorDepthMaskCollection;
     protected MongoCollection colorDepthSearchCollection;
     protected MongoCollection colorDepthResultCollection;
@@ -137,6 +139,7 @@ public class DomainDAO {
         this.tmSampleCollection = getCollectionByClass(TmSample.class);
         this.tmWorkspaceCollection = getCollectionByClass(TmWorkspace.class);
         this.tmNeuronCollection = getCollectionByClass(TmNeuronMetadata.class);
+        this.tmReviewTaskCollection = getCollectionByClass(TmReviewTask.class);
         this.colorDepthMaskCollection = getCollectionByClass(ColorDepthMask.class);
         this.colorDepthSearchCollection = getCollectionByClass(ColorDepthSearch.class);
         this.colorDepthResultCollection = getCollectionByClass(ColorDepthResult.class);
