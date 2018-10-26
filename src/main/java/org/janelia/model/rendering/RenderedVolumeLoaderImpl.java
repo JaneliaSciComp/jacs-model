@@ -66,22 +66,22 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     @Override
-    public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileIndex tileIndex) {
-        return renderedVolume.getTileInfo(tileIndex.getSliceAxis())
-                .flatMap(tileInfo -> renderedVolume.getRelativeTilePath(tileIndex)
+    public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
+        return renderedVolume.getTileInfo(tileKey.getSliceAxis())
+                .flatMap(tileInfo -> renderedVolume.getRelativeTilePath(tileKey)
                         .map(relativeTilePath -> {
-                            LOG.debug("Try to load tile {} from {} : {}", tileIndex, renderedVolume.getBasePath(), relativeTilePath);
+                            LOG.debug("Try to load tile {} from {} : {}", tileKey, renderedVolume.getBasePath(), relativeTilePath);
                             return IntStream.range(0, tileInfo.getChannelCount())
                                     .mapToObj(channel -> renderedVolume.getBasePath()
                                             .resolve(relativeTilePath)
-                                            .resolve(getFilenameForChannel(tileIndex.getSliceAxis(), channel)))
+                                            .resolve(getFilenameForChannel(tileKey.getSliceAxis(), channel)))
                                     .collect(Collectors.toList());
                         })
                         .flatMap(channelFiles -> channelFiles.stream()
                                     .filter(channelFile -> channelFile.toFile().exists())
                                     .map(channelFile -> {
-                                        LOG.debug("Read TIFF file {} for tile {}", channelFile, tileIndex);
-                                        return readImage(channelFile, tileIndex.getSliceIndex());
+                                        LOG.debug("Read TIFF file {} for tile {}", channelFile, tileKey);
+                                        return readImage(channelFile, tileKey.getSliceIndex());
                                     })
                                     .reduce(Optional.<ParameterBlock>empty(),
                                             (opb, im) -> opb

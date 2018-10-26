@@ -94,7 +94,7 @@ public class RenderedVolumeLoaderImplTest {
         prepareTestDataFiles("transform.txt", "default.0.tif", "default.1.tif");
         byte[] sliceBytes = renderedVolumeLoader.loadVolume(testDirectory)
                 .flatMap(rv -> rv.getTileInfo(CoordinateAxis.Z)
-                        .map(tileInfo -> TileIndex.fromTileCoord(
+                        .map(tileInfo -> TileKey.fromTileCoord(
                                 0,
                                 0,
                                 0,
@@ -111,7 +111,7 @@ public class RenderedVolumeLoaderImplTest {
         prepareTestDataFiles("transform.txt", "default.0.tif", "default.1.tif");
         byte[] sliceBytes = renderedVolumeLoader.loadVolume(testDirectory)
                 .flatMap(rv -> rv.getTileInfo(CoordinateAxis.Z)
-                        .map(tileInfo -> TileIndex.fromTileCoord(
+                        .map(tileInfo -> TileKey.fromTileCoord(
                                 1,
                                 1,
                                 1,

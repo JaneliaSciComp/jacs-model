@@ -16,7 +16,7 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
             .maximumSize(200)
             .build();
 
-    private static final Cache<TileIndex, Optional<byte[]>> IMAGE_CACHE = CacheBuilder.newBuilder()
+    private static final Cache<TileKey, Optional<byte[]>> IMAGE_CACHE = CacheBuilder.newBuilder()
             .maximumSize(200)
             .build();
 
@@ -37,9 +37,9 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     }
 
     @Override
-    public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileIndex tileIndex) {
+    public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
         try {
-            return IMAGE_CACHE.get(tileIndex, () -> impl.loadSlice(renderedVolume, tileIndex));
+            return IMAGE_CACHE.get(tileKey, () -> impl.loadSlice(renderedVolume, tileKey));
         } catch (ExecutionException e) {
             throw new IllegalStateException(e);
         }

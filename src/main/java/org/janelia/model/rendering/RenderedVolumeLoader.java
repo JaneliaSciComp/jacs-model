@@ -5,5 +5,5 @@ import java.util.Optional;
 
 public interface RenderedVolumeLoader {
     Optional<RenderedVolume> loadVolume(Path basePath);
-    Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileIndex tileIndex);
+    Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey);
 }

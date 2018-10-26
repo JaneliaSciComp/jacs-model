@@ -99,12 +99,12 @@ public class RenderedVolume {
         return xyTileInfo != null;
     }
 
-    public Optional<Path> getRelativeTilePath(TileIndex tileIndex) {
-        int depth = numZoomLevels - tileIndex.getZoom();
+    public Optional<Path> getRelativeTilePath(TileKey tileKey) {
+        int depth = numZoomLevels - tileKey.getZoom();
         if (depth < 0) {
             return Optional.empty();
         }
-        int[] tile = tileIndex.getCoord();
+        int[] tile = tileKey.getCoord();
 
         List<String> pathComps = new ArrayList<>();
         // start at lowest zoom to build up octree coordinates
