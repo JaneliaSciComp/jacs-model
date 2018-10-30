@@ -46,16 +46,6 @@ public class TmNeuronReviewItem implements TmReviewItem {
 
     }
 
-    @Override
-    public String getWorkspaceRef() {
-        return workspaceRef;
-    }
-
-    @Override
-    public void setWorkspaceRef(String workspaceRef) {
-        this.workspaceRef = workspaceRef;
-    }
-
     public Long getNeuronId() {
         return neuronId;
     }

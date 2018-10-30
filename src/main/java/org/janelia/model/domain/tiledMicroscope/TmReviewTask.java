@@ -20,6 +20,7 @@ public class TmReviewTask extends AbstractDomainObject {
     private List<Map<String,String>> reviewerHistory = new ArrayList<>();
     private String title;
     private List<TmReviewItem> reviewItems = new ArrayList<>();
+    private String workspaceRef;
 
     public TmReviewTask() {}
 
@@ -49,6 +50,14 @@ public class TmReviewTask extends AbstractDomainObject {
 
     public String getTitle() {
         return title;
+    }
+
+    public String getWorkspaceRef() {
+        return workspaceRef;
+    }
+
+    public void setWorkspaceRef(String workspaceRef) {
+        this.workspaceRef = workspaceRef;
     }
 
     public void setTitle(String title) {

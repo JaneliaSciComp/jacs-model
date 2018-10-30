@@ -9,7 +9,6 @@ import java.util.List;
 @JsonTypeName("pointlistreview")
 public class TmPointListReviewItem implements TmReviewItem {
     private String pathname;
-    private String workspaceRef;
     private List<List<Long>> pointList  = new ArrayList<>();
     private boolean reviewed;
 
@@ -42,17 +41,5 @@ public class TmPointListReviewItem implements TmReviewItem {
     public void addReviewItem(Object item) {
         pointList.add((List<Long>)item);
 
-    }
-
-    @JsonIgnore
-    @Override
-    public String getWorkspaceRef() {
-        return workspaceRef;
-    }
-
-    @JsonIgnore
-    @Override
-    public void setWorkspaceRef(String workspaceRef) {
-        this.workspaceRef = workspaceRef;
     }
 }

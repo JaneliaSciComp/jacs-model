@@ -22,7 +22,5 @@ public interface TmReviewItem {
     public void setName(String name);
     public String getName();
     public List<Object> getReviewItems();
-    public String getWorkspaceRef();
-    public void setWorkspaceRef(String workspaceRef);
     public void addReviewItem(Object item);
 }
