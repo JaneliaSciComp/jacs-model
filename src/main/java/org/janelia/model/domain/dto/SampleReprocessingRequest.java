@@ -17,6 +17,7 @@ public class SampleReprocessingRequest {
     private Boolean reuseProcessing;
     private Boolean reusePost;
     private Boolean reuseAlignment;
+    private Boolean reuseSeparation;
     private Boolean keepExistingResults;
     private String extraOptions;
 
@@ -69,6 +70,14 @@ public class SampleReprocessingRequest {
 
     public void setReuseAlignment(Boolean reuseAlignment) {
         this.reuseAlignment = reuseAlignment;
+    }
+
+    public Boolean getReuseSeparation() {
+        return reuseSeparation;
+    }
+
+    public void setReuseSeparation(Boolean reuseSeparation) {
+        this.reuseSeparation = reuseSeparation;
     }
 
     public Boolean getKeepExistingResults() {
