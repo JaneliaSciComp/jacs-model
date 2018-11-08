@@ -7,8 +7,12 @@ package org.janelia.model.domain.enums;
  */
 public enum FileType {
 
-    FirstAvailable2d("First Available", true, true, false),
-    FirstAvailable3d("First Available Stack", false, true, false),
+    // Virtual file types for driving the image browser
+    FirstAvailable2d("First Available", true, true, false, true),
+    FirstAvailable3d("First Available Stack", false, true, false, true),
+
+    // Virtual file types for driving the Download Wizard
+    ColorDepthMips("Color Depth Projections", true, false, false, true),
 
     // Stacks
     LosslessStack("Lossless Stack (e.g. LSM/RAW/PBD)", false, true, false),
@@ -35,7 +39,7 @@ public enum FileType {
     ColorDepthMip2("Color Depth Projection ch2", true, false, false),
     ColorDepthMip3("Color Depth Projection ch3", true, false, false),
     ColorDepthMip4("Color Depth Projection ch4", true, false, false),
-    
+
     // Movies
     SignalMovie("Signal Movie", false, false, false),
     ReferenceMovie("Reference Movie", false, false, false),
@@ -74,12 +78,18 @@ public enum FileType {
     private final boolean is2dImage;
     private final boolean is3dImage;
     private final boolean isAscii;
+    private final boolean isVirtual;
 
-    private FileType(String label, boolean is2dImage, boolean is3dImage, boolean isAscii) {
+    FileType(String label, boolean is2dImage, boolean is3dImage, boolean isAscii) {
+        this(label, is2dImage, is3dImage, isAscii, false);
+    }
+
+    FileType(String label, boolean is2dImage, boolean is3dImage, boolean isAscii, boolean isVirtual) {
         this.label = label;
         this.is2dImage = is2dImage;
         this.is3dImage = is3dImage;
         this.isAscii = isAscii;
+        this.isVirtual = isVirtual;
     }
     
     public String getLabel() {
@@ -96,15 +106,35 @@ public enum FileType {
         return null;
     }
 
+    /**
+     * Does the file type represent a 2D image that can be displayed on screen?
+     * @return true if the file is a 2d image
+     */
     public boolean is2dImage() {
         return is2dImage;
     }
 
+    /**
+     * Does the file type represent a 3D image or image stack?
+     * @return true if the file is a 3d image
+     */
     public boolean is3dImage() {
         return is3dImage;
     }
 
+    /**
+     * Does the file type represent an ASCII file that can be displayed in a text editor?
+     * @return true if the file is ASCII
+     */
     public boolean isAscii() {
         return isAscii;
+    }
+
+    /**
+     * Virtual file types are not used in the database. They are only used in the UI for user selections.
+     * @return true if the file type is virtual
+     */
+    public boolean isVirtual() {
+        return isVirtual;
     }
 }
