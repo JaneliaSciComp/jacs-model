@@ -1,7 +1,7 @@
 package org.janelia.model.access.domain.dao;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.janelia.model.domain.dto.BulkNeuronStyleUpdate;
+import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 

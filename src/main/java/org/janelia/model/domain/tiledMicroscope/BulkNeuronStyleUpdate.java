@@ -1,4 +1,4 @@
-package org.janelia.model.domain.dto;
+package org.janelia.model.domain.tiledMicroscope;
 
 import java.util.List;
 
