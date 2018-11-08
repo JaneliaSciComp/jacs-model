@@ -1,15 +1,5 @@
 package org.janelia.model.access.domain;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.enums.AlignmentScoreType;
@@ -19,6 +9,10 @@ import org.janelia.model.domain.interfaces.HasFiles;
 import org.janelia.model.domain.sample.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Utilities for dealing with Samples, Neuron Fragments, and other related objects.
@@ -37,6 +31,36 @@ public class SampleUtils {
         if (o1==null || o2==null) return false;
         if (o1.getId()==null || o2.getId()==null) return false;
         return o1.getId().equals(o2.getId());
+    }
+
+    /**
+     * Returns the fragment part of a line name. For example, "BJD_100A01_AE_01" -> "BJD_100A01"
+     * @param lineName line name from Sample or LSMImage
+     * @return fragment or null if fragment cannot be extracted
+     */
+    public static String getFragFromLineName(String lineName) {
+
+        Pattern p = Pattern.compile("^([A-Z]+_.+?)(_.+)?$");
+        Matcher m = p.matcher(lineName);
+        if (!m.matches()) {
+            return null;
+        }
+        return m.group(1);
+    }
+
+    /**
+     * Returns the plate and well part of a line name. For example, "BJD_100A01_AE_01" -> "100A01"
+     * @param lineName line name from Sample or LSMImage
+     * @return plate and well or null if it cannot be extracted
+     */
+    public static String getPlateWellFromLineName(String lineName) {
+
+        Pattern p = Pattern.compile("^[A-Z]+_(.+?)(_.+)?$");
+        Matcher m = p.matcher(lineName);
+        if (!m.matches()) {
+            return null;
+        }
+        return m.group(1);
     }
 
     /**
@@ -121,6 +145,8 @@ public class SampleUtils {
             SamplePipelineRun run = runs.get(i);
             log.debug("  Testing run: " + run.getId());
 
+            boolean matchedResultName = false;
+
             // Walk results backwards to get latest first
             List<PipelineResult> results = run.getResults();
             for (int j = results.size()-1; j>=0; j--) {
@@ -134,24 +160,16 @@ public class SampleUtils {
                     if (resultClass==null || StringUtils.equals(pipelineResult.getClass().getName(), resultClass)) {
                         log.debug("    Found result matching resultClass=" + resultClass);
 
-                        String pipelineResultName = null;
-                        if (pipelineResult instanceof SampleAlignmentResult) {
-                            SampleAlignmentResult alignmentResult = (SampleAlignmentResult) pipelineResult;
-                            if (StringUtils.isBlank(alignmentResult.getAlignmentSpace())) {
-                                // If the alignment space is empty, fallback on the result name.
-                                // This shouldn't happen, but it does for legacy or broken data.
-                                pipelineResultName = pipelineResult.getName();
-                            }
-                            else {
-                                pipelineResultName = alignmentResult.getAlignmentSpace();
-                            }
-                        }
-                        else {
-                            pipelineResultName = pipelineResult.getName();
-                        }
+                        String pipelineResultName = pipelineResult.getName();
 
-                        if (resultName == null || StringUtils.equals(pipelineResultName, resultName)) {
+                        boolean matchingResultName = StringUtils.equals(pipelineResultName, resultName);
+
+                        if (resultName == null || (!matchedResultName && matchingResultName)) {
                             log.debug("    Found result matching resultName=" + resultName);
+                            if (matchingResultName) {
+                                // Return only one result with the same name
+                                matchedResultName = true;
+                            }
 
                             if (groupName == null) {
                                 if (area == null) {
