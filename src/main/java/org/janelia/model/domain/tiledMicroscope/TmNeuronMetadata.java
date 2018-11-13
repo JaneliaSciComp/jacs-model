@@ -38,6 +38,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
 
     @JsonIgnore
     transient private boolean synced;
+    @JsonIgnore
     transient private int syncLevel = 0;
 
     public TmNeuronMetadata() {
@@ -74,12 +75,10 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         return syncLevel;
     }
 
-    @JsonIgnore
     public synchronized void decrementSyncLevel() {
         this.syncLevel--;
     }
 
-    @JsonIgnore
     public synchronized void incrementSyncLevel() {
         this.syncLevel++;
     }
