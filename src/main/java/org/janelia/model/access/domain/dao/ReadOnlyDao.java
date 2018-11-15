@@ -12,4 +12,5 @@ import java.util.List;
 public interface ReadOnlyDao<T, I> extends Dao<T, I> {
     T findById(I id);
     List<T> findByIds(Collection<I> ids);
+    List<T> findAll(long offset, int length);
 }

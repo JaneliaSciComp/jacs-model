@@ -53,6 +53,11 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> implements ReadW
         return MongoDaoHelper.findByIds(ids, mongoCollection, getEntityType());
     }
 
+    @Override
+    public List<T> findAll(long offset, int length) {
+        return find(null, null, offset, length, getEntityType());
+    }
+
     protected <R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType) {
         return MongoDaoHelper.find(queryFilter, sortCriteria, offset, length, mongoCollection, resultType);
     }
