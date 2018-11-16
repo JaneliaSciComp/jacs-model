@@ -8,16 +8,16 @@ import org.janelia.model.access.domain.DomainDAO;
  */
 public class DomainDAOManager {
 
-    private static final String databaseHost = "dev-mongodb";
-    private static final String databaseName = "jacs-test";
+    public static final String DATABASE_HOST = "dev-mongodb";
+    public static final String DATABASE_NAME = "jacs-test";
 
     private static DomainDAOManager instance;
 
     protected DomainDAO dao;
 
     private DomainDAOManager() {
-        // TODO: in the future we should use a mock database for this
-        this.dao = new DomainDAO(databaseHost, databaseName);
+        // TODO: these should be run as integration tests
+        this.dao = new DomainDAO(DATABASE_HOST, DATABASE_NAME);
     }
 
     public static DomainDAOManager getInstance() {
@@ -32,7 +32,7 @@ public class DomainDAOManager {
     }
 
     public void dropTestDatabase() {
-        dao.getMongo().getDatabase(databaseName).drop();
+        dao.getMongo().getDatabase(DATABASE_NAME).drop();
     }
 
 }

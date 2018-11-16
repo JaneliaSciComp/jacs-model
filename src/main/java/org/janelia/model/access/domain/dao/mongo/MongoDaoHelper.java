@@ -3,6 +3,7 @@ package org.janelia.model.access.domain.dao.mongo;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
@@ -79,6 +80,30 @@ class MongoDaoHelper {
         return results
                 .sort(sortCriteria)
                 .into(entityDocs);
+    }
+
+    static <T, R> List<R> findPipeline(List<Bson> aggregationPipeline, Bson sortCriteria, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
+        List<R> results = new ArrayList<>();
+        aggregationPipelineIterator(aggregationPipeline, sortCriteria, offset, length, mongoCollection, resultType)
+                .forEach(results::add);
+        return results;
+    }
+
+    static <T, R> Iterable<R> aggregationPipelineIterator(List<Bson> aggregationPipeline, Bson sortCriteria, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
+        ImmutableList.Builder<Bson> aggregatePipelineBuilder = ImmutableList.builder();
+        if (CollectionUtils.isNotEmpty(aggregationPipeline)) {
+            aggregatePipelineBuilder.addAll(aggregationPipeline);
+        }
+        if (sortCriteria != null) {
+            aggregatePipelineBuilder.add(Aggregates.sort(sortCriteria));
+        }
+        if (offset > 0) {
+            aggregatePipelineBuilder.add(Aggregates.skip((int) offset));
+        }
+        if (length > 0) {
+            aggregatePipelineBuilder.add(Aggregates.limit(length));
+        }
+        return mongoCollection.aggregate(aggregatePipelineBuilder.build(), resultType);
     }
 
     static Bson createFilterCriteria(List<Bson> filters) {

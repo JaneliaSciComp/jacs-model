@@ -41,7 +41,7 @@ import com.google.common.collect.Sets;
 public class DomainUtilsTest {
 
     @Test
-    public void testCloneFilter() throws Exception {
+    public void testCloneFilter() {
         Filter filter = new Filter();
         filter.setName("New Filter");
         filter.setSearchString("GMR");
@@ -64,7 +64,7 @@ public class DomainUtilsTest {
     }
 
     @Test
-    public void testGet2dTypeNames() throws Exception {
+    public void testGet2dTypeNames() {
         
         FileGroup group1 = new FileGroup("group1");
         group1.setFilepath("/group1");
@@ -88,7 +88,7 @@ public class DomainUtilsTest {
     }
     
     @Test
-    public void testGetAnnotationsByDomainObjectId() throws Exception {
+    public void testGetAnnotationsByDomainObjectId() {
 
         List<Annotation> annotations = new ArrayList<>();
         
