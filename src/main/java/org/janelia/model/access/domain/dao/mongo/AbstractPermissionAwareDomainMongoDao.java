@@ -93,7 +93,7 @@ public abstract class AbstractPermissionAwareDomainMongoDao<T extends DomainObje
                     Filters.exists("readers", false)
             );
         } else if (readers.contains(Subject.ADMIN_KEY)) {
-            return Filters.and(); // simply ignore the filtering in this case
+            return Filters.and(); // user is in the admin group so simply ignore the filtering in this case
         } else {
             return Filters.or(
                     Filters.eq("ownerKey", subjectKey),
@@ -111,7 +111,7 @@ public abstract class AbstractPermissionAwareDomainMongoDao<T extends DomainObje
                     Filters.exists("readers", false)
             );
         } else if (readers.contains(Subject.ADMIN_KEY)) {
-            return Filters.and(); // simply ignore the filtering in this case
+            return Filters.and(); // user is in the admin group so simply ignore the filtering in this case
         } else {
             return Filters.or(
                     Filters.eq("ownerKey", subjectKey),
