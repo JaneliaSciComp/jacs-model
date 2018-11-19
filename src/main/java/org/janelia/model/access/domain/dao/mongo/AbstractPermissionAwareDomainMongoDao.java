@@ -9,13 +9,11 @@ import com.mongodb.client.model.Updates;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
-import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.security.Subject;
-import org.janelia.model.util.ReflectionUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,7 +32,7 @@ import static com.mongodb.client.model.Filters.eq;
  * @param <T> type of the element
  */
 public abstract class AbstractPermissionAwareDomainMongoDao<T extends DomainObject>
-        extends AbstractMongoDao<T>
+        extends AbstractEntityMongoDao<T>
         implements DomainObjectDao<T> {
 
     private final SubjectDao subjectDao;

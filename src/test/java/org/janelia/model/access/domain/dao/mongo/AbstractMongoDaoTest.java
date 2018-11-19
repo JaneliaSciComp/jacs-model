@@ -8,7 +8,6 @@ import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.dao.mongo.utils.RegistryHelper;
 import org.janelia.model.domain.DomainDAOManager;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 
 public class AbstractMongoDaoTest {

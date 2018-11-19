@@ -106,6 +106,10 @@ class MongoDaoHelper {
         return mongoCollection.aggregate(aggregatePipelineBuilder.build(), resultType);
     }
 
+    static <T> Long count(Bson filter, MongoCollection<T> mongoCollection) {
+        return mongoCollection.countDocuments(filter);
+    }
+
     static Bson createFilterCriteria(List<Bson> filters) {
         return CollectionUtils.isNotEmpty(filters) ? Filters.and(filters) : Filters.and();
     }

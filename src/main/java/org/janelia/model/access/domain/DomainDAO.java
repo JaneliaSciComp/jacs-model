@@ -87,7 +87,6 @@ public class DomainDAO {
     }
 
     public DomainDAO(String serverUrl, String databaseName, String username, String password) {
-
         List<ServerAddress> members = new ArrayList<>();
         for (String serverMember : serverUrl.split(",")) {
             members.add(new ServerAddress(serverMember));
@@ -96,8 +95,8 @@ public class DomainDAO {
         MongoClientOptions options = MongoClientOptions.builder().writeConcern(WriteConcern.JOURNALED).build();
 
         if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
-            MongoCredential credential = MongoCredential.createMongoCRCredential(username, databaseName, password.toCharArray());
-            this.m = new MongoClient(members, Arrays.asList(credential), options);
+            MongoCredential credential = MongoCredential.createCredential(username, databaseName, password.toCharArray());
+            this.m = new MongoClient(members, credential, options);
             log.info("Connected to MongoDB (" + databaseName + "@" + serverUrl + ") as user " + username);
         } else {
             this.m = new MongoClient(members, options);

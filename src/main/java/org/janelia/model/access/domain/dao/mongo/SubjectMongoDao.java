@@ -4,7 +4,6 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.util.SubjectUtils;
@@ -15,7 +14,7 @@ import java.util.*;
 /**
  * Subject Mongo DAO.
  */
-public class SubjectMongoDao extends AbstractMongoDao<Subject> implements SubjectDao {
+public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements SubjectDao {
 
     @Inject
     public SubjectMongoDao(MongoDatabase mongoDatabase) {

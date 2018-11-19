@@ -13,13 +13,15 @@ import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 
-public class DatasetMongoDaoTest extends AbstractMongoDaoTest {
+public class SummaryMongoDaoTest extends AbstractMongoDaoTest {
 
     private DatasetMongoDao datasetMongoDao;
+    private SummaryMongoDao summaryMongoDao;
 
     @Before
     public void setUp() {
         datasetMongoDao = new DatasetMongoDao(testMongoDatabase, testObjectMapper);
+        summaryMongoDao = new SummaryMongoDao(testMongoDatabase);
     }
 
     @Test
@@ -46,7 +48,7 @@ public class DatasetMongoDaoTest extends AbstractMongoDaoTest {
                 "u4", expectedSizeCalc.apply("u4")
         );
         for (String testUser : expectedResults.keySet()) {
-            assertEquals(expectedResults.get(testUser), datasetMongoDao.getDiskSpaceUsageByOwnerKey(testUser));
+            assertEquals(expectedResults.get(testUser), summaryMongoDao.getDiskSpaceUsageByOwnerKey(testUser));
         }
     }
 
