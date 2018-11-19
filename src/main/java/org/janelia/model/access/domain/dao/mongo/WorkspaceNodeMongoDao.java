@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * {@link Workspace} Mongo DAO.
  */
-public class WorkspaceNodeMongoDao extends AbstractPermissionAwareDomainMongoDao<Workspace> implements WorkspaceNodeDao {
+public class WorkspaceNodeMongoDao extends TreeNodeMongoDao<Workspace> implements WorkspaceNodeDao {
 
     @Inject
     WorkspaceNodeMongoDao(MongoDatabase mongoDatabase, ObjectMapper objectMapper) {
