@@ -107,6 +107,10 @@ class MongoDaoHelper {
     }
 
     static Bson createFilterCriteria(List<Bson> filters) {
+        return CollectionUtils.isNotEmpty(filters) ? Filters.and(filters) : Filters.and();
+    }
+
+    static Bson createFilterCriteria(Bson... filters) {
         return Filters.and(filters);
     }
 
