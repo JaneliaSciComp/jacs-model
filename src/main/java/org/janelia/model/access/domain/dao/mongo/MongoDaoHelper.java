@@ -121,7 +121,7 @@ class MongoDaoHelper {
     }
 
     static Bson createFilterCriteria(List<Bson> filters) {
-        if (CollectionUtils.isEmpty(filters)) {
+        if (CollectionUtils.isNotEmpty(filters)) {
             return filters.stream()
                     .filter(f -> f != null)
                     .reduce((f1, f2) -> Filters.and(f1, f2))
