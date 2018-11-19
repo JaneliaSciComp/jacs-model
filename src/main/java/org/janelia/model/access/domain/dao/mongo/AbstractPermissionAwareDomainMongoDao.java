@@ -76,8 +76,11 @@ public abstract class AbstractPermissionAwareDomainMongoDao<T extends DomainObje
             return Collections.emptyList();
         } else {
             return find(MongoDaoHelper.createFilterCriteria(
-                    ImmutableList.of(MongoDaoHelper.createFilterByIds(ids), createSubjectReadPermissionFilter(subjectKey))),
-                    null, 0, -1,
+                    MongoDaoHelper.createFilterByIds(ids), createSubjectReadPermissionFilter(subjectKey)
+                    ),
+                    null,
+                    0,
+                    -1,
                     getEntityType());
         }
     }
@@ -91,7 +94,7 @@ public abstract class AbstractPermissionAwareDomainMongoDao<T extends DomainObje
                     Filters.exists("readers", false)
             );
         } else if (readers.contains(Subject.ADMIN_KEY)) {
-            return Filters.and(); // user is in the admin group so simply ignore the filtering in this case
+            return new Document(); // user is in the admin group so simply ignore the filtering in this case
         } else {
             return Filters.or(
                     Filters.eq("ownerKey", subjectKey),

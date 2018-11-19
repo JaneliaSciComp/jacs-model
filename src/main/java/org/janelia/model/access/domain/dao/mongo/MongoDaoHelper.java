@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -115,12 +116,19 @@ class MongoDaoHelper {
         return mongoCollection.countDocuments(filter);
     }
 
-    static Bson createFilterCriteria(List<Bson> filters) {
-        return CollectionUtils.isNotEmpty(filters) ? Filters.and(filters) : Filters.and();
+    static Bson createFilterCriteria(Bson... filters) {
+        return createFilterCriteria(Arrays.asList(filters));
     }
 
-    static Bson createFilterCriteria(Bson... filters) {
-        return Filters.and(filters);
+    static Bson createFilterCriteria(List<Bson> filters) {
+        if (CollectionUtils.isEmpty(filters)) {
+            return filters.stream()
+                    .filter(f -> f != null)
+                    .reduce((f1, f2) -> Filters.and(f1, f2))
+                    .orElse(new Document());
+        } else {
+            return new Document();
+        }
     }
 
     static Bson createBsonSortCriteria(SortCriteria... sortCriteria) {

@@ -95,9 +95,13 @@ public class TmNeuronMetadataMongoDao extends AbstractPermissionAwareDomainMongo
     public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(String subjectKey, Long workspaceId) {
         String workspaceRef = "TmWorkspace#"+workspaceId;
 
-        return find(MongoDaoHelper.createFilterCriteria(
-                ImmutableList.of(Filters.eq("workspaceRef", workspaceRef), createSubjectReadPermissionFilter(subjectKey))),
-                null, 0, -1,
+        return find(
+                MongoDaoHelper.createFilterCriteria(
+                        Filters.eq("workspaceRef", workspaceRef),
+                        createSubjectReadPermissionFilter(subjectKey)),
+                null,
+                0,
+                -1,
                 getEntityType());
     }
 
