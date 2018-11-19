@@ -11,16 +11,21 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.RemoveFieldValueHandler;
 import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
+import org.janelia.model.util.SortCriteria;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -116,6 +121,25 @@ class MongoDaoHelper {
 
     static Bson createFilterCriteria(Bson... filters) {
         return Filters.and(filters);
+    }
+
+    static Bson createBsonSortCriteria(SortCriteria... sortCriteria) {
+        return createBsonSortCriteria(Arrays.asList(sortCriteria));
+    }
+
+    static Bson createBsonSortCriteria(List<SortCriteria> sortCriteria) {
+        if (CollectionUtils.isNotEmpty(sortCriteria)) {
+            Map<String, Object> sortCriteriaAsMap = sortCriteria.stream()
+                    .filter(sc -> StringUtils.isNotBlank(sc.getField()))
+                    .collect(Collectors.toMap(
+                            SortCriteria::getField,
+                            sc -> sc.getDirection() == SortCriteria.SortDirection.DESC ? -1 : 1,
+                            (sc1, sc2) -> sc2,
+                            LinkedHashMap::new));
+            return new Document(sortCriteriaAsMap);
+        } else {
+            return null;
+        }
     }
 
     static <T, I> long delete(MongoCollection<T> mongoCollection, I entityId) {
