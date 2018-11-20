@@ -8,5 +8,5 @@ import java.util.List;
  * Ontology data access object
  */
 public interface OntologyDao extends DomainObjectDao<Ontology> {
-    List<Ontology> getOntologiesByAccessibleBySubjectGroups(String subjectKey, long offset, int length);
+    List<Ontology> getOntologiesAccessibleBySubjectGroups(String subjectKey, long offset, int length);
 }

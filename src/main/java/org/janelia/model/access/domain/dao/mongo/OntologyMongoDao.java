@@ -23,7 +23,7 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
     }
 
     @Override
-    public List<Ontology> getOntologiesByAccessibleBySubjectGroups(String subjectKey, long offset, int length) {
+    public List<Ontology> getOntologiesAccessibleBySubjectGroups(String subjectKey, long offset, int length) {
         if (StringUtils.isBlank(subjectKey))
             return Collections.emptyList();
         return MongoDaoHelper.find(
