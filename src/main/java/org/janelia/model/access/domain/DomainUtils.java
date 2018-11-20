@@ -76,8 +76,7 @@ public class DomainUtils {
     static {
         try {
             registerAnnotatedClasses();
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             log.error("Error initializing DomainUtils", e);
         }
     }
@@ -230,8 +229,7 @@ public class DomainUtils {
         Class<?> clazz;
         try {
             clazz = Class.forName(className);
-        }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             throw new RuntimeException("Domain object class not found: "+className);
         }
         if (!DomainObject.class.isAssignableFrom(clazz)) {

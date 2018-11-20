@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Abstract Mongo DAO.
  */
-public abstract class AbstractMongoDao {
+abstract class AbstractMongoDao {
 
     final MongoDatabase mongoDatabase;
 

@@ -110,7 +110,7 @@ public class DomainDAO {
         init(m, databaseName);
     }
 
-    private final void init(MongoClient m, String databaseName) {
+    private void init(MongoClient m, String databaseName) {
         this.m = m;
         this.databaseName = databaseName;
         this.jongo = new Jongo(m.getDB(databaseName),
@@ -2436,28 +2436,4 @@ public class DomainDAO {
         }
     }
     
-    public static void main(String[] args) throws Exception {
-        
-//        String MONGO_SERVER_URL = "dev-mongodb";
-//        String MONGO_DATABASE = "jacs";
-//        DomainDAO dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE);
-//        
-//        for(Sample sample : dao.fullTextSearch("user:rokickik", Sample.class, "2412458240001441829")) {
-//            System.out.println(sample.getOwnerKey());
-//        }
-//        String owner = "user:rokickik";
-//        for(Workspace workspace : dao.getWorkspaces(owner)) {
-//            System.out.println(""+workspace.getName());
-//            for(DomainObject topLevelObj : dao.getDomainObjects(owner, workspace.getChildren())) {
-//                System.out.println("  "+topLevelObj.getName());
-//                if (topLevelObj instanceof TreeNode) {
-//                    for(DomainObject domainObject : dao.getDomainObjects(owner, ((TreeNode)topLevelObj).getChildren())) {
-//                        System.out.println("    "+domainObject.getName());
-//                    }
-//                }
-//            }
-//        }
-
-//        dao.changePermissions("group:heberleinlab", DataSet.class.getSimpleName(), 1831437750079848537L, Arrays.asList("user:rokickik", "user:saffordt"), "r", false);
-    }
 }
