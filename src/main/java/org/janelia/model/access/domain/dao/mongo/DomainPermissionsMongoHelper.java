@@ -39,6 +39,22 @@ class DomainPermissionsMongoHelper {
         }
     }
 
+    Bson createSameGroupReadPermissionFilterForSubjectKey(String subjectKey) {
+        Set<String> readers = subjectDao.getReaderSetByKey(subjectKey);
+        if (CollectionUtils.isEmpty(readers)) {
+            // only include entities that have no reader restrictions
+            return Filters.or(
+                    Filters.eq("ownerKey", subjectKey),
+                    Filters.exists("readers", false)
+            );
+        } else {
+            return Filters.or(
+                    Filters.eq("ownerKey", subjectKey),
+                    Filters.in("readers", readers)
+            );
+        }
+    }
+
     Bson createWritePermissionFilterForSubjectKey(String subjectKey) {
         Set<String> readers = subjectDao.getWriterSetByKey(subjectKey);
         if (CollectionUtils.isEmpty(readers)) {
@@ -48,7 +64,7 @@ class DomainPermissionsMongoHelper {
                     Filters.exists("readers", false)
             );
         } else if (readers.contains(Subject.ADMIN_KEY)) {
-            return Filters.and(); // user is in the admin group so simply ignore the filtering in this case
+            return new Document(); // user is in the admin group so simply ignore the filtering in this case
         } else {
             return Filters.or(
                     Filters.eq("ownerKey", subjectKey),

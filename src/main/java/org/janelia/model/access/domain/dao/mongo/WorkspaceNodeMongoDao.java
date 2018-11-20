@@ -32,7 +32,7 @@ public class WorkspaceNodeMongoDao extends TreeNodeMongoDao<Workspace> implement
         return MongoDaoHelper.find(
                 MongoDaoHelper.createFilterCriteria(
                         Filters.eq("class", Workspace.class.getName()),
-                        permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
+                        permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey)),
                 null,
                 offset,
                 length,
