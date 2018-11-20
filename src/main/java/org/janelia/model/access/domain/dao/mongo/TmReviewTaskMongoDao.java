@@ -3,7 +3,9 @@ package org.janelia.model.access.domain.dao.mongo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.DomainDAO;
+import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmReviewTaskDao;
+import org.janelia.model.cdi.DaoObjectMapper;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,20 +16,22 @@ import java.util.List;
 /**
  * {@link TmReviewTask} Mongo DAO.
  */
-public class TmReviewTaskMongoDao extends AbstractPermissionAwareDomainMongoDao<TmReviewTask> implements TmReviewTaskDao {
-    private static final Logger LOG = LoggerFactory.getLogger(TmReviewTaskMongoDao.class);
+public class TmReviewTaskMongoDao extends AbstractDomainObjectMongoDao<TmReviewTask> implements TmReviewTaskDao {
 
     private final DomainDAO domainDao;
 
     @Inject
-    TmReviewTaskMongoDao(MongoDatabase mongoDatabase, ObjectMapper objectMapper, DomainDAO domainDao) {
-        super(mongoDatabase, objectMapper);
+    TmReviewTaskMongoDao(MongoDatabase mongoDatabase,
+                         DomainPermissionsMongoHelper permissionsHelper,
+                         DomainUpdateMongoHelper updateHelper,
+                         DomainDAO domainDao) {
+        super(mongoDatabase, permissionsHelper, updateHelper);
         this.domainDao = domainDao;
     }
 
     @Override
     public List<TmReviewTask> getReviewTasksForSubject(String subjectKey) {
-        return domainDao.getUserDomainObjects(subjectKey, TmReviewTask.class);
+        return findOwnedEntitiesBySubjectKey(subjectKey, 0, -1);
     }
 
     @Override

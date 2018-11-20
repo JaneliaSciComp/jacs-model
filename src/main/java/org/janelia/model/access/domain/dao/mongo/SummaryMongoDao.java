@@ -8,27 +8,18 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.access.domain.dao.SummaryDao;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.report.DatabaseSummary;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.sample.Sample;
-import org.janelia.model.security.Subject;
-import org.janelia.model.security.util.SubjectUtils;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Summary Mongo DAO.

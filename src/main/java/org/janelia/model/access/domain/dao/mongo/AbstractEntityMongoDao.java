@@ -7,10 +7,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
-import org.janelia.model.access.domain.dao.EntityUtils;
-import org.janelia.model.access.domain.dao.ReadWriteDao;
+import org.janelia.model.access.domain.dao.ReadDao;
+import org.janelia.model.access.domain.dao.WriteDao;
 import org.janelia.model.domain.interfaces.HasIdentifier;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 import java.util.Collection;
 import java.util.List;
@@ -21,7 +20,9 @@ import java.util.Map;
  *
  * @param <T> type of the element
  */
-public abstract class AbstractEntityMongoDao<T extends HasIdentifier> extends AbstractMongoDao implements ReadWriteDao<T, Long> {
+public abstract class AbstractEntityMongoDao<T extends HasIdentifier>
+        extends AbstractMongoDao
+        implements ReadDao<T, Long>, WriteDao<T, Long> {
 
     final MongoCollection<T> mongoCollection;
 
@@ -46,7 +47,7 @@ public abstract class AbstractEntityMongoDao<T extends HasIdentifier> extends Ab
         return find(null, null, offset, length, getEntityType());
     }
 
-    protected <R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType) {
+    <R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType) {
         return MongoDaoHelper.find(queryFilter, sortCriteria, offset, length, mongoCollection, resultType);
     }
 
@@ -71,5 +72,7 @@ public abstract class AbstractEntityMongoDao<T extends HasIdentifier> extends Ab
         updateOptions.upsert(false);
         return MongoDaoHelper.updateMany(mongoCollection, MongoDaoHelper.createFilterById(entityId), fieldsToUpdate, updateOptions);
     }
+
+
 
 }

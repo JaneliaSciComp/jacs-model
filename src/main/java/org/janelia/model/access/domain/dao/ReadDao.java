@@ -4,12 +4,12 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Read only data access spec.
+ * Read data access spec.
  *
  * @param <T> entity type
  * @param <I> entity type
  */
-public interface ReadOnlyDao<T, I> extends Dao<T, I> {
+public interface ReadDao<T, I> extends Dao<T, I> {
     T findById(I id);
     List<T> findByIds(Collection<I> ids);
     List<T> findAll(long offset, int length);

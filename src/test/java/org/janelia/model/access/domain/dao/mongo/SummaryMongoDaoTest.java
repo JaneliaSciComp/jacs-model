@@ -15,12 +15,17 @@ import static org.junit.Assert.assertEquals;
 
 public class SummaryMongoDaoTest extends AbstractMongoDaoTest {
 
+    private SubjectMongoDao subjectMongoDao;
     private DatasetMongoDao datasetMongoDao;
     private SummaryMongoDao summaryMongoDao;
 
     @Before
     public void setUp() {
-        datasetMongoDao = new DatasetMongoDao(testMongoDatabase, testObjectMapper);
+        subjectMongoDao = new SubjectMongoDao(testMongoDatabase);
+        datasetMongoDao = new DatasetMongoDao(
+                testMongoDatabase,
+                new DomainPermissionsMongoHelper(subjectMongoDao),
+                new DomainUpdateMongoHelper(testObjectMapper));
         summaryMongoDao = new SummaryMongoDao(testMongoDatabase);
     }
 

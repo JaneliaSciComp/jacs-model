@@ -1,7 +1,8 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
@@ -11,37 +12,50 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmProtobufExchanger;
+import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.util.IdSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * {@link TmWorkspace} Mongo DAO.
  */
-public class TmWorkspaceMongoDao extends AbstractPermissionAwareDomainMongoDao<TmWorkspace> implements TmWorkspaceDao {
-    private static final Logger LOG = LoggerFactory.getLogger(TmWorkspaceMongoDao.class);
+public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspace> implements TmWorkspaceDao {
 
     private final DomainDAO domainDao;
     private final TmNeuronMetadataDao tmNeuronMetadataDao;
 
     @Inject
-    TmWorkspaceMongoDao(MongoDatabase mongoDatabase, ObjectMapper objectMapper, DomainDAO domainDao, TmNeuronMetadataDao tmNeuronMetadataDao) {
-        super(mongoDatabase, objectMapper);
+    TmWorkspaceMongoDao(MongoDatabase mongoDatabase,
+                        DomainPermissionsMongoHelper permissionsHelper,
+                        DomainUpdateMongoHelper updateHelper,
+                        DomainDAO domainDao,
+                        TmNeuronMetadataDao tmNeuronMetadataDao) {
+        super(mongoDatabase, permissionsHelper, updateHelper);
         this.domainDao = domainDao;
         this.tmNeuronMetadataDao = tmNeuronMetadataDao;
     }
 
     @Override
     public List<TmWorkspace> getTmWorkspacesForSample(String subjectKey, Long sampleId) {
-        return domainDao.getDomainObjectsWithProperty(subjectKey, TmWorkspace.class, "sampleRef", "TmSample#"+sampleId);
+        if (StringUtils.isBlank(subjectKey))
+            return Collections.emptyList();
+        return MongoDaoHelper.find(
+                MongoDaoHelper.createFilterCriteria(
+                        Filters.eq("sampleRef", Reference.createFor(TmSample.class, sampleId).toString()),
+                        permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
+                null,
+                0,
+                -1,
+                mongoCollection,
+                TmWorkspace.class);
     }
 
     @Override
@@ -80,7 +94,7 @@ public class TmWorkspaceMongoDao extends AbstractPermissionAwareDomainMongoDao<T
                 protobufExchanger.deserializeNeuron(oldNeuronStream, neuronCopy);
 
                 // Change the parent of the roots to be the neuron id
-                for(TmGeoAnnotation annotation : neuronCopy.getRootAnnotations()) {
+                for (TmGeoAnnotation annotation : neuronCopy.getRootAnnotations()) {
                     annotation.setParentId(neuronCopy.getId());
                 }
 

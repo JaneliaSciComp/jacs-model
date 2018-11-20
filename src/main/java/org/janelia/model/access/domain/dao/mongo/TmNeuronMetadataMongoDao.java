@@ -19,6 +19,7 @@ import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
+import org.janelia.model.cdi.DaoObjectMapper;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
@@ -37,15 +38,19 @@ import java.util.Map;
 /**
  * {@link TmNeuronMetadata} Mongo DAO.
  */
-public class TmNeuronMetadataMongoDao extends AbstractPermissionAwareDomainMongoDao<TmNeuronMetadata> implements TmNeuronMetadataDao {
+public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeuronMetadata> implements TmNeuronMetadataDao {
     private static final Logger LOG = LoggerFactory.getLogger(TmNeuronMetadataMongoDao.class);
 
     private final DomainDAO domainDao;
     private final TmNeuronBufferDao tmNeuronBufferDao;
 
     @Inject
-    TmNeuronMetadataMongoDao(MongoDatabase mongoDatabase, ObjectMapper objectMapper, DomainDAO domainDao, TmNeuronBufferDao tmNeuronBufferDao) {
-        super(mongoDatabase, objectMapper);
+    TmNeuronMetadataMongoDao(MongoDatabase mongoDatabase,
+                             DomainPermissionsMongoHelper permissionsHelper,
+                             DomainUpdateMongoHelper updateHelper,
+                             DomainDAO domainDao,
+                             TmNeuronBufferDao tmNeuronBufferDao) {
+        super(mongoDatabase, permissionsHelper, updateHelper);
         this.domainDao = domainDao;
         this.tmNeuronBufferDao = tmNeuronBufferDao;
     }
@@ -93,12 +98,11 @@ public class TmNeuronMetadataMongoDao extends AbstractPermissionAwareDomainMongo
 
     @Override
     public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(String subjectKey, Long workspaceId) {
-        String workspaceRef = "TmWorkspace#"+workspaceId;
-
+        String workspaceRef = "TmWorkspace#" + workspaceId;
         return find(
                 MongoDaoHelper.createFilterCriteria(
                         Filters.eq("workspaceRef", workspaceRef),
-                        createSubjectReadPermissionFilter(subjectKey)),
+                        permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
                 null,
                 0,
                 -1,
@@ -111,7 +115,7 @@ public class TmNeuronMetadataMongoDao extends AbstractPermissionAwareDomainMongo
 
         Map<Long, InputStream> neuronsPointStreams = tmNeuronBufferDao.streamNeuronPointsByWorkspaceId(Collections.emptySet(), workspace.getId());
 
-        List<Pair<TmNeuronMetadata,InputStream>> neuronList = new ArrayList<>();
+        List<Pair<TmNeuronMetadata, InputStream>> neuronList = new ArrayList<>();
 
         neuronsPointStreams.forEach((neuronId, neuronPointStream) -> {
             TmNeuronMetadata neuron = workspaceNeurons.get(neuronId);
@@ -176,8 +180,8 @@ public class TmNeuronMetadataMongoDao extends AbstractPermissionAwareDomainMongo
                 MongoDaoHelper.createFilterCriteria(
                         ImmutableList.of(
                                 MongoDaoHelper.createFilterByIds(bulkNeuronStyleUpdate.getNeuronIds()),
-                                createSubjectWritePermissionFilter(subjectKey))
-                        ),
+                                permissionsHelper.createWritePermissionFilterForSubjectKey(subjectKey))
+                ),
                 updates,
                 updateOptions);
     }
@@ -199,7 +203,7 @@ public class TmNeuronMetadataMongoDao extends AbstractPermissionAwareDomainMongo
                 MongoDaoHelper.createFilterCriteria(
                         ImmutableList.of(
                                 MongoDaoHelper.createFilterByIds(neuronIds),
-                                createSubjectWritePermissionFilter(subjectKey))
+                                permissionsHelper.createWritePermissionFilterForSubjectKey(subjectKey))
                 ),
                 updates,
                 updateOptions);

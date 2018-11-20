@@ -5,6 +5,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
+import org.janelia.model.cdi.DaoObjectMapper;
 import org.janelia.model.domain.workspace.Workspace;
 
 import javax.inject.Inject;
@@ -17,18 +18,21 @@ import java.util.List;
 public class WorkspaceNodeMongoDao extends TreeNodeMongoDao<Workspace> implements WorkspaceNodeDao {
 
     @Inject
-    WorkspaceNodeMongoDao(MongoDatabase mongoDatabase, ObjectMapper objectMapper) {
-        super(mongoDatabase, objectMapper);
+    WorkspaceNodeMongoDao(MongoDatabase mongoDatabase,
+                          DomainPermissionsMongoHelper permissionsHelper,
+                          DomainUpdateMongoHelper updateHelper) {
+        super(mongoDatabase, permissionsHelper, updateHelper);
     }
 
     @Override
-    public List<Workspace> getAllWorkspaceNodesByOwnerKey(String subjectKey, long offset, int length) {
-        if (StringUtils.isBlank(subjectKey))
+    public List<Workspace> getAllWorkspaceNodesAccessibleBySubjectKey(String subjectKey, long offset, int length) {
+        if (StringUtils.isBlank(subjectKey)) {
             return Collections.emptyList();
+        }
         return MongoDaoHelper.find(
                 MongoDaoHelper.createFilterCriteria(
                         Filters.eq("class", Workspace.class.getName()),
-                        createSubjectReadPermissionFilter(subjectKey)),
+                        permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
                 null,
                 offset,
                 length,
@@ -37,18 +41,18 @@ public class WorkspaceNodeMongoDao extends TreeNodeMongoDao<Workspace> implement
     }
 
     @Override
-    public Workspace getDefaultWorkspaceNodeByOwnerKey(String subjectKey) {
-        if (StringUtils.isBlank(subjectKey)) return null;
-        List<Workspace> subjectWorkspaces = MongoDaoHelper.find(
+    public List<Workspace> getWorkspaceNodesOwnedBySubjectKey(String subjectKey) {
+        if (StringUtils.isBlank(subjectKey)) {
+            return Collections.emptyList();
+        }
+        return MongoDaoHelper.find(
                 MongoDaoHelper.createFilterCriteria(
                         Filters.eq("class", Workspace.class.getName()),
                         Filters.eq("owner", subjectKey)),
                 null,
                 0,
-                2,
+                -1,
                 mongoCollection,
                 Workspace.class);
-        return subjectWorkspaces.stream().findFirst()
-                .orElse(null);
     }
 }

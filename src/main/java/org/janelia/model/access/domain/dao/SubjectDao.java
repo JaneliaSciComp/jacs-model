@@ -7,7 +7,7 @@ import java.util.Set;
 /**
  * Interface for accessing subject info.
  */
-public interface SubjectDao extends ReadWriteDao<Subject, Long> {
+public interface SubjectDao extends ReadDao<Subject, Long>, WriteDao<Subject, Long> {
     Subject findByKey(String key);
     Subject findByName(String name);
     Subject findByNameOrKey(String nameOrKey);

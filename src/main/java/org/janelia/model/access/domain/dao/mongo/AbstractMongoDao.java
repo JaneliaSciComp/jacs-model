@@ -30,5 +30,4 @@ abstract class AbstractMongoDao {
         String entityCollectionName = EntityUtils.getPersistenceInfo(entityClass).collectionName();
         return mongoDatabase.getCollection(entityCollectionName, entityClass);
     }
-
 }
