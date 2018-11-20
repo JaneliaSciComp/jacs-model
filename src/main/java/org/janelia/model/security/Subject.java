@@ -2,6 +2,7 @@ package org.janelia.model.security;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.janelia.model.domain.interfaces.HasIdentifier;
 import org.janelia.model.domain.interfaces.HasName;
 import org.janelia.model.domain.support.MongoMapped;
@@ -23,6 +24,7 @@ public abstract class Subject implements HasIdentifier, HasName, Serializable {
     public static final String USERS_KEY = "group:workstation_users";
     
     @MongoId
+    @JsonProperty(value="_id")
     private Long id;
     private String key;
     private String name;

@@ -23,11 +23,11 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
     }
 
     @Override
-    public List<Ontology> getAllOntologiesByAccessibleBySubjectKey(String subjectKey, long offset, int length) {
+    public List<Ontology> getOntologiesByAccessibleBySubjectGroups(String subjectKey, long offset, int length) {
         if (StringUtils.isBlank(subjectKey))
             return Collections.emptyList();
         return MongoDaoHelper.find(
-                permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey),
+                permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey),
                 MongoDaoHelper.createBsonSortCriteria(new SortCriteria("_id")),
                 offset,
                 length,
