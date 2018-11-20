@@ -25,7 +25,7 @@ public class WorkspaceNodeMongoDao extends TreeNodeMongoDao<Workspace> implement
     }
 
     @Override
-    public List<Workspace> getAllWorkspaceNodesAccessibleBySubjectKey(String subjectKey, long offset, int length) {
+    public List<Workspace> getWorkspaceNodesAccessibleBySubjectGroups(String subjectKey, long offset, int length) {
         if (StringUtils.isBlank(subjectKey)) {
             return Collections.emptyList();
         }
