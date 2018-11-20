@@ -81,7 +81,7 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
     }
 
     @Override
-    public T saveWithSubjectKey(T entity, String subjectKey) {
+    public T saveBySubjectKey(T entity, String subjectKey) {
         Date now = new Date();
         if (entity.getId() == null) {
             entity.setId(createNewId());

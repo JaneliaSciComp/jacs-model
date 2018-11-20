@@ -25,5 +25,5 @@ public interface DomainObjectWriteDao<T extends DomainObject> extends WriteDao<T
      * @param subjectKey
      * @return the persisted instance
      */
-    T saveWithSubjectKey(T entity, String subjectKey);
+    T saveBySubjectKey(T entity, String subjectKey);
 }

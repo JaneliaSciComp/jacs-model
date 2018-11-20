@@ -1543,11 +1543,7 @@ public class DomainDAO {
     public <T extends DomainObject> T save(String subjectKey, T domainObject) throws Exception {
 
         log.debug("save({}, {})", subjectKey, Reference.createFor(domainObject));
-        saveImpl(subjectKey, domainObject);
-        // TODO: The only reason this retrieves the saved object is to avoid errors during development where the client incorrectly 
-        // depends on input object being returned. However, it's needlessly inefficient, so once we have remote clients written 
-        // we may want to optimize by just returning domainObject here. 
-        return getDomainObject(subjectKey, domainObject);
+        return saveImpl(subjectKey, domainObject);
     }
 
     public void remove(String subjectKey, DomainObject domainObject) throws Exception {

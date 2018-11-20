@@ -1,6 +1,5 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -19,7 +18,6 @@ import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
-import org.janelia.model.cdi.DaoObjectMapper;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
@@ -145,7 +143,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
             neuron.setWriters(Sets.newHashSet(neuron.getOwnerKey()));
         }
         try {
-            return saveWithSubjectKey(neuron, neuron.getOwnerKey());
+            return saveBySubjectKey(neuron, neuron.getOwnerKey());
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
