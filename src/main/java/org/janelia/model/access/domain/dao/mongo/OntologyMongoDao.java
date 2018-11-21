@@ -1,5 +1,6 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import com.mongodb.client.MongoDatabase;
@@ -163,5 +164,40 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
                                 + " in term order array " + Arrays.toString(order));
                     }
                 });
+    }
+
+    @Override
+    public Ontology removeTerm(String subjectKey, Long ontologyId, Long parentTermId, Long termId) {
+        Preconditions.checkArgument(termId != null,
+                "The ID of the term to be removed cannot be null");
+        Ontology ontology = findEntityByIdAccessibleBySubjectKey(ontologyId, subjectKey);
+        if (ontology == null) {
+            // bad ID or subject does not have access to the ontology
+            return null;
+        }
+        OntologyTerm parentTerm = ontology.findTerm(parentTermId);
+        if (parentTerm == null) {
+            throw new IllegalArgumentException("Term not found: " + parentTermId);
+        }
+        parentTerm.getTerms().stream()
+                .filter(t -> termId.equals(t.getId()))
+                .findFirst()
+                .ifPresent(t -> parentTerm.removeChild(t));
+        ontology.setUpdatedDate(new Date());
+
+        UpdateOptions updateOptions = new UpdateOptions();
+        updateOptions.upsert(false);
+        MongoDaoHelper.updateMany(
+                mongoCollection,
+                MongoDaoHelper.createFilterCriteria(
+                        MongoDaoHelper.createFilterById(ontologyId),
+                        permissionsHelper.createWritePermissionFilterForSubjectKey(subjectKey)
+                ),
+                ImmutableMap.of(
+                        "updatedDate", new SetFieldValueHandler<>(ontology.getUpdatedDate()),
+                        "terms", new SetFieldValueHandler<>(ontology.getTerms())
+                ),
+                updateOptions);
+        return ontology;
     }
 }

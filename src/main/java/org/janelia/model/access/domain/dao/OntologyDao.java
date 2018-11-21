@@ -33,4 +33,15 @@ public interface OntologyDao extends DomainObjectDao<Ontology> {
      */
     Ontology reorderTerms(String subjectKey, Long ontologyId, Long parentTermId, int[] order);
 
+    /**
+     * Remove the specified term from the ontology.
+     *
+     * @param subjectKey
+     * @param ontologyId
+     * @param parentTermId
+     * @param termId
+     * @return
+     */
+    Ontology removeTerm(String subjectKey, Long ontologyId, Long parentTermId, Long termId);
+
 }

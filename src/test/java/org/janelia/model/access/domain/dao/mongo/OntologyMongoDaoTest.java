@@ -203,6 +203,70 @@ public class OntologyMongoDaoTest extends AbstractMongoDaoTest {
         }
     }
 
+    @Test
+    public void removeTerm() {
+        class TestData {
+            private final String subjectKey;
+            private final Ontology ontology;
+            private final String toRemove;
+            private final String[] expectedNewTerms;
+
+            TestData(String subjectKey,
+                     Ontology ontology,
+                     String toRemove,
+                     String[] expectedNewTerms) {
+                this.subjectKey = subjectKey;
+                this.ontology = ontology;
+                this.toRemove = toRemove;
+                this.expectedNewTerms = expectedNewTerms;
+            }
+        }
+        Ontology testOntology = persistData(createTestOntology(
+                "o1",
+                "u1",
+                Arrays.asList(
+                        createCategoryTerm("o1.c1"),
+                        createCategoryTerm("o1.c2"),
+                        createTagTerm("o1.t1"),
+                        createTagTerm("o1.t2")
+                )));
+        TestData[] testData = new TestData[] {
+                new TestData(
+                        "u1",
+                        testOntology,
+                        "o1.c2",
+                        new String[] {"o1.c1", "o1.t1", "o1.t2"}
+                ),
+                new TestData(
+                        "u2",
+                        testOntology,
+                        "o1.c2",
+                        null
+                )
+        };
+        for (TestData td : testData) {
+            Long parentTermId = td.ontology.getId();
+            Long termId = null;
+            for (OntologyTerm t : td.ontology.getTerms()) {
+                if (td.toRemove.equals(t.getName())) {
+                    termId = t.getId();
+                }
+            }
+            Ontology updatedOntology = ontologyMongoDao.removeTerm(
+                    td.subjectKey,
+                    td.ontology.getId(),
+                    parentTermId,
+                    termId
+            );
+            if (td.expectedNewTerms == null) {
+                assertNull(updatedOntology);
+            } else {
+                assertArrayEquals(td.expectedNewTerms,
+                        updatedOntology.getTerms().stream().map(t -> t.getName()).toArray());
+            }
+        }
+    }
+
     private Ontology persistData(Ontology o) {
         ontologyMongoDao.save(o);
         return o;
