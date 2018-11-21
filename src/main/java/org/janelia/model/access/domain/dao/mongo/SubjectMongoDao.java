@@ -133,7 +133,7 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
                 .collect(Collectors.toMap(
                         s -> s,
                         s -> MongoDaoHelper.count(
-                                    Filters.eq("userGroupRoles.groupKey", s),
+                                    Filters.eq("userGroupRoles.groupKey", s.getKey()),
                                     mongoCollection)));
     }
 }
