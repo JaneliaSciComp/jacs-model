@@ -73,6 +73,4 @@ public abstract class AbstractEntityMongoDao<T extends HasIdentifier>
         return MongoDaoHelper.updateMany(mongoCollection, MongoDaoHelper.createFilterById(entityId), fieldsToUpdate, updateOptions);
     }
 
-
-
 }
