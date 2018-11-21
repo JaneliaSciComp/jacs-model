@@ -104,8 +104,11 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
 
     @Override
     public void save(T entity) {
+        Date now = new Date();
         if (entity.getId() == null) {
             entity.setId(createNewId());
+            entity.setCreationDate(now);
+            entity.setUpdatedDate(now);
             mongoCollection.insertOne(entity);
         }
     }

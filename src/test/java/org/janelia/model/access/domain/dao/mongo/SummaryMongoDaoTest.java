@@ -32,13 +32,13 @@ public class SummaryMongoDaoTest extends AbstractMongoDaoTest {
     @Test
     public void diskUsage() {
         List<DataSet> testData = ImmutableList.of(
-                persistDataSet(createTestDataset("ds1", "u1", 700000000000000010L)),
-                persistDataSet(createTestDataset("ds2", "u1", 800000000000000011L)),
-                persistDataSet(createTestDataset("ds3", "u1", 900000000000000013L)),
-                persistDataSet(createTestDataset("ds1", "u2", 20L)),
-                persistDataSet(createTestDataset("ds2", "u2", 21L)),
-                persistDataSet(createTestDataset("ds3", "u2", 23L)),
-                persistDataSet(createTestDataset("ds3", "u3", 0L))
+                persistData(createTestDataset("ds1", "u1", 700000000000000010L)),
+                persistData(createTestDataset("ds2", "u1", 800000000000000011L)),
+                persistData(createTestDataset("ds3", "u1", 900000000000000013L)),
+                persistData(createTestDataset("ds1", "u2", 20L)),
+                persistData(createTestDataset("ds2", "u2", 21L)),
+                persistData(createTestDataset("ds3", "u2", 23L)),
+                persistData(createTestDataset("ds3", "u3", 0L))
         );
         Function<String, BigDecimal> expectedSizeCalc = (String u) -> testData.stream()
                     .filter(ds -> ds.getOwnerKey().equals(u))
@@ -57,7 +57,7 @@ public class SummaryMongoDaoTest extends AbstractMongoDaoTest {
         }
     }
 
-    private DataSet persistDataSet(DataSet ds) {
+    private DataSet persistData(DataSet ds) {
         datasetMongoDao.save(ds);
         return ds;
     }

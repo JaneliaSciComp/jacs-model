@@ -5,6 +5,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoDatabase;
+import org.janelia.model.access.domain.dao.mongo.utils.MongoModule;
 import org.janelia.model.access.domain.dao.mongo.utils.RegistryHelper;
 import org.janelia.model.domain.DomainDAOManager;
 import org.junit.AfterClass;
@@ -17,7 +18,7 @@ public class AbstractMongoDaoTest {
 
     @BeforeClass
     public static void setUpMongoClient() {
-        testObjectMapper = new ObjectMapper();
+        testObjectMapper = new ObjectMapper().registerModule(new MongoModule());
         MongoClientOptions.Builder optionsBuilder = MongoClientOptions
                 .builder()
                 .codecRegistry(RegistryHelper.createCodecRegistry(testObjectMapper))

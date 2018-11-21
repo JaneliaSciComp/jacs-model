@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 public abstract class OntologyTerm implements HasIdentifier, HasName, Serializable {
     
     @MongoId
+    @JsonProperty(value="_id")
     private Long id;
     
     private String name;

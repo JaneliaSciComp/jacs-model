@@ -68,6 +68,9 @@ dependencies {
 
         // testing
         JUNIT_LIB = "junit:junit:4.12"
+
+        ASSERTJ_VERSION = "3.11.1"
+        ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
     }
 
     compile SLF4J_LIB,
@@ -93,7 +96,10 @@ dependencies {
         exclude group: 'javax.transaction'
     }
 
-    testCompile JUNIT_LIB
+    testCompile JUNIT_LIB,
+                ASSERTJ_LIB,
+                JACKSON_DATATYPE_JODA_LIB
+
 }
 
 publishing {

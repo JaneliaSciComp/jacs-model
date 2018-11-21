@@ -58,6 +58,8 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
         OntologyTerm parentTerm = ontology.findTerm(parentTermId);
         if (parentTerm == null) {
             throw new IllegalArgumentException("Term not found: " + parentTermId);
+        } else if (!parentTerm.allowsChildren()) {
+            throw new IllegalArgumentException("Term node " + parentTermId + " does not allow children");
         }
         if (CollectionUtils.isEmpty(terms)) {
             return ontology;
@@ -67,6 +69,8 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
                 terms.stream(),
                 (i, t) -> ImmutablePair.of(i, t)
         ).forEach(p -> {
+            OntologyTerm newTerm = p.getRight();
+            newTerm.setId(createNewId());
             if (pos != null) {
                 parentTerm.insertChild(pos + p.getLeft(), p.getRight());
             } else {
@@ -156,7 +160,7 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
                 .forEach(i -> {
                     if (i >= order.length) {
                         throw new IllegalArgumentException("Index value " + i + " greater than array length " + order.length
-                                + " in term order array " + Arrays.asList(order).toString());
+                                + " in term order array " + Arrays.toString(order));
                     }
                 });
     }

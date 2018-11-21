@@ -10,6 +10,9 @@ public class RegistryHelper {
     public static CodecRegistry createCodecRegistry(ObjectMapper objectMapper) {
         return CodecRegistries.fromRegistries(
                 MongoClient.getDefaultCodecRegistry(),
+                CodecRegistries.fromCodecs(
+                        new BigIntegerCodec()
+                ),
                 CodecRegistries.fromProviders(new JacksonCodecProvider(objectMapper))
         );
     }
