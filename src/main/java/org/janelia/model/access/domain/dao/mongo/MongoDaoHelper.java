@@ -87,6 +87,10 @@ class MongoDaoHelper {
         }
     }
 
+    static <T, R> R findFirst(Bson queryFilter, Bson sortCriteria, MongoCollection<T> mongoCollection, Class<R> resultType) {
+        return find(queryFilter, sortCriteria, 0, 2, mongoCollection, resultType).stream().findFirst().orElse(null);
+    }
+
     static <T, R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
         List<R> entityDocs = new ArrayList<>();
         FindIterable<R> results = mongoCollection.find(resultType);

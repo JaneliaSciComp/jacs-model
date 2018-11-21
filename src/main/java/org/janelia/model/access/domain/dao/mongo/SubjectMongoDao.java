@@ -126,8 +126,10 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
 
     @Override
     public Map<Subject, Number> getGroupMembersCount() {
-        List<Subject> distinctGroups = MongoDaoHelper.getDistinctValues("userGroupRoles.groupKey", null, mongoCollection, Subject.class);
-        return distinctGroups.stream()
+        List<String> distinctGroupNames = MongoDaoHelper.getDistinctValues("userGroupRoles.groupKey", null, mongoCollection, String.class);
+        return distinctGroupNames.stream()
+                .map(gn -> MongoDaoHelper.findFirst(Filters.eq("key", gn), null, mongoCollection, Subject.class))
+                .filter(s -> s != null)
                 .collect(Collectors.toMap(
                         s -> s,
                         s -> MongoDaoHelper.count(
