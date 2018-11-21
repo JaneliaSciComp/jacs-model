@@ -24,6 +24,11 @@ public class DatasetMongoDao extends AbstractDomainObjectMongoDao<DataSet> imple
     }
 
     @Override
+    public List<String> getAllDatasetNames() {
+        return MongoDaoHelper.getDistinctValues("name", null, mongoCollection, String.class);
+    }
+
+    @Override
     public Map<String, String> getDatasetsByGroupName(String groupName) {
         String groupKey = "group:" + groupName;
         List<DataSet> groupDatasets = find(
