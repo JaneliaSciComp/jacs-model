@@ -2,6 +2,8 @@ package org.janelia.model.access.domain.dao;
 
 import org.janelia.model.security.Subject;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -13,4 +15,6 @@ public interface SubjectDao extends ReadDao<Subject, Long>, WriteDao<Subject, Lo
     Subject findByNameOrKey(String nameOrKey);
     Set<String> getReaderSetByKey(String subjectKey);
     Set<String> getWriterSetByKey(String subjectKey);
+    List<Subject> getGroupMembers(String nameOrKey);
+    Map<Subject, Number> getGroupMembersCount();
 }

@@ -63,6 +63,22 @@ class MongoDaoHelper {
         return Filters.in("_id", ids);
     }
 
+    static Bson createFilterByClass(Class<?> clazz) {
+        return Filters.eq("class", clazz.getName());
+    }
+
+    static <T, R> List<R> getDistinctValues(String fieldName, Bson filter, MongoCollection<T> mongoCollection, Class<R> documentType) {
+        Iterable<R> results;
+        if (filter == null) {
+            results = mongoCollection.distinct(fieldName, documentType);
+        } else {
+            results = mongoCollection.distinct(fieldName, filter, documentType);
+        }
+        List<R> entityDocs = new ArrayList<>();
+        results.forEach(entityDocs::add);
+        return entityDocs;
+    }
+
     static <I, T, R> List<R> findByIds(Collection<I> ids, MongoCollection<T> mongoCollection, Class<R> documentType) {
         if (CollectionUtils.isNotEmpty(ids)) {
             return find(createFilterByIds(ids), null, 0, 0, mongoCollection, documentType);

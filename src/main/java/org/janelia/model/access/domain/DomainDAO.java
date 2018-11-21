@@ -1437,9 +1437,9 @@ public class DomainDAO {
         }
     }
 
-    public HashMap<Subject, Integer> getGroupNames() {
+    public Map<Subject, Integer> getGroupNames() {
         log.debug("getGroupNames");
-        HashMap<Subject, Integer> hmap = new HashMap<>();
+        Map<Subject, Integer> hmap = new HashMap<>();
         List<Subject> c = subjectCollection.distinct("userGroupRoles.groupKey").as(Subject.class);
         for (int i = 0; i < c.size(); i++) {
             Integer count = subjectCollection.find("{userGroupRoles.groupKey:#}", c.get(i)).as(Subject.class).count();
@@ -1448,10 +1448,10 @@ public class DomainDAO {
         return hmap;
     }
 
-    public HashMap<String, String> getDataSetsByGroupName(String groupName) {
+    public Map<String, String> getDataSetsByGroupName(String groupName) {
         log.debug("getDatasets({})", groupName);
         String refstr = "group:" + groupName;
-        HashMap<String, String> hmap = new HashMap<>();
+        Map<String, String> hmap = new HashMap<>();
 
         for (DataSet dataSet : getDomainObjects(refstr, DataSet.class)) {
             if (groupName.equals("admin")) {

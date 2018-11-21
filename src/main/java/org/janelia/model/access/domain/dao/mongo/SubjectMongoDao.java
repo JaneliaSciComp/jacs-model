@@ -10,6 +10,7 @@ import org.janelia.model.security.util.SubjectUtils;
 
 import javax.inject.Inject;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Subject Mongo DAO.
@@ -107,5 +108,30 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
         } else {
             return SubjectUtils.getWriterSet(subject);
         }
+    }
+
+    @Override
+    public List<Subject> getGroupMembers(String nameOrKey) {
+        String groupName = SubjectUtils.getSubjectName(nameOrKey);
+        String groupKey = "group:" + groupName;
+        return MongoDaoHelper.find(
+                Filters.eq("userGroupRoles.groupKey", groupKey),
+                null,
+                0,
+                -1,
+                mongoCollection,
+                Subject.class
+        );
+    }
+
+    @Override
+    public Map<Subject, Number> getGroupMembersCount() {
+        List<Subject> distinctGroups = MongoDaoHelper.getDistinctValues("userGroupRoles.groupKey", null, mongoCollection, Subject.class);
+        return distinctGroups.stream()
+                .collect(Collectors.toMap(
+                        s -> s,
+                        s -> MongoDaoHelper.count(
+                                    Filters.eq("userGroupRoles.groupKey", s),
+                                    mongoCollection)));
     }
 }

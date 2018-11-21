@@ -21,12 +21,12 @@ public class SubjectUtils {
             String[] s = subjectNameOrKey.split(":");
             if (s.length>1) {
                 return s[1];
-            }
-            else {
+            } else {
                 return "";
             }
+        } else {
+            return subjectNameOrKey;
         }
-        return subjectNameOrKey;
     }
 
     public static boolean subjectIsInGroup(Subject subject, String groupKey) {
