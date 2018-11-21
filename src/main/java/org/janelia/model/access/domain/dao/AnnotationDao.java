@@ -5,5 +5,5 @@ import org.janelia.model.domain.ontology.Annotation;
 /**
  * {@link Annotation} DAO.
  */
-public interface AnnotationDao<T extends Annotation> extends DomainObjectDao<T> {
+public interface AnnotationDao extends DomainObjectDao<Annotation> {
 }
