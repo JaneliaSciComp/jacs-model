@@ -1,25 +1,18 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.assertj.core.api.Assertions;
 import org.janelia.model.domain.ontology.Category;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
 import org.janelia.model.domain.ontology.Tag;
-import org.janelia.model.domain.sample.DataSet;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class OntologyMongoDaoTest extends AbstractMongoDaoTest {
