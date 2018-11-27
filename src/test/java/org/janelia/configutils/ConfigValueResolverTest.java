@@ -68,6 +68,9 @@ public class ConfigValueResolverTest {
                 new TestData("value of {k1} with {k2}",
                         ImmutableMap.of("k1", "{k2}", "k2", "v2"),
                         "value of v2 with v2"),
+                new TestData("{C}",
+                        ImmutableMap.of("A", "12345", "B", "{A}67890", "C", "{B} plus more"),
+                        "1234567890 plus more"),
         };
 
         for (TestData td : testData) {
