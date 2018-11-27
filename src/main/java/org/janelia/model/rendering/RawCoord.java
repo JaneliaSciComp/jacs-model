@@ -1,12 +1,8 @@
 package org.janelia.model.rendering;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Streams;
 
 import java.util.Arrays;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class RawCoord {
     private int[] originInNanos = new int[3];

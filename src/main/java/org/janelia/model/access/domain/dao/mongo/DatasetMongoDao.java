@@ -1,9 +1,7 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.dao.DatasetDao;
-import org.janelia.model.cdi.DaoObjectMapper;
 import org.janelia.model.domain.sample.DataSet;
 
 import javax.inject.Inject;
