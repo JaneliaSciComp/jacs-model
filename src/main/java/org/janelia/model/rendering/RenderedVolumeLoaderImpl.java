@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
 
@@ -36,6 +37,11 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     private static final String XY_CH_TIFF_PATTERN = "default.%s.tif";
     private static final String YZ_CH_TIFF_PATTERN = "YZ.%s.tif";
     private static final String ZX_CH_TIFF_PATTERN = "ZX.%s.tif";
+
+    private interface RenderedImageProvider {
+        void close();
+        RenderedImage get();
+    }
 
     @Override
     public Optional<RenderedVolume> loadVolume(Path basePath) {
@@ -83,12 +89,21 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                         LOG.debug("Read TIFF file {} for tile {}", channelFile, tileKey);
                                         return readImage(channelFile, tileKey.getSliceIndex());
                                     })
-                                    .reduce(Optional.<ParameterBlock>empty(),
-                                            (opb, im) -> opb
-                                                    .map(pb -> Optional.of(pb.addSource(im)))
-                                                    .orElseGet(() -> Optional.of(new ParameterBlockJAI("bandmerge").addSource(im))),
-                                            (opb1, opb2) -> opb2)
-                                    .map(combinedChannelsPB -> ImageUtils.renderedImageToBytes(JAI.create("bandmerge", combinedChannelsPB, null))))
+                                    .reduce(Optional.<Pair<ParameterBlock, List<RenderedImageProvider>>>empty(),
+                                            (ores, rimp) -> ores
+                                                    .map(res -> Optional.of(
+                                                            Pair.of(res.getLeft().addSource(rimp.get()),
+                                                                    Stream.concat(res.getRight().stream(), Stream.of(rimp)).collect(Collectors.toList()))))
+                                                    .orElseGet(() -> Optional.of(
+                                                            Pair.of(new ParameterBlockJAI("bandmerge").addSource(rimp.get()),
+                                                                    Arrays.asList(rimp)))),
+                                            (ores1, ores2) -> ores1)
+                                    .map(renderedResult -> {
+                                        ParameterBlock combinedChannelsPB = renderedResult.getLeft();
+                                        byte[] renderedImage = ImageUtils.renderedImageToBytes(JAI.create("bandmerge", combinedChannelsPB, null));
+                                        renderedResult.getRight().forEach(rimp -> rimp.close());
+                                        return renderedImage;
+                                    }))
                 );
     }
 
@@ -231,15 +246,39 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         }
     }
 
-    private RenderedImage readImage(Path tiffPath, int pageNumber) {
-        try {
-            SeekableStream tiffStream = new FileSeekableStream(tiffPath.toFile());
-            ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
-            return decoder.decodeAsRenderedImage(pageNumber);
-        } catch (IOException e) {
-            LOG.error("Error reading TIFF image {}, page {}", tiffPath, pageNumber, e);
-            throw new UncheckedIOException(e);
-        }
+    private RenderedImageProvider readImage(Path tiffPath, int pageNumber) {
+        return new RenderedImageProvider() {
+            private SeekableStream tiffStream;
+
+            @Override
+            public void close() {
+                try {
+                    if (tiffStream != null) tiffStream.close();
+                } catch (IOException e) {
+                    LOG.info("Error closing tiff stream for {} page {}", tiffPath, pageNumber);
+                } finally {
+                    tiffStream = null;
+                }
+            }
+
+            @Override
+            public RenderedImage get() {
+                try {
+                    tiffStream = new FileSeekableStream(tiffPath.toFile());
+                } catch (IOException e) {
+                    LOG.error("Error opening TIFF stream for image {}, page {}", tiffPath, pageNumber, e);
+                    throw new UncheckedIOException(e);
+                }
+                try {
+                    ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
+                    return decoder.decodeAsRenderedImage(pageNumber);
+                } catch (IOException e) {
+                    LOG.error("Error reading TIFF image {}, page {}", tiffPath, pageNumber, e);
+                    close();
+                    throw new UncheckedIOException(e);
+                }
+            }
+        };
     }
 
     private String getFilenameForChannel(CoordinateAxis sliceAxis, int channelNumber) {
