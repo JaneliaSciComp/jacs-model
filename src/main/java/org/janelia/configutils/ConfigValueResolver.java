@@ -1,7 +1,6 @@
 package org.janelia.configutils;
 
 import com.google.common.collect.ImmutableSet;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
@@ -18,7 +17,7 @@ public class ConfigValueResolver {
     }
 
     public String resolve(String v, Map<String, String> context) {
-        if (MapUtils.isEmpty(context)) {
+        if (context == null || context.isEmpty()) {
             // no context so simply return the value as is
             return v;
         }
