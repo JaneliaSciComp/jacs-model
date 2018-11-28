@@ -2,7 +2,9 @@ package org.janelia.model.rendering;
 
 import org.janelia.testutils.TestUtils;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -20,18 +22,25 @@ import static org.junit.Assert.assertTrue;
 public class RenderedVolumeLoaderImplTest {
     private static final String TEST_DATADIR = "src/test/resources/testdata/rendering";
 
-    private Path testDirectory;
+    private static Path testSuiteDirectory;
+
     private RenderedVolumeLoader renderedVolumeLoader;
+    private Path testDirectory;
+
+    @BeforeClass
+    public static void createTestDir() throws IOException {
+        testSuiteDirectory = Files.createTempDirectory("testrendering");
+    }
+
+    @AfterClass
+    public static void deleteTestDir() throws IOException {
+        TestUtils.deletePath(testSuiteDirectory);
+    }
 
     @Before
     public void setUp() throws IOException {
         renderedVolumeLoader = new RenderedVolumeLoaderImpl();
-        testDirectory = Files.createTempDirectory("testrendering");
-    }
-
-    @After
-    public void tearDown() throws IOException {
-        TestUtils.deletePath(testDirectory);
+        testDirectory = Files.createTempDirectory(testSuiteDirectory, null);
     }
 
     @Test
