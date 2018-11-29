@@ -1,7 +1,6 @@
 package org.janelia.model.rendering;
 
 import org.janelia.testutils.TestUtils;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -101,6 +100,23 @@ public class RenderedVolumeLoaderImplTest {
     @Test
     public void loadXYSlice() {
         prepareTestDataFiles("transform.txt", "default.0.tif", "default.1.tif");
+        byte[] sliceBytes = renderedVolumeLoader.loadVolume(testDirectory)
+                .flatMap(rv -> rv.getTileInfo(CoordinateAxis.Z)
+                        .map(tileInfo -> TileKey.fromTileCoord(
+                                0,
+                                0,
+                                0,
+                                rv.getNumZoomLevels() - 1,
+                                CoordinateAxis.Z,
+                                0))
+                        .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(rv, tileIndex)))
+                .orElse(null);
+        assertNotNull(sliceBytes);
+    }
+
+    @Test
+    public void loadSingleChannelXYSlice() {
+        prepareTestDataFiles("transform.txt", "default.0.tif");
         byte[] sliceBytes = renderedVolumeLoader.loadVolume(testDirectory)
                 .flatMap(rv -> rv.getTileInfo(CoordinateAxis.Z)
                         .map(tileInfo -> TileKey.fromTileCoord(

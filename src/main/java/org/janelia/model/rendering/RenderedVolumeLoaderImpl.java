@@ -99,8 +99,13 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                                                     Arrays.asList(rimp)))),
                                             (ores1, ores2) -> ores1)
                                     .map(renderedResult -> {
+                                        byte[] renderedImage;
                                         ParameterBlock combinedChannelsPB = renderedResult.getLeft();
-                                        byte[] renderedImage = ImageUtils.renderedImageToBytes(JAI.create("bandmerge", combinedChannelsPB, null));
+                                        if (renderedResult.getRight().size() == 1) {
+                                            renderedImage = ImageUtils.renderedImageToBytes(combinedChannelsPB.getRenderedSource(0));
+                                        } else {
+                                            renderedImage = ImageUtils.renderedImageToBytes(JAI.create("bandmerge", combinedChannelsPB, null));
+                                        }
                                         renderedResult.getRight().forEach(rimp -> rimp.close());
                                         return renderedImage;
                                     }))
