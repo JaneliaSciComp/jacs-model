@@ -28,7 +28,6 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
 
@@ -84,31 +83,28 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                     .collect(Collectors.toList());
                         })
                         .flatMap(channelFiles -> channelFiles.stream()
-                                    .filter(channelFile -> channelFile.toFile().exists())
-                                    .map(channelFile -> {
-                                        LOG.debug("Read TIFF file {} for tile {}", channelFile, tileKey);
-                                        return readImage(channelFile, tileKey.getSliceIndex());
-                                    })
-                                    .reduce(Optional.<Pair<ParameterBlock, List<RenderedImageProvider>>>empty(),
-                                            (ores, rimp) -> ores
-                                                    .map(res -> Optional.of(
-                                                            Pair.of(res.getLeft().addSource(rimp.get()),
-                                                                    Stream.concat(res.getRight().stream(), Stream.of(rimp)).collect(Collectors.toList()))))
-                                                    .orElseGet(() -> Optional.of(
-                                                            Pair.of(new ParameterBlockJAI("bandmerge").addSource(rimp.get()),
-                                                                    Arrays.asList(rimp)))),
-                                            (ores1, ores2) -> ores1)
-                                    .map(renderedResult -> {
-                                        byte[] renderedImage;
-                                        ParameterBlock combinedChannelsPB = renderedResult.getLeft();
-                                        if (renderedResult.getRight().size() == 1) {
-                                            renderedImage = ImageUtils.renderedImageToBytes(combinedChannelsPB.getRenderedSource(0));
-                                        } else {
-                                            renderedImage = ImageUtils.renderedImageToBytes(JAI.create("bandmerge", combinedChannelsPB, null));
+                                .filter(channelFile -> channelFile.toFile().exists())
+                                .map(channelFile -> {
+                                    LOG.debug("Read TIFF file {} for tile {}", channelFile, tileKey);
+                                    return readImage(channelFile, tileKey.getSliceIndex());
+                                })
+                                .collect(Collectors.collectingAndThen(Collectors.toList(), renderedImageProviders -> {
+                                    if (renderedImageProviders.isEmpty()) {
+                                        return Optional.empty();
+                                    } else {
+                                        try {
+                                            if (renderedImageProviders.size() == 1) {
+                                                return Optional.of(ImageUtils.renderedImageToBytes(renderedImageProviders.get(0).get()));
+                                            } else {
+                                                ParameterBlock combinedChannelsPB = new ParameterBlockJAI("bandmerge");
+                                                renderedImageProviders.forEach(rimp -> combinedChannelsPB.addSource(rimp.get()));
+                                                return Optional.of(ImageUtils.renderedImageToBytes(JAI.create("bandmerge", combinedChannelsPB, null)));
+                                            }
+                                        } finally {
+                                            renderedImageProviders.forEach(RenderedImageProvider::close);
                                         }
-                                        renderedResult.getRight().forEach(rimp -> rimp.close());
-                                        return renderedImage;
-                                    }))
+                                    }
+                                })))
                 );
     }
 
