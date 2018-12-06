@@ -1,8 +1,11 @@
 package org.janelia.model.rendering;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,6 +76,19 @@ public class RenderedVolume {
             default:
                 return Optional.empty();
         }
+    }
+
+    @JsonIgnore
+    public int[] getCenterVoxel() {
+        return Arrays.stream(volumeSizeInVoxels).map(coord -> coord / 2).toArray();
+    }
+
+    public int[] convertToMicroscopeCoord(int[] screenCoord) {
+        int[] microscopeCoord = new int[3];
+        for ( int i = 0; i < screenCoord.length; i++ ) {
+            microscopeCoord[i] = originVoxel[i] + (int)(screenCoord[i] * micromsPerVoxel[i]);
+        }
+        return microscopeCoord;
     }
 
     public TileInfo getXyTileInfo() {

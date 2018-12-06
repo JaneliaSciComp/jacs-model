@@ -1,5 +1,7 @@
 package org.janelia.model.rendering;
 
+import javax.media.jai.RenderedImageAdapter;
+import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
@@ -107,5 +109,14 @@ class ImageUtils {
             }
         }
         return dataBytesArray;
+    }
+
+    static BufferedImage renderedImageToBufferedImage(RenderedImage img) {
+        if (img instanceof BufferedImage) {
+            return (BufferedImage) img;
+        } else {
+            RenderedImageAdapter imageAdapter = new RenderedImageAdapter(img);
+            return imageAdapter.getAsBufferedImage();
+        }
     }
 }

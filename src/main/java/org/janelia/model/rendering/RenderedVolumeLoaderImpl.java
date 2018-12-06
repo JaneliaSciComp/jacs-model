@@ -1,41 +1,66 @@
 package org.janelia.model.rendering;
 
+import Jama.Matrix;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.base.Splitter;
+import com.google.common.collect.Streams;
 import com.sun.media.jai.codec.FileSeekableStream;
 import com.sun.media.jai.codec.ImageCodec;
 import com.sun.media.jai.codec.ImageDecoder;
 import com.sun.media.jai.codec.SeekableStream;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.janelia.model.rendering.ymlrepr.RawVolData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.media.jai.JAI;
+import javax.media.jai.NullOpImage;
 import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.RenderedImageAdapter;
+import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(RenderedVolumeLoaderImpl.class);
     private static final String TRANSFORM_FILE_NAME = "transform.txt";
+    private static final String TILED_VOL_BASE_FILE_NAME = "tilebase.cache.yml";
     private static final String XY_CH_TIFF_PATTERN = "default.%s.tif";
     private static final String YZ_CH_TIFF_PATTERN = "YZ.%s.tif";
     private static final String ZX_CH_TIFF_PATTERN = "ZX.%s.tif";
+    private static final String RAW_CH_TIFF_PATTERN = "-ngc.%s.tif";
+
+    private static final int START_X_INX = 0;
+    private static final int START_Y_INX = 1;
+    private static final int START_Z_INX = 2;
+    private static final int END_X_INX = 3;
+    private static final int END_Y_INX = 4;
+    private static final int END_Z_INX = 5;
 
     private interface RenderedImageProvider {
         void close();
@@ -292,6 +317,292 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                 return String.format(XY_CH_TIFF_PATTERN, channelNumber);
             default:
                 throw new IllegalArgumentException("Invalid slice axis " + sliceAxis);
+        }
+    }
+
+    @Override
+    public Optional<RawImage> findClosestRawImage(Path basePath, Integer x, Integer y, Integer z) {
+        return loadVolume(basePath)
+                .flatMap(rv -> {
+                    Integer[] p = Arrays.stream(rv.convertToMicroscopeCoord(new int[] {x, y, z})).boxed().toArray(Integer[]::new);
+                    return loadRawImageMetadataList(basePath)
+                            .min((t1, t2) -> {
+                                Double d1 = squaredMetricDistance(t1.getCenter(), p);
+                                Double d2 = squaredMetricDistance(t2.getCenter(), p);
+                                if (d1 < d2) {
+                                    return -1;
+                                } else if (d1 > d2) {
+                                    return 1;
+                                } else {
+                                    return 0;
+                                }
+                            });
+                });
+    }
+
+    private Stream<RawImage> loadRawImageMetadataList(Path basePath) {
+        Path rawImagesMetadataPath = basePath.resolve(TILED_VOL_BASE_FILE_NAME);
+        ObjectMapper ymlReader = new ObjectMapper(new YAMLFactory());
+        try {
+            if (Files.notExists(rawImagesMetadataPath)) {
+                LOG.warn("No rawimages file ({}) found in {}", rawImagesMetadataPath, basePath);
+                return Stream.of();
+            }
+            RawVolData rawVolData = ymlReader.readValue(rawImagesMetadataPath.toFile(), RawVolData.class);
+            if (CollectionUtils.isEmpty(rawVolData.getTiles())) {
+                return Stream.of();
+            } else {
+                return rawVolData.getTiles().stream()
+                        .map(t -> {
+                            RawImage tn = new RawImage();
+                            tn.setRenderedVolumePath(basePath.toString());
+                            tn.setAcquisitionPath(rawVolData.getPath());
+                            tn.setRelativePath(t.getPath());
+                            if (t.getAabb() != null) {
+                                tn.setOriginInMicros(t.getAabb().getOri());
+                                tn.setDimsInMicros(t.getAabb().getShape());
+                            }
+                            tn.setTransform(t.getTransform());
+                            if (t.getShape() != null) {
+                                tn.setTileDims(t.getShape().getDims());
+                            }
+                            return tn;
+                        })
+                        ;
+            }
+        } catch (IOException e) {
+            LOG.error("Error reading tiled volume metadata from {}", rawImagesMetadataPath, e);
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private Double squaredMetricDistance(Integer[] p1, Integer[] p2) {
+        return Streams.zip(Arrays.stream(p1), Arrays.stream(p2), (p1_coord, p2_coord) -> Math.pow((p1_coord.doubleValue() - p2_coord.doubleValue()), 2.))
+                .reduce(0., (d1, d2) -> d1 + d2);
+    }
+
+    @Override
+    public byte[] loadRawImageContent(RawImage rawImage,
+                                      int xStage, int yStage, int zStage,
+                                      int dimx, int dimy, int dimz, int channel) {
+        SeekableStream tiffStream;
+        long rawImageFileSize;
+        try {
+            File rawImageFile = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)).toFile();
+            rawImageFileSize = rawImageFile.length();
+            tiffStream = new FileSeekableStream(rawImageFile);
+        } catch (IOException e) {
+            LOG.error("Error opening raw image {}", rawImage, e);
+            throw new UncheckedIOException(e);
+        }
+        byte[] rgbBuffer;
+        try {
+            ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
+            int numSlices = decoder.getNumPages();
+            Matrix rawTileCoord = getRawTileCoordMatrix(rawImage, xStage, yStage, zStage);
+            int startZ;
+            int endZ;
+            if (dimz > 0) {
+                startZ = clamp(0, numSlices - dimz, (int) rawTileCoord.getArray()[2][0] - dimz / 2);
+                endZ = startZ + dimz;
+            } else {
+                startZ = 0;
+                endZ = numSlices;
+            }
+            if (startZ >= endZ) {
+                return null;
+            }
+            int startX;
+            int endX;
+            int startY;
+            int endY;
+            int sliceSize;
+            int totalVoxels;
+            PixelDataHandlers<?> pixelDataHandlers;
+            LOG.debug("Load page {} from {}", startZ, rawImage);
+            BufferedImage firstSliceImage = ImageUtils.renderedImageToBufferedImage(
+                    new NullOpImage(
+                            decoder.decodeAsRenderedImage(startZ),
+                            null,
+                            null,
+                            NullOpImage.OP_IO_BOUND));
+            if (dimx != -1) {
+                startX = clamp(0, firstSliceImage.getWidth() - dimx,
+                        (int) rawTileCoord.getArray()[0][0] - dimx / 2);
+                endX = startX + dimx;
+            } else {
+                startX = 0;
+                endX = firstSliceImage.getWidth();
+            }
+            if (dimy != -1) {
+                startY = clamp(0, firstSliceImage.getHeight() - dimy,
+                        (int) rawTileCoord.getArray()[1][0] - dimy / 2);
+                endY = startY + dimy;
+            } else {
+                startY = 0;
+                endY = firstSliceImage.getHeight();
+            }
+            // allocate the buffer
+            sliceSize = (endX - startX) * (endY - startY);
+            totalVoxels = sliceSize * (endZ - startZ);
+            int bytesPerPixel = (int) Math.floor((double) rawImageFileSize / ((firstSliceImage.getWidth() * firstSliceImage.getHeight()) * numSlices));
+            pixelDataHandlers = createDataHandlers(firstSliceImage.getWidth(), firstSliceImage.getHeight(), bytesPerPixel);
+            rgbBuffer = new byte[totalVoxels * bytesPerPixel];
+            transferPixels(firstSliceImage, startX, startY, endX, endY, rgbBuffer,
+                    0, pixelDataHandlers);
+
+            for (int zSlice = startZ + 1, sliceIndex = 1; zSlice < endZ; zSlice++, sliceIndex++) {
+                LOG.debug("Load page {} from {}", zSlice, rawImage);
+                BufferedImage sliceImage = ImageUtils.renderedImageToBufferedImage(
+                        new NullOpImage(
+                                decoder.decodeAsRenderedImage(startZ),
+                                null,
+                                null,
+                                NullOpImage.OP_IO_BOUND));
+                transferPixels(sliceImage, startX, startY, endX, endY, rgbBuffer,
+                        sliceIndex * sliceSize, pixelDataHandlers);
+            }
+        } catch (IOException e) {
+            LOG.error("Error reading raw image {}", rawImage, e);
+            try {
+                tiffStream.close();
+            } catch (IOException ignore) {
+            }
+            throw new UncheckedIOException(e);
+        }
+        return rgbBuffer;
+    }
+
+    private Matrix getRawTileCoordMatrix(RawImage rawImage, int xStage, int yStage, int zStage) {
+        Matrix tileToStageTransform = new Matrix(rawImage.getTransformMatrix());
+        Matrix stageToTileTransform = tileToStageTransform.inverse();
+        Matrix stageCoordMatrix = new Matrix(new double[] {xStage, yStage, zStage, 1.}, 4);
+        return stageToTileTransform.times(stageCoordMatrix);
+    }
+
+    private int clamp(int min, int max, int startingValue) {
+        int rtnVal = startingValue;
+        if ( startingValue < min ) {
+            rtnVal = min;
+        } else if ( startingValue > max ) {
+            rtnVal = max;
+        }
+        return rtnVal;
+    }
+
+    @FunctionalInterface
+    private interface DataCopier<B> {
+        /**
+         * Copies the pixel data from the source offset to the destination offset and returns then next destination offset
+         * @param sourceBuffer
+         * @param sourceOffset
+         * @param destBuffer
+         * @param destOffset
+         * @return the next destination offset
+         */
+        int copyFrom(B sourceBuffer, int sourceOffset,
+                     byte[] destBuffer, int destOffset);
+    }
+
+    private static class PixelDataHandlers<B> {
+        private final Function<BufferedImage, B> pixelDataSupplier;
+        private final BiFunction<Integer, Integer, Integer> pixelOffsetCalculator;
+        private final DataCopier<B> pixelCopier;
+
+        PixelDataHandlers(Function<BufferedImage, B> pixelDataSupplier,
+                          BiFunction<Integer, Integer, Integer> pixelOffsetCalculator,
+                          DataCopier<B> pixelCopier) {
+            this.pixelDataSupplier = pixelDataSupplier;
+            this.pixelOffsetCalculator = pixelOffsetCalculator;
+            this.pixelCopier = pixelCopier;
+        }
+    }
+
+    private PixelDataHandlers<?> createDataHandlers(int imageWidth, int imageHeight, int bytesPerPixel) {
+        PixelDataHandlers<?> pixelDataHandlers;
+        switch (bytesPerPixel) {
+            case 1: {
+                pixelDataHandlers = new PixelDataHandlers<>(
+                        image -> {
+                            DataBufferByte db = ((DataBufferByte) image.getTile(0, 0).getDataBuffer());
+                            return db.getData();
+                        },
+                        (x, y) -> x * imageWidth + y,
+                        (sBuffer, sOffset, dBuffer, dOffset) -> {
+                            sBuffer[sOffset] = dBuffer[dOffset];
+                            return dOffset + 1;
+                        }
+                );
+                break;
+            }
+            case 2: {
+                pixelDataHandlers = new PixelDataHandlers<>(
+                        image -> {
+                            DataBufferUShort db = ((DataBufferUShort) image.getTile(0, 0).getDataBuffer());
+                            return db.getData();
+                        },
+                        (x, y) -> x * imageWidth + y,
+                        (sBuffer, sOffset, dBuffer, dOffset) -> {
+                            int unsignedPixelVal;
+                            int pixelVal = sBuffer[sOffset];
+                            if (pixelVal < 0) {
+                                unsignedPixelVal = pixelVal + 65536;
+                            } else {
+                                unsignedPixelVal = pixelVal;
+                            }
+                            dBuffer[dOffset] = (byte) (unsignedPixelVal & 0x000000ff);
+                            dBuffer[dOffset + 1] = (byte) ((unsignedPixelVal >>> 8) & 0x000000ff);
+                            return dOffset + 2;
+                        }
+                );
+                break;
+            }
+            case 4: {
+                pixelDataHandlers = new PixelDataHandlers<>(
+                        image -> {
+                            int[] buffer = new int[imageWidth * imageHeight];
+                            image.getRGB(0, 0, imageWidth, imageHeight,
+                                    buffer, 0, imageWidth);
+                            return buffer;
+                        },
+                        (x, y) -> x * imageWidth + y,
+                        (sBuffer, sOffset, dBuffer, dOffset) -> {
+                            long unsignedPixelVal;
+                            long pixelVal = sBuffer[sOffset];
+                            if (pixelVal < 0) {
+                                unsignedPixelVal = pixelVal + Integer.MAX_VALUE;
+                            } else {
+                                unsignedPixelVal = pixelVal;
+                            }
+                            dBuffer[dOffset] = (byte) (unsignedPixelVal & 0x000000ff);
+                            dBuffer[dOffset + 1] = (byte) ((unsignedPixelVal >>> 8) & 0x000000ff);
+                            dBuffer[dOffset + 2] = (byte) ((unsignedPixelVal >>> 16) & 0x000000ff);
+                            dBuffer[dOffset + 3] = (byte) ((unsignedPixelVal >>> 24) & 0x000000ff);
+                            return dOffset + 4;
+                        }
+                );
+                break;
+            }
+            default:
+                throw new IllegalArgumentException("Unsupported value for bytes per pixel - " + bytesPerPixel);
+        }
+        return pixelDataHandlers;
+    }
+
+    private <B> void transferPixels(
+            BufferedImage image,
+            int startX, int startY, int endX, int endY,
+            byte[] destBuffer, int destOffset,
+            PixelDataHandlers<B> pixelDataHandlers) {
+        B sourceBuffer = pixelDataHandlers.pixelDataSupplier.apply(image);
+        int currentDestOffset = destOffset;
+        for (int y = startY; y < endY; y++) {
+            for (int x = startX; x < endX; x++) {
+                currentDestOffset = pixelDataHandlers.pixelCopier.copyFrom(
+                        sourceBuffer,
+                        pixelDataHandlers.pixelOffsetCalculator.apply(x, y),
+                        destBuffer, currentDestOffset);
+            }
         }
     }
 }

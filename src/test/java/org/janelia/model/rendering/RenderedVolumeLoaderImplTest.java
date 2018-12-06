@@ -148,6 +148,21 @@ public class RenderedVolumeLoaderImplTest {
         assertNull(sliceBytes);
     }
 
+    @Test
+    public void retrieveClosestRawImage() {
+        prepareTestDataFiles("transform.txt", "default.0.tif", "default.1.tif", "tilebase.cache.yml");
+        RawImage rawImage = renderedVolumeLoader.findClosestRawImage(testDirectory, 0, 0, 0)
+                .orElse(null);
+        assertNotNull(rawImage);
+    }
+
+    @Test
+    public void noRawImageFound() {
+        RawImage rawImage = renderedVolumeLoader.findClosestRawImage(testDirectory, 0, 0, 0)
+                .orElse(null);
+        assertNull(rawImage);
+    }
+
     private void prepareTestDataFiles(String... testDataFileNames) {
         try {
             Path testDataDir = Paths.get(TEST_DATADIR);

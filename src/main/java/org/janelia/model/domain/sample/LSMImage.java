@@ -254,7 +254,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
 
     @ReprocessOnChange
     @SAGEAttribute(cvName="light_imagery", termName="tile")
-    @SearchAttribute(key="tile_txt",label="Tile")
+    @SearchAttribute(key="tile_txt",label="RawTile")
     private String tile;
 
     @SAGEAttribute(cvName="light_imagery", termName="tissue_orientation")

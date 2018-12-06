@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Exchanges data between byte array and Tile Microscope.  At time of writing,
+ * Exchanges data between byte array and RawTile Microscope.  At time of writing,
  * all contents of a TmNeuronData are supported.
  * 
  * All operations here must be thread safe.

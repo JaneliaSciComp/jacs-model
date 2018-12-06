@@ -4,7 +4,7 @@ import org.janelia.model.domain.enums.NamedEnum;
 
 public enum StitchAlgorithm implements NamedEnum {
 
-	FLYLIGHT("FlyLight Tile Stitching");
+	FLYLIGHT("FlyLight RawTile Stitching");
 	
 	private String name;
 	

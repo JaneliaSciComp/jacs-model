@@ -51,7 +51,7 @@ public class DomainConstants {
     public static final String ERROR_ONTOLOGY_CATEGORY = "Report";
 
     public static final String NAME_TM_WORKSPACE_FOLDER = "Workspaces";
-    public static final String NAME_TM_SAMPLE_FOLDER = "3D Tile Microscope Samples";
+    public static final String NAME_TM_SAMPLE_FOLDER = "3D RawTile Microscope Samples";
 
     public static final String FILE_STORE_CENTRAL_DIR_PROP = "FileStore.CentralDir";
     
