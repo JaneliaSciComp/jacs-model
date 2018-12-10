@@ -46,14 +46,14 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     }
 
     @Override
-    public Optional<RawImage> findClosestRawImage(Path basePath, Integer x, Integer y, Integer z) {
-        return impl.findClosestRawImage(basePath, x, y, z);
+    public Optional<RawImage> findClosestRawImageFromVoxelCoord(Path basePath, Integer x, Integer y, Integer z) {
+        return impl.findClosestRawImageFromVoxelCoord(basePath, x, y, z);
     }
 
     @Override
-    public byte[] loadRawImageContent(RawImage rawImage,
-                                      int x, int y, int z,
-                                      int dimx, int dimy, int dimz, int channel) {
-        return impl.loadRawImageContent(rawImage, x, y, z, dimx, dimy, dimz, channel);
+    public byte[] loadRawImageContentFromVoxelCoord(RawImage rawImage,
+                                                    int x, int y, int z,
+                                                    int dimx, int dimy, int dimz, int channel) {
+        return impl.loadRawImageContentFromVoxelCoord(rawImage, x, y, z, dimx, dimy, dimz, channel);
     }
 }

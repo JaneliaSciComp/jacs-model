@@ -7,8 +7,8 @@ import java.util.Optional;
 public interface RenderedVolumeLoader {
     Optional<RenderedVolume> loadVolume(Path basePath);
     Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey);
-    Optional<RawImage> findClosestRawImage(Path basePath, Integer x, Integer y, Integer z);
-    byte[] loadRawImageContent(RawImage rawImage,
-                               int x, int y, int z,
-                               int dimx, int dimy, int dimz, int channel);
+    Optional<RawImage> findClosestRawImageFromVoxelCoord(Path basePath, Integer xVoxel, Integer yVoxel, Integer zVoxel);
+    byte[] loadRawImageContentFromVoxelCoord(RawImage rawImage,
+                                             int xVoxel, int yVoxel, int zVoxel,
+                                             int dimx, int dimy, int dimz, int channel);
 }

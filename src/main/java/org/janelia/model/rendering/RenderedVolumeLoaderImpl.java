@@ -321,10 +321,10 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     @Override
-    public Optional<RawImage> findClosestRawImage(Path basePath, Integer x, Integer y, Integer z) {
+    public Optional<RawImage> findClosestRawImageFromVoxelCoord(Path basePath, Integer xVoxel, Integer yVoxel, Integer zVoxel) {
         return loadVolume(basePath)
                 .flatMap(rv -> {
-                    Integer[] p = Arrays.stream(rv.convertToMicroscopeCoord(new int[] {x, y, z})).boxed().toArray(Integer[]::new);
+                    Integer[] p = Arrays.stream(rv.convertToMicroscopeCoord(new int[] {xVoxel, yVoxel, zVoxel})).boxed().toArray(Integer[]::new);
                     return loadRawImageMetadataList(basePath)
                             .min((t1, t2) -> {
                                 Double d1 = squaredMetricDistance(t1.getCenter(), p);
@@ -336,7 +336,8 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                 } else {
                                     return 0;
                                 }
-                            });
+                            })
+                            ;
                 });
     }
 
@@ -382,93 +383,105 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     @Override
-    public byte[] loadRawImageContent(RawImage rawImage,
-                                      int xStage, int yStage, int zStage,
-                                      int dimx, int dimy, int dimz, int channel) {
+    public byte[] loadRawImageContentFromVoxelCoord(RawImage rawImage,
+                                                    int xVoxel, int yVoxel, int zVoxel,
+                                                    int dimx, int dimy, int dimz, int channel) {
         SeekableStream tiffStream;
         long rawImageFileSize;
         try {
             File rawImageFile = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)).toFile();
+            if (!rawImageFile.exists()) {
+                return null;
+            }
             rawImageFileSize = rawImageFile.length();
             tiffStream = new FileSeekableStream(rawImageFile);
         } catch (IOException e) {
             LOG.error("Error opening raw image {}", rawImage, e);
             throw new UncheckedIOException(e);
         }
-        byte[] rgbBuffer;
         try {
             ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
-            int numSlices = decoder.getNumPages();
-            Matrix rawTileCoord = getRawTileCoordMatrix(rawImage, xStage, yStage, zStage);
-            int startZ;
-            int endZ;
-            if (dimz > 0) {
-                startZ = clamp(0, numSlices - dimz, (int) rawTileCoord.getArray()[2][0] - dimz / 2);
-                endZ = startZ + dimz;
-            } else {
-                startZ = 0;
-                endZ = numSlices;
-            }
-            if (startZ >= endZ) {
-                return null;
-            }
-            int startX;
-            int endX;
-            int startY;
-            int endY;
-            int sliceSize;
-            int totalVoxels;
-            PixelDataHandlers<?> pixelDataHandlers;
-            LOG.debug("Load page {} from {}", startZ, rawImage);
-            BufferedImage firstSliceImage = ImageUtils.renderedImageToBufferedImage(
-                    new NullOpImage(
-                            decoder.decodeAsRenderedImage(startZ),
-                            null,
-                            null,
-                            NullOpImage.OP_IO_BOUND));
-            if (dimx != -1) {
-                startX = clamp(0, firstSliceImage.getWidth() - dimx,
-                        (int) rawTileCoord.getArray()[0][0] - dimx / 2);
-                endX = startX + dimx;
-            } else {
-                startX = 0;
-                endX = firstSliceImage.getWidth();
-            }
-            if (dimy != -1) {
-                startY = clamp(0, firstSliceImage.getHeight() - dimy,
-                        (int) rawTileCoord.getArray()[1][0] - dimy / 2);
-                endY = startY + dimy;
-            } else {
-                startY = 0;
-                endY = firstSliceImage.getHeight();
-            }
-            // allocate the buffer
-            sliceSize = (endX - startX) * (endY - startY);
-            totalVoxels = sliceSize * (endZ - startZ);
-            int bytesPerPixel = (int) Math.floor((double) rawImageFileSize / ((firstSliceImage.getWidth() * firstSliceImage.getHeight()) * numSlices));
-            pixelDataHandlers = createDataHandlers(firstSliceImage.getWidth(), firstSliceImage.getHeight(), bytesPerPixel);
-            rgbBuffer = new byte[totalVoxels * bytesPerPixel];
-            transferPixels(firstSliceImage, startX, startY, endX, endY, rgbBuffer,
-                    0, pixelDataHandlers);
-
-            for (int zSlice = startZ + 1, sliceIndex = 1; zSlice < endZ; zSlice++, sliceIndex++) {
-                LOG.debug("Load page {} from {}", zSlice, rawImage);
-                BufferedImage sliceImage = ImageUtils.renderedImageToBufferedImage(
-                        new NullOpImage(
-                                decoder.decodeAsRenderedImage(startZ),
-                                null,
-                                null,
-                                NullOpImage.OP_IO_BOUND));
-                transferPixels(sliceImage, startX, startY, endX, endY, rgbBuffer,
-                        sliceIndex * sliceSize, pixelDataHandlers);
-            }
-        } catch (IOException e) {
+            return loadRawImageContentFromVoxelCoord(decoder,
+                    xVoxel, yVoxel, zVoxel,
+                    dimx, dimy, dimz,
+                    (imageWidth, imageHeight, imageDepth) -> (int) Math.floor((double) rawImageFileSize / (imageWidth * imageHeight * imageDepth)));
+        } catch (Exception e) {
             LOG.error("Error reading raw image {}", rawImage, e);
+            throw new IllegalStateException(e);
+        } finally {
             try {
                 tiffStream.close();
             } catch (IOException ignore) {
             }
-            throw new UncheckedIOException(e);
+        }
+    }
+
+    private byte[] loadRawImageContentFromVoxelCoord(ImageDecoder decoder,
+                                                     int xVoxel, int yVoxel, int zVoxel,
+                                                     int dimx, int dimy, int dimz,
+                                                     TriFunction<Integer, Integer, Integer, Integer> bytesPerPixelCalculator)
+            throws IOException {
+        byte[] rgbBuffer;
+        int numSlices = decoder.getNumPages();
+        int startZ;
+        int endZ;
+        if (dimz > 0) {
+            startZ = clamp(0, numSlices - dimz, zVoxel - dimz / 2);
+            endZ = clamp(0, numSlices, startZ + dimz);
+        } else {
+            startZ = 0;
+            endZ = numSlices;
+        }
+        if (startZ >= endZ) {
+            return null;
+        }
+        int startX;
+        int endX;
+        int startY;
+        int endY;
+        int sliceSize;
+        int totalVoxels;
+        PixelDataHandlers<?> pixelDataHandlers;
+        BufferedImage firstSliceImage = ImageUtils.renderedImageToBufferedImage(
+                new NullOpImage(
+                        decoder.decodeAsRenderedImage(startZ),
+                        null,
+                        null,
+                        NullOpImage.OP_IO_BOUND));
+        if (dimx != -1) {
+            startX = clamp(0, firstSliceImage.getWidth() - dimx,
+                    xVoxel - dimx / 2);
+            endX = clamp(0, firstSliceImage.getWidth(), startX + dimx);
+        } else {
+            startX = 0;
+            endX = firstSliceImage.getWidth();
+        }
+        if (dimy != -1) {
+            startY = clamp(0, firstSliceImage.getHeight() - dimy,
+                    yVoxel - dimy / 2);
+            endY = clamp(0, firstSliceImage.getHeight(), startY + dimy);
+        } else {
+            startY = 0;
+            endY = firstSliceImage.getHeight();
+        }
+        // allocate the buffer
+        sliceSize = (endX - startX) * (endY - startY);
+        totalVoxels = sliceSize * (endZ - startZ);
+        int bytesPerPixel = bytesPerPixelCalculator.apply(firstSliceImage.getWidth(), firstSliceImage.getHeight(), numSlices);
+        pixelDataHandlers = createDataHandlers(firstSliceImage.getWidth(), firstSliceImage.getHeight(), bytesPerPixel);
+        rgbBuffer = new byte[totalVoxels * bytesPerPixel];
+        transferPixels(firstSliceImage, startX, startY, endX, endY, rgbBuffer,
+                0, pixelDataHandlers);
+
+        for (int zSlice = startZ + 1, sliceIndex = 1; zSlice < endZ; zSlice++, sliceIndex++) {
+            BufferedImage sliceImage = ImageUtils.renderedImageToBufferedImage(
+                    new NullOpImage(
+                            decoder.decodeAsRenderedImage(zSlice),
+                            null,
+                            null,
+                            NullOpImage.OP_IO_BOUND));
+            transferPixels(sliceImage, startX, startY, endX, endY, rgbBuffer,
+                    sliceIndex * sliceSize, pixelDataHandlers);
         }
         return rgbBuffer;
     }
@@ -488,6 +501,18 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
             rtnVal = max;
         }
         return rtnVal;
+    }
+
+    /**
+     * Function with three arguments.
+     * @param <S> first arg type
+     * @param <T> second arg type
+     * @param <U> third arg type
+     * @param <R> result type
+     */
+    @FunctionalInterface
+    public interface TriFunction<S, T, U, R> {
+        R apply(S s, T t, U u);
     }
 
     @FunctionalInterface
@@ -541,7 +566,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                             DataBufferUShort db = ((DataBufferUShort) image.getTile(0, 0).getDataBuffer());
                             return db.getData();
                         },
-                        (x, y) -> x * imageWidth + y,
+                        (x, y) -> y * imageWidth + x,
                         (sBuffer, sOffset, dBuffer, dOffset) -> {
                             int unsignedPixelVal;
                             int pixelVal = sBuffer[sOffset];

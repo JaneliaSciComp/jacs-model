@@ -1,9 +1,11 @@
 package org.janelia.model.rendering;
 
+import com.google.common.collect.ImmutableMap;
 import org.janelia.testutils.TestUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -11,6 +13,10 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
@@ -151,26 +157,73 @@ public class RenderedVolumeLoaderImplTest {
     @Test
     public void retrieveClosestRawImage() {
         prepareTestDataFiles("transform.txt", "default.0.tif", "default.1.tif", "tilebase.cache.yml");
-        RawImage rawImage = renderedVolumeLoader.findClosestRawImage(testDirectory, 0, 0, 0)
+        RawImage rawImage = renderedVolumeLoader.findClosestRawImageFromVoxelCoord(testDirectory, 0, 0, 0)
                 .orElse(null);
         assertNotNull(rawImage);
     }
 
     @Test
     public void noRawImageFound() {
-        RawImage rawImage = renderedVolumeLoader.findClosestRawImage(testDirectory, 0, 0, 0)
+        RawImage rawImage = renderedVolumeLoader.findClosestRawImageFromVoxelCoord(testDirectory, 0, 0, 0)
                 .orElse(null);
         assertNull(rawImage);
     }
 
+    @Test
+    public void loadRawImageContent() {
+        prepareTestDataFiles(ImmutableMap.of(
+                "default.0.tif", "default-ngc.0.tif",
+                "default.1.tif", "default-ngc.1.tif"));
+        RawImage rawImage = new RawImage();
+        rawImage.setAcquisitionPath(testDirectory.toString());
+        rawImage.setRelativePath("default");
+        class TestData {
+            private final int xVoxel;
+            private final int yVoxel;
+            private final int zVoxel;
+            private final int dimx;
+            private final int dimy;
+            private final int dimz;
+            private final int channel;
+            private final Consumer<byte[]> resultAssertion;
+            private TestData(int xVoxel, int yVoxel, int zVoxel, int dimx, int dimy, int dimz, int channel, Consumer<byte[]> resultAssertion) {
+                this.xVoxel = xVoxel;
+                this.yVoxel = yVoxel;
+                this.zVoxel = zVoxel;
+                this.dimx = dimx;
+                this.dimy = dimy;
+                this.dimz = dimz;
+                this.channel = channel;
+                this.resultAssertion = resultAssertion;
+            }
+        }
+        TestData[] testData = new TestData[] {
+                new TestData(0, 0, 0, -1, -1, -1, 0, imageBytes -> assertNotNull("Test 0", imageBytes)),
+                new TestData(0, 0, 0, -1, -1, -1, 1, imageBytes -> assertNotNull("Test 1", imageBytes)),
+                new TestData(0, 0, 0, -1, -1, -1, 2, imageBytes -> assertNull("Test 2", imageBytes)),
+                new TestData(10, 11, 9, 10, 10, 3, 0, imageBytes -> assertNotNull("Test 3", imageBytes)),
+                new TestData(10, 11, 9, 100, 100, 100, 0, imageBytes -> assertNotNull("Test 4", imageBytes)),
+                new TestData(10, 11, 9, -1, -1, -1, 0, imageBytes -> assertNotNull("Test 5", imageBytes)),
+        };
+        for (TestData td : testData) {
+            td.resultAssertion.accept(renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rawImage, td.xVoxel, td.yVoxel, td.zVoxel, td.dimx, td.dimy, td.dimz, td.channel));
+        }
+    }
+
     private void prepareTestDataFiles(String... testDataFileNames) {
+        prepareTestDataFiles(Stream.of(testDataFileNames).collect(Collectors.toMap(fn -> fn, fn -> fn)));
+    }
+
+    private void prepareTestDataFiles(Map<String, String> testDataFileMapping) {
         try {
             Path testDataDir = Paths.get(TEST_DATADIR);
-            for (String testFileName : testDataFileNames) {
-                Files.copy(testDataDir.resolve(testFileName), testDirectory.resolve(testFileName));
+            for (String testFileName : testDataFileMapping.keySet()) {
+                // copy file and rename it.
+                Files.copy(testDataDir.resolve(testFileName), testDirectory.resolve(testDataFileMapping.get(testFileName)));
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
+
 }
