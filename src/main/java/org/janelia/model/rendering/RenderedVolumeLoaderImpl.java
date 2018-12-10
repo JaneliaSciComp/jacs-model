@@ -321,7 +321,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     @Override
-    public Optional<RawImage> findClosestRawImageFromVoxelCoord(Path basePath, Integer xVoxel, Integer yVoxel, Integer zVoxel) {
+    public Optional<RawImage> findClosestRawImageFromVoxelCoord(Path basePath, int xVoxel, int yVoxel, int zVoxel) {
         return loadVolume(basePath)
                 .flatMap(rv -> {
                     Integer[] p = Arrays.stream(rv.convertToMicroscopeCoord(new int[] {xVoxel, yVoxel, zVoxel})).boxed().toArray(Integer[]::new);
