@@ -3,6 +3,7 @@ package org.janelia.model.rendering;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Streams;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -119,8 +120,13 @@ public class RawImage {
 
     @JsonIgnore
     Path getRawImagePath(String suffix) {
-        Path rPath = Paths.get(relativePath);
-        return Paths.get(acquisitionPath).resolve(rPath).resolve(rPath.getFileName().toString() + suffix);
+        Path imagePath;
+        if (StringUtils.isBlank(relativePath)) {
+            imagePath = Paths.get(acquisitionPath);
+        } else {
+            imagePath = Paths.get(acquisitionPath).resolve(StringUtils.stripStart(relativePath, "/"));
+        }
+        return imagePath.resolve(imagePath.getFileName().toString() + suffix);
     }
 
     @Override
