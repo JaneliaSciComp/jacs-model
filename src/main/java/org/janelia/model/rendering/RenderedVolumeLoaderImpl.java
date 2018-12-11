@@ -486,13 +486,6 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         return rgbBuffer;
     }
 
-    private Matrix getRawTileCoordMatrix(RawImage rawImage, int xStage, int yStage, int zStage) {
-        Matrix tileToStageTransform = new Matrix(rawImage.getTransformMatrix());
-        Matrix stageToTileTransform = tileToStageTransform.inverse();
-        Matrix stageCoordMatrix = new Matrix(new double[] {xStage, yStage, zStage, 1.}, 4);
-        return stageToTileTransform.times(stageCoordMatrix);
-    }
-
     private int clamp(int min, int max, int startingValue) {
         int rtnVal = startingValue;
         if ( startingValue < min ) {
