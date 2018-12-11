@@ -119,7 +119,8 @@ public class RawImage {
 
     @JsonIgnore
     Path getRawImagePath(String suffix) {
-        return Paths.get(acquisitionPath, relativePath + suffix);
+        Path rPath = Paths.get(relativePath);
+        return Paths.get(acquisitionPath).resolve(rPath).resolve(rPath.getFileName().toString() + suffix);
     }
 
     @Override

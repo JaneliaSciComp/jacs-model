@@ -172,8 +172,8 @@ public class RenderedVolumeLoaderImplTest {
     @Test
     public void loadRawImageContent() {
         prepareTestDataFiles(ImmutableMap.of(
-                "default.0.tif", "default-ngc.0.tif",
-                "default.1.tif", "default-ngc.1.tif"));
+                "default.0.tif", "default/default-ngc.0.tif",
+                "default.1.tif", "default/default-ngc.1.tif"));
         RawImage rawImage = new RawImage();
         rawImage.setAcquisitionPath(testDirectory.toString());
         rawImage.setRelativePath("default");
@@ -219,7 +219,11 @@ public class RenderedVolumeLoaderImplTest {
             Path testDataDir = Paths.get(TEST_DATADIR);
             for (String testFileName : testDataFileMapping.keySet()) {
                 // copy file and rename it.
-                Files.copy(testDataDir.resolve(testFileName), testDirectory.resolve(testDataFileMapping.get(testFileName)));
+                Path dest = testDirectory.resolve(testDataFileMapping.get(testFileName));
+                if (Files.notExists(dest.getParent())) {
+                    Files.createDirectories(dest.getParent());
+                }
+                Files.copy(testDataDir.resolve(testFileName), dest);
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
