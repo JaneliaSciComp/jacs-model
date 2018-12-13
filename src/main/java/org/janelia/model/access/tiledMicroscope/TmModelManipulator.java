@@ -131,8 +131,6 @@ public class TmModelManipulator {
             throw new IllegalStateException("Tiled Neuron must be created in a valid workspace.");
         }
         TmNeuronMetadata neuron = new TmNeuronMetadata(workspace, name);
-        List neuronList = new ArrayList();
-        neuronList.add(neuron);
         createNeuronRequest = createTiledMicroscopeNeuron(neuron);
         return createNeuronRequest;
     }
