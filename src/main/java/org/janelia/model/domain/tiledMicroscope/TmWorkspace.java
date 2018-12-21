@@ -110,6 +110,12 @@ public class TmWorkspace extends AbstractDomainObject {
         objectMeshList.add(objectMesh);
     }
 
+    public void removeObjectMesh (TmObjectMesh objectMesh) {
+        if (objectMeshList==null)
+            objectMeshList = new ArrayList<TmObjectMesh>();
+        objectMeshList.remove(objectMesh);
+    }
+
     public List<TmObjectMesh> getObjectMeshList() {
         return objectMeshList;
     }
