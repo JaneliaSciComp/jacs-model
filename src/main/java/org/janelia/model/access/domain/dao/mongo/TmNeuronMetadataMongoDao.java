@@ -150,9 +150,14 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     }
 
     @Override
-    public void removeTmNeuron(Long neuronId, String subjectKey) {
-        deleteByIdAndSubjectKey(neuronId, subjectKey);
-        tmNeuronBufferDao.deleteNeuronPoints(neuronId);
+    public boolean removeTmNeuron(Long neuronId, String subjectKey) {
+        long nDeleted = deleteByIdAndSubjectKey(neuronId, subjectKey);
+        if (nDeleted > 0) {
+            tmNeuronBufferDao.deleteNeuronPoints(neuronId);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
