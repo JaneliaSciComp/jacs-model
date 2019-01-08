@@ -1546,7 +1546,7 @@ public class DomainDAO {
         return saveImpl(subjectKey, domainObject);
     }
 
-    public void remove(String subjectKey, DomainObject domainObject) throws Exception {
+    public boolean remove(String subjectKey, DomainObject domainObject) throws Exception {
 
         String collectionName = DomainUtils.getCollectionName(domainObject);
         MongoCollection collection = getCollectionByName(collectionName);
@@ -1567,6 +1567,7 @@ public class DomainDAO {
         }
 
         // TODO: remove dependent objects?
+        return result.getN() > 0;
     }
 
     public Ontology reorderTerms(String subjectKey, Long ontologyId, Long parentTermId, int[] order) throws Exception {

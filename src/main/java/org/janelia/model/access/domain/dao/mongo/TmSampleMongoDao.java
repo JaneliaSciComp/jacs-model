@@ -50,15 +50,17 @@ public class TmSampleMongoDao extends AbstractDomainObjectMongoDao<TmSample> imp
     }
 
     @Override
-    public void removeTmSample(String subjectKey, Long tmSampleId) {
+    public boolean removeTmSample(String subjectKey, Long tmSampleId) {
         Reference ref = Reference.createFor(TmSample.class, tmSampleId);
         DomainObject domainObj = domainDao.getDomainObject(subjectKey, ref);
         if (domainObj != null) {
             try {
-                domainDao.remove(subjectKey, domainObj);
+                return domainDao.remove(subjectKey, domainObj);
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }
+        } else {
+            return false;
         }
     }
 
