@@ -1,15 +1,12 @@
 # JACS Domain Model and DAOs
 
-## Build
-
-If you don't have gradle version 4.0:
-`gradle wrapper` 
+## Build 
 
 Run the unit tests:
-`gradle test`
+`gradlew test`
 
 Build the jar:
-`gradle jar`
+`gradlew jar`
 
 Publish the jar to the local maven repo:
 `gradle publishToMavenLocal`
@@ -31,3 +28,6 @@ Currently, this module is attempting to unify the fragmented JACSv1 and JACSv2 m
     * **security** - Contains model classes for the JACS security model.
     * **util** - Useful utilities
 
+## License 
+
+[Janelia Open Source License](https://www.janelia.org/open-science/software-licensing)
