@@ -1,8 +1,8 @@
 package org.janelia.model.util;
 
-import com.sun.media.jai.codec.ForwardSeekableStream;
 import com.sun.media.jai.codec.ImageCodec;
 import com.sun.media.jai.codec.ImageDecoder;
+import com.sun.media.jai.codec.MemoryCacheSeekableStream;
 import com.sun.media.jai.codec.SeekableStream;
 import com.sun.media.jai.codec.TIFFDirectory;
 import com.sun.media.jai.codecimpl.TIFFImageDecoder;
@@ -68,7 +68,7 @@ public class ImageUtils {
             if (inputStream instanceof SeekableStream) {
                 tiffStream = (SeekableStream) inputStream;
             } else {
-                tiffStream = new ForwardSeekableStream(inputStream);
+                tiffStream = new MemoryCacheSeekableStream(inputStream);
             }
             TIFFDirectory tiffDirectory = new TIFFDirectory(tiffStream, 0);
             int imageWidth = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_IMAGE_WIDTH);

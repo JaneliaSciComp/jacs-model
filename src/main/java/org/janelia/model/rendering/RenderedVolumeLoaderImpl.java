@@ -23,7 +23,9 @@ import java.awt.image.ColorModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -378,7 +380,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     public byte[] loadRawImageContentFromVoxelCoord(RawImage rawImage,
                                                     int xVoxel, int yVoxel, int zVoxel,
                                                     int dimx, int dimy, int dimz, int channel) {
-        SeekableStream tiffStream;
+        InputStream tiffStream;
         try {
             File rawImageFile = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)).toFile();
             if (!rawImageFile.exists()) {
