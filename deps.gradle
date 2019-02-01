@@ -30,6 +30,10 @@ dependencies {
         COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:3.5"
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:4.1"
 
+        // JAX-RS client
+        JERSEY_VERSION = "2.27"
+        JAX_RS_JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
+
         // JSON
         JACKSON_VERSION = "2.9.5"
         JACKSON_CORE_LIB = "com.fasterxml.jackson.core:jackson-core:${JACKSON_VERSION}"

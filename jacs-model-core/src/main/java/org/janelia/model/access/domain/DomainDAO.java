@@ -110,6 +110,7 @@ public class DomainDAO {
         init(m, databaseName);
     }
 
+    @SuppressWarnings("deprecation")
     private void init(MongoClient m, String databaseName) {
         this.m = m;
         this.databaseName = databaseName;
@@ -658,6 +659,7 @@ public class DomainDAO {
         return getDomainObjectsAs(null, references, clazz);
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends DomainObject> List<T> getDomainObjectsAs(String subjectKey, List<Reference> references, Class<T> clazz) {
         List<T> list = new ArrayList<>();
         for (DomainObject object : getDomainObjects(subjectKey, references)) {
@@ -715,6 +717,7 @@ public class DomainDAO {
      * @param ids
      * @return
      */
+    @SuppressWarnings("unchecked")
     public <T extends DomainObject> List<T> getDomainObjects(String subjectKey, String className, Collection<Long> ids) {
         Class<T> clazz;
         try {
@@ -769,6 +772,7 @@ public class DomainDAO {
         return getUserDomainObjects(subjectKey, domainClass, null);
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends DomainObject> List<T> getUserDomainObjects(String subjectKey, String className, Collection<Long> ids) {
         return (List<T>) getUserDomainObjects(subjectKey, DomainUtils.getObjectClassByName(className), ids);
     }
@@ -1861,24 +1865,20 @@ public class DomainDAO {
         }
         log.debug("removeReference({}, {}, {})", subjectKey, node, reference);
         if (node.hasChildren()) {
-            for (Iterator<Reference> i = node.getChildren().iterator(); i.hasNext(); ) {
-                Reference iref = i.next();
-                if (iref.equals(reference)) {
-                    i.remove();
-                }
-            }
+            node.getChildren().removeIf(iref -> iref.equals(reference));
             saveImpl(subjectKey, node);
         }
         return getDomainObject(subjectKey, node);
     }
 
     public <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue) throws Exception {
-        return (T) updateProperty(subjectKey, clazz.getName(), id, propName, propValue);
+        return updateProperty(subjectKey, clazz.getName(), id, propName, propValue);
     }
 
-    public DomainObject updateProperty(String subjectKey, String className, Long id, String propName, Object propValue) throws Exception {
-        Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(className);
-        DomainObject domainObject = getDomainObject(subjectKey, clazz, id);
+    @SuppressWarnings("unchecked")
+    public <T extends DomainObject> T updateProperty(String subjectKey, String className, Long id, String propName, Object propValue) throws Exception {
+        Class<T> clazz = (Class<T>) DomainUtils.getObjectClassByName(className);
+        T domainObject = getDomainObject(subjectKey, clazz, id);
         try {
             set(domainObject, propName, propValue);
         } catch (Exception e) {

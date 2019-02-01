@@ -31,6 +31,7 @@ public class RenderedVolumeLoaderImplTest {
 
     private RenderedVolumeLoader renderedVolumeLoader;
     private Path testDirectory;
+    private RenderedVolumeLocation testVolumeLocation;
 
     @BeforeClass
     public static void createTestDir() throws IOException {
@@ -46,26 +47,27 @@ public class RenderedVolumeLoaderImplTest {
     public void setUp() throws IOException {
         renderedVolumeLoader = new RenderedVolumeLoaderImpl();
         testDirectory = Files.createTempDirectory(testSuiteDirectory, null);
+        testVolumeLocation = new FileBasedRenderedVolumeLocation(testDirectory);
     }
 
     @Test
     public void loadVolumeWithNoTransform() {
-        prepareTestDataFiles("default.0.tif");
-        RenderedVolume rv = renderedVolumeLoader.loadVolume(testDirectory).orElse(null);
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "default.0.tif");
+        RenderedVolume rv = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
         assertNull(rv);
     }
 
     @Test
     public void loadVolumeWithNoTiles() {
-        prepareTestDataFiles("transform.txt");
-        RenderedVolume rv = renderedVolumeLoader.loadVolume(testDirectory).orElse(null);
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt");
+        RenderedVolume rv = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
         assertNull(rv);
     }
 
     @Test
     public void loadVolumeWithXYTiles() {
-        prepareTestDataFiles("transform.txt", "default.0.tif", "default.1.tif");
-        RenderedVolume rv = renderedVolumeLoader.loadVolume(testDirectory).orElse(null);
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif", "default.1.tif");
+        RenderedVolume rv = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
         assertNotNull(rv);
         assertFalse(rv.hasXSlices());
         assertFalse(rv.hasYSlices());
@@ -75,8 +77,8 @@ public class RenderedVolumeLoaderImplTest {
 
     @Test
     public void loadVolumeWithYZTiles() {
-        prepareTestDataFiles("transform.txt", "YZ.0.tif", "YZ.1.tif");
-        RenderedVolume rv = renderedVolumeLoader.loadVolume(testDirectory).orElse(null);
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "YZ.0.tif", "YZ.1.tif");
+        RenderedVolume rv = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
         assertNotNull(rv);
         assertTrue(rv.hasXSlices());
         assertFalse(rv.hasYSlices());
@@ -85,8 +87,8 @@ public class RenderedVolumeLoaderImplTest {
 
     @Test
     public void loadVolumeWithZXTiles() {
-        prepareTestDataFiles("transform.txt", "ZX.0.tif", "ZX.1.tif");
-        RenderedVolume rv = renderedVolumeLoader.loadVolume(testDirectory).orElse(null);
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "ZX.0.tif", "ZX.1.tif");
+        RenderedVolume rv = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
         assertNotNull(rv);
         assertFalse(rv.hasXSlices());
         assertTrue(rv.hasYSlices());
@@ -95,8 +97,8 @@ public class RenderedVolumeLoaderImplTest {
 
     @Test
     public void loadVolumeWithAllOrthoTiles() {
-        prepareTestDataFiles("transform.txt", "default.0.tif", "default.1.tif", "YZ.0.tif", "YZ.1.tif", "ZX.0.tif", "ZX.1.tif");
-        RenderedVolume rv = renderedVolumeLoader.loadVolume(testDirectory).orElse(null);
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif", "default.1.tif", "YZ.0.tif", "YZ.1.tif", "ZX.0.tif", "ZX.1.tif");
+        RenderedVolume rv = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
         assertNotNull(rv);
         assertTrue(rv.hasXSlices());
         assertTrue(rv.hasYSlices());
@@ -105,8 +107,8 @@ public class RenderedVolumeLoaderImplTest {
 
     @Test
     public void loadXYSlice() {
-        prepareTestDataFiles("transform.txt", "default.0.tif", "default.1.tif");
-        byte[] sliceBytes = renderedVolumeLoader.loadVolume(testDirectory)
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif", "default.1.tif");
+        byte[] sliceBytes = renderedVolumeLoader.loadVolume(testVolumeLocation)
                 .flatMap(rv -> rv.getTileInfo(CoordinateAxis.Z)
                         .map(tileInfo -> TileKey.fromTileCoord(
                                 0,
@@ -122,8 +124,8 @@ public class RenderedVolumeLoaderImplTest {
 
     @Test
     public void loadSingleChannelXYSlice() {
-        prepareTestDataFiles("transform.txt", "default.0.tif");
-        byte[] sliceBytes = renderedVolumeLoader.loadVolume(testDirectory)
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif");
+        byte[] sliceBytes = renderedVolumeLoader.loadVolume(testVolumeLocation)
                 .flatMap(rv -> rv.getTileInfo(CoordinateAxis.Z)
                         .map(tileInfo -> TileKey.fromTileCoord(
                                 0,
@@ -131,7 +133,7 @@ public class RenderedVolumeLoaderImplTest {
                                 0,
                                 rv.getNumZoomLevels() - 1,
                                 CoordinateAxis.Z,
-                                0))
+                                1))
                         .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(rv, tileIndex)))
                 .orElse(null);
         assertNotNull(sliceBytes);
@@ -139,8 +141,8 @@ public class RenderedVolumeLoaderImplTest {
 
     @Test
     public void loadMissingXYSlice() {
-        prepareTestDataFiles("transform.txt", "default.0.tif", "default.1.tif");
-        byte[] sliceBytes = renderedVolumeLoader.loadVolume(testDirectory)
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif", "default.1.tif");
+        byte[] sliceBytes = renderedVolumeLoader.loadVolume(testVolumeLocation)
                 .flatMap(rv -> rv.getTileInfo(CoordinateAxis.Z)
                         .map(tileInfo -> TileKey.fromTileCoord(
                                 1,
@@ -156,22 +158,22 @@ public class RenderedVolumeLoaderImplTest {
 
     @Test
     public void retrieveClosestRawImage() {
-        prepareTestDataFiles("transform.txt", "default.0.tif", "default.1.tif", "tilebase.cache.yml");
-        RawImage rawImage = renderedVolumeLoader.findClosestRawImageFromVoxelCoord(testDirectory, 0, 0, 0)
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif", "default.1.tif", "tilebase.cache.yml");
+        RawImage rawImage = renderedVolumeLoader.findClosestRawImageFromVoxelCoord(testVolumeLocation, 0, 0, 0)
                 .orElse(null);
         assertNotNull(rawImage);
     }
 
     @Test
     public void noRawImageFound() {
-        RawImage rawImage = renderedVolumeLoader.findClosestRawImageFromVoxelCoord(testDirectory, 0, 0, 0)
+        RawImage rawImage = renderedVolumeLoader.findClosestRawImageFromVoxelCoord(testVolumeLocation, 0, 0, 0)
                 .orElse(null);
         assertNull(rawImage);
     }
 
     @Test
     public void loadRawImageContent() {
-        prepareTestDataFiles(ImmutableMap.of(
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, ImmutableMap.of(
                 "default.0.tif", "default/default-ngc.0.tif",
                 "default.1.tif", "default/default-ngc.1.tif"));
         RawImage rawImage = new RawImage();
@@ -207,26 +209,6 @@ public class RenderedVolumeLoaderImplTest {
         };
         for (TestData td : testData) {
             td.resultAssertion.accept(renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rawImage, td.xVoxel, td.yVoxel, td.zVoxel, td.dimx, td.dimy, td.dimz, td.channel));
-        }
-    }
-
-    private void prepareTestDataFiles(String... testDataFileNames) {
-        prepareTestDataFiles(Stream.of(testDataFileNames).collect(Collectors.toMap(fn -> fn, fn -> fn)));
-    }
-
-    private void prepareTestDataFiles(Map<String, String> testDataFileMapping) {
-        try {
-            Path testDataDir = Paths.get(TEST_DATADIR);
-            for (String testFileName : testDataFileMapping.keySet()) {
-                // copy file and rename it.
-                Path dest = testDirectory.resolve(testDataFileMapping.get(testFileName));
-                if (Files.notExists(dest.getParent())) {
-                    Files.createDirectories(dest.getParent());
-                }
-                Files.copy(testDataDir.resolve(testFileName), dest);
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         }
     }
 

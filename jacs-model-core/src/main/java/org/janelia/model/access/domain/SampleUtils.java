@@ -220,6 +220,7 @@ public class SampleUtils {
         return getNeuronSeparation(sample, neuronFragment, NeuronSeparation.class);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T extends PipelineResult> T getNeuronSeparation(Sample sample, NeuronFragment neuronFragment, Class<T> returnClazz) {
 
         if (neuronFragment==null) return null;

@@ -2,14 +2,20 @@ package org.janelia.rendering.utils;
 
 import com.sun.media.jai.codec.ImageCodec;
 import com.sun.media.jai.codec.ImageDecoder;
+import com.sun.media.jai.codec.ImageEncoder;
 import com.sun.media.jai.codec.MemoryCacheSeekableStream;
 import com.sun.media.jai.codec.SeekableStream;
 import com.sun.media.jai.codec.TIFFDirectory;
+import com.sun.media.jai.codec.TIFFEncodeParam;
 import com.sun.media.jai.codecimpl.TIFFImageDecoder;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.media.jai.JAI;
 import javax.media.jai.NullOpImage;
+import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.RenderedImageAdapter;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -18,13 +24,19 @@ import java.awt.image.DataBufferUShort;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
+import java.awt.image.renderable.ParameterBlock;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ImageUtils {
@@ -60,9 +72,34 @@ public class ImageUtils {
         }
     }
 
-    public static byte[] loadImageFromTiffStream(InputStream inputStream,
-                                                 int x0, int y0, int z0,
-                                                 int deltax, int deltay, int deltaz) {
+    public static ImageInfo loadImageInfoFromTiffStream(InputStream inputStream) {
+        SeekableStream tiffStream;
+        try {
+            if (inputStream instanceof SeekableStream) {
+                tiffStream = (SeekableStream) inputStream;
+            } else {
+                tiffStream = new MemoryCacheSeekableStream(inputStream);
+            }
+            TIFFDirectory tiffDirectory = new TIFFDirectory(tiffStream, 0);
+            int imageWidth = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_IMAGE_WIDTH);
+            int imageHeight = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_IMAGE_LENGTH);
+            int numSlices = TIFFDirectory.getNumDirectories(tiffStream);
+            int bitsPerPixel = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_BITS_PER_SAMPLE);
+
+            ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
+            RenderedImageAdapter ria = new RenderedImageAdapter(decoder.decodeAsRenderedImage(0));
+            ColorModel colorModel = ria.getColorModel();
+            return new ImageInfo(imageWidth, imageHeight, numSlices, bitsPerPixel, colorModel);
+        } catch (Exception e) {
+            LOG.error("Error reading TIFF image stream", e);
+            throw new IllegalStateException(e);
+        }
+
+    }
+
+    public static byte[] loadImagePixelBytesFromTiffStream(InputStream inputStream,
+                                                           int x0, int y0, int z0,
+                                                           int deltax, int deltay, int deltaz) {
         SeekableStream tiffStream;
         try {
             if (inputStream instanceof SeekableStream) {
@@ -123,10 +160,10 @@ public class ImageUtils {
                         try {
                             BufferedImage sliceImage = ImageUtils.renderedImageToBufferedImage(
                                     new NullOpImage(
-                                            decoder.decodeAsRenderedImage(startZ + sliceIndex),
-                                            null,
-                                            null,
-                                            NullOpImage.OP_IO_BOUND));
+                                    decoder.decodeAsRenderedImage(startZ + sliceIndex),
+                                    null,
+                                    null,
+                                    NullOpImage.OP_IO_BOUND));
                             transferPixels(sliceImage, startX, startY, endX, endY, rgbBuffer,
                                     sliceIndex * sliceSize, pixelDataHandlers);
                         } catch (IOException e) {
@@ -135,6 +172,96 @@ public class ImageUtils {
                         }
                     });
             return rgbBuffer;
+        } catch (Exception e) {
+            LOG.error("Error reading TIFF image stream", e);
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static byte[] loadRenderedImageBytesFromTiffStream(InputStream inputStream, int z0, int deltaz) {
+        SeekableStream tiffStream;
+        try {
+            if (inputStream instanceof SeekableStream) {
+                tiffStream = (SeekableStream) inputStream;
+            } else {
+                tiffStream = new MemoryCacheSeekableStream(inputStream);
+            }
+            int numSlices = TIFFDirectory.getNumDirectories(tiffStream);
+            int startZ;
+            int endZ;
+            if (deltaz > 0) {
+                startZ = clamp(0, numSlices - 1, z0);
+                endZ = clamp(0, numSlices, startZ + deltaz);
+            } else {
+                startZ = 0;
+                endZ = numSlices;
+            }
+            ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
+            List<RenderedImage> pages = IntStream.range(0, endZ - startZ)
+                    .mapToObj(sliceIndex -> {
+                        try {
+                            return ImageUtils.renderedImageToBufferedImage(
+                                    new NullOpImage(
+                                            decoder.decodeAsRenderedImage(startZ + sliceIndex),
+                                            null,
+                                            null,
+                                            NullOpImage.OP_IO_BOUND));
+                        } catch (IOException e) {
+                            LOG.error("Error reading slice {}", sliceIndex, e);
+                            throw new IllegalStateException(e);
+                        }
+                    })
+                    .collect(Collectors.toList());
+            if (pages.isEmpty()) {
+                return null;
+            } else {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                TIFFEncodeParam param = new TIFFEncodeParam();
+                ImageEncoder encoder = ImageCodec.createImageEncoder("tiff", outputStream, param);
+                Iterator<RenderedImage> pagesIterator = pages.iterator();
+                param.setExtraImages(pagesIterator);
+                encoder.encode(pagesIterator.next());
+                outputStream.flush();
+                return outputStream.toByteArray();
+            }
+        } catch (Exception e) {
+            LOG.error("Error reading TIFF image stream", e);
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static Pair<ParameterBlock, RenderedImage> acumulateImage(Pair<ParameterBlock, RenderedImage> pbImagePair, RenderedImage rim) {
+        if (pbImagePair.getRight() == null) {
+            return ImmutablePair.of(null, rim);
+        } else if (pbImagePair.getLeft() == null) {
+            ParameterBlock combinedChannelsPB = new ParameterBlockJAI("bandmerge");
+            combinedChannelsPB.addSource(pbImagePair.getRight());
+            return ImmutablePair.of(combinedChannelsPB, rim);
+        } else {
+            return ImmutablePair.of(pbImagePair.getLeft().addSource(pbImagePair.getRight()), rim);
+        }
+    }
+
+    public static RenderedImage reduceImage(Pair<ParameterBlock, RenderedImage> pbImagePair) {
+        if (pbImagePair.getRight() == null) {
+            return null;
+        } else if (pbImagePair.getLeft() == null) {
+            return pbImagePair.getRight();
+        } else {
+            return JAI.create("bandmerge", pbImagePair.getLeft().addSource(pbImagePair.getRight()), null);
+        }
+    }
+
+    public static RenderedImage loadRenderedImageFromTiffStream(InputStream inputStream, int pageNumber) {
+        SeekableStream tiffStream;
+        try {
+            if (inputStream instanceof SeekableStream) {
+                tiffStream = (SeekableStream) inputStream;
+            } else {
+                tiffStream = new MemoryCacheSeekableStream(inputStream);
+            }
+            ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
+            return decoder.decodeAsRenderedImage(pageNumber);
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);
@@ -239,7 +366,7 @@ public class ImageUtils {
         }
     }
 
-    public static byte[] renderedImageToBytes(RenderedImage renderedImage) {
+    public static byte[] renderedImageToTextureBytes(RenderedImage renderedImage) {
         RenderedImage rgbImage;
         // If input image uses indexed color table, convert to RGB first.
         if (renderedImage.getColorModel() instanceof IndexColorModel) {
@@ -336,7 +463,7 @@ public class ImageUtils {
         return dataBytesArray;
     }
 
-    public static BufferedImage renderedImageToBufferedImage(RenderedImage img) {
+    private static BufferedImage renderedImageToBufferedImage(RenderedImage img) {
         if (img instanceof BufferedImage) {
             return (BufferedImage) img;
         } else {

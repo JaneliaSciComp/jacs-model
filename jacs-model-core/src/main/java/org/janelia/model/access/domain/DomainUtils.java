@@ -84,6 +84,7 @@ public class DomainUtils {
     /**
      * Look at all classes with the @MongoMapped annotation and register them as domain classes.
      */
+    @SuppressWarnings("unchecked")
     private static void registerAnnotatedClasses() {
         
         log.info("Scanning domain object package: {}", DOMAIN_OBJECT_PACKAGE_NAME);
@@ -216,7 +217,8 @@ public class DomainUtils {
         }
         return names;
     }
-    
+
+    @SuppressWarnings("unchecked")
     public static Class<? extends DomainObject> getObjectClassByName(String className) {
         if (className==null) return null;
         if (!className.contains(".")) {
@@ -336,6 +338,7 @@ public class DomainUtils {
      * @param clazz a class which extends DomainObject
      * @return a list of DomainObjectAttributes
      */
+    @SuppressWarnings("unchecked")
     public static List<DomainObjectAttribute> getSearchAttributes(Class<? extends DomainObject> clazz) {
         
         List<DomainObjectAttribute> attrs = new ArrayList<>();
@@ -390,7 +393,10 @@ public class DomainUtils {
     }
 
 
-    // returns all the Search Mappings for all domain objects
+    /**
+     * Get all the Search Mappings for all domain objects.
+     */
+    @SuppressWarnings("unchecked")
     public static  HashMap<String, List<String>>  getAllSearchAttributes() {
         HashMap<String, List<String>> hmap = new HashMap<>();
 
@@ -398,7 +404,7 @@ public class DomainUtils {
         Reflections reflections = new Reflections(DOMAIN_OBJECT_PACKAGE_NAME);
         Set<Class<?>> ann1 = reflections.getTypesAnnotatedWith(SearchType.class);
         Set<Class<?>> ann2 = reflections.getTypesAnnotatedWith(MongoMapped.class);
-// replace ann1 with getSearchClasses
+        // replace ann1 with getSearchClasses
         for (Class<?> searchClass : ann1) {
             log.trace("Getting search attributes for class {}", searchClass.getSimpleName());
             // Look for annotated fields
@@ -948,6 +954,7 @@ public class DomainUtils {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T extends DomainObject> T findObjectByTypeAndName(Collection<DomainObject> domainObjects, Class<T> clazz, String name) {
         for(DomainObject domainObject : domainObjects) {
             if (clazz.isAssignableFrom(domainObject.getClass()) && name.equals(domainObject.getName())) {

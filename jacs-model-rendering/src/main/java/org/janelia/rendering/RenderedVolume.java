@@ -2,6 +2,7 @@ package org.janelia.rendering;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ import java.util.Optional;
 
 public class RenderedVolume {
 
-    private final Path basePath;
+    private final RenderedVolumeLocation rvl;
     private final RenderingType renderingType;
     private final int[] originVoxel;
     private final int[] volumeSizeInVoxels;
@@ -21,7 +22,7 @@ public class RenderedVolume {
     private final TileInfo yzTileInfo;
     private final TileInfo zxTileInfo;
 
-    RenderedVolume(Path basePath,
+    RenderedVolume(RenderedVolumeLocation rvl,
                    RenderingType renderingType,
                    int[] originVoxel,
                    int[] volumeSizeInVoxels,
@@ -30,7 +31,7 @@ public class RenderedVolume {
                    TileInfo xyTileInfo,
                    TileInfo yzTileInfo,
                    TileInfo zxTileInfo) {
-        this.basePath = basePath;
+        this.rvl = rvl;
         this.renderingType = renderingType;
         this.originVoxel = originVoxel;
         this.volumeSizeInVoxels = volumeSizeInVoxels;
@@ -41,8 +42,13 @@ public class RenderedVolume {
         this.zxTileInfo = zxTileInfo;
     }
 
-    Path getBasePath() {
-        return basePath;
+    URI getBaseURI() {
+        return rvl.getBaseURI();
+    }
+
+    @JsonIgnore
+    RenderedVolumeLocation getRvl() {
+        return rvl;
     }
 
     public RenderingType getRenderingType() {

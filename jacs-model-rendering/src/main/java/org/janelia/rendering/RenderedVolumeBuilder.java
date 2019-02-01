@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 public class RenderedVolumeBuilder {
 
-    private Path basePath;
+    private RenderedVolumeLocation rvl;
     private RenderingType renderingType;
     private int[] originVoxel;
     private int[] volumeSizeInVoxels;
@@ -15,10 +15,10 @@ public class RenderedVolumeBuilder {
     private TileInfo yzTileInfo;
     private TileInfo zxTileInfo;
 
-    public static RenderedVolumeBuilder octreeBuilder(Path basePath) {
+    public static RenderedVolumeBuilder builder(RenderedVolumeLocation rvl) {
         RenderedVolumeBuilder volumeBuilder = new RenderedVolumeBuilder();
         volumeBuilder.renderingType = RenderingType.OCTREE;
-        volumeBuilder.basePath = basePath;
+        volumeBuilder.rvl = rvl;
         return volumeBuilder;
     }
 
@@ -59,7 +59,7 @@ public class RenderedVolumeBuilder {
 
     public RenderedVolume build() {
         return new RenderedVolume(
-                basePath,
+                rvl,
                 renderingType,
                 originVoxel,
                 volumeSizeInVoxels,

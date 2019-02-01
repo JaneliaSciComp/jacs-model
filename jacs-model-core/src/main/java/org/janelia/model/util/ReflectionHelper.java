@@ -1,5 +1,6 @@
 package org.janelia.model.util;
 
+import com.google.common.collect.ImmutableList;
 import org.reflections.ReflectionUtils;
 
 import java.lang.annotation.Annotation;
@@ -68,7 +69,8 @@ public class ReflectionHelper {
                     annotationClass.getSimpleName()+" annotation", e);
         }
     }
-    
+
+    @SuppressWarnings("unchecked")
     public static Method getMethod(Object obj, String methodName) {
         Method matchedMethod = null;
         for(Method method : ReflectionUtils.getAllMethods(obj.getClass(), ReflectionUtils.withName(methodName))) {
@@ -80,14 +82,17 @@ public class ReflectionHelper {
         return matchedMethod;
     }
 
+    @SuppressWarnings("unchecked")
     public static Collection<Method> getMethods(Object obj, String methodName) {
         return ReflectionUtils.getAllMethods(obj.getClass(), ReflectionUtils.withName(methodName));
     }
 
+    @SuppressWarnings("unchecked")
     public static List<Field> getFields(Object obj) {
-        return new ArrayList<Field>(ReflectionUtils.getAllFields(obj.getClass()));
+        return ImmutableList.copyOf(ReflectionUtils.getAllFields(obj.getClass()));
     }
-    
+
+    @SuppressWarnings("unchecked")
     public static Field getField(Object obj, Class<? extends Annotation> annotationClass) throws NoSuchFieldException {
         Field matchedField = null;
         for(Field field : ReflectionUtils.getAllFields(obj.getClass(), ReflectionUtils.withAnnotation(annotationClass))) {
@@ -102,6 +107,7 @@ public class ReflectionHelper {
         return matchedField;
     }
 
+    @SuppressWarnings("unchecked")
     public static Collection<Field> getFields(Object obj, Class<? extends Annotation> annotationClass) {
         List<Field> matchedFields = new ArrayList<Field>();
         for(Field field : ReflectionUtils.getAllFields(obj.getClass(), ReflectionUtils.withAnnotation(annotationClass))) {
@@ -117,7 +123,8 @@ public class ReflectionHelper {
     public static void setFieldValue(Object obj, String fieldName, Object value) throws NoSuchFieldException {
         setFieldValue(obj, getField(obj, fieldName), value); 
     }
-    
+
+    @SuppressWarnings("unchecked")
     public static Field getField(Object obj, String fieldName) throws NoSuchFieldException {
         Field matchedField = null;
         final Set<Field> fields = ReflectionUtils.getAllFields(obj.getClass(), ReflectionUtils.withName(fieldName));
