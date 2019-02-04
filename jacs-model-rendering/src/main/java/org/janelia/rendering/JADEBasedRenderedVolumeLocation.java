@@ -23,6 +23,7 @@ import java.net.URI;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -49,6 +50,10 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
         private String mimeType;
         @JsonProperty
         private boolean collectionFlag; // true if the node identifies a directory
+        @JsonProperty
+        private Date creationTime;
+        @JsonProperty
+        private Date lastModified;
     }
 
     private final String volumeBaseURI;
