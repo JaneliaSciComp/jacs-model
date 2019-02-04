@@ -177,9 +177,9 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
 
     private Optional<TileInfo[]> loadTileInfo(RenderedVolumeLocation rvl) {
         try {
-            Pattern xyTilePattern = Pattern.compile(String.format(XY_CH_TIFF_PATTERN, "(\\d+)"), Pattern.CASE_INSENSITIVE);
-            Pattern yzTilePattern = Pattern.compile(String.format(YZ_CH_TIFF_PATTERN, "(\\d+)"), Pattern.CASE_INSENSITIVE);
-            Pattern zxTilePattern = Pattern.compile(String.format(ZX_CH_TIFF_PATTERN, "(\\d+)"), Pattern.CASE_INSENSITIVE);
+            Pattern xyTilePattern = Pattern.compile("^" + String.format(XY_CH_TIFF_PATTERN, "(\\d+)"), Pattern.CASE_INSENSITIVE);
+            Pattern yzTilePattern = Pattern.compile("^" + String.format(YZ_CH_TIFF_PATTERN, "(\\d+)"), Pattern.CASE_INSENSITIVE);
+            Pattern zxTilePattern = Pattern.compile("^" + String.format(ZX_CH_TIFF_PATTERN, "(\\d+)"), Pattern.CASE_INSENSITIVE);
             Map<String, List<String>> channelTilesByOrthoProjection = rvl.listImageUris(0).stream()
                     .map(tileUri -> {
                         String uriPath = tileUri.getPath();
