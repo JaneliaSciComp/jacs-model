@@ -1,8 +1,10 @@
 package org.janelia.rendering;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.rendering.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +17,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.FeatureContext;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -190,6 +193,7 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
                     .connectTimeout(5, TimeUnit.SECONDS)
                     .sslContext(sslContext)
                     .hostnameVerifier((s, sslSession) -> true)
+                    .register(new JacksonFeature())
                     .build();
         } catch (Exception e) {
             // error initializing the HTTP client

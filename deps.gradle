@@ -33,6 +33,7 @@ dependencies {
         // JAX-RS client
         JERSEY_VERSION = "2.27"
         JAX_RS_JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
 
         // JSON
         JACKSON_VERSION = "2.9.5"
