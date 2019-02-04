@@ -1,10 +1,13 @@
 package org.janelia.rendering;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import org.janelia.rendering.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,6 +171,20 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
     }
 
     private Client createHttpClient() {
+        SSLContext sslContext = createSSLContext();
+        JacksonJaxbJsonProvider jacksonProvider = new JacksonJaxbJsonProvider();
+        jacksonProvider.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ClientConfig clientConfig = new ClientConfig()
+                .register(jacksonProvider);
+        return ClientBuilder.newBuilder()
+                .withConfig(clientConfig)
+                .connectTimeout(5, TimeUnit.SECONDS)
+                .sslContext(sslContext)
+                .hostnameVerifier((s, sslSession) -> true)
+                .build();
+    }
+
+    private static SSLContext createSSLContext() {
         try {
             SSLContext sslContext = SSLContext.getInstance("TLSv1");
             TrustManager[] trustManagers = {
@@ -189,15 +206,9 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
                     }
             };
             sslContext.init(null, trustManagers, new SecureRandom());
-            return ClientBuilder.newBuilder()
-                    .connectTimeout(5, TimeUnit.SECONDS)
-                    .sslContext(sslContext)
-                    .hostnameVerifier((s, sslSession) -> true)
-                    .register(new JacksonFeature())
-                    .build();
+            return sslContext;
         } catch (Exception e) {
-            // error initializing the HTTP client
-            throw new IllegalStateException(e);
+            throw new IllegalStateException("Error initilizing SSL context", e);
         }
     }
 
