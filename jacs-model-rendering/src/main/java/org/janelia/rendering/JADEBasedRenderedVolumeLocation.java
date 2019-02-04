@@ -1,9 +1,7 @@
 package org.janelia.rendering;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.rendering.utils.ImageUtils;
 import org.slf4j.Logger;
@@ -13,7 +11,6 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
@@ -21,14 +18,11 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Files;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -58,11 +52,13 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
     }
 
     private final String volumeBaseURI;
-    private final String authorization;
+    private final String authToken;
+    private final String storageServiceApiKey;
 
-    public JADEBasedRenderedVolumeLocation(String volumeBaseURI, String authorization) {
+    public JADEBasedRenderedVolumeLocation(String volumeBaseURI, String authToken, String storageServiceApiKey) {
         this.volumeBaseURI = volumeBaseURI;
-        this.authorization = authorization;
+        this.authToken = authToken;
+        this.storageServiceApiKey = storageServiceApiKey;
     }
 
     @Override
@@ -198,10 +194,14 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
 
     private Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder) {
         Invocation.Builder requestWithCredentialsBuilder = requestBuilder;
-        if (StringUtils.isNotBlank(authorization)) {
+        if (StringUtils.isNotBlank(authToken)) {
             requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
                     "Authorization",
-                    authorization);
+                    "Bearer " + authToken);
+        } else if (StringUtils.isNotBlank(storageServiceApiKey)) {
+            requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
+                    "Authorization",
+                    "APIKEY " + storageServiceApiKey);
         }
         return requestWithCredentialsBuilder;
     }
