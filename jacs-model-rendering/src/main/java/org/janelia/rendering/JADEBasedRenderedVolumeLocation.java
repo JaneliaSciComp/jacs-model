@@ -97,14 +97,6 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
                 httpClient.close();
             }
         }
-
-        //        OctreeImageVisitor imageVisitor = new OctreeImageVisitor(level);
-//        try {
-//            Files.walkFileTree(volumeBasePath, imageVisitor);
-//            return imageVisitor.tileImages.stream().map(p -> p.toUri()).collect(Collectors.toList());
-//        } catch (IOException e) {
-//            throw new IllegalStateException(e);
-//        }
     }
 
     @Nullable
