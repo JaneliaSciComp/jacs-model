@@ -26,6 +26,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -82,16 +83,23 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
+            int detailLevel = level + 1;
             WebTarget target = httpClient.target(volumeBaseURI)
                     .path("list")
-                    .queryParam("depth", level)
+                    .queryParam("depth", detailLevel)
                     ;
             Response response;
             response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON)).get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 List<ContentEntry> storageCotent = response.readEntity(new GenericType<List<ContentEntry>>(){});
-                return storageCotent.stream().map(ce -> URI.create(ce.nodeAccessURL).resolve(ce.nodeRelativePath)).collect(Collectors.toList()); // !!!! FIXME
+                return storageCotent.stream()
+                        .filter(ce -> StringUtils.isNotBlank(ce.nodeRelativePath))
+                        .filter(ce -> Paths.get(ce.nodeRelativePath).getNameCount() == detailLevel)
+                        .filter(ce -> !ce.collectionFlag)
+                        .filter(ce -> "image/tiff".equals(ce.mimeType))
+                        .map(ce -> URI.create(ce.nodeAccessURL))
+                        .collect(Collectors.toList());
             } else {
                 LOG.warn("List {} - depth {} returned {} status", volumeBaseURI, level, responseStatus);
                 return null;
