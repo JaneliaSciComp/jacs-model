@@ -76,7 +76,7 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
                     .queryParam("depth", level)
                     ;
             Response response;
-            response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM)).get();
+            response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON)).get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 List<ContentEntry> storageCotent = response.readEntity(new GenericType<List<ContentEntry>>(){});
