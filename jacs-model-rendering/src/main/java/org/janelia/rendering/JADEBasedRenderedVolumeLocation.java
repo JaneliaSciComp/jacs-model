@@ -125,7 +125,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                     .path(tileRelativePath)
                     ;
             Response response;
-            response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM)).get();
+            response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON)).get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return response.readEntity(RenderedImageInfo.class);
