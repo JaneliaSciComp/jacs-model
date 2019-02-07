@@ -2,7 +2,6 @@ package org.janelia.rendering;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
