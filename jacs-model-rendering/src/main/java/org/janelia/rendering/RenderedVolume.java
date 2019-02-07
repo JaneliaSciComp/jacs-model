@@ -42,13 +42,13 @@ public class RenderedVolume {
         this.zxTileInfo = zxTileInfo;
     }
 
-    URI getBaseURI() {
-        return rvl.getBaseURI();
-    }
-
     @JsonIgnore
     RenderedVolumeLocation getRvl() {
         return rvl;
+    }
+
+    public String getBaseURI() {
+        return rvl.getBaseURI().toString();
     }
 
     public RenderingType getRenderingType() {
