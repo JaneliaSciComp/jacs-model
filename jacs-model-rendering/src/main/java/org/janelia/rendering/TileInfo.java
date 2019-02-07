@@ -1,20 +1,23 @@
 package org.janelia.rendering;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class TileInfo {
 
-    private final CoordinateAxis sliceAxis;
+    private final Coordinate sliceAxis;
     private final int channelCount;
     private final int[] tileSize; // tileSize in pixels
     private final int bitDepth;
     private final boolean srgb;
 
-    TileInfo(CoordinateAxis sliceAxis,
-             int channelCount,
-             int[] tileSize,
-             int bitDepth,
-             boolean srgb) {
+    @JsonCreator
+    public TileInfo(@JsonProperty("sliceAxis") Coordinate sliceAxis,
+                    @JsonProperty("channelCount") int channelCount,
+                    @JsonProperty("tileSize") int[] tileSize,
+                    @JsonProperty("bitDepth") int bitDepth,
+                    @JsonProperty("srgb") boolean srgb) {
         this.sliceAxis = sliceAxis;
         this.channelCount = channelCount;
         this.tileSize = tileSize;
@@ -36,6 +39,10 @@ public class TileInfo {
 
     public int getNumPages() {
         return tileSize[2];
+    }
+
+    public Coordinate getSliceAxis() {
+        return sliceAxis;
     }
 
     /**

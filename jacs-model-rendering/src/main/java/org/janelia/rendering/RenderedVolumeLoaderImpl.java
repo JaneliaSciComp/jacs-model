@@ -56,9 +56,9 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                     .map(tileInfo -> tileInfo.getVolumeSize())
                                     .orElseGet(() -> new int[] {0, 0, 0});
                             int[] volumeSizeInVoxels = Arrays.stream(tileVolumeDims).map(tileDim -> tileDim * scaleFactor).toArray();
-                            TileInfo xyTileInfo = tileInfos[CoordinateAxis.Z.index()];
-                            TileInfo zxTileInfo = tileInfos[CoordinateAxis.Y.index()];
-                            TileInfo yzTileInfo = tileInfos[CoordinateAxis.X.index()];
+                            TileInfo xyTileInfo = tileInfos[Coordinate.Z.index()];
+                            TileInfo zxTileInfo = tileInfos[Coordinate.Y.index()];
+                            TileInfo yzTileInfo = tileInfos[Coordinate.X.index()];
                             return new RenderedVolume(rvl,
                                     RenderingType.OCTREE,
                                     coord.getOriginVoxel(),
@@ -139,22 +139,22 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                 }
                 switch (nameAndValue.get(0)) {
                     case "ox":
-                        coord.setOriginInNanos(CoordinateAxis.X, Integer.valueOf(nameAndValue.get(1)));
+                        coord.setOriginInNanos(Coordinate.X, Integer.valueOf(nameAndValue.get(1)));
                         break;
                     case "oy":
-                        coord.setOriginInNanos(CoordinateAxis.Y, Integer.valueOf(nameAndValue.get(1)));
+                        coord.setOriginInNanos(Coordinate.Y, Integer.valueOf(nameAndValue.get(1)));
                         break;
                     case "oz":
-                        coord.setOriginInNanos(CoordinateAxis.Z, Integer.valueOf(nameAndValue.get(1)));
+                        coord.setOriginInNanos(Coordinate.Z, Integer.valueOf(nameAndValue.get(1)));
                         break;
                     case "sx":
-                        coord.setLowestResNanosPerVoxel(CoordinateAxis.X, Double.valueOf(nameAndValue.get(1)));
+                        coord.setLowestResNanosPerVoxel(Coordinate.X, Double.valueOf(nameAndValue.get(1)));
                         break;
                     case "sy":
-                        coord.setLowestResNanosPerVoxel(CoordinateAxis.Y, Double.valueOf(nameAndValue.get(1)));
+                        coord.setLowestResNanosPerVoxel(Coordinate.Y, Double.valueOf(nameAndValue.get(1)));
                         break;
                     case "sz":
-                        coord.setLowestResNanosPerVoxel(CoordinateAxis.Z, Double.valueOf(nameAndValue.get(1)));
+                        coord.setLowestResNanosPerVoxel(Coordinate.Z, Double.valueOf(nameAndValue.get(1)));
                         break;
                     case "nl":
                         coord.setNumZoomLevels(Integer.valueOf(nameAndValue.get(1)));
@@ -201,36 +201,36 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
             TileInfo[] tileInfos = new TileInfo[3];
             if (channelTilesByOrthoProjection.get(XY_CH_TIFF_PATTERN) != null) {
                 RenderedImageInfo xyImageInfo = rvl.readTileImageInfo(channelTilesByOrthoProjection.get(XY_CH_TIFF_PATTERN).get(0));
-                tileInfos[CoordinateAxis.Z.index()] = new TileInfo(
-                        CoordinateAxis.Z,
+                tileInfos[Coordinate.Z.index()] = new TileInfo(
+                        Coordinate.Z,
                         channelTilesByOrthoProjection.get(XY_CH_TIFF_PATTERN).size(),
                         new int[] {xyImageInfo.sx, xyImageInfo.sy, xyImageInfo.sz},
                         xyImageInfo.cmPixelSize,
                         xyImageInfo.sRGBspace);
             } else {
-                tileInfos[CoordinateAxis.Z.index()] = null;
+                tileInfos[Coordinate.Z.index()] = null;
             }
             if (channelTilesByOrthoProjection.get(YZ_CH_TIFF_PATTERN) != null) {
                 RenderedImageInfo yzImageInfo = rvl.readTileImageInfo(channelTilesByOrthoProjection.get(YZ_CH_TIFF_PATTERN).get(0));
-                tileInfos[CoordinateAxis.X.index()] = new TileInfo(
-                        CoordinateAxis.X,
+                tileInfos[Coordinate.X.index()] = new TileInfo(
+                        Coordinate.X,
                         channelTilesByOrthoProjection.get(YZ_CH_TIFF_PATTERN).size(),
                         new int[] {yzImageInfo.sx, yzImageInfo.sy, yzImageInfo.sz},
                         yzImageInfo.cmPixelSize,
                         yzImageInfo.sRGBspace);
             } else {
-                tileInfos[CoordinateAxis.X.index()] = null;
+                tileInfos[Coordinate.X.index()] = null;
             }
             if (channelTilesByOrthoProjection.get(ZX_CH_TIFF_PATTERN) != null) {
                 RenderedImageInfo zxImageInfo = rvl.readTileImageInfo(channelTilesByOrthoProjection.get(ZX_CH_TIFF_PATTERN).get(0));
-                tileInfos[CoordinateAxis.Y.index()] = new TileInfo(
-                        CoordinateAxis.Y,
+                tileInfos[Coordinate.Y.index()] = new TileInfo(
+                        Coordinate.Y,
                         channelTilesByOrthoProjection.get(ZX_CH_TIFF_PATTERN).size(),
                         new int[] {zxImageInfo.sx, zxImageInfo.sy, zxImageInfo.sz},
                         zxImageInfo.cmPixelSize,
                         zxImageInfo.sRGBspace);
             } else {
-                tileInfos[CoordinateAxis.Y.index()] = null;
+                tileInfos[Coordinate.Y.index()] = null;
             }
             return Optional.of(tileInfos);
         } catch (Exception e) {
@@ -249,7 +249,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         };
     }
 
-    private String getImageNameForChannel(CoordinateAxis sliceAxis, int channelNumber) {
+    private String getImageNameForChannel(Coordinate sliceAxis, int channelNumber) {
         switch (sliceAxis) {
             case X:
                 return String.format(YZ_CH_TIFF_PATTERN, channelNumber);

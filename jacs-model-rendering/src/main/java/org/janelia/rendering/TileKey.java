@@ -15,26 +15,26 @@ public class TileKey {
 
     static TileKey fromTileCoord(int xTile, int yTile, int zTile,
                                  int zoom,
-                                 CoordinateAxis sliceAxis,
+                                 Coordinate sliceAxis,
                                  int sliceIndex) {
         return new TileKey(xTile, yTile, zTile, zoom, sliceAxis, sliceIndex);
     }
 
     public static TileKey fromRavelerTileCoord(int xTile, int yTile, int zTile,
                                                int zoom,
-                                               CoordinateAxis sliceAxis,
+                                               Coordinate sliceAxis,
                                                TileInfo tileInfo) {
         int zoomFactor = 1 << zoom;
         switch (sliceAxis) {
             case X:
-                return fromTileCoord(xTile / tileInfo.getVolumeSize()[CoordinateAxis.X.index()] / zoomFactor, yTile, zTile,
+                return fromTileCoord(xTile / tileInfo.getVolumeSize()[Coordinate.X.index()] / zoomFactor, yTile, zTile,
                         zoom, sliceAxis, (xTile / zoomFactor) % tileInfo.getNumPages());
             case Y:
                 // Raveller y is flipped so flip when slicing in Y
-                return fromTileCoord(xTile, yTile / tileInfo.getVolumeSize()[CoordinateAxis.Y.index()] / zoomFactor, zTile,
+                return fromTileCoord(xTile, yTile / tileInfo.getVolumeSize()[Coordinate.Y.index()] / zoomFactor, zTile,
                         zoom, sliceAxis, tileInfo.getNumPages() - ((yTile / zoomFactor) % tileInfo.getNumPages()) - 1);
             case Z:
-                return fromTileCoord(xTile, yTile, zTile / tileInfo.getVolumeSize()[CoordinateAxis.Z.index()] / zoomFactor,
+                return fromTileCoord(xTile, yTile, zTile / tileInfo.getVolumeSize()[Coordinate.Z.index()] / zoomFactor,
                         zoom, sliceAxis, (zTile / zoomFactor) % tileInfo.getNumPages());
             default:
                 throw new IllegalArgumentException("Invalid slice axis " + sliceAxis);
@@ -43,11 +43,11 @@ public class TileKey {
 
     private final int xyz[] = new int[3];
     private final int zoom;
-    private final CoordinateAxis sliceAxis;
+    private final Coordinate sliceAxis;
     private final int sliceIndex;
 
     private TileKey(int x, int y, int z, int zoom,
-                    CoordinateAxis sliceAxis,
+                    Coordinate sliceAxis,
                     int sliceIndex) {
         this.xyz[0] = x;
         this.xyz[1] = y;
@@ -69,7 +69,7 @@ public class TileKey {
         return 1 << zoom;
     }
 
-    public CoordinateAxis getSliceAxis() {
+    public Coordinate getSliceAxis() {
         return sliceAxis;
     }
 

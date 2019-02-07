@@ -21,22 +21,22 @@ public class RenderedVolume {
     private final TileInfo yzTileInfo;
     private final TileInfo zxTileInfo;
 
-    RenderedVolume(RenderedVolumeLocation rvl,
-                   RenderingType renderingType,
-                   int[] originVoxel,
-                   int[] volumeSizeInVoxels,
-                   double[] micromsPerVoxel,
-                   int numZoomLevels,
-                   TileInfo xyTileInfo,
-                   TileInfo yzTileInfo,
-                   TileInfo zxTileInfo) {
+    public RenderedVolume(RenderedVolumeLocation rvl,
+                          RenderingType renderingType,
+                          int[] originVoxel,
+                          int[] volumeSizeInVoxels,
+                          double[] micromsPerVoxel,
+                          int numZoomLevels,
+                          TileInfo xyTileInfo,
+                          TileInfo yzTileInfo,
+                          TileInfo zxTileInfo) {
         this.rvl = rvl;
         this.renderingType = renderingType;
         this.originVoxel = originVoxel;
         this.volumeSizeInVoxels = volumeSizeInVoxels;
         this.micromsPerVoxel = micromsPerVoxel;
         this.numZoomLevels = numZoomLevels;
-        this.xyTileInfo= xyTileInfo;
+        this.xyTileInfo = xyTileInfo;
         this.yzTileInfo = yzTileInfo;
         this.zxTileInfo = zxTileInfo;
     }
@@ -70,7 +70,7 @@ public class RenderedVolume {
         return micromsPerVoxel;
     }
 
-    public Optional<TileInfo> getTileInfo(CoordinateAxis sliceAxis) {
+    public Optional<TileInfo> getTileInfo(Coordinate sliceAxis) {
         switch (sliceAxis) {
             case X:
                 return yzTileInfo == null ? Optional.empty() : Optional.of(yzTileInfo);

@@ -9,11 +9,11 @@ public class RawCoord {
     private double[] lowestResNanosPerVoxel = new double[3]; // nanos per voxel at lowest resolution (max zoon level)
     private int numZoomLevels = -1;
 
-    void setOriginInNanos(CoordinateAxis axis, Integer value) {
+    void setOriginInNanos(Coordinate axis, Integer value) {
         originInNanos[axis.index()] = value;
     }
 
-    void setLowestResNanosPerVoxel(CoordinateAxis axis, Double value) {
+    void setLowestResNanosPerVoxel(Coordinate axis, Double value) {
         lowestResNanosPerVoxel[axis.index()] = value;
     }
 

@@ -9,9 +9,6 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface RenderedVolumeLocation {
-    String TRANSFORM_FILE_NAME = "transform.txt";
-    String TILED_VOL_BASE_FILE_NAME = "tilebase.cache.yml";
-
     URI getBaseURI();
 
     /**

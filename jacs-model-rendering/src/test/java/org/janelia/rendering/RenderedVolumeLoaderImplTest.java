@@ -5,18 +5,13 @@ import org.janelia.testutils.TestUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
@@ -109,13 +104,13 @@ public class RenderedVolumeLoaderImplTest {
     public void loadXYSlice() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif", "default.1.tif");
         byte[] sliceBytes = renderedVolumeLoader.loadVolume(testVolumeLocation)
-                .flatMap(rv -> rv.getTileInfo(CoordinateAxis.Z)
+                .flatMap(rv -> rv.getTileInfo(Coordinate.Z)
                         .map(tileInfo -> TileKey.fromTileCoord(
                                 0,
                                 0,
                                 0,
                                 rv.getNumZoomLevels() - 1,
-                                CoordinateAxis.Z,
+                                Coordinate.Z,
                                 0))
                         .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(rv, tileIndex)))
                 .orElse(null);
@@ -126,13 +121,13 @@ public class RenderedVolumeLoaderImplTest {
     public void loadSingleChannelXYSlice() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif");
         byte[] sliceBytes = renderedVolumeLoader.loadVolume(testVolumeLocation)
-                .flatMap(rv -> rv.getTileInfo(CoordinateAxis.Z)
+                .flatMap(rv -> rv.getTileInfo(Coordinate.Z)
                         .map(tileInfo -> TileKey.fromTileCoord(
                                 0,
                                 0,
                                 0,
                                 rv.getNumZoomLevels() - 1,
-                                CoordinateAxis.Z,
+                                Coordinate.Z,
                                 1))
                         .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(rv, tileIndex)))
                 .orElse(null);
@@ -143,13 +138,13 @@ public class RenderedVolumeLoaderImplTest {
     public void loadMissingXYSlice() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif", "default.1.tif");
         byte[] sliceBytes = renderedVolumeLoader.loadVolume(testVolumeLocation)
-                .flatMap(rv -> rv.getTileInfo(CoordinateAxis.Z)
+                .flatMap(rv -> rv.getTileInfo(Coordinate.Z)
                         .map(tileInfo -> TileKey.fromTileCoord(
                                 1,
                                 1,
                                 1,
                                 0,
-                                CoordinateAxis.Z,
+                                Coordinate.Z,
                                 0))
                         .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(rv, tileIndex)))
                 .orElse(null);

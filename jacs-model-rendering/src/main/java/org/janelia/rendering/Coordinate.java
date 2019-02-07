@@ -1,17 +1,17 @@
 package org.janelia.rendering;
 
-public enum CoordinateAxis {
+public enum Coordinate {
 	X(0),
 	Y(1),
 	Z(2);
 	
 	private final int index;
 
-	CoordinateAxis(int indexParam) {
+	Coordinate(int indexParam) {
 		this.index = indexParam;
 	}
 
-	public CoordinateAxis fromIndex(int index) {
+	public Coordinate fromIndex(int index) {
 		switch (index % 3) {
 			case 0: return X;
 			case 1: return Y;
@@ -23,11 +23,11 @@ public enum CoordinateAxis {
 
 	public int index() {return index;}
 
-	public CoordinateAxis next() {
+	public Coordinate next() {
 		return fromIndex(index() + 1);
 	}
 
-	public CoordinateAxis previous() {
+	public Coordinate previous() {
 		return fromIndex(index() -1);
 	}
 

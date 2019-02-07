@@ -1,6 +1,5 @@
 package org.janelia.rendering;
 
-import java.nio.file.Path;
 import java.util.Arrays;
 
 public class RenderedVolumeBuilder {
@@ -43,17 +42,17 @@ public class RenderedVolumeBuilder {
     }
 
     public RenderedVolumeBuilder withXYTile(int channels, int[] size, int bitDepth, boolean srgb) {
-        this.xyTileInfo = new TileInfo(CoordinateAxis.Z, channels, Arrays.copyOf(size, size.length), bitDepth, srgb);
+        this.xyTileInfo = new TileInfo(Coordinate.Z, channels, Arrays.copyOf(size, size.length), bitDepth, srgb);
         return this;
     }
 
     public RenderedVolumeBuilder withYZTile(int channels, int[] size, int bitDepth, boolean srgb) {
-        this.yzTileInfo = new TileInfo(CoordinateAxis.X, channels, Arrays.copyOf(size, size.length), bitDepth, srgb);
+        this.yzTileInfo = new TileInfo(Coordinate.X, channels, Arrays.copyOf(size, size.length), bitDepth, srgb);
         return this;
     }
 
     public RenderedVolumeBuilder withZXTile(int channels, int[] size, int bitDepth, boolean srgb) {
-        this.zxTileInfo = new TileInfo(CoordinateAxis.Y, channels, Arrays.copyOf(size, size.length), bitDepth, srgb);
+        this.zxTileInfo = new TileInfo(Coordinate.Y, channels, Arrays.copyOf(size, size.length), bitDepth, srgb);
         return this;
     }
 
