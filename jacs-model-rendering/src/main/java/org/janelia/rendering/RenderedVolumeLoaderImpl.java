@@ -74,14 +74,14 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     @Override
     public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
         Stream<Path> channelImagePaths = renderedVolume.getTileInfo(tileKey.getSliceAxis())
-                .flatMap(tileInfo -> renderedVolume.getRelativeTilePath(tileKey)
-                        .map(relativeTilePath -> {
-                            LOG.debug("Try to load tile {} from {} : {}", tileKey, renderedVolume.getBaseURI(), relativeTilePath);
-                            return IntStream.range(0, tileInfo.getChannelCount())
-                                    .mapToObj(channel -> relativeTilePath.resolve(getImageNameForChannel(tileKey.getSliceAxis(), channel)))
-                                    ;
-                        }))
-                .orElse(Stream.of())
+                .map(tileInfo -> IntStream.range(0, tileInfo.getChannelCount()) // for each channel
+                        .mapToObj(channel -> renderedVolume.getRelativeTilePath(tileKey) // build the relativeImagePath
+                                .map(relativeTilePath -> relativeTilePath.resolve(getImageNameForChannel(tileKey.getSliceAxis(), channel)))
+                                .orElse(null)
+                        )
+                        .filter(relativeImagePath -> relativeImagePath != null)
+                )
+                .orElseGet(() -> Stream.of())
                 ;
         Pair<ParameterBlock, RenderedImage> pbImagePair = channelImagePaths
                 .map(channelImagePath -> {
