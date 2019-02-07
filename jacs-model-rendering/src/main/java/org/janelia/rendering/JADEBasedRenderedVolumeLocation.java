@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
+public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocation {
 
     private static final Logger LOG = LoggerFactory.getLogger(JADEBasedRenderedVolumeLocation.class);
 
@@ -116,13 +116,36 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
 
     @Nullable
     @Override
-    public InputStream readTileImage(String tileRelativePath) {
-        return openContentStream(tileRelativePath, ImmutableMap.of());
+    public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(volumeBaseURI)
+                    .path("entry_info")
+                    .path(tileRelativePath)
+                    ;
+            Response response;
+            response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM)).get();
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return response.readEntity(RenderedImageInfo.class);
+            } else {
+                LOG.warn("Retrieve content info {} - {} returned {} status", volumeBaseURI, tileRelativePath, responseStatus);
+                return null;
+            }
+        } catch (Exception e) {
+            LOG.error("Error retrieving content info from {} - {}", volumeBaseURI, tileRelativePath, e);
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
     }
 
     @Nullable
     @Override
-    public byte[] readTileImagePages(String tileRelativePath, int startPage, int nPages) {
+    public byte[] readTileImagePagesAsTiff(String tileRelativePath, int startPage, int nPages) {
         InputStream tileImageStream = openContentStream(tileRelativePath,
                 ImmutableMap.<String, String>builder()
                         .put("filterType", "TIFF_IMAGE")
@@ -130,10 +153,35 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
                         .put("deltaz", String.valueOf(nPages))
                         .build()
         );
-        if (tileImageStream == null) {
-            return null;
-        } else
-        return ImageUtils.loadRenderedImageBytesFromTiffStream(tileImageStream, 0, -1);
+        try {
+            return ImageUtils.loadRenderedImageBytesFromTiffStream(tileImageStream, 0, 0, startPage, -1, -1, nPages);
+        } finally {
+            closeContentStream(tileImageStream);
+        }
+    }
+
+    @Override
+    public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
+        InputStream rawImageStream = openContentStream(rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)).toString(),
+                ImmutableMap.<String, String>builder()
+                        .put("filterType", "TIFF_IMAGE")
+                        .put("x0", String.valueOf(xCenter - dimx / 2))
+                        .put("y0", String.valueOf(yCenter - dimy / 2))
+                        .put("z0", String.valueOf(zCenter - dimz / 2))
+                        .put("deltax", String.valueOf(dimx))
+                        .put("deltay", String.valueOf(dimy))
+                        .put("deltaz", String.valueOf(dimz))
+                        .build()
+        );
+        try {
+            return ImageUtils.loadImagePixelBytesFromTiffStream(
+                    rawImageStream,
+                    xCenter, yCenter, zCenter,
+                    dimx, dimy, dimz
+            );
+        } finally {
+            closeContentStream(rawImageStream);
+        }
     }
 
     @Nullable

@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface RenderedVolumeLocation {
@@ -19,14 +20,22 @@ public interface RenderedVolumeLocation {
     List<URI> listImageUris(int level);
 
     /**
-     * Read tile image
-\    */
-    @Nullable InputStream readTileImage(String tileRelativePath);
+     * Read tile image info.
+     * @param tileRelativePath
+     * @return
+     */
+    RenderedImageInfo readTileImageInfo(String tileRelativePath);
 
     /**
      * Read tile image
      */
-    @Nullable byte[] readTileImagePages(String tileRelativePath, int startPage, int nPages);
+    @Nullable byte[] readTileImagePagesAsTiff(String tileRelativePath, int startPage, int nPages);
+
+    /**
+     * Read ROI from the raw image.
+     * @return
+     */
+    byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz);
 
     /**
      * Read transform.txt

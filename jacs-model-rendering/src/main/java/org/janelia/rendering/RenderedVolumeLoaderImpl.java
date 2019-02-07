@@ -4,24 +4,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Streams;
-import com.sun.media.jai.codec.FileSeekableStream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.janelia.rendering.utils.ImageInfo;
 import org.janelia.rendering.utils.ImageUtils;
 import org.janelia.rendering.ymlrepr.RawVolData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -43,7 +38,6 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     private static final String XY_CH_TIFF_PATTERN = "default.%s.tif";
     private static final String YZ_CH_TIFF_PATTERN = "YZ.%s.tif";
     private static final String ZX_CH_TIFF_PATTERN = "ZX.%s.tif";
-    private static final String RAW_CH_TIFF_PATTERN = "-ngc.%s.tif";
 
     private interface RenderedImageProvider {
         Optional<RenderedImage> get();
@@ -206,35 +200,35 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
             }
             TileInfo[] tileInfos = new TileInfo[3];
             if (channelTilesByOrthoProjection.get(XY_CH_TIFF_PATTERN) != null) {
-                ImageInfo xyImageInfo = ImageUtils.loadImageInfoFromTiffStream(rvl.readTileImage(channelTilesByOrthoProjection.get(XY_CH_TIFF_PATTERN).get(0)));
+                RenderedImageInfo xyImageInfo = rvl.readTileImageInfo(channelTilesByOrthoProjection.get(XY_CH_TIFF_PATTERN).get(0));
                 tileInfos[CoordinateAxis.Z.index()] = new TileInfo(
                         CoordinateAxis.Z,
                         channelTilesByOrthoProjection.get(XY_CH_TIFF_PATTERN).size(),
                         new int[] {xyImageInfo.sx, xyImageInfo.sy, xyImageInfo.sz},
-                        xyImageInfo.colorModel.getPixelSize(),
-                        xyImageInfo.colorModel.getColorSpace().isCS_sRGB());
+                        xyImageInfo.cmPixelSize,
+                        xyImageInfo.sRGBspace);
             } else {
                 tileInfos[CoordinateAxis.Z.index()] = null;
             }
             if (channelTilesByOrthoProjection.get(YZ_CH_TIFF_PATTERN) != null) {
-                ImageInfo yzImageInfo = ImageUtils.loadImageInfoFromTiffStream(rvl.readTileImage(channelTilesByOrthoProjection.get(YZ_CH_TIFF_PATTERN).get(0)));
+                RenderedImageInfo yzImageInfo = rvl.readTileImageInfo(channelTilesByOrthoProjection.get(YZ_CH_TIFF_PATTERN).get(0));
                 tileInfos[CoordinateAxis.X.index()] = new TileInfo(
                         CoordinateAxis.X,
                         channelTilesByOrthoProjection.get(YZ_CH_TIFF_PATTERN).size(),
                         new int[] {yzImageInfo.sx, yzImageInfo.sy, yzImageInfo.sz},
-                        yzImageInfo.colorModel.getPixelSize(),
-                        yzImageInfo.colorModel.getColorSpace().isCS_sRGB());
+                        yzImageInfo.cmPixelSize,
+                        yzImageInfo.sRGBspace);
             } else {
                 tileInfos[CoordinateAxis.X.index()] = null;
             }
             if (channelTilesByOrthoProjection.get(ZX_CH_TIFF_PATTERN) != null) {
-                ImageInfo zxImageInfo = ImageUtils.loadImageInfoFromTiffStream(rvl.readTileImage(channelTilesByOrthoProjection.get(ZX_CH_TIFF_PATTERN).get(0)));
+                RenderedImageInfo zxImageInfo = rvl.readTileImageInfo(channelTilesByOrthoProjection.get(ZX_CH_TIFF_PATTERN).get(0));
                 tileInfos[CoordinateAxis.Y.index()] = new TileInfo(
                         CoordinateAxis.Y,
                         channelTilesByOrthoProjection.get(ZX_CH_TIFF_PATTERN).size(),
                         new int[] {zxImageInfo.sx, zxImageInfo.sy, zxImageInfo.sz},
-                        zxImageInfo.colorModel.getPixelSize(),
-                        zxImageInfo.colorModel.getColorSpace().isCS_sRGB());
+                        zxImageInfo.cmPixelSize,
+                        zxImageInfo.sRGBspace);
             } else {
                 tileInfos[CoordinateAxis.Y.index()] = null;
             }
@@ -245,16 +239,12 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     private RenderedImageProvider getRenderedImageProvider(RenderedVolumeLocation rvl, String imagePath, int pageNumber) {
-        return new RenderedImageProvider() {
-            @Override
-            public Optional<RenderedImage> get() {
-                byte[] imageBytes = rvl.readTileImagePages(imagePath, pageNumber, 1);
-
-                if (imageBytes == null) {
-                    return Optional.empty();
-                } else {
-                    return Optional.of(ImageUtils.loadRenderedImageFromTiffStream(new ByteArrayInputStream(imageBytes), 0));
-                }
+        return () -> {
+            byte[] imageBytes = rvl.readTileImagePagesAsTiff(imagePath, pageNumber, 1);
+            if (imageBytes == null) {
+                return Optional.empty();
+            } else {
+                return Optional.of(ImageUtils.loadRenderedImageFromTiffStream(new ByteArrayInputStream(imageBytes), 0));
             }
         };
     }
@@ -335,31 +325,11 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     @Override
-    public byte[] loadRawImageContentFromVoxelCoord(RawImage rawImage,
-                                                    int xCenter, int yCenter, int zCenter,
-                                                    int dimx, int dimy, int dimz, int channel) {
-        InputStream tiffStream;
-        try {
-            File rawImageFile = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)).toFile();
-            if (!rawImageFile.exists()) {
-                return null;
-            }
-            tiffStream = new FileSeekableStream(rawImageFile);
-        } catch (IOException e) {
-            LOG.error("Error opening raw image {}", rawImage, e);
-            throw new UncheckedIOException(e);
-        }
-        try {
-            return ImageUtils.loadImagePixelBytesFromTiffStream(tiffStream, xCenter, yCenter, zCenter, dimx, dimy, dimz);
-        } catch (Exception e) {
-            LOG.error("Error reading raw image {}", rawImage, e);
-            throw new IllegalStateException(e);
-        } finally {
-            try {
-                tiffStream.close();
-            } catch (IOException ignore) {
-            }
-        }
+    public byte[] loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
+                                                    RawImage rawImage,
+                                                    int channel, int xCenter, int yCenter, int zCenter,
+                                                    int dimx, int dimy, int dimz) {
+        return rvl.readRawTileROIPixels(rawImage, channel, xCenter, yCenter, zCenter, dimx, dimy, dimz);
     }
 
 }

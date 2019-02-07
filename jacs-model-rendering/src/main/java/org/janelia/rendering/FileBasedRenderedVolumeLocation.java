@@ -3,7 +3,6 @@ package org.janelia.rendering;
 import org.janelia.rendering.utils.ImageUtils;
 
 import javax.annotation.Nullable;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -12,18 +11,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.rmi.server.ExportException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class FileBasedRenderedVolumeLocation implements RenderedVolumeLocation {
+public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocation {
 
     private static class OctreeImageVisitor extends SimpleFileVisitor<Path> {
         private final List<Path> tileImages = new ArrayList<>();
         private final int detailLevel;
         private int currentLevel;
 
-        public OctreeImageVisitor(int detailLevel) {
+        OctreeImageVisitor(int detailLevel) {
             this.detailLevel = detailLevel;
             this.currentLevel = 0;
         }
@@ -74,18 +74,38 @@ public class FileBasedRenderedVolumeLocation implements RenderedVolumeLocation {
 
     @Nullable
     @Override
-    public InputStream readTileImage(String tileRelativePath) {
-        return openContentStream(volumeBasePath.resolve(tileRelativePath));
+    public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
+        InputStream tileImageStream = openContentStream(volumeBasePath.resolve(tileRelativePath));
+        try {
+            return ImageUtils.loadImageInfoFromTiffStream(tileImageStream);
+        } finally {
+            closeContentStream(tileImageStream);
+        }
     }
 
     @Nullable
     @Override
-    public byte[] readTileImagePages(String tileRelativePath, int startPage, int nPages) {
-        InputStream tileImageStream = readTileImage(tileRelativePath);
-        if (tileImageStream == null) {
-            return null;
-        } else
-        return ImageUtils.loadRenderedImageBytesFromTiffStream(tileImageStream, startPage, nPages);
+    public byte[] readTileImagePagesAsTiff(String tileRelativePath, int startPage, int nPages) {
+        InputStream tileImageStream = openContentStream(volumeBasePath.resolve(tileRelativePath));
+        try {
+            return ImageUtils.loadRenderedImageBytesFromTiffStream(tileImageStream, 0, 0, startPage, -1, -1, nPages);
+        } finally {
+            closeContentStream(tileImageStream);
+        }
+    }
+
+    @Override
+    public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
+        InputStream rawImageStream = openContentStream(rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)));
+        try {
+            return ImageUtils.loadImagePixelBytesFromTiffStream(
+                    rawImageStream,
+                    xCenter, yCenter, zCenter,
+                    dimx, dimy, dimz
+            );
+        } finally {
+            closeContentStream(rawImageStream);
+        }
     }
 
     @Nullable
@@ -100,6 +120,7 @@ public class FileBasedRenderedVolumeLocation implements RenderedVolumeLocation {
         return openContentStream(volumeBasePath.resolve(TILED_VOL_BASE_FILE_NAME));
     }
 
+    @Nullable
     private InputStream openContentStream(Path fp) {
         try {
             if (Files.exists(fp)) {
@@ -111,4 +132,5 @@ public class FileBasedRenderedVolumeLocation implements RenderedVolumeLocation {
             throw new IllegalArgumentException(e);
         }
     }
+
 }

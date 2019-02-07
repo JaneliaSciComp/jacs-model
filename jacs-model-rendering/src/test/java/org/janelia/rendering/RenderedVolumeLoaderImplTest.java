@@ -208,7 +208,7 @@ public class RenderedVolumeLoaderImplTest {
                 new TestData(10, 11, 9, -1, -1, -1, 0, imageBytes -> assertNotNull("Test 5", imageBytes)),
         };
         for (TestData td : testData) {
-            td.resultAssertion.accept(renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rawImage, td.xVoxel, td.yVoxel, td.zVoxel, td.dimx, td.dimy, td.dimz, td.channel));
+            td.resultAssertion.accept(renderedVolumeLoader.loadRawImageContentFromVoxelCoord(testVolumeLocation, rawImage, td.channel, td.xVoxel, td.yVoxel, td.zVoxel, td.dimx, td.dimy, td.dimz));
         }
     }
 

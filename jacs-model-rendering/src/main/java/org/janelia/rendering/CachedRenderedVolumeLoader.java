@@ -51,9 +51,11 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     }
 
     @Override
-    public byte[] loadRawImageContentFromVoxelCoord(RawImage rawImage,
+    public byte[] loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
+                                                    RawImage rawImage,
+                                                    int channel,
                                                     int x, int y, int z,
-                                                    int dimx, int dimy, int dimz, int channel) {
-        return impl.loadRawImageContentFromVoxelCoord(rawImage, x, y, z, dimx, dimy, dimz, channel);
+                                                    int dimx, int dimy, int dimz) {
+        return impl.loadRawImageContentFromVoxelCoord(rvl, rawImage, channel, x, y, z, dimx, dimy, dimz);
     }
 }

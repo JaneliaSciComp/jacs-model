@@ -1,6 +1,5 @@
 package org.janelia.rendering;
 
-import org.janelia.rendering.utils.ImageInfo;
 import org.janelia.rendering.utils.ImageUtils;
 import org.janelia.testutils.TestUtils;
 import org.junit.AfterClass;
@@ -44,9 +43,9 @@ public class FileBasedRenderedVolumeLocationTest {
     public void loadSliceRange() {
         String imageName = "default.0.tif";
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, imageName);
-        ImageInfo originalImageInfo = ImageUtils.loadImageInfoFromTiffStream(testVolumeLocation.readTileImage(imageName));
-        byte[] imagePages = testVolumeLocation.readTileImagePages(imageName, 10, 15);
-        ImageInfo copyImageInfo = ImageUtils.loadImageInfoFromTiffStream(new ByteArrayInputStream(imagePages));
+        RenderedImageInfo originalImageInfo = testVolumeLocation.readTileImageInfo(imageName);
+        byte[] imagePages = testVolumeLocation.readTileImagePagesAsTiff(imageName, 10, 15);
+        RenderedImageInfo copyImageInfo = ImageUtils.loadImageInfoFromTiffStream(new ByteArrayInputStream(imagePages));
         assertEquals(originalImageInfo.sx, copyImageInfo.sx);
         assertEquals(originalImageInfo.sy, copyImageInfo.sy);
         assertEquals(Math.min(15, originalImageInfo.sz - 10), copyImageInfo.sz);

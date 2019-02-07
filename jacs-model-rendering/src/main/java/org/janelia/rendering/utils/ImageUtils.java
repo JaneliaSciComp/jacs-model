@@ -10,13 +10,16 @@ import com.sun.media.jai.codec.TIFFEncodeParam;
 import com.sun.media.jai.codecimpl.TIFFImageDecoder;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.janelia.rendering.RenderedImageInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.media.jai.JAI;
 import javax.media.jai.NullOpImage;
 import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.RenderedImageAdapter;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
@@ -33,7 +36,6 @@ import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -72,10 +74,13 @@ public class ImageUtils {
         }
     }
 
-    public static ImageInfo loadImageInfoFromTiffStream(InputStream inputStream) {
+    @Nullable
+    public static RenderedImageInfo loadImageInfoFromTiffStream(InputStream inputStream) {
         SeekableStream tiffStream;
         try {
-            if (inputStream instanceof SeekableStream) {
+            if (inputStream == null) {
+                return null;
+            } else if (inputStream instanceof SeekableStream) {
                 tiffStream = (SeekableStream) inputStream;
             } else {
                 tiffStream = new MemoryCacheSeekableStream(inputStream);
@@ -84,12 +89,11 @@ public class ImageUtils {
             int imageWidth = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_IMAGE_WIDTH);
             int imageHeight = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_IMAGE_LENGTH);
             int numSlices = TIFFDirectory.getNumDirectories(tiffStream);
-            int bitsPerPixel = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_BITS_PER_SAMPLE);
 
             ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
             RenderedImageAdapter ria = new RenderedImageAdapter(decoder.decodeAsRenderedImage(0));
             ColorModel colorModel = ria.getColorModel();
-            return new ImageInfo(imageWidth, imageHeight, numSlices, bitsPerPixel, colorModel);
+            return new RenderedImageInfo(imageWidth, imageHeight, numSlices, colorModel.getPixelSize(), colorModel.getColorSpace().isCS_sRGB());
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);
@@ -97,12 +101,15 @@ public class ImageUtils {
 
     }
 
+    @Nullable
     public static byte[] loadImagePixelBytesFromTiffStream(InputStream inputStream,
                                                            int x0, int y0, int z0,
                                                            int deltax, int deltay, int deltaz) {
         SeekableStream tiffStream;
         try {
-            if (inputStream instanceof SeekableStream) {
+            if (inputStream == null) {
+                return null;
+            } else if (inputStream instanceof SeekableStream) {
                 tiffStream = (SeekableStream) inputStream;
             } else {
                 tiffStream = new MemoryCacheSeekableStream(inputStream);
@@ -163,7 +170,8 @@ public class ImageUtils {
                                     decoder.decodeAsRenderedImage(startZ + sliceIndex),
                                     null,
                                     null,
-                                    NullOpImage.OP_IO_BOUND));
+                                    NullOpImage.OP_IO_BOUND),
+                                    0, 0, -1, -1);
                             transferPixels(sliceImage, startX, startY, endX, endY, rgbBuffer,
                                     sliceIndex * sliceSize, pixelDataHandlers);
                         } catch (IOException e) {
@@ -178,10 +186,13 @@ public class ImageUtils {
         }
     }
 
-    public static byte[] loadRenderedImageBytesFromTiffStream(InputStream inputStream, int z0, int deltaz) {
+    @Nullable
+    public static byte[] loadRenderedImageBytesFromTiffStream(InputStream inputStream, int x0, int y0, int z0, int deltax, int deltay, int deltaz) {
         SeekableStream tiffStream;
         try {
-            if (inputStream instanceof SeekableStream) {
+            if (inputStream == null) {
+                return null;
+            } else if (inputStream instanceof SeekableStream) {
                 tiffStream = (SeekableStream) inputStream;
             } else {
                 tiffStream = new MemoryCacheSeekableStream(inputStream);
@@ -205,7 +216,8 @@ public class ImageUtils {
                                             decoder.decodeAsRenderedImage(startZ + sliceIndex),
                                             null,
                                             null,
-                                            NullOpImage.OP_IO_BOUND));
+                                            NullOpImage.OP_IO_BOUND),
+                                    x0, y0, deltax, deltay);
                         } catch (IOException e) {
                             LOG.error("Error reading slice {}", sliceIndex, e);
                             throw new IllegalStateException(e);
@@ -252,10 +264,13 @@ public class ImageUtils {
         }
     }
 
+    @Nullable
     public static RenderedImage loadRenderedImageFromTiffStream(InputStream inputStream, int pageNumber) {
         SeekableStream tiffStream;
         try {
-            if (inputStream instanceof SeekableStream) {
+            if (inputStream == null) {
+                return null;
+            } else if (inputStream instanceof SeekableStream) {
                 tiffStream = (SeekableStream) inputStream;
             } else {
                 tiffStream = new MemoryCacheSeekableStream(inputStream);
@@ -270,7 +285,7 @@ public class ImageUtils {
 
     private static int clamp(int min, int max, int startingValue) {
         int rtnVal = startingValue;
-        if ( startingValue < min ) {
+        if (startingValue < min) {
             rtnVal = min;
         } else if ( startingValue > max ) {
             rtnVal = max;
@@ -463,12 +478,19 @@ public class ImageUtils {
         return dataBytesArray;
     }
 
-    private static BufferedImage renderedImageToBufferedImage(RenderedImage img) {
+    private static BufferedImage renderedImageToBufferedImage(RenderedImage img, int x0, int y0, int width, int height) {
+        int imgWidth = img.getWidth();
+        int imgHeight = img.getHeight();
+        int x = clamp(0, imgWidth, x0);
+        int y = clamp(0, imgHeight, y0);
+        int w = width < 0 ? imgWidth : clamp(0, imgWidth, width);
+        int h = height < 0 ? imgHeight : clamp(0, imgHeight, height);
         if (img instanceof BufferedImage) {
-            return (BufferedImage) img;
+            BufferedImage bimg = (BufferedImage) img;
+            return bimg.getSubimage(x, y, w, h);
         } else {
             RenderedImageAdapter imageAdapter = new RenderedImageAdapter(img);
-            return imageAdapter.getAsBufferedImage();
+            return imageAdapter.getAsBufferedImage(new Rectangle(x, y, w, h), img.getColorModel());
         }
     }
 
