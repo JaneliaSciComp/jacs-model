@@ -208,7 +208,7 @@ public class ImageUtils {
                 endZ = numSlices;
             }
             ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
-            List<RenderedImage> pages = IntStream.range(0, endZ - startZ)
+            Iterator<BufferedImage> pagesIterator = IntStream.range(0, endZ - startZ)
                     .mapToObj(sliceIndex -> {
                         try {
                             return ImageUtils.renderedImageToBufferedImage(
@@ -223,14 +223,13 @@ public class ImageUtils {
                             throw new IllegalStateException(e);
                         }
                     })
-                    .collect(Collectors.toList());
-            if (pages.isEmpty()) {
+                    .iterator();
+            if (endZ - startZ <= 0) {
                 return null;
             } else {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 TIFFEncodeParam param = new TIFFEncodeParam();
                 ImageEncoder encoder = ImageCodec.createImageEncoder("tiff", outputStream, param);
-                Iterator<RenderedImage> pagesIterator = pages.iterator();
                 param.setExtraImages(pagesIterator);
                 encoder.encode(pagesIterator.next());
                 outputStream.flush();
@@ -485,12 +484,21 @@ public class ImageUtils {
         int y = clamp(0, imgHeight, y0);
         int w = width < 0 ? imgWidth : clamp(0, imgWidth, width);
         int h = height < 0 ? imgHeight : clamp(0, imgHeight, height);
+        boolean extractSubImage;
+        if (x > 0 || y > 0 || w < imgWidth || h < imgHeight) {
+            LOG.debug("Extract subimage ({}, {}), ({}, {})", x, y, w, h);
+            extractSubImage = true;
+        } else {
+            extractSubImage = false;
+        }
         if (img instanceof BufferedImage) {
             BufferedImage bimg = (BufferedImage) img;
-            return bimg.getSubimage(x, y, w, h);
+            return extractSubImage ? bimg.getSubimage(x, y, w, h) : bimg;
         } else {
             RenderedImageAdapter imageAdapter = new RenderedImageAdapter(img);
-            return imageAdapter.getAsBufferedImage(new Rectangle(x, y, w, h), img.getColorModel());
+            return extractSubImage
+                    ? imageAdapter.getAsBufferedImage(new Rectangle(x, y, w, h), img.getColorModel())
+                    : imageAdapter.getAsBufferedImage();
         }
     }
 
