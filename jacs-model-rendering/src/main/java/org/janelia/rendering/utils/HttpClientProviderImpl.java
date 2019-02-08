@@ -2,6 +2,7 @@ package org.janelia.rendering.utils;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import org.glassfish.jersey.client.ClientConfig;
 
 import javax.net.ssl.SSLContext;
@@ -18,7 +19,7 @@ public class HttpClientProviderImpl implements HttpClientProvider {
 
     public Client getClient() {
         SSLContext sslContext = createSSLContext();
-        JacksonJaxbJsonProvider jacksonProvider = new JacksonJaxbJsonProvider();
+        JacksonJsonProvider jacksonProvider = new JacksonJaxbJsonProvider();
         jacksonProvider.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         ClientConfig clientConfig = new ClientConfig()
                 .register(jacksonProvider);

@@ -37,6 +37,8 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         @JsonProperty
         private String nodeAccessURL;
         @JsonProperty
+        private String nodeInfoURL;
+        @JsonProperty
         private String nodeRelativePath; // node path relative to the root
         @JsonProperty
         private long size;
