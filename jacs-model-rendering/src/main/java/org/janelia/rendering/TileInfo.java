@@ -45,6 +45,10 @@ public class TileInfo {
         return sliceAxis;
     }
 
+    public int[] getTileSize() {
+        return tileSize;
+    }
+
     /**
      * @return an array of int representing the X, Y, Z dimensions (in this order) keeping in mind that the tile dimension
      * are mapped to the cartesian coordinates based on the slice axis.

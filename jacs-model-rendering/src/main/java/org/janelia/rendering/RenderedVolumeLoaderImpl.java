@@ -1,7 +1,5 @@
 package org.janelia.rendering;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Streams;
 import org.apache.commons.collections4.CollectionUtils;
@@ -10,6 +8,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.rendering.utils.ImageUtils;
 import org.janelia.rendering.ymlrepr.RawVolData;
+import org.janelia.rendering.ymlrepr.RawVolReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -284,14 +283,13 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     private Stream<RawImage> loadRawImageMetadataList(RenderedVolumeLocation rvl) {
-        ObjectMapper ymlReader = new ObjectMapper(new YAMLFactory());
         try {
             InputStream tileBaseStream = rvl.readTileBaseData();
-            if (tileBaseStream == null) {
+            RawVolData rawVolData = new RawVolReader().readRawVolData(tileBaseStream);
+            if (rawVolData == null) {
                 LOG.warn("No rawimages found at {}", rvl.getBaseURI());
                 return Stream.of();
             }
-            RawVolData rawVolData = ymlReader.readValue(tileBaseStream, RawVolData.class);
             if (CollectionUtils.isEmpty(rawVolData.getTiles())) {
                 return Stream.of();
             } else {
