@@ -42,7 +42,7 @@ public class RenderedVolume {
     }
 
     @JsonIgnore
-    RenderedVolumeLocation getRvl() {
+    public RenderedVolumeLocation getRvl() {
         return rvl;
     }
 
