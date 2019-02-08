@@ -1,39 +1,26 @@
 package org.janelia.rendering;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.DeserializationConfig;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.jackson.JacksonFeature;
-import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import org.janelia.rendering.utils.HttpClientProvider;
 import org.janelia.rendering.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.FeatureContext;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Paths;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocation {
@@ -66,11 +53,13 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     private final String volumeBaseURI;
     private final String authToken;
     private final String storageServiceApiKey;
+    private final HttpClientProvider httpClientProvider;
 
-    public JADEBasedRenderedVolumeLocation(String volumeBaseURI, String authToken, String storageServiceApiKey) {
+    public JADEBasedRenderedVolumeLocation(String volumeBaseURI, String authToken, String storageServiceApiKey, HttpClientProvider httpClientProvider) {
         this.volumeBaseURI = volumeBaseURI;
         this.authToken = authToken;
         this.storageServiceApiKey = storageServiceApiKey;
+        this.httpClientProvider = httpClientProvider;
     }
 
     @Override
@@ -82,7 +71,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     public List<URI> listImageUris(int level) {
         Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = httpClientProvider.getClient();
             int detailLevel = level + 1;
             WebTarget target = httpClient.target(volumeBaseURI)
                     .path("list")
@@ -119,7 +108,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
         Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = httpClientProvider.getClient();
             WebTarget target = httpClient.target(volumeBaseURI)
                     .path("entry_info")
                     .path(tileRelativePath)
@@ -199,7 +188,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     private InputStream openContentStream(String contentRelativePath, Map<String, String> queryParams) {
         Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = httpClientProvider.getClient();
             WebTarget target = httpClient.target(volumeBaseURI)
                     .path("entry_content")
                     .path(contentRelativePath)
@@ -223,48 +212,6 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             if (httpClient != null) {
                 httpClient.close();
             }
-        }
-    }
-
-    private Client createHttpClient() {
-        SSLContext sslContext = createSSLContext();
-        JacksonJaxbJsonProvider jacksonProvider = new JacksonJaxbJsonProvider();
-        jacksonProvider.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        ClientConfig clientConfig = new ClientConfig()
-                .register(jacksonProvider);
-        return ClientBuilder.newBuilder()
-                .withConfig(clientConfig)
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .sslContext(sslContext)
-                .hostnameVerifier((s, sslSession) -> true)
-                .build();
-    }
-
-    private static SSLContext createSSLContext() {
-        try {
-            SSLContext sslContext = SSLContext.getInstance("TLSv1");
-            TrustManager[] trustManagers = {
-                    new X509TrustManager() {
-                        @Override
-                        public void checkClientTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
-                            // Everyone is trusted
-                        }
-
-                        @Override
-                        public void checkServerTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
-                            // Everyone is trusted
-                        }
-
-                        @Override
-                        public X509Certificate[] getAcceptedIssuers() {
-                            return new X509Certificate[0];
-                        }
-                    }
-            };
-            sslContext.init(null, trustManagers, new SecureRandom());
-            return sslContext;
-        } catch (Exception e) {
-            throw new IllegalStateException("Error initilizing SSL context", e);
         }
     }
 
