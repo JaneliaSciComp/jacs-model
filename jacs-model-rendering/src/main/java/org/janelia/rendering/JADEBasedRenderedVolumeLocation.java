@@ -113,7 +113,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             httpClient = httpClientProvider.getClient();
             WebTarget target = httpClient.target(volumeBaseURI)
                     .path("entry_info")
-                    .path(tileRelativePath)
+                    .path(tileRelativePath.replace('\\', '/'))
                     ;
             Response response;
             response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON)).get();
@@ -193,7 +193,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             httpClient = httpClientProvider.getClient();
             WebTarget target = httpClient.target(volumeBaseURI)
                     .path("entry_content")
-                    .path(contentRelativePath)
+                    .path(contentRelativePath.replace('\\', '/'))
                     ;
             for (Map.Entry<String, String> qe : queryParams.entrySet()) {
                 target = target.queryParam(qe.getKey(), qe.getValue());
