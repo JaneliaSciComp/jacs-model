@@ -5,22 +5,19 @@ import com.google.common.collect.Streams;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.rendering.utils.ImageUtils;
+import org.janelia.rendering.utils.RenderedImageSupplier;
 import org.janelia.rendering.ymlrepr.RawVolData;
 import org.janelia.rendering.ymlrepr.RawVolReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -37,10 +34,6 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     private static final String XY_CH_TIFF_PATTERN = "default.%s.tif";
     private static final String YZ_CH_TIFF_PATTERN = "YZ.%s.tif";
     private static final String ZX_CH_TIFF_PATTERN = "ZX.%s.tif";
-
-    private interface RenderedImageProvider {
-        Optional<RenderedImage> get();
-    }
 
     @Override
     public Optional<RenderedVolume> loadVolume(RenderedVolumeLocation rvl) {
@@ -72,40 +65,21 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
 
     @Override
     public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
-        Stream<Path> channelImagePaths = renderedVolume.getTileInfo(tileKey.getSliceAxis())
+        Stream<RenderedImageSupplier> imageSuppliers = renderedVolume.getTileInfo(tileKey.getSliceAxis())
                 .map(tileInfo -> IntStream.range(0, tileInfo.getChannelCount()) // for each channel
                         .mapToObj(channel -> renderedVolume.getRelativeTilePath(tileKey) // build the relativeImagePath
                                 .map(relativeTilePath -> relativeTilePath.resolve(getImageNameForChannel(tileKey.getSliceAxis(), channel)))
                                 .orElse(null)
                         )
-                        .filter(relativeImagePath -> relativeImagePath != null)
+                        .filter(channelImagePath -> channelImagePath != null)
+                        .map(channelImagePath -> {
+                            LOG.debug("Read TIFF image {} from volume located at {}, for tile {}", channelImagePath, renderedVolume.getBaseURI(), tileKey);
+                            return getRenderedImageSupplier(renderedVolume.getRvl(), channelImagePath.toString(), tileKey.getSliceIndex());
+                        })
                 )
                 .orElseGet(() -> Stream.of())
                 ;
-        Pair<ParameterBlock, RenderedImage> pbImagePair = channelImagePaths
-                .map(channelImagePath -> {
-                    LOG.debug("Read TIFF image {} from volume located at {}, for tile {}", channelImagePath, renderedVolume.getBaseURI(), tileKey);
-                    return getRenderedImageProvider(renderedVolume.getRvl(), channelImagePath.toString(), tileKey.getSliceIndex());
-                })
-                .map(rimp -> rimp.get().orElse(null))
-                .filter(rim -> rim != null)
-                .reduce(new ImmutablePair<ParameterBlock, RenderedImage>(null, null),
-                        (Pair<ParameterBlock, RenderedImage> p, RenderedImage r) -> ImageUtils.acumulateImage(p, r),
-                        (Pair<ParameterBlock, RenderedImage> p1, Pair<ParameterBlock, RenderedImage> p2) -> {
-                            if (p1.getRight() == null) {
-                                return p2;
-                            } else {
-                                RenderedImage p2Image = ImageUtils.reduceImage(p2);
-                                return ImageUtils.acumulateImage(p1, p2Image);
-                            }
-                        })
-                ;
-        RenderedImage imageResult = ImageUtils.reduceImage(pbImagePair);
-        if (imageResult == null) {
-            return Optional.empty();
-        } else {
-            return Optional.of(ImageUtils.renderedImageToTextureBytes(imageResult));
-        }
+        return ImageUtils.mergeImageBands(imageSuppliers);
     }
 
     private Optional<RawCoord> loadVolumeSizeAndCoord(RenderedVolumeLocation rvl) {
@@ -237,7 +211,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         }
     }
 
-    private RenderedImageProvider getRenderedImageProvider(RenderedVolumeLocation rvl, String imagePath, int pageNumber) {
+    private RenderedImageSupplier getRenderedImageSupplier(RenderedVolumeLocation rvl, String imagePath, int pageNumber) {
         return () -> {
             byte[] imageBytes = rvl.readTileImagePagesAsTiff(imagePath, pageNumber, 1);
             if (imageBytes == null) {

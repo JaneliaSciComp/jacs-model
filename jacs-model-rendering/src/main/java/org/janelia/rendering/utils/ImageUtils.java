@@ -36,10 +36,11 @@ import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class ImageUtils {
 
@@ -58,7 +59,6 @@ public class ImageUtils {
          */
         int copyFrom(B sourceBuffer, int sourceOffset, byte[] destBuffer, int destOffset);
     }
-
 
     private static class PixelDataHandlers<B> {
         private final Function<BufferedImage, B> pixelDataSupplier;
@@ -98,7 +98,6 @@ public class ImageUtils {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);
         }
-
     }
 
     @Nullable
@@ -241,7 +240,30 @@ public class ImageUtils {
         }
     }
 
-    public static Pair<ParameterBlock, RenderedImage> acumulateImage(Pair<ParameterBlock, RenderedImage> pbImagePair, RenderedImage rim) {
+    public static Optional<byte[]> mergeImageBands(Stream<RenderedImageSupplier> imageSuppliers) {
+        Pair<ParameterBlock, RenderedImage> pbImagePair = imageSuppliers
+                .map(rims -> rims.get().orElse(null))
+                .filter(rim -> rim != null)
+                .reduce(ImmutablePair.of(null, null),
+                        (Pair<ParameterBlock, RenderedImage> p, RenderedImage r) -> ImageUtils.acumulateImage(p, r),
+                        (Pair<ParameterBlock, RenderedImage> p1, Pair<ParameterBlock, RenderedImage> p2) -> {
+                            if (p1.getRight() == null) {
+                                return p2;
+                            } else {
+                                RenderedImage p2Image = ImageUtils.reduceImage(p2);
+                                return ImageUtils.acumulateImage(p1, p2Image);
+                            }
+                        })
+                ;
+        RenderedImage imageResult = ImageUtils.reduceImage(pbImagePair);
+        if (imageResult == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(ImageUtils.renderedImageToTextureBytes(imageResult));
+        }
+    }
+
+    private static Pair<ParameterBlock, RenderedImage> acumulateImage(Pair<ParameterBlock, RenderedImage> pbImagePair, RenderedImage rim) {
         if (pbImagePair.getRight() == null) {
             return ImmutablePair.of(null, rim);
         } else if (pbImagePair.getLeft() == null) {
@@ -253,7 +275,7 @@ public class ImageUtils {
         }
     }
 
-    public static RenderedImage reduceImage(Pair<ParameterBlock, RenderedImage> pbImagePair) {
+    private static RenderedImage reduceImage(Pair<ParameterBlock, RenderedImage> pbImagePair) {
         if (pbImagePair.getRight() == null) {
             return null;
         } else if (pbImagePair.getLeft() == null) {
