@@ -147,7 +147,9 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                 ImmutableMultimap.<String, String>builder()
                         .put("filterType", "TIFF_MERGE_BANDS")
                         .put("z", String.valueOf(pageNumber))
-                        .putAll("selected", channelImageNames.stream().map(Paths::get).map(p -> p.getFileName()).map(p -> p.toString()).collect(Collectors.toList()))
+                        .putAll("selectedEntries", channelImageNames.stream().map(Paths::get).map(p -> p.getFileName()).map(p -> p.toString()).collect(Collectors.toList()))
+                        .put("entryPattern", "")
+                        .put("maxDepth", String.valueOf(1))
                         .build()
         );
         try {

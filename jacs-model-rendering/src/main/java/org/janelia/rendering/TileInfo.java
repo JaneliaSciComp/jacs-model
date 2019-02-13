@@ -3,8 +3,44 @@ package org.janelia.rendering;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+
+import java.util.regex.Pattern;
 
 public class TileInfo {
+
+    private static final String XY_CH_TIFF_PATTERN = "default.%s.tif";
+    private static final String YZ_CH_TIFF_PATTERN = "YZ.%s.tif";
+    private static final String ZX_CH_TIFF_PATTERN = "ZX.%s.tif";
+
+    static Coordinate getSliceAxisFromImageNameForChannel(String fn) {
+        Pattern xyTilePattern = Pattern.compile("^" + String.format(XY_CH_TIFF_PATTERN, "(\\d+)"), Pattern.CASE_INSENSITIVE);
+        Pattern yzTilePattern = Pattern.compile("^" + String.format(YZ_CH_TIFF_PATTERN, "(\\d+)"), Pattern.CASE_INSENSITIVE);
+        Pattern zxTilePattern = Pattern.compile("^" + String.format(ZX_CH_TIFF_PATTERN, "(\\d+)"), Pattern.CASE_INSENSITIVE);
+        if (xyTilePattern.asPredicate().test(fn)) {
+            return Coordinate.Z;
+        } else if (yzTilePattern.asPredicate().test(fn)) {
+            return Coordinate.X;
+        } else if (zxTilePattern.asPredicate().test(fn)) {
+            return Coordinate.Y;
+        } else {
+            return null;
+        }
+    }
+
+    static String getImageNameForChannel(Coordinate sliceAxis, int channelNumber) {
+        switch (sliceAxis) {
+            case X:
+                return String.format(YZ_CH_TIFF_PATTERN, channelNumber);
+            case Y:
+                return String.format(ZX_CH_TIFF_PATTERN, channelNumber);
+            case Z:
+                return String.format(XY_CH_TIFF_PATTERN, channelNumber);
+            default:
+                throw new IllegalArgumentException("Invalid slice axis " + sliceAxis);
+        }
+    }
+
 
     private final Coordinate sliceAxis;
     private final int channelCount;
