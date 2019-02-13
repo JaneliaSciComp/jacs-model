@@ -94,7 +94,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Override
     public byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
         return ImageUtils.mergeImageBands(channelImageNames.stream()
-                .map(channelImageName -> Paths.get(channelImageName))
+                .map(channelImageName -> volumeBasePath.resolve(tileRelativePath).resolve(channelImageName))
                 .filter(channelImagePath -> Files.exists(channelImagePath))
                 .map(channelImagePath -> () -> {
                     RenderedImage rim;
@@ -110,7 +110,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                         return Optional.of(rim);
                     }
                 })
-        ).orElseGet(() -> new byte[]{});
+        ).orElseGet(() -> null);
     }
 
     @Override

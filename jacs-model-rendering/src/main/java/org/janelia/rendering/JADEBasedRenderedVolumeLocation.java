@@ -151,7 +151,11 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                         .build()
         );
         try {
-            return ByteStreams.toByteArray(tileImageStream);
+            if (tileImageStream == null) {
+                return null;
+            } else {
+                return ByteStreams.toByteArray(tileImageStream);
+            }
         } catch (Exception e) {
             LOG.error("Error reading {} from {}", channelImageNames, tileRelativePath, e);
             throw new IllegalStateException(e);
@@ -175,7 +179,11 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                         .build()
         );
         try {
-            return ByteStreams.toByteArray(rawImageStream);
+            if (rawImageStream == null) {
+                return null;
+            } else {
+                return ByteStreams.toByteArray(rawImageStream);
+            }
         } catch (Exception e) {
             LOG.error("Error reading {} from {}", rawImagePath, rawImage, e);
             throw new IllegalStateException(e);

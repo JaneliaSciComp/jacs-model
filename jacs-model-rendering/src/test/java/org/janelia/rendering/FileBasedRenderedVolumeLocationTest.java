@@ -1,17 +1,18 @@
 package org.janelia.rendering;
 
-import org.janelia.rendering.utils.ImageUtils;
 import org.janelia.testutils.TestUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -40,14 +41,48 @@ public class FileBasedRenderedVolumeLocationTest {
     }
 
     @Test
-    public void loadSliceRange() {
-        String imageName = "default.0.tif";
-        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, imageName);
-        RenderedImageInfo originalImageInfo = testVolumeLocation.readTileImageInfo(imageName);
-        byte[] imagePages = testVolumeLocation.readTileImagePagesAsTiff(imageName, 10, 15);
-        RenderedImageInfo copyImageInfo = ImageUtils.loadImageInfoFromTiffStream(new ByteArrayInputStream(imagePages));
-        assertEquals(originalImageInfo.sx, copyImageInfo.sx);
-        assertEquals(originalImageInfo.sy, copyImageInfo.sy);
-        assertEquals(Math.min(15, originalImageInfo.sz - 10), copyImageInfo.sz);
+    public void loadSlice() {
+        class TestData {
+            private final List<String> imageNames;
+            private TestData(List<String> imageNames) {
+                this.imageNames = imageNames;
+            }
+        }
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "default.0.tif", "default.1.tif", "default.2.tif");
+        RenderedImageInfo originalImageInfo = testVolumeLocation.readTileImageInfo("default.0.tif");
+        TestData[] testData = new TestData[] {
+                new TestData(Arrays.asList("default.0.tif")),
+                new TestData(Arrays.asList("default.0.tif", "default.1.tif")),
+                new TestData(Arrays.asList("default.0.tif", "default.1.tif", "default.2.tif"))
+        };
+        for (TestData td : testData) {
+            byte[] imageBytes = testVolumeLocation.readTileImagePageAsTexturedBytes("", td.imageNames, 10);
+            ByteBuffer byteBuffer = ByteBuffer.wrap(imageBytes);
+            int mipmapLevel = byteBuffer.getInt();
+            int width = byteBuffer.getInt();
+            int usedWidth = byteBuffer.getInt();
+            int height = byteBuffer.getInt();
+            int border = byteBuffer.getInt();
+            int srgbProxy = byteBuffer.getInt();
+            int bitDepth = byteBuffer.getInt();
+            int channelCount = byteBuffer.getInt();
+            float textureCoordX = byteBuffer.getFloat();
+            float expectedTextureCoordX;
+            if ((usedWidth % 8) != 0) {
+                expectedTextureCoordX = usedWidth / (float)width;
+            } else {
+                width = usedWidth;
+                expectedTextureCoordX = 1.0f;
+            }
+
+            assertEquals(originalImageInfo.sx, usedWidth);
+            assertEquals(originalImageInfo.sy, height);
+            assertEquals(td.imageNames.size(), channelCount);
+            assertEquals(originalImageInfo.cmPixelSize, bitDepth);
+            int bytesPerPixel = bitDepth / 8;
+            assertEquals(originalImageInfo.sRGBspace, srgbProxy > 0 && bytesPerPixel >= channelCount ? true : false);
+            assertEquals(expectedTextureCoordX, textureCoordX, 0.0000001);
+            assertEquals(byteBuffer.remaining(), height * width * bytesPerPixel * channelCount);
+        }
     }
 }

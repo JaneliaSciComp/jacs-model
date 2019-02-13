@@ -70,8 +70,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                 .flatMap(tileInfo -> renderedVolume.getRelativeTilePath(tileKey)
                         .map(tileRelativePath -> {
                             List<String> chanelImageNames = IntStream.range(0, tileInfo.getChannelCount())
-                                    .mapToObj(channel -> tileRelativePath.resolve(getImageNameForChannel(tileKey.getSliceAxis(), channel)))
-                                    .map(channelImageRelativePath -> channelImageRelativePath.toString())
+                                    .mapToObj(channel -> getImageNameForChannel(tileKey.getSliceAxis(), channel))
                                     .collect(Collectors.toList());
                             return renderedVolume.getRvl().readTileImagePageAsTexturedBytes(tileRelativePath.toString(), chanelImageNames, tileKey.getSliceIndex());
                         }))
