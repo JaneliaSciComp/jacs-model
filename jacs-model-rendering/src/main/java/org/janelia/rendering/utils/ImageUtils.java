@@ -1,5 +1,6 @@
 package org.janelia.rendering.utils;
 
+import com.sun.media.jai.codec.FileSeekableStream;
 import com.sun.media.jai.codec.ImageCodec;
 import com.sun.media.jai.codec.ImageDecoder;
 import com.sun.media.jai.codec.ImageEncoder;
@@ -34,6 +35,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -72,6 +74,17 @@ public class ImageUtils {
             this.pixelOffsetCalculator = pixelOffsetCalculator;
             this.pixelCopier = pixelCopier;
         }
+    }
+
+    public static Function<Path, InputStream> getImagePathHandler() {
+        return (Path p) -> {
+            try {
+                return new FileSeekableStream(p.toFile());
+            } catch (IOException e) {
+                LOG.error("Error opening {}", p, e);
+                throw new IllegalArgumentException(e);
+            }
+        };
     }
 
     @Nullable
