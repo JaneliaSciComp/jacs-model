@@ -1,22 +1,29 @@
 package org.janelia.rendering;
 
+import com.sun.media.jai.codec.FileSeekableStream;
 import org.janelia.rendering.utils.ImageUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.rmi.server.ExportException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocation {
+
+    private static final Logger LOG = LoggerFactory.getLogger(FileBasedRenderedVolumeLocation.class);
 
     private static class OctreeImageVisitor extends SimpleFileVisitor<Path> {
         private final List<Path> tileImages = new ArrayList<>();
@@ -85,13 +92,25 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Nullable
     @Override
-    public byte[] readTileImagePagesAsTiff(String tileRelativePath, int startPage, int nPages) {
-        InputStream tileImageStream = openContentStream(volumeBasePath.resolve(tileRelativePath));
-        try {
-            return ImageUtils.loadRenderedImageBytesFromTiffStream(tileImageStream, 0, 0, startPage, -1, -1, nPages);
-        } finally {
-            closeContentStream(tileImageStream);
-        }
+    public byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
+        return ImageUtils.mergeImageBands(channelImageNames.stream()
+                .map(channelImageName -> Paths.get(channelImageName))
+                .filter(channelImagePath -> Files.exists(channelImagePath))
+                .map(channelImagePath -> () -> {
+                    RenderedImage rim;
+                    try {
+                        rim = ImageUtils.loadRenderedImageFromTiffStream(new FileSeekableStream(channelImagePath.toFile()), pageNumber);
+                    } catch (IOException e) {
+                        LOG.error("Error reading image from {}", channelImagePath, e);
+                        throw new IllegalStateException(e);
+                    }
+                    if (rim == null) {
+                        return Optional.empty();
+                    } else {
+                        return Optional.of(rim);
+                    }
+                })
+        ).orElseGet(() -> new byte[]{});
     }
 
     @Override

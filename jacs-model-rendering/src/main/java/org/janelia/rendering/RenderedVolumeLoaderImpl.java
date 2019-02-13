@@ -20,6 +20,7 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -65,21 +66,16 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
 
     @Override
     public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
-        Stream<RenderedImageSupplier> imageSuppliers = renderedVolume.getTileInfo(tileKey.getSliceAxis())
-                .map(tileInfo -> IntStream.range(0, tileInfo.getChannelCount()) // for each channel
-                        .mapToObj(channel -> renderedVolume.getRelativeTilePath(tileKey) // build the relativeImagePath
-                                .map(relativeTilePath -> relativeTilePath.resolve(getImageNameForChannel(tileKey.getSliceAxis(), channel)))
-                                .orElse(null)
-                        )
-                        .filter(channelImagePath -> channelImagePath != null)
-                        .map(channelImagePath -> {
-                            LOG.debug("Read TIFF image {} from volume located at {}, for tile {}", channelImagePath, renderedVolume.getBaseURI(), tileKey);
-                            return getRenderedImageSupplier(renderedVolume.getRvl(), channelImagePath.toString(), tileKey.getSliceIndex());
-                        })
-                )
-                .orElseGet(() -> Stream.of())
+        return renderedVolume.getTileInfo(tileKey.getSliceAxis())
+                .flatMap(tileInfo -> renderedVolume.getRelativeTilePath(tileKey)
+                        .map(tileRelativePath -> {
+                            List<String> chanelImageNames = IntStream.range(0, tileInfo.getChannelCount())
+                                    .mapToObj(channel -> tileRelativePath.resolve(getImageNameForChannel(tileKey.getSliceAxis(), channel)))
+                                    .map(channelImageRelativePath -> channelImageRelativePath.toString())
+                                    .collect(Collectors.toList());
+                            return renderedVolume.getRvl().readTileImagePageAsTexturedBytes(tileRelativePath.toString(), chanelImageNames, tileKey.getSliceIndex());
+                        }))
                 ;
-        return ImageUtils.mergeImageBands(imageSuppliers);
     }
 
     private Optional<RawCoord> loadVolumeSizeAndCoord(RenderedVolumeLocation rvl) {
@@ -209,17 +205,6 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }
-    }
-
-    private RenderedImageSupplier getRenderedImageSupplier(RenderedVolumeLocation rvl, String imagePath, int pageNumber) {
-        return () -> {
-            byte[] imageBytes = rvl.readTileImagePagesAsTiff(imagePath, pageNumber, 1);
-            if (imageBytes == null) {
-                return Optional.empty();
-            } else {
-                return Optional.of(ImageUtils.loadRenderedImageFromTiffStream(new ByteArrayInputStream(imageBytes), 0));
-            }
-        };
     }
 
     private String getImageNameForChannel(Coordinate sliceAxis, int channelNumber) {

@@ -1,7 +1,12 @@
 package org.janelia.rendering;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.rendering.utils.HttpClientProvider;
 import org.janelia.rendering.utils.ImageUtils;
@@ -17,6 +22,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
@@ -136,16 +142,19 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Nullable
     @Override
-    public byte[] readTileImagePagesAsTiff(String tileRelativePath, int startPage, int nPages) {
+    public byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
         InputStream tileImageStream = openContentStream(tileRelativePath,
-                ImmutableMap.<String, String>builder()
-                        .put("filterType", "TIFF_IMAGE")
-                        .put("z0", String.valueOf(startPage))
-                        .put("deltaz", String.valueOf(nPages))
+                ImmutableMultimap.<String, String>builder()
+                        .put("filterType", "TIFF_MERGE_BANDS")
+                        .put("z", String.valueOf(pageNumber))
+                        .putAll("selected", channelImageNames.stream().map(Paths::get).map(p -> p.getFileName()).map(p -> p.toString()).collect(Collectors.toList()))
                         .build()
         );
         try {
-            return ImageUtils.loadRenderedImageBytesFromTiffStream(tileImageStream, 0, 0, startPage, -1, -1, nPages);
+            return ByteStreams.toByteArray(tileImageStream);
+        } catch (Exception e) {
+            LOG.error("Error reading {} from {}", channelImageNames, tileRelativePath, e);
+            throw new IllegalStateException(e);
         } finally {
             closeContentStream(tileImageStream);
         }
@@ -153,23 +162,23 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Override
     public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
-        InputStream rawImageStream = openContentStream(rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)).toString(),
-                ImmutableMap.<String, String>builder()
-                        .put("filterType", "TIFF_IMAGE")
-                        .put("x0", String.valueOf(xCenter - dimx / 2))
-                        .put("y0", String.valueOf(yCenter - dimy / 2))
-                        .put("z0", String.valueOf(zCenter - dimz / 2))
-                        .put("deltax", String.valueOf(dimx))
-                        .put("deltay", String.valueOf(dimy))
-                        .put("deltaz", String.valueOf(dimz))
+        Path rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
+        InputStream rawImageStream = openContentStream(rawImagePath.toString(),
+                ImmutableMultimap.<String, String>builder()
+                        .put("filterType", "TIFF_ROI_PIXELS")
+                        .put("xCenter", String.valueOf(xCenter - dimx / 2))
+                        .put("yCenter", String.valueOf(yCenter - dimy / 2))
+                        .put("zCenter", String.valueOf(zCenter - dimz / 2))
+                        .put("dimX", String.valueOf(dimx))
+                        .put("dimY", String.valueOf(dimy))
+                        .put("dimZ", String.valueOf(dimz))
                         .build()
         );
         try {
-            return ImageUtils.loadImagePixelBytesFromTiffStream(
-                    rawImageStream,
-                    xCenter, yCenter, zCenter,
-                    dimx, dimy, dimz
-            );
+            return ByteStreams.toByteArray(rawImageStream);
+        } catch (Exception e) {
+            LOG.error("Error reading {} from {}", rawImagePath, rawImage, e);
+            throw new IllegalStateException(e);
         } finally {
             closeContentStream(rawImageStream);
         }
@@ -178,16 +187,16 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public InputStream readTransformData() {
-        return openContentStream(TRANSFORM_FILE_NAME, ImmutableMap.of());
+        return openContentStream(TRANSFORM_FILE_NAME, ImmutableMultimap.of());
     }
 
     @Nullable
     @Override
     public InputStream readTileBaseData() {
-        return openContentStream(TILED_VOL_BASE_FILE_NAME, ImmutableMap.of());
+        return openContentStream(TILED_VOL_BASE_FILE_NAME, ImmutableMultimap.of());
     }
 
-    private InputStream openContentStream(String contentRelativePath, Map<String, String> queryParams) {
+    private InputStream openContentStream(String contentRelativePath, Multimap<String, String> queryParams) {
         Client httpClient = null;
         try {
             httpClient = httpClientProvider.getClient();
@@ -195,7 +204,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                     .path("entry_content")
                     .path(contentRelativePath.replace('\\', '/'))
                     ;
-            for (Map.Entry<String, String> qe : queryParams.entrySet()) {
+            for (Map.Entry<String, String> qe : queryParams.entries()) {
                 target = target.queryParam(qe.getKey(), qe.getValue());
             }
             Response response;
