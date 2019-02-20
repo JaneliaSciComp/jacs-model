@@ -69,7 +69,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     }
 
     @Override
-    public String getVolumeBasePath() {
+    public String getRenderedVolumePath() {
         return StringUtils.replace(volumeBasePath.toString(), "\\", "/");
     }
 

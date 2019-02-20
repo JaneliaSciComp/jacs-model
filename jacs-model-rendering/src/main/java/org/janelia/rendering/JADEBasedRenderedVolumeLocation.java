@@ -55,14 +55,14 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     }
 
     final String jadeBaseURI;
-    final String volumeBasePath;
+    final String renderedVolumePath;
     final String authToken;
     final String storageServiceApiKey;
     final HttpClientProvider httpClientProvider;
 
-    public JADEBasedRenderedVolumeLocation(String jadeBaseURI, String volumeBasePath, String authToken, String storageServiceApiKey, HttpClientProvider httpClientProvider) {
+    public JADEBasedRenderedVolumeLocation(String jadeBaseURI, String renderedVolumePath, String authToken, String storageServiceApiKey, HttpClientProvider httpClientProvider) {
         this.jadeBaseURI = jadeBaseURI;
-        this.volumeBasePath = StringUtils.replace(StringUtils.defaultIfBlank(volumeBasePath, ""), "\\", "/");
+        this.renderedVolumePath = StringUtils.replace(StringUtils.defaultIfBlank(renderedVolumePath, ""), "\\", "/");
         this.authToken = authToken;
         this.storageServiceApiKey = storageServiceApiKey;
         this.httpClientProvider = httpClientProvider;
@@ -74,8 +74,8 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     }
 
     @Override
-    public String getVolumeBasePath() {
-        return volumeBasePath;
+    public String getRenderedVolumePath() {
+        return renderedVolumePath;
     }
 
     @Override
@@ -86,7 +86,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             int detailLevel = level + 1;
             WebTarget target = httpClient.target(jadeBaseURI)
                     .path("list")
-                    .path(volumeBasePath)
+                    .path(renderedVolumePath)
                     .queryParam("depth", detailLevel)
                     ;
             Response response;
@@ -123,7 +123,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             httpClient = httpClientProvider.getClient();
             WebTarget target = httpClient.target(jadeBaseURI)
                     .path("data_info")
-                    .path(volumeBasePath)
+                    .path(renderedVolumePath)
                     .path(tileRelativePath.replace('\\', '/'))
                     ;
             Response response;
@@ -217,7 +217,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             httpClient = httpClientProvider.getClient();
             WebTarget target = httpClient.target(jadeBaseURI)
                     .path("data_content")
-                    .path(volumeBasePath)
+                    .path(renderedVolumePath)
                     .path(contentRelativePath.replace('\\', '/'))
                     ;
             for (Map.Entry<String, String> qe : queryParams.entries()) {

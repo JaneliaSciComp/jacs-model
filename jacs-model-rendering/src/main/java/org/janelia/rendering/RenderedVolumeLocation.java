@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface RenderedVolumeLocation {
     URI getBaseURI();
 
-    String getVolumeBasePath();
+    String getRenderedVolumePath();
 
     /**
      * List image URIs at the specified detail level.
