@@ -1,6 +1,7 @@
 package org.janelia.rendering;
 
 import com.sun.media.jai.codec.FileSeekableStream;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.rendering.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +66,11 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Override
     public URI getBaseURI() {
         return volumeBasePath.toUri();
+    }
+
+    @Override
+    public String getVolumeBasePath() {
+        return StringUtils.replace(volumeBasePath.toString(), "\\", "/");
     }
 
     @Override
