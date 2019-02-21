@@ -9,6 +9,12 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface RenderedVolumeLocation {
+    /**
+     * Rendered volume base URI.
+     * Note: This does not uniquely identify the location of the data.
+     * For uniquely identifying the data both baseURI and renderedVolumePath are required.
+     * @return
+     */
     URI getBaseURI();
 
     String getRenderedVolumePath();

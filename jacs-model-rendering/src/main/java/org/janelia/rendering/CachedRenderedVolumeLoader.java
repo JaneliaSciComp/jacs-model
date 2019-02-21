@@ -16,7 +16,7 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
             .maximumSize(200)
             .build();
 
-    private static final Cache<TileKey, Optional<byte[]>> IMAGE_CACHE = CacheBuilder.newBuilder()
+    private static final Cache<URI, Optional<byte[]>> IMAGE_CACHE = CacheBuilder.newBuilder()
             .maximumSize(200)
             .build();
 
@@ -30,7 +30,7 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     @Override
     public Optional<RenderedVolume> loadVolume(RenderedVolumeLocation rvl) {
         try {
-            return RENDERED_VOLUMES_CACHE.get(rvl.getBaseURI(), () -> impl.loadVolume(rvl));
+            return RENDERED_VOLUMES_CACHE.get(getRenderedVolumeKey(rvl), () -> impl.loadVolume(rvl));
         } catch (ExecutionException e) {
             throw new IllegalStateException(e);
         }
@@ -38,11 +38,15 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
 
     @Override
     public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
-        try {
-            return IMAGE_CACHE.get(tileKey, () -> impl.loadSlice(renderedVolume, tileKey));
-        } catch (ExecutionException e) {
-            throw new IllegalStateException(e);
-        }
+        return renderedVolume.getRelativeTilePath(tileKey)
+                .map(tilePath -> getRenderedVolumeKey(renderedVolume.getRvl()).resolve(tilePath.toUri()))
+                .flatMap(tileURI -> {
+                    try {
+                        return IMAGE_CACHE.get(tileURI, () -> impl.loadSlice(renderedVolume, tileKey));
+                    } catch (ExecutionException e) {
+                        throw new IllegalStateException(e);
+                    }
+                });
     }
 
     @Override
@@ -57,5 +61,9 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
                                                     int x, int y, int z,
                                                     int dimx, int dimy, int dimz) {
         return impl.loadRawImageContentFromVoxelCoord(rvl, rawImage, channel, x, y, z, dimx, dimy, dimz);
+    }
+
+    private URI getRenderedVolumeKey(RenderedVolumeLocation rvl) {
+        return rvl.getBaseURI().resolve(rvl.getRenderedVolumePath());
     }
 }

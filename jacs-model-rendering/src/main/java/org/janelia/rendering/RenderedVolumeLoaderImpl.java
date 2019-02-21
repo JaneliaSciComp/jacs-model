@@ -10,6 +10,7 @@ import org.janelia.rendering.ymlrepr.RawVolReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,11 +61,16 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
         return renderedVolume.getTileInfo(tileKey.getSliceAxis())
                 .flatMap(tileInfo -> renderedVolume.getRelativeTilePath(tileKey)
-                        .map(tileRelativePath -> {
+                        .flatMap(tileRelativePath -> {
                             List<String> chanelImageNames = IntStream.range(0, tileInfo.getChannelCount())
                                     .mapToObj(channel -> TileInfo.getImageNameForChannel(tileKey.getSliceAxis(), channel))
                                     .collect(Collectors.toList());
-                            return renderedVolume.getRvl().readTileImagePageAsTexturedBytes(tileRelativePath.toString(), chanelImageNames, tileKey.getSliceIndex());
+                            byte[] content = renderedVolume.getRvl().readTileImagePageAsTexturedBytes(tileRelativePath.toString(), chanelImageNames, tileKey.getSliceIndex());
+                            if (content == null) {
+                                return Optional.empty();
+                            } else {
+                                return Optional.of(content);
+                            }
                         }))
                 ;
     }
@@ -84,7 +90,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         }
     }
 
-    private RawCoord parseTransformStream(InputStream stream) {
+    private RawCoord parseTransformStream(@Nonnull InputStream stream) {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(stream))) {
             RawCoord coord = new RawCoord();
             String l;
