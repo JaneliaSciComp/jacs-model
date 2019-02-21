@@ -89,6 +89,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                     .path(renderedVolumePath)
                     .queryParam("depth", detailLevel)
                     ;
+            LOG.debug("List images from URI {}, volume path {}, level {} using {}", jadeBaseURI, renderedVolumePath, level, target.getUri());
             Response response;
             response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON)).get();
             int responseStatus = response.getStatus();
@@ -126,6 +127,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                     .path(renderedVolumePath)
                     .path(tileRelativePath.replace('\\', '/'))
                     ;
+            LOG.debug("Read tile imageInfo from URI {}, volume path {}, tile path {} using {}", jadeBaseURI, renderedVolumePath, tileRelativePath, target.getUri());
             Response response;
             response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON)).get();
             int responseStatus = response.getStatus();
@@ -223,6 +225,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             for (Map.Entry<String, String> qe : queryParams.entries()) {
                 target = target.queryParam(qe.getKey(), qe.getValue());
             }
+            LOG.debug("Open stream for {} with {} for {}", contentRelativePath, queryParams, target.getUri());
             Response response;
             response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM)).get();
             int responseStatus = response.getStatus();

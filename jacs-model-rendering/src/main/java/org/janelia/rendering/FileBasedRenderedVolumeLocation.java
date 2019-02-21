@@ -104,6 +104,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                 .map(channelImagePath -> () -> {
                     RenderedImage rim;
                     try {
+                        LOG.debug("Load page {} from {}", pageNumber, channelImagePath);
                         rim = ImageUtils.loadRenderedImageFromTiffStream(new FileSeekableStream(channelImagePath.toFile()), pageNumber);
                     } catch (IOException e) {
                         LOG.error("Error reading image from {}", channelImagePath, e);
