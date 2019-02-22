@@ -109,11 +109,11 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                         .map(ce -> URI.create(ce.nodeAccessURL))
                         .collect(Collectors.toList());
             } else {
-                LOG.warn("List {} - depth {} returned {} status", jadeBaseURI, level, responseStatus);
+                LOG.warn("List images from URI {}, volume path {}, level {} ({}) returned status {}", jadeBaseURI, renderedVolumePath, level, target.getUri(), responseStatus);
                 return null;
             }
         } catch (Exception e) {
-            LOG.error("Error listing content {} with depth {}", jadeBaseURI, level, e);
+            LOG.error("Error listing images from URI {}, volume path {}, level {} returned status {}", jadeBaseURI, renderedVolumePath, level, e);
             throw new IllegalStateException(e);
         } finally {
             if (httpClient != null) {
@@ -140,11 +140,11 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return response.readEntity(RenderedImageInfo.class);
             } else {
-                LOG.warn("Retrieve content info {} - {} returned {} status", jadeBaseURI, tileRelativePath, responseStatus);
+                LOG.warn("Retrieve content info from URI {}, volume path {}, tile path {} ({}) returned status {}", jadeBaseURI, renderedVolumePath, tileRelativePath, target.getUri(), responseStatus);
                 return null;
             }
         } catch (Exception e) {
-            LOG.error("Error retrieving content info from {} - {}", jadeBaseURI, tileRelativePath, e);
+            LOG.warn("Error retrieving content info from URI {}, volume path {}, tile path {} returned status {}", jadeBaseURI, renderedVolumePath, tileRelativePath, e);
             throw new IllegalStateException(e);
         } finally {
             if (httpClient != null) {
@@ -231,18 +231,18 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             for (Map.Entry<String, String> qe : queryParams.entries()) {
                 target = target.queryParam(qe.getKey(), qe.getValue());
             }
-            LOG.debug("Open stream for {} with {} for {}", contentRelativePath, queryParams, target.getUri());
+            LOG.debug("Open stream from URI {}, volume path {}, tile path {} using {}", jadeBaseURI, renderedVolumePath, contentRelativePath, target.getUri());
             Response response;
             response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM)).get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return response.readEntity(InputStream.class);
             } else {
-                LOG.warn("{} - {} returned {} status", jadeBaseURI, contentRelativePath, responseStatus);
+                LOG.debug("Open stream from URI {}, volume path {}, tile path {} ({}) returned status {}", jadeBaseURI, renderedVolumePath, contentRelativePath, target.getUri(), responseStatus);
                 return null;
             }
         } catch (Exception e) {
-            LOG.error("Error streaming data from {} - {}", jadeBaseURI, contentRelativePath, e);
+            LOG.debug("Error opening the stream from URI {}, volume path {}, tile path {}", jadeBaseURI, renderedVolumePath, contentRelativePath, e);
             throw new IllegalStateException(e);
         } finally {
             if (httpClient != null) {
