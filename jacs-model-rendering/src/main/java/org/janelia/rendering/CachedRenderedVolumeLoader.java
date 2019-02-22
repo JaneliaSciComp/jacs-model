@@ -2,6 +2,7 @@ package org.janelia.rendering;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,7 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     @Override
     public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
         return renderedVolume.getRelativeTilePath(tileKey)
-                .map(tilePath -> renderedVolume.getRvl().getVolumeLocation().resolve(tilePath.toString() + "/").resolve(tileKey.asPathComponents() + "/"))
+                .map(tilePath -> renderedVolume.getRvl().getVolumeLocation().resolve(tilePath + "/").resolve(tileKey.asPathComponents() + "/"))
                 .flatMap(tileURI -> {
                     if (renderedTileImagesCache == null) {
                         return impl.loadSlice(renderedVolume, tileKey);

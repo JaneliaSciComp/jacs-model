@@ -128,7 +128,7 @@ public class RenderedVolume {
         return xyTileInfo != null;
     }
 
-    public Optional<Path> getRelativeTilePath(TileKey tileKey) {
+    public Optional<String> getRelativeTilePath(TileKey tileKey) {
         int depth = numZoomLevels - tileKey.getZoom();
         if (depth < 0) {
             return Optional.empty();
@@ -165,7 +165,7 @@ public class RenderedVolume {
                     + 4 * ds[2];
             pathComps.add(String.valueOf(octreeCoord));
         }
-        return Optional.of(Paths.get("", pathComps.toArray(new String[0])));
+        return Optional.of(Paths.get("", pathComps.toArray(new String[0])).toString().replace('\\', '/'));
     }
 
 }
