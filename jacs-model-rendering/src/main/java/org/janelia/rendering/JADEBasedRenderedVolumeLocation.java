@@ -1,6 +1,7 @@
 package org.janelia.rendering;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
@@ -61,6 +62,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     final HttpClientProvider httpClientProvider;
 
     public JADEBasedRenderedVolumeLocation(String jadeBaseURI, String renderedVolumePath, String authToken, String storageServiceApiKey, HttpClientProvider httpClientProvider) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(jadeBaseURI));
         this.jadeBaseURI = jadeBaseURI;
         this.renderedVolumePath = StringUtils.replace(StringUtils.defaultIfBlank(renderedVolumePath, ""), "\\", "/");
         this.authToken = authToken;
@@ -70,7 +72,11 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Override
     public URI getBaseURI() {
-        return URI.create(jadeBaseURI);
+        if (jadeBaseURI.endsWith("/")) {
+            return URI.create(jadeBaseURI);
+        } else {
+            return URI.create(jadeBaseURI + "/");
+        }
     }
 
     @Override

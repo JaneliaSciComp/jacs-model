@@ -2,6 +2,7 @@ package org.janelia.rendering;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.rendering.cdi.WithCache;
 
 import javax.inject.Inject;
@@ -39,7 +40,7 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     @Override
     public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
         return renderedVolume.getRelativeTilePath(tileKey)
-                .map(tilePath -> getRenderedVolumeKey(renderedVolume.getRvl()).resolve(tilePath.toUri()).resolve(tileKey.asUri()))
+                .map(tilePath -> getRenderedVolumeKey(renderedVolume.getRvl()).resolve(tilePath.toString() + "/").resolve(tileKey.asPathComponents() + "/"))
                 .flatMap(tileURI -> {
                     try {
                         return IMAGE_CACHE.get(tileURI, () -> impl.loadSlice(renderedVolume, tileKey));
@@ -64,6 +65,13 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     }
 
     private URI getRenderedVolumeKey(RenderedVolumeLocation rvl) {
-        return rvl.getBaseURI().resolve(rvl.getRenderedVolumePath());
+        String renderedVolumePath = rvl.getRenderedVolumePath();
+        if (StringUtils.isBlank(renderedVolumePath)) {
+            return rvl.getBaseURI();
+        } else if (renderedVolumePath.endsWith("/")) {
+            return rvl.getBaseURI().resolve(renderedVolumePath);
+        } else {
+            return rvl.getBaseURI().resolve(renderedVolumePath + "/");
+        }
     }
 }

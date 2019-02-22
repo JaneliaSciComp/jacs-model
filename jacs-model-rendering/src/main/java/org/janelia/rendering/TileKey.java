@@ -77,7 +77,7 @@ public class TileKey {
         return sliceIndex;
     }
 
-    String asUri() {
+    String asPathComponents() {
         return sliceAxis.name() + "/"
                 + zoom + "/"
                 + xyz[0] + "/" + xyz[1] + "/" + xyz[1] + "/"
