@@ -39,7 +39,7 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     @Override
     public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
         return renderedVolume.getRelativeTilePath(tileKey)
-                .map(tilePath -> getRenderedVolumeKey(renderedVolume.getRvl()).resolve(tilePath.toUri()))
+                .map(tilePath -> getRenderedVolumeKey(renderedVolume.getRvl()).resolve(tilePath.toUri()).resolve(tileKey.asUri()))
                 .flatMap(tileURI -> {
                     try {
                         return IMAGE_CACHE.get(tileURI, () -> impl.loadSlice(renderedVolume, tileKey));

@@ -77,6 +77,13 @@ public class TileKey {
         return sliceIndex;
     }
 
+    String asUri() {
+        return sliceAxis.name() + "/"
+                + zoom + "/"
+                + xyz[0] + "/" + xyz[1] + "/" + xyz[1] + "/"
+                + sliceIndex;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
