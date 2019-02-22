@@ -2,50 +2,66 @@ package org.janelia.rendering;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.rendering.cdi.WithCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.net.URI;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-@WithCache
 public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
 
-    private static final Cache<URI, Optional<RenderedVolume>> RENDERED_VOLUMES_CACHE = CacheBuilder.newBuilder()
-            .maximumSize(200)
-            .build();
-
-    private static final Cache<URI, Optional<byte[]>> IMAGE_CACHE = CacheBuilder.newBuilder()
-            .maximumSize(200)
-            .build();
+    private static final Logger LOG = LoggerFactory.getLogger(CachedRenderedVolumeLoader.class);
 
     private final RenderedVolumeLoader impl;
+    private final Cache<URI, Optional<RenderedVolume>> renderedVolumesCache;
+    private final Cache<URI, Optional<byte[]>> renderedTileImagesCache;
 
-    @Inject
-    public CachedRenderedVolumeLoader(RenderedVolumeLoader impl) {
+    public CachedRenderedVolumeLoader(RenderedVolumeLoader impl, int volumesCacheSize, int tileImagesCacheSize) {
         this.impl = impl;
+        if (volumesCacheSize > 0) {
+            renderedVolumesCache = CacheBuilder.newBuilder()
+                    .maximumSize(volumesCacheSize)
+                    .build();
+        } else {
+            renderedVolumesCache = null;
+        }
+        if (tileImagesCacheSize > 0) {
+            renderedTileImagesCache = CacheBuilder.newBuilder()
+                    .maximumSize(tileImagesCacheSize)
+                    .build();
+        } else {
+            renderedTileImagesCache = null;
+        }
     }
 
     @Override
     public Optional<RenderedVolume> loadVolume(RenderedVolumeLocation rvl) {
-        try {
-            return RENDERED_VOLUMES_CACHE.get(getRenderedVolumeKey(rvl), () -> impl.loadVolume(rvl));
-        } catch (ExecutionException e) {
-            throw new IllegalStateException(e);
+        if (renderedVolumesCache == null) {
+            return impl.loadVolume(rvl);
+        } else {
+            try {
+                return renderedVolumesCache.get(rvl.getVolumeLocation(), () -> impl.loadVolume(rvl));
+            } catch (ExecutionException e) {
+                throw new IllegalStateException(e);
+            }
         }
     }
 
     @Override
     public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
         return renderedVolume.getRelativeTilePath(tileKey)
-                .map(tilePath -> getRenderedVolumeKey(renderedVolume.getRvl()).resolve(tilePath.toString() + "/").resolve(tileKey.asPathComponents() + "/"))
+                .map(tilePath -> renderedVolume.getRvl().getVolumeLocation().resolve(tilePath.toString() + "/").resolve(tileKey.asPathComponents() + "/"))
                 .flatMap(tileURI -> {
-                    try {
-                        return IMAGE_CACHE.get(tileURI, () -> impl.loadSlice(renderedVolume, tileKey));
-                    } catch (ExecutionException e) {
-                        throw new IllegalStateException(e);
+                    if (renderedTileImagesCache == null) {
+                        return impl.loadSlice(renderedVolume, tileKey);
+                    } else {
+                        try {
+                            LOG.trace("Try to retrieve tile {} from {} cache using {}", tileKey, renderedVolume.volumeLocation(), tileURI);
+                            return renderedTileImagesCache.get(tileURI, () -> impl.loadSlice(renderedVolume, tileKey));
+                        } catch (ExecutionException e) {
+                            throw new IllegalStateException(e);
+                        }
                     }
                 });
     }
@@ -64,14 +80,4 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
         return impl.loadRawImageContentFromVoxelCoord(rvl, rawImage, channel, x, y, z, dimx, dimy, dimz);
     }
 
-    private URI getRenderedVolumeKey(RenderedVolumeLocation rvl) {
-        String renderedVolumePath = rvl.getRenderedVolumePath();
-        if (StringUtils.isBlank(renderedVolumePath)) {
-            return rvl.getBaseURI();
-        } else if (renderedVolumePath.endsWith("/")) {
-            return rvl.getBaseURI().resolve(renderedVolumePath);
-        } else {
-            return rvl.getBaseURI().resolve(renderedVolumePath + "/");
-        }
-    }
 }

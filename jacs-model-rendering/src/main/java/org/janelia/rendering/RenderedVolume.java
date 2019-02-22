@@ -54,6 +54,10 @@ public class RenderedVolume {
         return rvl.getRenderedVolumePath();
     }
 
+    String volumeLocation() {
+        return rvl.getVolumeLocation().toString();
+    }
+
     public RenderingType getRenderingType() {
         return renderingType;
     }

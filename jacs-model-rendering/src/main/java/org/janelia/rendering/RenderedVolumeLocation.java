@@ -3,10 +3,7 @@ package org.janelia.rendering;
 import javax.annotation.Nullable;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public interface RenderedVolumeLocation {
     /**
@@ -18,6 +15,17 @@ public interface RenderedVolumeLocation {
     URI getBaseURI();
 
     String getRenderedVolumePath();
+
+    default URI getVolumeLocation() {
+        String renderedVolumePath = getRenderedVolumePath();
+        if (renderedVolumePath == null || renderedVolumePath.trim().length() == 0) {
+            return getBaseURI();
+        } else if (renderedVolumePath.trim().endsWith("/")) {
+            return getBaseURI().resolve(renderedVolumePath.trim());
+        } else {
+            return getBaseURI().resolve(renderedVolumePath.trim() + "/");
+        }
+    }
 
     /**
      * List image URIs at the specified detail level.
