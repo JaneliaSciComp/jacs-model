@@ -56,19 +56,19 @@ class DomainPermissionsMongoHelper {
     }
 
     Bson createWritePermissionFilterForSubjectKey(String subjectKey) {
-        Set<String> readers = subjectDao.getWriterSetByKey(subjectKey);
-        if (CollectionUtils.isEmpty(readers)) {
+        Set<String> writers = subjectDao.getWriterSetByKey(subjectKey);
+        if (CollectionUtils.isEmpty(writers)) {
             // only include entities that have no reader restrictions
             return Filters.or(
                     Filters.eq("ownerKey", subjectKey),
-                    Filters.exists("readers", false)
+                    Filters.exists("writers", false)
             );
-        } else if (readers.contains(Subject.ADMIN_KEY)) {
+        } else if (writers.contains(Subject.ADMIN_KEY)) {
             return new Document(); // user is in the admin group so simply ignore the filtering in this case
         } else {
             return Filters.or(
                     Filters.eq("ownerKey", subjectKey),
-                    Filters.in("readers", readers)
+                    Filters.in("writers", writers)
             );
         }
     }

@@ -8,6 +8,7 @@ import com.mongodb.client.model.UpdateOptions;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.OntologyDao;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
@@ -82,7 +83,7 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
 
         UpdateOptions updateOptions = new UpdateOptions();
         updateOptions.upsert(false);
-        MongoDaoHelper.updateMany(
+        DaoUpdateResult updateResult = MongoDaoHelper.updateMany(
                 mongoCollection,
                 MongoDaoHelper.createFilterCriteria(
                         MongoDaoHelper.createFilterById(ontologyId),
@@ -93,7 +94,12 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
                         "terms", new SetFieldValueHandler<>(ontology.getTerms())
                 ),
                 updateOptions);
-        return ontology;
+        if (updateResult.getEntitiesFound() == 0) {
+            // no entity was found for update - this usually happens if the user does not have write permissions
+            return null;
+        } else {
+            return ontology;
+        }
     }
 
     @Override
