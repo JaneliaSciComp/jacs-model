@@ -34,7 +34,7 @@ public abstract class MapFacade<K, V> extends AbstractMap<K, V> {
     		throw new IllegalStateException("Data structures out of sync. Map size ("+map.size()+") != list size ("+list.size()+")");
     	}
     }
-    
+
     @Override
     public boolean containsKey(Object key) {
     	verifyIntegrity();
@@ -91,21 +91,25 @@ public abstract class MapFacade<K, V> extends AbstractMap<K, V> {
         public Iterator<Map.Entry<K,V>> iterator() {
             return new EntryIterator(mapEntrySet);
         }
+
         public boolean contains(Object o) {
             return mapEntrySet.contains(o);
         }
+
         public boolean remove(Object o) {
             if (mapEntrySet.remove(o)) {
                 return list.remove(o);
             }
             return false;
         }
+
         public int size() {
             return mapEntrySet.size();
         }
+
         public void clear() {
-            // This uses the iterator to remove all items, so it keeps the list in sync
-            mapEntrySet.clear(); 
+            mapEntrySet.clear();
+            list.clear();
         }
     }
 

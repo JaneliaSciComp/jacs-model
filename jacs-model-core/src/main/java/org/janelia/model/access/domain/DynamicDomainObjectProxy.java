@@ -1,16 +1,19 @@
 package org.janelia.model.access.domain;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.enums.AlignmentScoreType;
 import org.janelia.model.domain.sample.Sample;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * A wrapper around a DomainObject which provides a facade with dynamic access to its properties by UI label. This is
@@ -23,19 +26,28 @@ public class DynamicDomainObjectProxy implements Map<String,Object> {
     private static final Logger log = LoggerFactory.getLogger(DynamicDomainObjectProxy.class);
     
     private final DomainObject domainObject;
-    private final HashMap<String,DomainObjectAttribute> attrs;
+    private final Map<String,DomainObjectAttribute> attrs;
 
-    public DynamicDomainObjectProxy(DomainObject domainObject) {
-        this.domainObject = domainObject;
-        
-        synchronized (DynamicDomainObjectProxy.class) {
-            Class<? extends DomainObject> clazz = domainObject.getClass();
+    private static final LoadingCache<Class<? extends DomainObject>,Map<String,DomainObjectAttribute>> classAttrMaps =
+            CacheBuilder.newBuilder().build(new CacheLoader<Class<? extends DomainObject>,Map<String,DomainObjectAttribute>>() {
+        public Map<String,DomainObjectAttribute> load(Class<? extends DomainObject> clazz) {
+            Map<String,DomainObjectAttribute> attrs = new LinkedHashMap<>();
             log.trace("Getting attrs for {}",clazz.getSimpleName());
-            this.attrs = new LinkedHashMap<>();
-            for (DomainObjectAttribute attr : DomainUtils.getDisplayAttributes(domainObject.getClass())) {
-                log.trace("  {} -> {}.{}",attr.getLabel(), domainObject.getClass().getSimpleName(), attr.getName());
+            for (DomainObjectAttribute attr : DomainUtils.getDisplayAttributes(clazz)) {
+                log.trace("  {} -> {}.{}",attr.getLabel(), clazz.getSimpleName(), attr.getName());
                 attrs.put(attr.getLabel(), attr);
             }
+            return attrs;
+        }
+    });
+
+    public DynamicDomainObjectProxy(DomainObject domainObject) {
+        try {
+            this.domainObject = domainObject;
+            this.attrs = classAttrMaps.get(domainObject.getClass());
+        }
+        catch (ExecutionException e) {
+            throw new RuntimeException(e);
         }
     }
 
