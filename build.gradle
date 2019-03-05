@@ -82,6 +82,12 @@ dependencies {
     testCompile JUNIT_LIB
 }
 
+test {
+    exclude '**/SampleDAOTest.class'
+    exclude '**/SubjectDAOTest.class'
+    exclude '**/SampleLockTests.class'
+}
+
 publishing {
     publications {
         mavenJar(MavenPublication) {
