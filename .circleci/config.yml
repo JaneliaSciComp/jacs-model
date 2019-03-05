@@ -1,7 +1,12 @@
 version: 2
 jobs:
   build:
-    
+
+    branches:
+      only:
+       - master
+       - release
+   
     working_directory: ~/jacs-model
 
     docker:
