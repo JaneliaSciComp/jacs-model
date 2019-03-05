@@ -25,6 +25,7 @@ jobs:
           key: jacs-model-{{ checksum "build.gradle" }}
           paths:
             - ~/.gradle
+            - .gradle
 
       - store_test_results:
           path: build/test-results/test
