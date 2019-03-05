@@ -1,15 +1,18 @@
 # JACS Domain Model and DAOs
 
+[![CircleCI](https://circleci.com/gh/JaneliaSciComp/jacs-model.svg?style=svg)](https://circleci.com/gh/JaneliaSciComp/jacs-model)
+
 ## Build
 
-If you don't have gradle version 4.0:
-`gradle wrapper` 
-
 Run the unit tests:
-`gradle test`
+```
+/gradlew test
+```
 
 Build the jar:
-`gradle jar`
+```
+./gradlew jar
+```
 
 ## Summary
 
