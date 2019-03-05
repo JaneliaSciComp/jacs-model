@@ -11,10 +11,10 @@ jobs:
 
       - checkout
 
-	  - restore_cache:
+      - restore_cache:
           key: jacs-model-{{ checksum "build.gradle" }}
       
-	  - run: ./gradlew jar test
+      - run: ./gradlew jar test
       
       - save_cache:
           key: jacs-model-{{ checksum "build.gradle" }}
