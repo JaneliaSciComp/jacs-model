@@ -52,6 +52,12 @@ subprojects {
         from sourceSets.main.allJava
     }
 
+    test {
+        exclude '**/SampleDAOTest.class'
+        exclude '**/SubjectDAOTest.class'
+        exclude '**/SampleLockTests.class'
+    }
+
     publishing {
         publications {
             mavenJar(MavenPublication) {
