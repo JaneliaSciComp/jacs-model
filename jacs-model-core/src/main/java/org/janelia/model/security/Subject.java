@@ -29,7 +29,7 @@ public abstract class Subject implements HasIdentifier, HasName, Serializable {
     private String key;
     private String name;
     private String fullName;
-        
+
     public Long getId() {
         return id;
     }
@@ -54,6 +54,9 @@ public abstract class Subject implements HasIdentifier, HasName, Serializable {
         this.name = name;
     }
 
+    /**
+     * Full name of the user or gro=
+     */
     public String getFullName() {
         return fullName;
     }

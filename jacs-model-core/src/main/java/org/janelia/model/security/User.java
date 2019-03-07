@@ -5,15 +5,26 @@ import java.util.Set;
 
 /**
  * A user in the Workstation system who can be part of one or more groups. 
- * 
- * Must have a corresponding account in LDAP.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class User extends Subject {
 
+    private String password;
     private String email;
     private Set<UserGroupRole> userGroupRoles = new HashSet<>();
+
+    /**
+     * Hashed password. This is not a required field. If this is undefined, it's expected that the user will be
+     * authenticated against an external service such as LDAP or AD.
+     */
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     public String getEmail() {
         return email;
@@ -22,7 +33,7 @@ public class User extends Subject {
     public void setEmail(String email) {
         this.email = email;
     }
-    
+
     public Set<UserGroupRole> getUserGroupRoles() {
         return userGroupRoles;
     }
