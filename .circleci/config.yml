@@ -20,12 +20,12 @@ jobs:
       - checkout
 
       - restore_cache:
-          key: jacs-model-{{ checksum "build.gradle" }}
+          key: jacs-model-c1-{{ checksum "build.gradle" }}
       
       - run: ./gradlew --no-daemon jar test
       
       - save_cache:
-          key: jacs-model-{{ checksum "build.gradle" }}
+          key: jacs-model-c1-{{ checksum "build.gradle" }}
           paths:
             - ~/.gradle
 
@@ -34,5 +34,3 @@ jobs:
             - jacs-model-core/build/test-results/test
             - jacs-model-rendering/build/test-results/test
       
-      - store_artifacts:
-          path: jacs-model-core/build/libs/jacs-model-*.jar
