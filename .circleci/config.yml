@@ -35,5 +35,6 @@ jobs:
             - jacs-model-rendering/build/test-results/test
       
       - store_artifacts:
-          path: jacs-model-core/build/jacs-model-*.jar
-          path: jacs-model-rendering/build/jacs-model-*.jar
+          paths:
+            - jacs-model-core/build/jacs-model-*.jar
+            - jacs-model-rendering/build/jacs-model-*.jar
