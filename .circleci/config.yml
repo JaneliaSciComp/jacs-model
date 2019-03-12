@@ -12,6 +12,9 @@ jobs:
     docker:
       - image: circleci/openjdk:8u171-jdk
 
+    environment:
+      TERM: dumb
+
     steps:
 
       - checkout
@@ -19,7 +22,7 @@ jobs:
       - restore_cache:
           key: jacs-model-{{ checksum "build.gradle" }}
       
-      - run: ./gradlew jar test
+      - run: ./gradlew --no-daemon jar test
       
       - save_cache:
           key: jacs-model-{{ checksum "build.gradle" }}
@@ -32,4 +35,5 @@ jobs:
             - jacs-model-rendering/build/test-results/test
       
       - store_artifacts:
-          path: build/jacs-model-*.jar
+          path: jacs-model-core/build/jacs-model-*.jar
+          path: jacs-model-rendering/build/jacs-model-*.jar
