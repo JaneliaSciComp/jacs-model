@@ -1,12 +1,19 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.UpdateOptions;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.access.domain.dao.DaoUpdateResult;
+import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.Subject;
+import org.janelia.model.security.User;
 import org.janelia.model.security.util.SubjectUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.*;
@@ -28,6 +35,32 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
             entity.setId(createNewId());
             insertNewEntity(entity);
         }
+        else {
+            throw new IllegalArgumentException("Cannot save object which already has an id");
+        }
+    }
+
+    @Override
+    public User setUserPassword(User user, String passwordHash) {
+
+        UpdateOptions updateOptions = new UpdateOptions();
+        updateOptions.upsert(false);
+        DaoUpdateResult updateResult = MongoDaoHelper.updateMany(
+                mongoCollection,
+                MongoDaoHelper.createFilterCriteria(
+                        MongoDaoHelper.createFilterById(user.getId())
+                ),
+                ImmutableMap.of(
+                    "password", new SetFieldValueHandler<>(passwordHash)
+                ),
+                updateOptions);
+        if (updateResult.getEntitiesFound() == 0) {
+            // no entity was found for update - this usually happens if the user does not have write permissions
+            return null;
+        } else {
+            user.setPassword(passwordHash);
+            return user;
+        }
     }
 
     @Override
@@ -38,6 +71,9 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
             if (e.getId() == null) {
                 e.setId(idIterator.next());
                 toInsert.add(e);
+            }
+            else {
+                throw new IllegalArgumentException("Cannot save object which already has an id");
             }
         });
         insertNewEntities(toInsert);
@@ -129,7 +165,7 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
         List<String> distinctGroupNames = MongoDaoHelper.getDistinctValues("userGroupRoles.groupKey", null, mongoCollection, String.class);
         return distinctGroupNames.stream()
                 .map(gn -> MongoDaoHelper.findFirst(Filters.eq("key", gn), null, mongoCollection, Subject.class))
-                .filter(s -> s != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toMap(
                         s -> s,
                         s -> MongoDaoHelper.count(
