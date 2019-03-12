@@ -36,5 +36,4 @@ jobs:
       
       - store_artifacts:
           paths:
-            - jacs-model-core/build/jacs-model-*.jar
-            - jacs-model-rendering/build/jacs-model-*.jar
+            - jacs-model-core/build/libs/jacs-model-*.jar
