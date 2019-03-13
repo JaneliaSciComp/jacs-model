@@ -1,9 +1,10 @@
 package org.janelia.model.util;
 
-import java.util.AbstractMap;
-import java.util.AbstractSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,8 +15,10 @@ import java.util.Set;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public abstract class MapFacade<K, V> extends AbstractMap<K, V> {
-    
+public abstract class MapFacade<K, V> implements Map<K, V> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MapFacade.class);
+
     private final List<V> list;
     private final Map<K, V> map = new HashMap<>();
 
@@ -30,107 +33,85 @@ public abstract class MapFacade<K, V> extends AbstractMap<K, V> {
     public abstract K getKey(V object);
 
     private void verifyIntegrity() {
-    	if (map.size()!=list.size()) {
-    		throw new IllegalStateException("Data structures out of sync. Map size ("+map.size()+") != list size ("+list.size()+")");
-    	}
+        if (map.size() != list.size()) {
+            LOG.warn("Data structures out of sync. Map size {} != list size {}, map: {}, list: {}", map.size(), list.size(), map, list);
+            throw new IllegalStateException("Data structures out of sync. Map size (" + map.size() + ") != list size (" + list.size() + ")");
+        }
     }
-    
+
     @Override
     public boolean containsKey(Object key) {
-    	verifyIntegrity();
+        verifyIntegrity();
         return map.containsKey(key);
     }
 
     @Override
     public boolean containsValue(Object value) {
-    	verifyIntegrity();
+        verifyIntegrity();
         return map.containsValue(value);
     }
 
     @Override
     public V get(Object key) {
-    	verifyIntegrity();
+        verifyIntegrity();
         return map.get(key);
     }
 
     @Override
     public V put(K key, V value) {
-    	verifyIntegrity();
-    	if (map.containsKey(key)) {
-    	    list.remove(map.get(key));
-    	}
+        LOG.trace("MapFacade put {} {}, list is {}, map is {}", key, value);
+        verifyIntegrity();
+        if (map.containsKey(key)) {
+            list.remove(map.remove(key));
+        }
         list.add(value);
         return map.put(key, value);
     }
 
     @Override
     public V remove(Object key) {
-    	verifyIntegrity();
-        list.remove(map.get(key));
+        LOG.trace("MapFacade remove {} list is {}, map is {}", key, list, map);
+        verifyIntegrity();
+        V toRemove = map.get(key);
+        list.remove(toRemove);
         return map.remove(key);
     }
 
-    // Views
-    private transient Set<Map.Entry<K,V>> entrySet = null;
-    
     @Override
-    public Set<Entry<K, V>> entrySet() {
+    public int size() {
+        return map.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return map.isEmpty();
+    }
+
+    @Override
+    public void putAll(Map<? extends K, ? extends V> m) {
+        m.forEach((k, v) -> put(k, v));
+    }
+
+    @Override
+    public void clear() {
+        map.clear();
+        list.clear();
+    }
+
+    @Override
+    public Set<K> keySet() {
+        return map.keySet();
+    }
+
+    @Override
+    public Collection<V> values() {
+        return map.values();
+    }
+
+    @Override
+    public Set<Map.Entry<K, V>> entrySet() {
         verifyIntegrity();
-        Set<Map.Entry<K,V>> es = entrySet;
-        return es != null ? es : (entrySet = new EntrySet());
-    }
-    
-    private final class EntrySet extends AbstractSet<Map.Entry<K,V>> {
-
-        private Set<Map.Entry<K, V>> mapEntrySet;
-        
-        public EntrySet() {
-            this.mapEntrySet = map.entrySet();
-        }
-        
-        public Iterator<Map.Entry<K,V>> iterator() {
-            return new EntryIterator(mapEntrySet);
-        }
-        public boolean contains(Object o) {
-            return mapEntrySet.contains(o);
-        }
-        public boolean remove(Object o) {
-            if (mapEntrySet.remove(o)) {
-                return list.remove(o);
-            }
-            return false;
-        }
-        public int size() {
-            return mapEntrySet.size();
-        }
-        public void clear() {
-            // This uses the iterator to remove all items, so it keeps the list in sync
-            mapEntrySet.clear(); 
-        }
-    }
-
-    private class EntryIterator implements Iterator<Map.Entry<K,V>> {
-        
-        private Iterator<Map.Entry<K, V>> mapIterator;
-        private Map.Entry<K,V> last;
-        
-        public EntryIterator(Set<Map.Entry<K, V>> entrySet) {
-            this.mapIterator = entrySet.iterator();
-        }
-
-        public final boolean hasNext() {
-            return mapIterator.hasNext();
-        }
-
-        public Map.Entry<K,V> next() {
-            this.last = mapIterator.next();
-            return last;
-        }
-
-        public void remove() {
-            mapIterator.remove();
-            list.remove(last);
-        }
+        return map.entrySet();
     }
 
 }

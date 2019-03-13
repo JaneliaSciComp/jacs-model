@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
@@ -182,5 +184,33 @@ public abstract class AbstractDomainObject implements DomainObject, Serializable
     @Override
     public String toString() {
         return getClass().getSimpleName() + "#" + id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AbstractDomainObject that = (AbstractDomainObject) o;
+
+        return new EqualsBuilder()
+                .append(id, that.id)
+                .append(name, that.name)
+                .append(ownerKey, that.ownerKey)
+                .append(creationDate, that.creationDate)
+                .append(updatedDate, that.updatedDate)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(id)
+                .append(name)
+                .append(ownerKey)
+                .append(creationDate)
+                .append(updatedDate)
+                .toHashCode();
     }
 }
