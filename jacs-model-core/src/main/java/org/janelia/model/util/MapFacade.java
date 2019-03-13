@@ -3,8 +3,11 @@ package org.janelia.model.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,7 +25,7 @@ public abstract class MapFacade<K, V> implements Map<K, V> {
     private final List<V> list;
     private final Map<K, V> map = new HashMap<>();
 
-    public MapFacade(List<V> list) {
+    protected MapFacade(List<V> list) {
         this.list = list;
         for(V object : list) {
             map.put(getKey(object), object);
@@ -72,8 +75,7 @@ public abstract class MapFacade<K, V> implements Map<K, V> {
     public V remove(Object key) {
         LOG.trace("MapFacade remove {} list is {}, map is {}", key, list, map);
         verifyIntegrity();
-        V toRemove = map.get(key);
-        list.remove(toRemove);
+        list.remove(map.get(key));
         return map.remove(key);
     }
 
@@ -88,8 +90,8 @@ public abstract class MapFacade<K, V> implements Map<K, V> {
     }
 
     @Override
-    public void putAll(Map<? extends K, ? extends V> m) {
-        m.forEach((k, v) -> put(k, v));
+    public void putAll(@Nonnull Map<? extends K, ? extends V> m) {
+        m.forEach(this::put);
     }
 
     @Override
@@ -99,19 +101,78 @@ public abstract class MapFacade<K, V> implements Map<K, V> {
     }
 
     @Override
+    @Nonnull
     public Set<K> keySet() {
         return map.keySet();
     }
 
     @Override
+    @Nonnull
     public Collection<V> values() {
         return map.values();
     }
 
     @Override
+    @Nonnull
     public Set<Map.Entry<K, V>> entrySet() {
         verifyIntegrity();
-        return map.entrySet();
+        return new EntrySet(map.entrySet());
     }
 
+    private final class EntrySet extends AbstractSet<Entry<K,V>> {
+
+        private Set<Map.Entry<K, V>> mapEntrySet;
+
+        private EntrySet(Set<Map.Entry<K, V>> mapEntrySet) {
+            this.mapEntrySet = mapEntrySet;
+        }
+
+        public Iterator<Entry<K,V>> iterator() {
+            return new EntryIterator(mapEntrySet);
+        }
+
+        public boolean contains(Object o) {
+            return mapEntrySet.contains(o);
+        }
+
+        public boolean remove(Object o) {
+            if (mapEntrySet.remove(o)) {
+                return list.remove(o);
+            }
+            return false;
+        }
+
+        public int size() {
+            return mapEntrySet.size();
+        }
+
+        public void clear() {
+            mapEntrySet.clear();
+            list.clear();
+        }
+    }
+
+    private class EntryIterator implements Iterator<Map.Entry<K,V>> {
+
+        private Iterator<Map.Entry<K, V>> mapIterator;
+        private Map.Entry<K,V> last;
+
+        private EntryIterator(Set<Map.Entry<K, V>> entrySet) {
+            this.mapIterator = entrySet.iterator();
+        }
+
+        public final boolean hasNext() {
+            return mapIterator.hasNext();
+        }
+
+        public Map.Entry<K,V> next() {
+            this.last = mapIterator.next();
+            return last;
+        }
+
+        public void remove() {
+            mapIterator.remove();
+            list.remove(last.getValue());
+        }
+    }
 }
