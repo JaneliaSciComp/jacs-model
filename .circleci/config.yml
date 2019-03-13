@@ -1,0 +1,36 @@
+version: 2
+jobs:
+  build:
+
+    branches:
+      only:
+       - master
+       - release
+   
+    working_directory: ~/jacs-model
+
+    docker:
+      - image: circleci/openjdk:8u171-jdk
+
+    environment:
+      TERM: dumb
+
+    steps:
+
+      - checkout
+
+      - restore_cache:
+          key: jacs-model-c1-{{ checksum "build.gradle" }}
+      
+      - run: ./gradlew --no-daemon jar test
+      
+      - save_cache:
+          key: jacs-model-c1-{{ checksum "build.gradle" }}
+          paths:
+            - ~/.gradle
+
+      - store_test_results:
+          paths: 
+            - jacs-model-core/build/test-results/test
+            - jacs-model-rendering/build/test-results/test
+      

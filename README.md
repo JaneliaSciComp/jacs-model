@@ -1,15 +1,23 @@
 # JACS Domain Model and DAOs
 
-## Build 
+[![CircleCI](https://circleci.com/gh/JaneliaSciComp/jacs-model.svg?style=svg)](https://circleci.com/gh/JaneliaSciComp/jacs-model)
+
+## Build
 
 Run the unit tests:
-`gradlew test`
+```
+/gradlew test
+```
 
 Build the jar:
-`gradlew jar`
+```
+./gradlew jar
+```
 
 Publish the jar to the local maven repo:
-`gradle publishToMavenLocal`
+```
+gradle publishToMavenLocal
+```
 
 ## Summary
 
