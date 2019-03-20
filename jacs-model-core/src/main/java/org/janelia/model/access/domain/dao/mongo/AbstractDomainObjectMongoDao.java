@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
 import org.janelia.model.domain.DomainObject;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,6 +41,21 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
             return find(Filters.eq("ownerKey", subjectKey), null, offset, length, getEntityType());
         } else {
             return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public List<T> findEntitiesReadableBySubjectKey(@Nullable String subjectKey, long offset, int length) {
+        if (StringUtils.isNotBlank(subjectKey)) {
+            return find(
+                    MongoDaoHelper.createFilterCriteria(
+                            permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
+                    null,
+                    0,
+                    -1,
+                    getEntityType());
+        } else {
+            return find(null, null, offset, length, getEntityType());
         }
     }
 

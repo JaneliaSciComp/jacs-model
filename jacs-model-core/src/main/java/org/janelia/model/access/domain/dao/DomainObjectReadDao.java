@@ -3,6 +3,7 @@ package org.janelia.model.access.domain.dao;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -34,5 +35,13 @@ public interface DomainObjectReadDao<T extends DomainObject> extends ReadDao<T, 
      * @return
      */
     List<T> findOwnedEntitiesBySubjectKey(String subjectKey, long offset, int length);
+
+    /**
+     * Find domain entities readable by the provided subjectKey. If no subjectKey is provided it returns all entities.
+     *
+     * @param subjectKey
+     * @return
+     */
+    List<T> findEntitiesReadableBySubjectKey(@Nullable String subjectKey, long offset, int length);
 
 }

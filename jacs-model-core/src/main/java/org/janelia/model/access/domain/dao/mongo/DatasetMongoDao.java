@@ -1,6 +1,8 @@
 package org.janelia.model.access.domain.dao.mongo;
 
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.domain.sample.DataSet;
 
@@ -54,5 +56,19 @@ public class DatasetMongoDao extends AbstractDomainObjectMongoDao<DataSet> imple
                         return "Reader";
                     }
                 }));
+    }
+
+    @Override
+    public List<DataSet> getDatasetsByOwnersAndSageSyncFlag(List<String> ownerKeys, Boolean sageSyncFlag) {
+        return find(
+                MongoDaoHelper.createFilterCriteria(
+                        CollectionUtils.isEmpty(ownerKeys) ? null : Filters.in("ownerKey", ownerKeys),
+                        sageSyncFlag != null && sageSyncFlag
+                                ? Filters.eq("sageSync", true)
+                                : Filters.or(Filters.eq("sageSync", false), Filters.exists("sageSync", false))),
+                null,
+                0,
+                -1,
+                getEntityType());
     }
 }
