@@ -437,7 +437,6 @@ public class ImageUtils {
             textureCoordX = 1.0f;
         }
         int height = rgbImage.getHeight();
-        int border = DEFAULT_BORDER;
         int srgb = colorModel.getColorSpace().isCS_sRGB() ? 1 : 0;
         int channelCount = colorModel.getNumComponents();
         int perChannelBitDepth = colorModel.getPixelSize() / channelCount;
@@ -459,13 +458,14 @@ public class ImageUtils {
         dataBytesBuffer.putInt(width);
         dataBytesBuffer.putInt(usedWidth);
         dataBytesBuffer.putInt(height);
-        dataBytesBuffer.putInt(border);
+        dataBytesBuffer.putInt(DEFAULT_BORDER);
         dataBytesBuffer.putInt(srgb);
         dataBytesBuffer.putInt(bitDepth);
         dataBytesBuffer.putInt(channelCount);
         dataBytesBuffer.putFloat(textureCoordX);
 
-        dataBytesBuffer.order(ByteOrder.nativeOrder());
+        ByteBuffer pixelsBuffer = ByteBuffer.wrap(dataBytesArray, dataBytesBuffer.position(), dataBytesBuffer.capacity() - dataBytesBuffer.position());
+        pixelsBuffer.order(ByteOrder.nativeOrder());
 
         Raster raster = rgbImage.getData();
 
@@ -473,7 +473,7 @@ public class ImageUtils {
         int padData[] = new int[channelCount]; // color for edge padding
         final boolean is16Bit = bitDepth == 16;
         if (is16Bit) {
-            ShortBuffer shortDataBuffer = dataBytesBuffer.asShortBuffer(); // for 16-bit case
+            ShortBuffer shortPixelsBuffer = pixelsBuffer.asShortBuffer(); // for 16-bit case
             for (int y = 0; y < height; y++) {
                 // Choose ragged right edge pad color from right
                 // edge of used portion of scan line.
@@ -482,11 +482,11 @@ public class ImageUtils {
                     if (x < usedWidth) { // used portion of scan line
                         raster.getPixel(x, y, pixelData);
                         for (int i : pixelData) {
-                            shortDataBuffer.put((short)i);
+                            shortPixelsBuffer.put((short)i);
                         }
                     } else { // (not zero) pad right edge
                         for (int i : padData) {
-                            shortDataBuffer.put((short)i);
+                            shortPixelsBuffer.put((short)i);
                         }
                     }
                 }
@@ -498,11 +498,11 @@ public class ImageUtils {
                     if (x < usedWidth) {
                         raster.getPixel(x, y, pixelData);
                         for (int i : pixelData) {
-                            dataBytesBuffer.put((byte)i);
+                            pixelsBuffer.put((byte)i);
                         }
                     } else { // zero pad right edge
                         for (int i : padData) {
-                            dataBytesBuffer.put((byte)i);
+                            pixelsBuffer.put((byte)i);
                         }
                     }
                 }
