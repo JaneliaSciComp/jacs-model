@@ -1,4 +1,4 @@
-package org.janelia.model.security;
+package org.janelia.model.security.dto;
 
 /**
  * Created by schauderd on 3/29/19.
