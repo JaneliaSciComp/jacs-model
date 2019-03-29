@@ -2,6 +2,8 @@ package org.janelia.model.access.domain.dao;
 
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
+import org.janelia.model.security.Group;
+import org.janelia.model.security.UserGroupRole;
 
 import java.util.List;
 import java.util.Map;
@@ -34,4 +36,11 @@ public interface SubjectDao extends ReadDao<Subject, Long>, WriteDao<Subject, Lo
      * @return
      */
     User setUserPassword(User user, String passwordHash);
+
+    boolean updateUserGroupRoles(User user, Set<UserGroupRole> userGroupRoles);
+
+    Group createGroup(String groupKey, String fullName, String ldapName);
+
+    boolean updateUserProperty(User user, String property, String value);
+
 }
