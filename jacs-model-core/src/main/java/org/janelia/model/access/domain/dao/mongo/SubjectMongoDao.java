@@ -9,13 +9,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SubjectDao;
-import org.janelia.model.security.Subject;
-import org.janelia.model.security.User;
+import org.janelia.model.security.*;
 import org.janelia.model.security.util.SubjectUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.beans.PropertyDescriptor;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,6 +59,65 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
             user.setPassword(passwordHash);
             return user;
         }
+    }
+
+    @Override
+    public boolean updateUserProperty(User user, String property, String value) {
+
+        UpdateOptions updateOptions = new UpdateOptions();
+        updateOptions.upsert(false);
+        DaoUpdateResult updateResult = MongoDaoHelper.updateMany(
+                mongoCollection,
+                MongoDaoHelper.createFilterCriteria(
+                        MongoDaoHelper.createFilterById(user.getId())
+                ),
+                ImmutableMap.of(
+                        property, new SetFieldValueHandler<>(value)
+                ),
+                updateOptions);
+        if (updateResult.getEntitiesFound() == 0) {
+            // no entity was found for update - this usually happens if the user does not have write permissions
+            return false;
+        } else {
+            try {
+                new PropertyDescriptor(property, User.class).getWriteMethod().invoke(user, value);
+            } catch (Exception e) {
+                throw new RuntimeException ("Problem try to change property" + property + " on User");
+            }
+            return true;
+        }
+    }
+
+    @Override
+    public boolean updateUserGroupRoles(User user, Set<UserGroupRole> groupRoles) {
+
+        UpdateOptions updateOptions = new UpdateOptions();
+        updateOptions.upsert(false);
+        DaoUpdateResult updateResult = MongoDaoHelper.updateMany(
+                mongoCollection,
+                MongoDaoHelper.createFilterCriteria(
+                        MongoDaoHelper.createFilterById(user.getId())
+                ),
+                ImmutableMap.of(
+                        "userGroupRoles", new SetFieldValueHandler<>(groupRoles)
+                ),
+                updateOptions);
+        if (updateResult.getEntitiesFound() == 0) {
+            // no entity was found for update - this usually happens if the user does not have write permissions
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public Group createGroup(String groupKey, String fullName, String ldapName) {
+        Group newGroup = new Group();
+        newGroup.setLdapGroupName(ldapName);
+        newGroup.setFullName(groupKey);
+        newGroup.setKey(groupKey);
+        save(newGroup);
+        newGroup = (Group) findByKey(groupKey);
+        return newGroup;
     }
 
     @Override
