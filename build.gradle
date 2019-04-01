@@ -24,9 +24,6 @@ subprojects {
             maven {
                 url "https://raw.githubusercontent.com/JaneliaSciComp/mvn-repo/master/repository/"
             }
-            flatDir {
-                dirs "${rootDir}/projectrepository"
-            }
         }
 
         compileJava {
