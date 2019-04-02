@@ -1,9 +1,6 @@
 project(":jacs-model-core") {
     dependencies {
-        compile SLF4J_LIB,
-                LOGBACK_CORE_LIB,
-                LOGBACK_CLASSIC_LIB,
-                JAVAX_INJECT_API_LIB,
+        compile JAVAX_INJECT_API_LIB,
                 PROTOSTUFF_API_LIB,
                 PROTOSTUFF_CORE_LIB,
                 PROTOSTUFF_RUNTIME_LIB,
