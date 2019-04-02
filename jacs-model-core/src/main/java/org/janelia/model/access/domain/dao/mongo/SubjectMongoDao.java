@@ -113,7 +113,7 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     public Group createGroup(String groupKey, String fullName, String ldapName) {
         Group newGroup = new Group();
         newGroup.setLdapGroupName(ldapName);
-        newGroup.setFullName(groupKey);
+        newGroup.setFullName(fullName);
         newGroup.setKey(groupKey);
         save(newGroup);
         newGroup = (Group) findByKey(groupKey);
