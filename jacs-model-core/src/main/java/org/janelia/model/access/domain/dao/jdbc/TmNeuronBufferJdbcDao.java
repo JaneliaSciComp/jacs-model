@@ -116,7 +116,7 @@ public class TmNeuronBufferJdbcDao implements TmNeuronBufferDao {
             while (rs.next()) {
                 Long neuronId = rs.getLong(1);
                 InputStream neuronPoints = rs.getBinaryStream(2);
-                neuronStreams.put(neuronId, neuronPoints);
+                if (neuronPoints != null) neuronStreams.put(neuronId, neuronPoints);
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
