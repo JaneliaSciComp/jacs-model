@@ -24,6 +24,19 @@ To publish the jar to the remote repo you have to provide your maven repo creden
 gradle -PmavenRepoUser=YourUserName -PmavenRepoPassword=YourPassword publish
 ```
 
+Note: If the publish fails with a 'sun.security.validator.ValidatorException: PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target' exception you will have to add Janelia wildcard certificate to your Java trusted store and then kill all running gradle daemons.
+
+If you already have the certificate locally on your file system, install it using the keytool command, as show below otherwise first download the certificate using 'gnutls'.
+```
+gnutls-cli nexus.janelia.org --print-cert
+```
+
+In the example below 'cert.crt' is the Janelia wildcard certificate. When prompted for the password, if you have not changed your keystore password, the default is 'changeit'.
+
+```
+sudo keytool -importcert -alias JaneliaWildcard -file cert.crt -keystore /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/security/cacerts
+```
+
 ## Summary
 
 This module contains common domain models and DAOs which can be used to access data stored in the JACS databases.
