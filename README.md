@@ -19,6 +19,11 @@ Publish the jar to the local maven repo:
 gradle publishToMavenLocal
 ```
 
+To publish the jar to the remote repo you have to provide your maven repo credentials as gradle properties, e.g.
+```
+gradle -PmavenRepoUser=YourUserName -PmavenRepoPassword=YourPassword publish
+```
+
 ## Summary
 
 This module contains common domain models and DAOs which can be used to access data stored in the JACS databases.

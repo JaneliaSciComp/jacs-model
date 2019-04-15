@@ -8,7 +8,7 @@ allprojects {
     apply plugin: 'maven-publish'
 
     group = 'org.janelia.jacs-model'
-    version = '2.0.2'
+    version = '2.0.2-SNAPSHOT'
 }
 
 subprojects {
@@ -47,6 +47,7 @@ subprojects {
 
     task sourceJar(type: Jar) {
         from sourceSets.main.allJava
+        archiveClassifier = 'sources'
     }
 
     test {
@@ -61,18 +62,25 @@ subprojects {
         publications {
             mavenJar(MavenPublication) {
                 from components.java
-                artifact sourceJar {
-                    classifier 'sources'
-                }
+                artifact sourceJar
             }
+        }
+        ext {
+           if (!project.hasProperty('mavenRepoUser')) {
+              mavenRepoUser = ''
+           }
+           if (!project.hasProperty('mavenRepoPassword')) {
+              mavenRepoPassword = ''
+           }
         }
         repositories {
             maven {
-                // change to point to your repo, e.g. http://my.org/repo
-                url "http://maven.int.janelia.org/nexus/content/repositories/thirdparty"
+                def releasesRepoUrl = 'https://nexus.janelia.org/repository/maven-releases'
+                def snapshotsRepoUrl = 'https://nexus.janelia.org/repository/maven-snapshots'
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
                 credentials {
-                    username "deployment"
-                    password "deploymentpw"
+                    username "${mavenRepoUser}"
+                    password "${mavenRepoPassword}"
                 }
             }
         }
