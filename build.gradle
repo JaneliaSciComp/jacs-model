@@ -4,9 +4,7 @@ plugins {
 
 allprojects {
     apply plugin: 'java'
-    apply plugin: 'idea'
     apply plugin: 'maven-publish'
-
     group = 'org.janelia.jacs-model'
     version = '2.0.2'
 }

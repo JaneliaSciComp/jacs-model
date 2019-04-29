@@ -1,7 +1,7 @@
 dependencies {
     project.ext {
         // logging
-        SLF4J_VERSION = "1.7.21"
+        SLF4J_VERSION = "1.7.26"
         LOGBACK_VERSION = "1.1.7"
         SLF4J_LIB = "org.slf4j:slf4j-api:${SLF4J_VERSION}"
         LOGBACK_CORE_LIB = "ch.qos.logback:logback-core:${LOGBACK_VERSION}"

@@ -27,7 +27,7 @@ import org.junit.Test;
 public class DomainObjectTests {
 
     @Test
-    public void testGetType() throws Exception {
+    public void testGetType() {
         Assert.assertEquals("Alignment Board",(new AlignmentBoard()).getType());
         Assert.assertEquals("Alignment Context", (new AlignmentContext()).getType());
         Assert.assertEquals("Annotation",(new Annotation()).getType());
@@ -47,18 +47,14 @@ public class DomainObjectTests {
     }
     
     @Test
-    public void testGetSearchType() throws Exception {
+    public void testGetSearchType() {
         Assert.assertEquals(null,(new AlignmentBoard()).getSearchType());
         Assert.assertEquals(null,(new Annotation()).getSearchType());
         Assert.assertEquals(null,(new CompartmentSet()).getSearchType());
         Assert.assertEquals("dataSet",(new DataSet()).getSearchType());
         Assert.assertEquals("filter",(new Filter()).getSearchType());
-        //Assert.assertEquals("flyLine",(new FlyLine()).getSearchType());
         Assert.assertEquals("image",(new Image()).getSearchType());
         Assert.assertEquals("lsmImage",(new LSMImage()).getSearchType());
-        //Assert.assertEquals("release",(new LineRelease()).getSearchType());
-        //Assert.assertEquals("fragment",(new NeuronFragment()).getSearchType());
-        //Assert.assertEquals("fragment",(new CuratedNeuron()).getSearchType());
         Assert.assertEquals("sample",(new Sample()).getSearchType());
         Assert.assertEquals("treeNode",(new TreeNode()).getSearchType());
         Assert.assertEquals("treeNode",(new Workspace()).getSearchType());
