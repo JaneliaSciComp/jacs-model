@@ -1,19 +1,14 @@
 package org.janelia.model.access.domain;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.LinkedHashMultiset;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Ordering;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
@@ -45,15 +40,19 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.LinkedHashMultiset;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Ordering;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility methods for dealing with the domain model. 
@@ -393,11 +392,16 @@ public class DomainUtils {
     }
 
 
+    public static Set<Class<?>> getDomainClassesAnnotatedWith(final Class<? extends java.lang.annotation.Annotation> annotationClass) {
+        Reflections reflections = new Reflections(DOMAIN_OBJECT_PACKAGE_NAME);
+        return reflections.getTypesAnnotatedWith(annotationClass);
+    }
+
     /**
      * Get all the Search Mappings for all domain objects.
      */
     @SuppressWarnings("unchecked")
-    public static  HashMap<String, List<String>>  getAllSearchAttributes() {
+    public static Map<String, List<String>>  getAllSearchAttributes() {
         HashMap<String, List<String>> hmap = new HashMap<>();
 
 

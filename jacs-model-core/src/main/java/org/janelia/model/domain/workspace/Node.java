@@ -15,9 +15,9 @@ import java.util.List;
  */
 public interface Node extends DomainObject, IsParent {
 
-    public List<Reference> getChildren();
+    List<Reference> getChildren();
 
-    public void setChildren(List<Reference> children);
+    void setChildren(List<Reference> children);
 
     /**
      * Return true if the given tree node has the specified domain object as a child.

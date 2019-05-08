@@ -6,7 +6,7 @@ import org.janelia.model.domain.workspace.Workspace;
 import java.util.List;
 
 /**
- * TreeNodeDao data access object
+ * TreeNode data access object
  */
-public interface TreeNodeDao<T extends TreeNode> extends DomainObjectDao<T> {
+public interface TreeNodeDao extends NodeDao<TreeNode> {
 }

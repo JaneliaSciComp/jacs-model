@@ -179,6 +179,17 @@ class MongoDaoHelper {
         }
     }
 
+    static <T, I> long update(MongoCollection<T> mongoCollection, I entityId, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+        if (entityId == null) {
+            return 0;
+        } else {
+            UpdateOptions updateOptions = new UpdateOptions();
+            updateOptions.upsert(false);
+            DaoUpdateResult result = updateMany(mongoCollection, createFilterById(entityId), fieldsToUpdate, updateOptions);
+            return result.getEntitiesAffected();
+        }
+    }
+
     static <T> long deleteMatchingRecords(MongoCollection<T> mongoCollection, Bson matchingCriteria) {
         if (matchingCriteria == null) {
             throw new IllegalArgumentException("An empty matching criteria will delete all records");

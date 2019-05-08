@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Workspace data access object
  */
-public interface WorkspaceNodeDao extends TreeNodeDao<Workspace> {
+public interface WorkspaceNodeDao extends NodeDao<Workspace> {
     List<Workspace> getWorkspaceNodesAccessibleBySubjectGroups(String subjectKey, long offset, int length);
     List<Workspace> getWorkspaceNodesOwnedBySubjectKey(String subjectKey);
 }
