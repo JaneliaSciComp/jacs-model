@@ -26,6 +26,10 @@ dependencies {
         JONGO_LIB = "org.jongo:jongo:1.4.0"
         HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
 
+        // search
+        SOLR_VERSION = "3.6.2"
+        SOLR_SEARCH_LIB = "org.apache.solr:solr-solrj:${SOLR_VERSION}"
+	
         // apache commons
         COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:3.5"
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:4.1"
@@ -52,10 +56,15 @@ dependencies {
         JAMA_LIB = "gov.nist.math:jama:1.0.3"
 
         // testing
-        JUNIT_LIB = "junit:junit:4.12"
-
         ASSERTJ_VERSION = "3.11.1"
+        JUNIT_VERSION = "4.12"
+        HAMCREST_VERSION = "2.0.0.0"
+        MOCKITO_VERSION = "2.8.9"
+
         ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
+	JUNIT_LIB = "junit:junit:${JUNIT_VERSION}"
+        HAMCREST_LIB = "org.hamcrest:java-hamcrest:${HAMCREST_VERSION}"
+        MOCKITO_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
     }
     
     compile COMMONS_LANG_LIB,
@@ -65,7 +74,9 @@ dependencies {
             JAI_CODEC_LIB,
             SLF4J_LIB
 
-    testCompile JUNIT_LIB,
-                ASSERTJ_LIB
+    testCompile ASSERTJ_LIB,
+                HAMCREST_LIB,
+                JUNIT_LIB,
+                MOCKITO_LIB
 
 }

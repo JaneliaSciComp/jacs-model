@@ -3,7 +3,8 @@ project(":jacs-model-access") {
         compile project(":jacs-model-core"),
                 JACKSON_DATABIND_LIB,
                 JONGO_LIB,
-                MONGODB_DRIVER_LIB
+                MONGODB_DRIVER_LIB,
+                SOLR_SEARCH_LIB
 
         compile (HIBERNATE_LIB) {
             exclude group: 'javax.transaction'
