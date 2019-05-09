@@ -1,4 +1,5 @@
 rootProject.name = 'jacs-model'
 
 include 'jacs-model-core'
+include 'jacs-model-access'
 include 'jacs-model-rendering'

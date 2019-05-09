@@ -1,12 +1,12 @@
 project(":jacs-model-core") {
     dependencies {
         compile JAVAX_INJECT_API_LIB,
+                JONGO_LIB,
                 PROTOSTUFF_API_LIB,
                 PROTOSTUFF_CORE_LIB,
                 PROTOSTUFF_RUNTIME_LIB,
                 REFLECTIONS_LIB,
                 MONGODB_DRIVER_LIB,
-                JONGO_LIB,
                 JACKSON_CORE_LIB,
                 JACKSON_ANNOTATIONS_LIB,
                 JAMA_LIB
@@ -14,7 +14,5 @@ project(":jacs-model-core") {
         compile (HIBERNATE_LIB) {
             exclude group: 'javax.transaction'
         }
-
-        testCompile JACKSON_DATATYPE_JODA_LIB
     }
 }

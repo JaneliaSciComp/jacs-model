@@ -8,8 +8,6 @@ import org.janelia.model.domain.ontology.OntologyTerm;
 
 import java.util.List;
 
-import static org.janelia.model.access.domain.DomainUtils.abbr;
-
 /**
  * Created by schauderd on 8/24/15.
  */

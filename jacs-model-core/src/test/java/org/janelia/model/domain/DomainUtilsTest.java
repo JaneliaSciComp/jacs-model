@@ -1,11 +1,8 @@
 package org.janelia.model.domain;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Sets;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.enums.SubjectRole;
 import org.janelia.model.domain.gui.search.Filter;
@@ -19,19 +16,19 @@ import org.janelia.model.domain.sample.LSMSummaryResult;
 import org.janelia.model.domain.sample.NeuronFragment;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.sample.SampleProcessingResult;
+import org.janelia.model.domain.workspace.TreeNode;
+import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
-import org.janelia.model.access.domain.DomainObjectAttribute;
-import org.janelia.model.access.domain.DomainUtils;
-import org.janelia.model.domain.workspace.TreeNode;
-import org.janelia.model.domain.workspace.Workspace;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Sets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests for the DomainUtils utility class.

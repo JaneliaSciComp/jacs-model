@@ -1,15 +1,14 @@
 package org.janelia.model.domain.sample;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-
-import org.janelia.model.access.domain.DomainUtils;
-import org.janelia.model.access.domain.SampleUtils;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Ordering;
 import org.janelia.model.domain.AbstractDomainObject;
+import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.SampleUtils;
 import org.janelia.model.domain.interfaces.IsParent;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SAGEAttribute;
@@ -17,11 +16,11 @@ import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchType;
 import org.janelia.model.util.ModelStringUtil;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Ordering;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
 
 /**
  * All the processing results of a particular specimen. Uniqueness of a Sample is determined by a combination 

@@ -1,16 +1,15 @@
 package org.janelia.model.domain.ontology;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.janelia.model.access.domain.DomainUtils;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.DomainObject;
+import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * An ontology is a hierarchy of terms that can be applied to objects as annotations.
@@ -65,8 +64,8 @@ public class Ontology extends OntologyTerm implements DomainObject {
     }
 
     /**
-     * For use by Solr. 
-     * @see org.janelia.model.domain.AbstractDomainObject.getSubjectNames
+     * For use by Solr.
+     * @see org.janelia.model.domain.AbstractDomainObject.getSubjectNames()
      */
     @SearchAttribute(key="subjects",label="Subjects",display=false)
     @JsonIgnore

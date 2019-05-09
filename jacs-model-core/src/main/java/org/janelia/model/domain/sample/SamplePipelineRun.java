@@ -2,7 +2,7 @@ package org.janelia.model.domain.sample;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.interfaces.HasName;
 import org.janelia.model.domain.interfaces.HasResults;
 

@@ -1,11 +1,7 @@
 package org.janelia.model.domain;
 
-import org.janelia.model.access.domain.SampleUtils;
-import org.janelia.model.domain.sample.*;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Arrays;
 
 /**
  * Tests for the Sample domain model. 

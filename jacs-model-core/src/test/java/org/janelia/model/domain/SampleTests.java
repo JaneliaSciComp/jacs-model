@@ -1,7 +1,5 @@
 package org.janelia.model.domain;
 
-import java.util.Arrays;
-
 import org.janelia.model.domain.sample.LSMSummaryResult;
 import org.janelia.model.domain.sample.NeuronSeparation;
 import org.janelia.model.domain.sample.ObjectiveSample;
@@ -12,6 +10,8 @@ import org.janelia.model.domain.sample.SamplePipelineRun;
 import org.janelia.model.domain.sample.SampleProcessingResult;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 /**
  * Tests for the Sample domain model. 

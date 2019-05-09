@@ -2,7 +2,7 @@ package org.janelia.model.domain.tiledMicroscope;
 
 import java.util.List;
 
-import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.domain.DomainUtils;
 
 /**
  * DTO for a bulk update to many neurons at once.

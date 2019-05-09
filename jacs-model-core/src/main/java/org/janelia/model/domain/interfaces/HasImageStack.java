@@ -1,7 +1,7 @@
 package org.janelia.model.domain.interfaces;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
 
 /**
