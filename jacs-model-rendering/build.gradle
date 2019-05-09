@@ -1,11 +1,10 @@
 project(":jacs-model-rendering") {
     dependencies {
-        compile JAI_CORE_LIB,
-                JAI_CODEC_LIB,
-                JAVAX_INJECT_API_LIB,
-                JACKSON_DATABIND_LIB,
-                JACKSON_DATA_YML_LIB,
-                JAX_RS_JERSEY_CLIENT_LIB,
-                JAX_RS_JERSEY_MEDIA_JSON_LIB
+        implementation JAI_CORE_LIB,
+                       JAI_CODEC_LIB,
+                       JACKSON_DATABIND_LIB,
+                       JACKSON_DATA_YML_LIB,
+                       JAX_RS_JERSEY_CLIENT_LIB,
+                       JAX_RS_JERSEY_MEDIA_JSON_LIB
     }
 }

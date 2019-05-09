@@ -29,7 +29,7 @@ dependencies {
         // search
         SOLR_VERSION = "3.6.2"
         SOLR_SEARCH_LIB = "org.apache.solr:solr-solrj:${SOLR_VERSION}"
-	
+        
         // apache commons
         COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:3.5"
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:4.1"
@@ -62,21 +62,21 @@ dependencies {
         MOCKITO_VERSION = "2.8.9"
 
         ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
-	JUNIT_LIB = "junit:junit:${JUNIT_VERSION}"
+        JUNIT_LIB = "junit:junit:${JUNIT_VERSION}"
         HAMCREST_LIB = "org.hamcrest:java-hamcrest:${HAMCREST_VERSION}"
         MOCKITO_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
     }
-    
-    compile COMMONS_LANG_LIB,
-            COMMONS_COLLECTIONS_LIB,
-            GUAVA_LIB,
-            JAI_CORE_LIB,
-            JAI_CODEC_LIB,
-            SLF4J_LIB
 
-    testCompile ASSERTJ_LIB,
-                HAMCREST_LIB,
-                JUNIT_LIB,
-                MOCKITO_LIB
+    implementation COMMONS_LANG_LIB,
+                   COMMONS_COLLECTIONS_LIB,
+                   GUAVA_LIB,
+                   JAI_CORE_LIB,
+                   JAI_CODEC_LIB,
+                   SLF4J_LIB
+
+    testImplementation ASSERTJ_LIB,
+                       HAMCREST_LIB,
+                       JUNIT_LIB,
+                       MOCKITO_LIB
 
 }

@@ -18,6 +18,7 @@ import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -42,7 +43,7 @@ public class SolrConnector {
     private final SolrServer solrServer;
     private final int solrCommitDelayInMillis;
 
-    public SolrConnector(SolrServer solrServer, int solrCommitDelayInMillis) {
+    public SolrConnector(@Nullable SolrServer solrServer, int solrCommitDelayInMillis) {
         this.solrServer = solrServer;
         this.solrCommitDelayInMillis = solrCommitDelayInMillis;
     }
@@ -56,86 +57,88 @@ public class SolrConnector {
     public QueryResponse search(SolrQuery query) {
         LOG.trace("search(query={})", query.getQuery());
         if (solrServer == null) {
-            LOG.debug("SOLR search is not configured");
+            LOG.debug("SOLR is not configured");
             return new QueryResponse();
-        } else {
-            LOG.debug("Running SOLR query: {}", query);
-            try {
-                return solrServer.query(query);
-            } catch (SolrServerException e) {
-                LOG.error("Search error for {}", query, e);
-                throw new IllegalStateException(e);
-            }
+        }
+        LOG.debug("Running SOLR query: {}", query);
+        try {
+            return solrServer.query(query);
+        } catch (SolrServerException e) {
+            LOG.error("Search error for {}", query, e);
+            throw new IllegalStateException(e);
         }
     }
 
-    boolean addDocToIndex(SolrInputDocument solrDoc) {
+    public boolean addDocToIndex(SolrInputDocument solrDoc) {
         if (solrServer == null) {
+            LOG.debug("SOLR is not configured");
             return false;
-        } else {
-            try {
-                solrServer.add(solrDoc, solrCommitDelayInMillis);
-                solrServer.commit(false, false);
-                return true;
-            } catch (Exception e) {
-                LOG.error("Error while adding {} to solr index", solrDoc, e);
-                return false;
-            }
         }
-    }
-    boolean addDocsToIndex(Stream<SolrInputDocument> solrDocsStream, int batchSize) {
-        if (solrServer == null) {
+        try {
+            solrServer.add(solrDoc, solrCommitDelayInMillis);
+            solrServer.commit(false, false);
+            return true;
+        } catch (Exception e) {
+            LOG.error("Error while adding {} to solr index", solrDoc, e);
             return false;
-        } else {
-            final AtomicInteger counter = new AtomicInteger();
-            int actualBatchSize = Math.max(batchSize, 1);
-            // group documents in batches of given size to send the to solr
-            return solrDocsStream
-                    .collect(Collectors.groupingBy(solrDoc -> counter.getAndIncrement() / actualBatchSize,
-                            Collectors.collectingAndThen(Collectors.toList(), solrDocsBatch -> {
-                                try {
-                                    solrServer.add(solrDocsBatch, solrCommitDelayInMillis);
-                                    solrServer.commit(false, false);
-                                    return true;
-                                } catch (Exception e) {
-                                    LOG.error("Error while updating solr index for {}", solrDocsBatch, e);
-                                    return false;
-                                }
-                            })))
-                    .entrySet().stream()
-                    .map(e -> e.getValue())
-                    .reduce((e1, e2) -> e1 && e2)
-                    .orElse(false)
-                    ;
         }
     }
 
-    void clearIndex() {
-        if (solrServer != null) {
-            try {
-                solrServer.deleteByQuery("*:*", solrCommitDelayInMillis);
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
+    public boolean addDocsToIndex(Stream<SolrInputDocument> solrDocsStream, int batchSize) {
+        if (solrServer == null) {
+            LOG.debug("SOLR is not configured");
+            return false;
+        }
+        final AtomicInteger counter = new AtomicInteger();
+        int actualBatchSize = Math.max(batchSize, 1);
+        // group documents in batches of given size to send the to solr
+        return solrDocsStream
+                .collect(Collectors.groupingBy(solrDoc -> counter.getAndIncrement() / actualBatchSize,
+                        Collectors.collectingAndThen(Collectors.toList(), solrDocsBatch -> {
+                            try {
+                                solrServer.add(solrDocsBatch, solrCommitDelayInMillis);
+                                solrServer.commit(false, false);
+                                return true;
+                            } catch (Exception e) {
+                                LOG.error("Error while updating solr index for {}", solrDocsBatch, e);
+                                return false;
+                            }
+                        })))
+                .entrySet().stream()
+                .map(e -> e.getValue())
+                .reduce((e1, e2) -> e1 && e2)
+                .orElse(false)
+                ;
+    }
+
+    public void clearIndex() {
+        if (solrServer == null) {
+            LOG.debug("SOLR is not configured");
+            return;
+        }
+        try {
+            solrServer.deleteByQuery("*:*", solrCommitDelayInMillis);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
         }
     }
 
-    boolean removeFromIndexById(String id) {
+    public boolean removeFromIndexById(String id) {
         if (solrServer == null) {
+            LOG.debug("SOLR is not configured");
             return false;
-        } else {
-            try {
-                solrServer.deleteById(id, solrCommitDelayInMillis);
-                solrServer.commit(false, false);
-                return true;
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
+        }
+        try {
+            solrServer.deleteById(id, solrCommitDelayInMillis);
+            solrServer.commit(false, false);
+            return true;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
         }
     }
 
     @SuppressWarnings("unchecked")
-    SolrInputDocument createSolrDoc(DomainObject domainObject, Set<Long> ancestorIds) {
+    public SolrInputDocument createSolrDoc(DomainObject domainObject, Set<Long> ancestorIds) {
         SolrInputDocument solrDoc = new SolrInputDocument();
         solrDoc.setField("doc_type", SolrDocType.DOCUMENT.name(), 1.0f);
         solrDoc.setField("class", domainObject.getClass().getName(), 1.0f);
@@ -182,44 +185,42 @@ public class SolrConnector {
     }
 
     @SuppressWarnings("unchecked")
-    void addAncestorIdToAllDocs(Long ancestorDocId, List<Long> solrDocIds, int batchSize) {
-        Stream<SolrInputDocument> solrDocsStream = searchByDocIds(solrDocIds, batchSize)
-                .map(solrDoc -> ClientUtils.toSolrInputDocument(solrDoc))
-                .map(solrInputDoc -> {
-                    Collection<Long> ancestorIds;
-                    SolrInputField field = solrInputDoc.getField("ancestor_ids");
-                    if (field == null || field.getValue() == null) {
-                        ancestorIds = new ArrayList<>();
-                    } else {
-                        ancestorIds = (Collection<Long>) field.getValue();
-                    }
-                    ancestorIds.add(ancestorDocId);
-                    solrInputDoc.setField("ancestor_ids", ancestorIds, 0.2f);
-                    return solrInputDoc;
-                })
-                ;
-        addDocsToIndex(solrDocsStream, batchSize);
+    public void addAncestorIdToAllDocs(Long ancestorDocId, List<Long> solrDocIds, int batchSize) {
+        if (solrServer != null) {
+            Stream<SolrInputDocument> solrDocsStream = searchByDocIds(solrDocIds, batchSize)
+                    .map(solrDoc -> ClientUtils.toSolrInputDocument(solrDoc))
+                    .map(solrInputDoc -> {
+                        Collection<Long> ancestorIds;
+                        SolrInputField field = solrInputDoc.getField("ancestor_ids");
+                        if (field == null || field.getValue() == null) {
+                            ancestorIds = new ArrayList<>();
+                        } else {
+                            ancestorIds = (Collection<Long>) field.getValue();
+                        }
+                        ancestorIds.add(ancestorDocId);
+                        solrInputDoc.setField("ancestor_ids", ancestorIds, 0.2f);
+                        return solrInputDoc;
+                    });
+            addDocsToIndex(solrDocsStream, batchSize);
+        }
     }
 
     private Stream<SolrDocument> searchByDocIds(List<Long> solrDocIds, int batchSize) {
-        if (solrServer == null) {
-            LOG.debug("SOLR server is not setup");
-            return Stream.of();
-        }
         if (CollectionUtils.isEmpty(solrDocIds)) {
             return Stream.of();
+        } else {
+            final AtomicInteger counter = new AtomicInteger();
+            Collection<List<Long>> solrDocIdsPartitions = batchSize > 0
+                    ? solrDocIds.stream().collect(Collectors.groupingBy(docId -> counter.getAndIncrement() / batchSize)).values()
+                    : Collections.singleton(solrDocIds);
+            return solrDocIdsPartitions.stream()
+                    .map(partition -> partition.stream().map(id -> "id:" + id.toString()).reduce((id1, id2) -> id1 + " OR " + id2).orElse(null))
+                    .filter(queryStr -> queryStr != null)
+                    .map(SolrQuery::new)
+                    .map(this::search)
+                    .flatMap(queryResponse -> queryResponse.getResults().stream())
+                    ;
         }
-        final AtomicInteger counter = new AtomicInteger();
-        Collection<List<Long>> solrDocIdsPartitions = batchSize > 0
-                ? solrDocIds.stream().collect(Collectors.groupingBy(docId -> counter.getAndIncrement() / batchSize)).values()
-                : Collections.singleton(solrDocIds);
-        return solrDocIdsPartitions.stream()
-                .map(partition -> partition.stream().map(id -> "id:" + id.toString()).reduce((id1, id2) -> id1 + " OR " + id2).orElse(null))
-                .filter(queryStr -> queryStr != null)
-                .map(SolrQuery::new)
-                .map(this::search)
-                .flatMap(queryResponse -> queryResponse.getResults().stream())
-                ;
     }
 
 }
