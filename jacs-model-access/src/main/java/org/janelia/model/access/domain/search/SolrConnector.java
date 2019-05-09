@@ -12,6 +12,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.SolrInputField;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainUtils;
+import org.janelia.model.domain.searchable.SearchableDocType;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.util.ReflectionHelper;
 import org.reflections.ReflectionUtils;
@@ -140,7 +141,7 @@ public class SolrConnector {
     @SuppressWarnings("unchecked")
     public SolrInputDocument createSolrDoc(DomainObject domainObject, Set<Long> ancestorIds) {
         SolrInputDocument solrDoc = new SolrInputDocument();
-        solrDoc.setField("doc_type", SolrDocType.DOCUMENT.name(), 1.0f);
+        solrDoc.setField("doc_type", SearchableDocType.DOCUMENT.name(), 1.0f);
         solrDoc.setField("class", domainObject.getClass().getName(), 1.0f);
         solrDoc.setField("collection", DomainUtils.getCollectionName(domainObject), 1.0f);
         solrDoc.setField("ancestor_ids", new ArrayList<>(ancestorIds), 0.2f);
