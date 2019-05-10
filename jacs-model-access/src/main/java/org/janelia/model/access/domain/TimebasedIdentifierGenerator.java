@@ -77,14 +77,12 @@ public class TimebasedIdentifierGenerator implements IdentifierGenerator {
     private static final Long CURRENT_TIME_OFFSET = 921700000000L;
     public static final String PROPERTIES_FILE = "jacs.properties";
     public static final String DEPLOYMENT_CONTEXT_PROP = "TimebasedIdentifierGenerator.DeploymentContextNumber";
-    public static final String PROFILE_PROP = "TimebasedIdentifierGenerator.DoLog";
     private static boolean valid = true;
     private static long millisecond;
     private static long intraMillisecondCounter;
     private static long lastUid;
     private static String deploymentContextComponent;
     private static String subnetComponent;
-    //private static boolean doLog=false;
 
     static {
         try {
@@ -132,8 +130,6 @@ public class TimebasedIdentifierGenerator implements IdentifierGenerator {
 
     private static synchronized Serializable generateSync(long blockSize)
             throws HibernateException {
-        //logger.debug("Starting generation of TimebasedIdentifierGenerator uuid...");
-//        long nTimeStart = System.nanoTime();
         if (!valid) throw new HibernateException("This generator has an illegal state - last uid issued: " + lastUid);
         Long uid;
         try {
@@ -245,10 +241,7 @@ public class TimebasedIdentifierGenerator implements IdentifierGenerator {
             Properties props = new Properties();
             props.load(is);
             deploymentContext = Integer.parseInt(props.getProperty(DEPLOYMENT_CONTEXT_PROP));
-//            if (props.getProperty(PROFILE_PROP)!=null &&
-//                props.getProperty(PROFILE_PROP).toLowerCase().equals("true")) doLog=true;
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             logger.error("Error loading deployment context property " + DEPLOYMENT_CONTEXT_PROP +
                     " will look for system property...");
             String depString = System.getProperties().getProperty(DEPLOYMENT_CONTEXT_PROP);
@@ -316,7 +309,4 @@ public class TimebasedIdentifierGenerator implements IdentifierGenerator {
         return Long.parseLong(uidString, 2);
     }
 
-//    public static void main(String[] args) {
-//        System.out.println(TimebasedIdentifierGenerator.getTimestamp(1940155822617133154l));
-//    }
 }
