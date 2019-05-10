@@ -39,8 +39,8 @@ public class DomainObjectIndexer {
     public DomainObjectIndexer(SolrServer solrServer,
                                TreeNodeDao treeNodeDao,
                                int solrBatchSize,
-                               int commitDelayInMillis) {
-        this.solrConnector = new SolrConnector(solrServer, commitDelayInMillis);
+                               int solrCommitDelayInMillis) {
+        this.solrConnector = new SolrConnector(solrServer, solrCommitDelayInMillis);
         this.treeNodeDao = treeNodeDao;
         this.solrBatchSize = solrBatchSize;
     }
