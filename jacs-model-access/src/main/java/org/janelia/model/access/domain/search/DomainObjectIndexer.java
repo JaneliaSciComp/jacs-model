@@ -142,8 +142,8 @@ public class DomainObjectIndexer {
         return solrConnector.removeDocIdFromIndex(docId);
     }
 
-    public boolean removeDocumentStream(Stream<Long> docIdsStream, int batchSize) {
-        return solrConnector.removeDocIdsFromIndex(docIdsStream, batchSize);
+    public boolean removeDocumentStream(Stream<Long> docIdsStream) {
+        return solrConnector.removeDocIdsFromIndex(docIdsStream, solrBatchSize);
     }
 
     public void removeIndex() {
