@@ -80,13 +80,13 @@ public class SolrConnectorTest {
     @Test
     public void updateDocAncestors() throws Exception {
         class TestData {
-            private final Set<Long> childrenDocIds;
+            private final Set<Long> descendantIds;
             private final Long ancestorDocId;
             private final int batchSize;
             private final List<String> expectedQueries;
 
-            private TestData(Set<Long> childrenDocIds, Long ancestorDocId, int batchSize, List<String> expectedQueries) {
-                this.childrenDocIds = childrenDocIds;
+            private TestData(Set<Long> descendantIds, Long ancestorDocId, int batchSize, List<String> expectedQueries) {
+                this.descendantIds = descendantIds;
                 this.ancestorDocId = ancestorDocId;
                 this.batchSize = batchSize;
                 this.expectedQueries = expectedQueries;
@@ -120,7 +120,7 @@ public class SolrConnectorTest {
             } catch (SolrServerException e) {
                 fail(e.toString());
             }
-            solrConnector.addAncestorIdToAllDocs(td.ancestorDocId, td.childrenDocIds, td.batchSize);
+            solrConnector.updateDocsAncestors(td.descendantIds, td.ancestorDocId, td.batchSize);
             td.expectedQueries.forEach(q -> {
                 try {
                     Mockito.verify(testSolrServer).query(argThat((ArgumentMatcher<SolrQuery>) solrQuery -> solrQuery.getQuery().equals(q)));
@@ -128,15 +128,15 @@ public class SolrConnectorTest {
                     fail(e.toString());
                 }
             });
-            if (CollectionUtils.isEmpty(td.childrenDocIds)) {
+            if (CollectionUtils.isEmpty(td.descendantIds)) {
                 Mockito.verify(testSolrServer, never()).add(anyList(), eq(commitDelay));
             } else {
                 int batchSize = Math.max(1, td.batchSize);
                 int nInvocations;
-                if (batchSize == 1 || td.childrenDocIds.size() % batchSize == 0) {
-                    nInvocations = td.childrenDocIds.size() / batchSize;
+                if (batchSize == 1 || td.descendantIds.size() % batchSize == 0) {
+                    nInvocations = td.descendantIds.size() / batchSize;
                 } else {
-                    nInvocations = td.childrenDocIds.size() / batchSize + 1;
+                    nInvocations = td.descendantIds.size() / batchSize + 1;
                 }
                 Mockito.verify(testSolrServer, times(nInvocations)).add(anyList(), eq(commitDelay));
             }
