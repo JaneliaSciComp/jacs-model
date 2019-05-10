@@ -1,5 +1,6 @@
 package org.janelia.model.access.domain.search;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -186,7 +187,7 @@ public class SolrConnector {
     }
 
     @SuppressWarnings("unchecked")
-    public void addAncestorIdToAllDocs(Long ancestorDocId, List<Long> solrDocIds, int batchSize) {
+    public void addAncestorIdToAllDocs(Long ancestorDocId, Set<Long> solrDocIds, int batchSize) {
         if (solrServer != null) {
             Stream<SolrInputDocument> solrDocsStream = searchByDocIds(solrDocIds, batchSize)
                     .map(solrDoc -> ClientUtils.toSolrInputDocument(solrDoc))
@@ -206,14 +207,15 @@ public class SolrConnector {
         }
     }
 
-    private Stream<SolrDocument> searchByDocIds(List<Long> solrDocIds, int batchSize) {
+    private Stream<SolrDocument> searchByDocIds(Set<Long> solrDocIds, int batchSize) {
         if (CollectionUtils.isEmpty(solrDocIds)) {
             return Stream.of();
         } else {
             final AtomicInteger counter = new AtomicInteger();
             Collection<List<Long>> solrDocIdsPartitions = batchSize > 0
-                    ? solrDocIds.stream().collect(Collectors.groupingBy(docId -> counter.getAndIncrement() / batchSize)).values()
-                    : Collections.singleton(solrDocIds);
+                    ? solrDocIds.stream()
+                        .collect(Collectors.groupingBy(docId -> counter.getAndIncrement() / batchSize)).values()
+                    : Collections.singleton(ImmutableList.copyOf(solrDocIds));
             return solrDocIdsPartitions.stream()
                     .map(partition -> partition.stream().map(id -> "id:" + id.toString()).reduce((id1, id2) -> id1 + " OR " + id2).orElse(null))
                     .filter(queryStr -> queryStr != null)

@@ -1,6 +1,7 @@
 package org.janelia.model.access.domain.search;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -16,6 +17,7 @@ import org.mockito.Mockito;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.fail;
@@ -78,12 +80,12 @@ public class SolrConnectorTest {
     @Test
     public void updateDocAncestors() throws Exception {
         class TestData {
-            private final List<Long> childrenDocIds;
+            private final Set<Long> childrenDocIds;
             private final Long ancestorDocId;
             private final int batchSize;
             private final List<String> expectedQueries;
 
-            private TestData(List<Long> childrenDocIds, Long ancestorDocId, int batchSize, List<String> expectedQueries) {
+            private TestData(Set<Long> childrenDocIds, Long ancestorDocId, int batchSize, List<String> expectedQueries) {
                 this.childrenDocIds = childrenDocIds;
                 this.ancestorDocId = ancestorDocId;
                 this.batchSize = batchSize;
@@ -93,9 +95,9 @@ public class SolrConnectorTest {
 
         TestData[] testData = new TestData[] {
                 new TestData(null, 10L, 0, Collections.emptyList()),
-                new TestData(Arrays.asList(1L, 2L, 3L, 4L), 10L, 0, Arrays.asList("id:1 OR id:2 OR id:3 OR id:4")),
-                new TestData(Arrays.asList(1L, 2L, 3L, 4L), 10L, 3, Arrays.asList("id:1 OR id:2 OR id:3", "id:4")),
-                new TestData(Arrays.asList(1L, 2L, 3L, 4L), 10L, 2, Arrays.asList("id:1 OR id:2", "id:3 OR id:4"))
+                new TestData(ImmutableSet.of(1L, 2L, 3L, 4L), 10L, 0, Arrays.asList("id:1 OR id:2 OR id:3 OR id:4")),
+                new TestData(ImmutableSet.of(1L, 2L, 3L, 4L), 10L, 3, Arrays.asList("id:1 OR id:2 OR id:3", "id:4")),
+                new TestData(ImmutableSet.of(1L, 2L, 3L, 4L), 10L, 2, Arrays.asList("id:1 OR id:2", "id:3 OR id:4"))
         };
         SolrServer testSolrServer = Mockito.mock(SolrServer.class);
         int commitDelay = 100;
