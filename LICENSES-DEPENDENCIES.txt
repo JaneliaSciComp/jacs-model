@@ -1,0 +1,21 @@
+LICENSES-DEPENDENCIES.txt
+
+jacs-model integrates dependencies with the following open source licenses:
+
+- the Apache Software License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0
+
+- the BSD 3-Clause license: https://opensource.org/licenses/BSD-3-Clause
+
+- the Do What the Fuck You Want To Public License: http://www.wtfpl.net/about/
+
+- the Eclipse Public License - v 1.0: https://www.eclipse.org/legal/epl-v10.html
+
+- the GNU Lesser General Public License: https://www.gnu.org/licenses/old-licenses/lgpl-2.0.en.html
+
+- the MIT license: https://opensource.org/licenses/MIT
+
+- the Mozilla Public License 1.1: https://www.mozilla.org/en-US/MPL/1.1/
+
+- Public Domain
+
+- the Sun Microsystems, Inc. Binary Code License Agreement: https://download.java.net/media/jai/builds/release/1_1_3/LICENSE-jai.txt
