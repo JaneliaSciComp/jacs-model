@@ -1,6 +1,5 @@
 package org.janelia.model.access.domain.dao.searchables;
 
-import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
@@ -79,17 +78,21 @@ public abstract class AbstractDomainSearchablDao<T extends DomainObject>
 
     @Override
     public T saveBySubjectKey(T entity, String subjectKey) {
-        return null;
+        T persistedEntity = domainObjectDao.saveBySubjectKey(entity, subjectKey);
+        domainObjectIndexer.indexDocument(persistedEntity);
+        return persistedEntity;
     }
 
     @Override
     public void save(T entity) {
-
+        domainObjectDao.save(entity);
+        domainObjectIndexer.indexDocument(entity);
     }
 
     @Override
     public void saveAll(Collection<T> entities) {
-
+        domainObjectDao.saveAll(entities);
+        domainObjectIndexer.indexDocumentStream(entities.stream().map(e -> (DomainObject)e));
     }
 
     @Override
@@ -111,5 +114,4 @@ public abstract class AbstractDomainSearchablDao<T extends DomainObject>
         }
         return updateResult;
     }
-
 }
