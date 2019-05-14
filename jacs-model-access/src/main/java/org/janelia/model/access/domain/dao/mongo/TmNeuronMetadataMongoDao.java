@@ -91,7 +91,9 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     }
 
     private void attachNeuronPoints(TmNeuronMetadata neuron, InputStream neuronPoints) {
-        tmNeuronBufferDao.createNeuronWorkspacePoints(neuron.getId(), neuron.getWorkspaceId(), neuronPoints);
+        if (neuronPoints != null) {
+            tmNeuronBufferDao.createNeuronWorkspacePoints(neuron.getId(), neuron.getWorkspaceId(), neuronPoints);
+        }
     }
 
     @Override
@@ -162,7 +164,9 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     @Override
     public void updateNeuronPoints(TmNeuronMetadata neuron, InputStream neuronPoints) {
-        tmNeuronBufferDao.updateNeuronWorkspacePoints(neuron.getId(), neuron.getWorkspaceId(), neuronPoints);
+        if (neuronPoints != null) {
+            tmNeuronBufferDao.updateNeuronWorkspacePoints(neuron.getId(), neuron.getWorkspaceId(), neuronPoints);
+        }
     }
 
     @Override
