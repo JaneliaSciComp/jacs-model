@@ -15,9 +15,11 @@ public enum PipelineStatus {
     Retired("Retired");
 
     private final String status;
-    private PipelineStatus(String status) {
+
+    PipelineStatus(String status) {
         this.status = status;
     }
+
     public String getStatus() {
         return status;
     }

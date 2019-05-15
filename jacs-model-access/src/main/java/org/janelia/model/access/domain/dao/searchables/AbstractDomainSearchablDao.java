@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Abstract Mongo DAO.
+ * Abstract Searchable DAO.
  *
  * @param <T> type of the element
  */

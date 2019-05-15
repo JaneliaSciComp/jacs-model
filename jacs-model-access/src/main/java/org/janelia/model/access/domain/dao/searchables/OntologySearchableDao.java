@@ -10,7 +10,7 @@ import javax.inject.Inject;
 import java.util.List;
 
 /**
- * {@link Ontology} Mongo DAO.
+ * {@link Ontology} DAO.
  */
 @AsyncIndex
 public class OntologySearchableDao extends AbstractDomainSearchablDao<Ontology> implements OntologyDao {
