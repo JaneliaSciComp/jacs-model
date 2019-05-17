@@ -17,8 +17,8 @@ import java.util.stream.Stream;
  */
 public class NodeUtils {
 
-    public static void traverseAllAncestors(Reference nodeReference, Function<Reference, Set<Reference>> directNodeAncestorsMap, Consumer<Reference> ancestorAction) {
-        Set<Reference> directNodeAncestors = directNodeAncestorsMap.apply(nodeReference);
+    public static void traverseAllAncestors(Reference nodeReference, DirectNodeAncestorsGetter directNodeAncestorsMap, Consumer<Reference> ancestorAction) {
+        Set<Reference> directNodeAncestors = directNodeAncestorsMap.getNodeDirectAncestors(nodeReference);
         if (CollectionUtils.isNotEmpty(directNodeAncestors)) {
             Set<Reference> allAncestors = new LinkedHashSet<>();
             allAncestors.add(nodeReference);
@@ -26,14 +26,14 @@ public class NodeUtils {
         }
     }
 
-    private static void traverseAllAncestors(Function<Reference, Set<Reference>> directNodeAncestorsMap, Set<Reference> visitedNodes, Set<Reference> remainingNodes, Consumer<Reference> ancestorAction) {
+    private static void traverseAllAncestors(DirectNodeAncestorsGetter directNodeAncestorsMap, Set<Reference> visitedNodes, Set<Reference> remainingNodes, Consumer<Reference> ancestorAction) {
         for (Set<Reference> uninspectedAncestorNodes = remainingNodes; !uninspectedAncestorNodes.isEmpty();) {
             uninspectedAncestorNodes = uninspectedAncestorNodes.stream()
                     .flatMap(nodeReference -> {
                         ancestorAction
                                 .andThen(nr -> visitedNodes.add(nr))
                                 .accept(nodeReference);
-                        Set<Reference> directNodeAncestors = directNodeAncestorsMap.apply(nodeReference);
+                        Set<Reference> directNodeAncestors = directNodeAncestorsMap.getNodeDirectAncestors(nodeReference);
                         if (CollectionUtils.isNotEmpty(directNodeAncestors)) {
                             return directNodeAncestors.stream();
                         } else {

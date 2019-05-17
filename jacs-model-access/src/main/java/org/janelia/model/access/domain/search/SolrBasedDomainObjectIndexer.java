@@ -1,22 +1,5 @@
 package org.janelia.model.access.domain.search;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.response.FacetField;
-import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrInputDocument;
-import org.janelia.model.access.domain.dao.TreeNodeDao;
-import org.janelia.model.domain.DomainObject;
-import org.janelia.model.domain.DomainUtils;
-import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.searchable.SearchableDocType;
-import org.janelia.model.domain.support.SearchAttribute;
-import org.janelia.model.domain.workspace.NodeUtils;
-import org.janelia.model.domain.workspace.TreeNode;
-import org.janelia.model.util.ReflectionHelper;
-import org.reflections.ReflectionUtils;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -27,21 +10,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.response.FacetField;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrInputDocument;
+import org.janelia.model.domain.DomainObject;
+import org.janelia.model.domain.DomainUtils;
+import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.searchable.SearchableDocType;
+import org.janelia.model.domain.support.SearchAttribute;
+import org.janelia.model.domain.workspace.DirectNodeAncestorsGetter;
+import org.janelia.model.domain.workspace.NodeUtils;
+import org.janelia.model.util.ReflectionHelper;
+import org.reflections.ReflectionUtils;
 
 public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
 
     private final SolrConnector solrConnector;
-    private final TreeNodeDao treeNodeDao;
+    private final DirectNodeAncestorsGetter directNodeAncestorsGetter;
     private final int solrBatchSize;
 
     public SolrBasedDomainObjectIndexer(SolrServer solrServer,
-                                        TreeNodeDao treeNodeDao,
+                                        DirectNodeAncestorsGetter directNodeAncestorsGetter,
                                         int solrBatchSize,
                                         int solrCommitDelayInMillis) {
         this.solrConnector = new SolrConnector(solrServer, solrCommitDelayInMillis);
-        this.treeNodeDao = treeNodeDao;
+        this.directNodeAncestorsGetter = directNodeAncestorsGetter;
         this.solrBatchSize = solrBatchSize;
     }
 
@@ -86,10 +84,7 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
         Set<Long> domainObjectAncestorsIds = new LinkedHashSet<>();
         NodeUtils.traverseAllAncestors(
                 Reference.createFor(domainObject),
-                nodeReference -> {
-                    List<TreeNode> nodeAncestors = treeNodeDao.getNodeDirectAncestors(nodeReference);
-                    return nodeAncestors.stream().map(n -> Reference.createFor(n)).collect(Collectors.toSet());
-                },
+                directNodeAncestorsGetter,
                 n -> domainObjectAncestorsIds.add(n.getTargetId()));
         return createSolrDoc(domainObject, domainObjectAncestorsIds);
     }
