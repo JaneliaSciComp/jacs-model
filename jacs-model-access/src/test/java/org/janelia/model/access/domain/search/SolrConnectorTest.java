@@ -72,7 +72,11 @@ public class SolrConnectorTest {
             } else {
                 nInvocations = testSolrDocs.size() / batchSize + 1;
             }
-            Mockito.verify(testSolrServer, times(nInvocations)).add(anyList(), eq(commitDelay));
+            if (batchSize == 1) {
+                Mockito.verify(testSolrServer, times(nInvocations)).add(any(SolrInputDocument.class), eq(commitDelay));
+            } else {
+                Mockito.verify(testSolrServer, times(nInvocations)).add(anyList(), eq(commitDelay));
+            }
             Mockito.reset(testSolrServer);
         }
     }
@@ -138,7 +142,11 @@ public class SolrConnectorTest {
                 } else {
                     nInvocations = td.descendantIds.size() / batchSize + 1;
                 }
-                Mockito.verify(testSolrServer, times(nInvocations)).add(anyList(), eq(commitDelay));
+                if (batchSize == 1) {
+                    Mockito.verify(testSolrServer, times(nInvocations)).add(any(SolrInputDocument.class), eq(commitDelay));
+                } else {
+                    Mockito.verify(testSolrServer, times(nInvocations)).add(anyList(), eq(commitDelay));
+                }
             }
             Mockito.reset(testSolrServer);
         }

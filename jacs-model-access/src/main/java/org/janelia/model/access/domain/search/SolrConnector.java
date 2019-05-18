@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -91,26 +92,48 @@ class SolrConnector {
             LOG.debug("SOLR is not configured");
             return false;
         }
-        final AtomicInteger counter = new AtomicInteger();
-        int actualBatchSize = Math.max(batchSize, 1);
+        List<SolrInputDocument> solrDocsBatch = new ArrayList<>();
+
+        AtomicBoolean result = new AtomicBoolean(true);
         // group documents in batches of given size to send the to solr
-        return solrDocsStream
-                .collect(Collectors.groupingBy(solrDoc -> counter.getAndIncrement() / actualBatchSize,
-                        Collectors.collectingAndThen(Collectors.toList(), solrDocsBatch -> {
+        solrDocsStream
+                .forEach(solrDoc -> {
+                    if (batchSize > 1) {
+                        solrDocsBatch.add(solrDoc);
+                        if (solrDocsBatch.size() >= batchSize) {
                             try {
                                 solrServer.add(solrDocsBatch, solrCommitDelayInMillis);
                                 solrServer.commit(false, false);
-                                return true;
                             } catch (Exception e) {
                                 LOG.error("Error while updating solr index for {}", solrDocsBatch, e);
-                                return false;
+                                result.set(false);
+                            } finally {
+                                solrDocsBatch.clear();
                             }
-                        })))
-                .entrySet().stream()
-                .map(e -> e.getValue())
-                .reduce((e1, e2) -> e1 && e2)
-                .orElse(false)
+                        }
+                    } else {
+                        try {
+                            solrServer.add(solrDoc, solrCommitDelayInMillis);
+                            solrServer.commit(false, false);
+                        } catch (Exception e) {
+                            LOG.error("Error while updating solr index for {}", solrDoc, e);
+                            result.set(false);
+                        }
+                    }
+                })
                 ;
+        if (solrDocsBatch.size() > 0) {
+            try {
+                solrServer.add(solrDocsBatch, solrCommitDelayInMillis);
+                solrServer.commit(false, false);
+            } catch (Exception e) {
+                LOG.error("Error while updating solr index for {}", solrDocsBatch, e);
+                result.set(false);
+            } finally {
+                solrDocsBatch.clear();
+            }
+        }
+        return result.get();
     }
 
     void clearIndex() {
@@ -144,38 +167,59 @@ class SolrConnector {
             LOG.debug("SOLR is not configured");
             return false;
         }
-        final AtomicInteger counter = new AtomicInteger();
-        int actualBatchSize = Math.max(batchSize, 1);
-        // group documents in batches of given size to send the to solr
-        return docIdsStream
-                .collect(Collectors.groupingBy(solrDoc -> counter.getAndIncrement() / actualBatchSize,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                solrDocsBatch -> solrDocsBatch
-                                        .stream()
-                                        .map(id -> "id:" + id.toString())
-                                        .reduce((id1, id2) -> id1 + " OR " + id2)
-                                        .orElse(null)
-                        ))
-                )
-                .entrySet().stream()
-                .map(e -> e.getValue())
-                .filter(q -> q != null)
-                .reduce(
-                        true,
-                        (res, q) -> {
-                            try {
-                                solrServer.deleteByQuery(q, solrCommitDelayInMillis);
-                                solrServer.commit(false, false);
-                                return res;
-                            } catch (Exception e) {
-                                LOG.error("Error trying to delete using query: {}", q, e);
-                                return false;
-                            }
-                        },
-                        (r1, r2) -> r1 && r2
-                )
-                ;
+        AtomicBoolean result = new AtomicBoolean(true);
+        List<Long> remainingIds = docIdsStream
+            .reduce(new ArrayList<>(),
+                    (ids, id) -> {
+                        removeHandler(ids, id, batchSize, result);
+                        return ids;
+                    },
+                    (ids1, ids2) -> {
+                        for (Long id : ids2) {
+                            removeHandler(ids1, id, batchSize, result);
+                        }
+                        return ids1;
+                    });
+        if (!remainingIds.isEmpty()) {
+            if (!removeDocIds(remainingIds)) {
+                result.set(false);
+            }
+        }
+        return result.get();
+    }
+
+    private void removeHandler(List<Long> ids, Long id, int batchSize, AtomicBoolean result) {
+        if (batchSize > 1) {
+            ids.add(id);
+            if (ids.size() >= batchSize) {
+                if (!removeDocIds(ids)) {
+                    result.set(false);
+                }
+                ids.clear();
+            }
+        } else {
+            removeDocIdFromIndex(id);
+        }
+    }
+
+    private boolean removeDocIds(List<Long> ids) {
+        String q = idsToSolrQuery(ids);
+        try {
+            solrServer.deleteByQuery(q, solrCommitDelayInMillis);
+            solrServer.commit(false, false);
+            return true;
+        } catch (Exception e) {
+            LOG.error("Error trying to delete using query: {}", q, e);
+            return false;
+        }
+    }
+
+    private String idsToSolrQuery(List<Long> ids) {
+        return ids
+                .stream()
+                .map(id -> "id:" + id.toString())
+                .reduce((id1, id2) -> id1 + " OR " + id2)
+                .orElse(null);
     }
 
     @SuppressWarnings("unchecked")
@@ -209,7 +253,7 @@ class SolrConnector {
                         .collect(Collectors.groupingBy(docId -> counter.getAndIncrement() / batchSize)).values()
                     : Collections.singleton(ImmutableList.copyOf(solrDocIds));
             return solrDocIdsPartitions.stream()
-                    .map(partition -> partition.stream().map(id -> "id:" + id.toString()).reduce((id1, id2) -> id1 + " OR " + id2).orElse(null))
+                    .map(partition -> idsToSolrQuery(partition))
                     .filter(queryStr -> queryStr != null)
                     .map(SolrQuery::new)
                     .map(this::search)

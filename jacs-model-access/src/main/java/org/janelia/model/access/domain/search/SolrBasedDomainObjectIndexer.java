@@ -73,7 +73,7 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
     }
 
     @Override
-    public boolean indexDocumentStream(Stream<DomainObject> domainObjectStream) {
+    public boolean indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
         return solrConnector.addDocsToIndex(
                 domainObjectStream.map(this::domainObjectToSolrDocument),
                 solrBatchSize

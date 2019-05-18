@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 public interface  DomainObjectIndexer {
     DocumentSearchResults searchIndex(DocumentSearchParams searchParams);
     boolean indexDocument(DomainObject domainObject);
-    boolean indexDocumentStream(Stream<DomainObject> domainObjectStream);
+    boolean indexDocumentStream(Stream<? extends DomainObject> domainObjectStream);
     boolean removeDocument(Long docId);
     boolean removeDocumentStream(Stream<Long> docIdsStream);
     void removeIndex();

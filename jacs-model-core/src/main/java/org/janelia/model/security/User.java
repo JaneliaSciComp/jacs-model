@@ -86,13 +86,23 @@ public class User extends Subject {
     }
     
     public boolean hasGroupRead(String groupKey) {
-        UserGroupRole role = getRole(groupKey);
-        return role!=null && role.getRole().isRead();
+        return userGroupRoles.stream()
+                .filter(groupRole -> groupRole.getGroupKey().equals(groupKey))
+                .filter(groupRole -> groupRole.getRole().isRead())
+                .findFirst()
+                .map(userGroupRole -> true)
+                .orElse(false)
+                ;
     }
 
     public boolean hasGroupWrite(String groupKey) {
-        UserGroupRole role = getRole(groupKey);
-        return role!=null && role.getRole().isWrite();
+        return userGroupRoles.stream()
+                .filter(groupRole -> groupRole.getGroupKey().equals(groupKey))
+                .filter(groupRole -> groupRole.getRole().isWrite())
+                .findFirst()
+                .map(userGroupRole -> true)
+                .orElse(false)
+                ;
     }
     
     public UserGroupRole getRole(String groupKey) {
