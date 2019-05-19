@@ -21,7 +21,7 @@ jobs:
       - restore_cache:
           key: jacs-model-c1-{{ checksum "build.gradle" }}
       
-      - run: ./gradlew --no-daemon jar test
+      - run: ./gradlew --no-daemon build -x :jacs-model-access:test
       
       - save_cache:
           key: jacs-model-c1-{{ checksum "build.gradle" }}
