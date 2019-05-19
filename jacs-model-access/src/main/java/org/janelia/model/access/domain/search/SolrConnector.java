@@ -244,6 +244,7 @@ class SolrConnector {
 
     private boolean commit() {
         try {
+            LOG.debug("SOLR commit");
             solrServer.commit(false, false);
             return true;
         } catch (Exception e) {
