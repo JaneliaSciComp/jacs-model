@@ -33,14 +33,17 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
     private final SolrConnector solrConnector;
     private final DirectNodeAncestorsGetter directNodeAncestorsGetter;
     private final int solrBatchSize;
+    private final int solrCommitSize;
 
     public SolrBasedDomainObjectIndexer(SolrServer solrServer,
                                         DirectNodeAncestorsGetter directNodeAncestorsGetter,
                                         int solrBatchSize,
+                                        int solrCommitSize,
                                         int solrCommitDelayInMillis) {
         this.solrConnector = new SolrConnector(solrServer, solrCommitDelayInMillis);
         this.directNodeAncestorsGetter = directNodeAncestorsGetter;
         this.solrBatchSize = solrBatchSize;
+        this.solrCommitSize = solrCommitSize;
     }
 
     @Override
@@ -73,10 +76,11 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
     }
 
     @Override
-    public boolean indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
+    public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
         return solrConnector.addDocsToIndex(
                 domainObjectStream.map(this::domainObjectToSolrDocument),
-                solrBatchSize
+                solrBatchSize,
+                solrCommitSize
         );
     }
 
@@ -142,8 +146,8 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
     }
 
     @Override
-    public boolean removeDocumentStream(Stream<Long> docIdsStream) {
-        return solrConnector.removeDocIdsFromIndex(docIdsStream, solrBatchSize);
+    public int removeDocumentStream(Stream<Long> docIdsStream) {
+        return solrConnector.removeDocIdsFromIndex(docIdsStream, solrBatchSize, solrCommitSize);
     }
 
     @Override
@@ -153,6 +157,6 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
 
     @Override
     public void updateDocsAncestors(Set<Long> docIds, Long ancestorId) {
-        solrConnector.updateDocsAncestors(docIds, ancestorId, solrBatchSize);
+        solrConnector.updateDocsAncestors(docIds, ancestorId, solrBatchSize, solrCommitSize);
     }
 }

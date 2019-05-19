@@ -34,8 +34,13 @@ public class SolrConnectorTest {
     public void indexDocumentStream() throws Exception {
         class TestData {
             private final int batchSize;
-            private TestData(int batchSize) {
+            private final int commitSize;
+            private final int expectedCommits;
+
+            private TestData(int batchSize, int commitSize, int expectedCommits) {
                 this.batchSize = batchSize;
+                this.commitSize = commitSize;
+                this.expectedCommits = expectedCommits;
             }
         }
         List<SolrInputDocument> testSolrDocs = Arrays.asList(
@@ -53,18 +58,19 @@ public class SolrConnectorTest {
                 createTestSolrDoc("12")
         );
         TestData[] testData = new TestData[] {
-                new TestData(-2),
-                new TestData(0),
-                new TestData(4),
-                new TestData(5),
-                new TestData(testSolrDocs.size()),
-                new TestData(testSolrDocs.size() + 1)
+                new TestData(-2, 0, testSolrDocs.size()),
+                new TestData(0, 10, 2),
+                new TestData(1, testSolrDocs.size() + 1, 1),
+                new TestData(4, 0, 3),
+                new TestData(5, 5, 3),
+                new TestData(testSolrDocs.size(), 1, 1),
+                new TestData(testSolrDocs.size() + 1, 100, 1)
         };
         SolrServer testSolrServer = Mockito.mock(SolrServer.class);
         int commitDelay = 100;
         SolrConnector solrConnector = createSolrConnector(testSolrServer, commitDelay);
         for (TestData td : testData) {
-            solrConnector.addDocsToIndex(testSolrDocs.stream(), td.batchSize);
+            solrConnector.addDocsToIndex(testSolrDocs.stream(), td.batchSize, td.commitSize);
             int batchSize = Math.max(1, td.batchSize);
             int nInvocations;
             if (batchSize == 1 || testSolrDocs.size() % batchSize == 0) {
@@ -73,10 +79,11 @@ public class SolrConnectorTest {
                 nInvocations = testSolrDocs.size() / batchSize + 1;
             }
             if (batchSize == 1) {
-                Mockito.verify(testSolrServer, times(nInvocations)).add(any(SolrInputDocument.class), eq(commitDelay));
+                Mockito.verify(testSolrServer, times(nInvocations)).add(any(SolrInputDocument.class));
             } else {
-                Mockito.verify(testSolrServer, times(nInvocations)).add(anyList(), eq(commitDelay));
+                Mockito.verify(testSolrServer, times(nInvocations)).add(anyList());
             }
+            Mockito.verify(testSolrServer, times(td.expectedCommits)).commit(false, false);
             Mockito.reset(testSolrServer);
         }
     }
@@ -87,21 +94,23 @@ public class SolrConnectorTest {
             private final Set<Long> descendantIds;
             private final Long ancestorDocId;
             private final int batchSize;
+            private final int commitSize;
             private final List<String> expectedQueries;
 
-            private TestData(Set<Long> descendantIds, Long ancestorDocId, int batchSize, List<String> expectedQueries) {
+            private TestData(Set<Long> descendantIds, Long ancestorDocId, int batchSize, int commitSize, List<String> expectedQueries) {
                 this.descendantIds = descendantIds;
                 this.ancestorDocId = ancestorDocId;
                 this.batchSize = batchSize;
+                this.commitSize = commitSize;
                 this.expectedQueries = expectedQueries;
             }
         }
 
         TestData[] testData = new TestData[] {
-                new TestData(null, 10L, 0, Collections.emptyList()),
-                new TestData(ImmutableSet.of(1L, 2L, 3L, 4L), 10L, 0, Arrays.asList("id:1 OR id:2 OR id:3 OR id:4")),
-                new TestData(ImmutableSet.of(1L, 2L, 3L, 4L), 10L, 3, Arrays.asList("id:1 OR id:2 OR id:3", "id:4")),
-                new TestData(ImmutableSet.of(1L, 2L, 3L, 4L), 10L, 2, Arrays.asList("id:1 OR id:2", "id:3 OR id:4"))
+                new TestData(null, 10L, 0, 0, Collections.emptyList()),
+                new TestData(ImmutableSet.of(1L, 2L, 3L, 4L), 10L, 0, 1, Arrays.asList("id:1 OR id:2 OR id:3 OR id:4")),
+                new TestData(ImmutableSet.of(1L, 2L, 3L, 4L), 10L, 3, 1, Arrays.asList("id:1 OR id:2 OR id:3", "id:4")),
+                new TestData(ImmutableSet.of(1L, 2L, 3L, 4L), 10L, 2, 100, Arrays.asList("id:1 OR id:2", "id:3 OR id:4"))
         };
         SolrServer testSolrServer = Mockito.mock(SolrServer.class);
         int commitDelay = 100;
@@ -124,7 +133,7 @@ public class SolrConnectorTest {
             } catch (SolrServerException e) {
                 fail(e.toString());
             }
-            solrConnector.updateDocsAncestors(td.descendantIds, td.ancestorDocId, td.batchSize);
+            solrConnector.updateDocsAncestors(td.descendantIds, td.ancestorDocId, td.batchSize, td.commitSize);
             td.expectedQueries.forEach(q -> {
                 try {
                     Mockito.verify(testSolrServer).query(argThat((ArgumentMatcher<SolrQuery>) solrQuery -> solrQuery.getQuery().equals(q)));
@@ -143,9 +152,9 @@ public class SolrConnectorTest {
                     nInvocations = td.descendantIds.size() / batchSize + 1;
                 }
                 if (batchSize == 1) {
-                    Mockito.verify(testSolrServer, times(nInvocations)).add(any(SolrInputDocument.class), eq(commitDelay));
+                    Mockito.verify(testSolrServer, times(nInvocations)).add(any(SolrInputDocument.class));
                 } else {
-                    Mockito.verify(testSolrServer, times(nInvocations)).add(anyList(), eq(commitDelay));
+                    Mockito.verify(testSolrServer, times(nInvocations)).add(anyList());
                 }
             }
             Mockito.reset(testSolrServer);
