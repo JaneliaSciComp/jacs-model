@@ -101,16 +101,13 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
         solrDoc.setField("collection", DomainUtils.getCollectionName(domainObject), 1.0f);
         solrDoc.setField("ancestor_ids", new ArrayList<>(ancestorIds), 0.2f);
 
+        Map<String, Object> attrs = new HashMap<>();
+
         BiConsumer<SearchAttribute, Object> searchFieldHandler = (searchAttribute, fieldValue) -> {
-            if (fieldValue == null || fieldValue instanceof String && StringUtils.isBlank((String) fieldValue)) {
-                solrDoc.removeField(searchAttribute.key());
+            if (fieldValue != null && !(fieldValue instanceof String && StringUtils.isBlank((String) fieldValue))) {
+                attrs.put(searchAttribute.key(), fieldValue);
                 if (StringUtils.isNotEmpty(searchAttribute.facet())) {
-                    solrDoc.removeField(searchAttribute.facet());
-                }
-            } else {
-                solrDoc.addField(searchAttribute.key(), fieldValue, 1.0f);
-                if (StringUtils.isNotEmpty(searchAttribute.facet())) {
-                    solrDoc.addField(searchAttribute.facet(), fieldValue, 1.0f);
+                    attrs.put(searchAttribute.facet(), fieldValue);
                 }
             }
         };
@@ -136,6 +133,12 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
                 throw new IllegalArgumentException("Problem executing " + propertyMethod.getName() + " on object " + domainObject, e);
             }
         }
+
+        attrs.forEach((k, v) -> {
+            if (v != null) {
+                solrDoc.addField(k, v, 1.0f);
+            }
+        });
 
         return solrDoc;
     }

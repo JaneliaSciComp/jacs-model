@@ -70,7 +70,7 @@ class SolrConnector {
         }
         try {
             solrServer.add(solrDoc);
-            commit();
+            commit(false, false);
             return true;
         } catch (Exception e) {
             LOG.error("Error while adding {} to solr index", solrDoc, e);
@@ -118,7 +118,7 @@ class SolrConnector {
                         int nToCommit = itemsToCommit.addAndGet(nAdded);
                         result.addAndGet(nAdded);
                         if (commitSize <= 1 || nToCommit / commitSize > 0) {
-                            if (commit()) {
+                            if (commit(true, true)) {
                                 itemsToCommit.set(0);
                             }
                         }
@@ -137,7 +137,7 @@ class SolrConnector {
             }
         }
         if (itemsToCommit.get() > 0) {
-            commit();
+            commit(true, true);
         }
         return result.get();
     }
@@ -149,7 +149,7 @@ class SolrConnector {
         }
         try {
             solrServer.deleteByQuery("*:*");
-            commit();
+            commit(true, true);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -162,7 +162,7 @@ class SolrConnector {
         }
         try {
             solrServer.deleteById(id.toString());
-            commit();
+            commit(false, false);
             return true;
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -194,7 +194,7 @@ class SolrConnector {
             itemsToCommit.addAndGet(nRemoved);
         }
         if (itemsToCommit.get() > 0) {
-            commit();
+            commit(true, true);
         }
         return result.get();
     }
@@ -216,7 +216,7 @@ class SolrConnector {
             itemsRemoved.addAndGet(nRemoved);
             int nToCommit = itemsToCommit.addAndGet(nRemoved);
             if (commitSize <= 1 || nToCommit / commitSize > 0) {
-                if (commit()) {
+                if (commit(false, false)) {
                     itemsToCommit.set(0);
                 }
             }
@@ -242,10 +242,10 @@ class SolrConnector {
                 .orElse(null);
     }
 
-    private boolean commit() {
+    private boolean commit(boolean waitFlush, boolean waitSearcher) {
         try {
             LOG.debug("SOLR commit");
-            solrServer.commit(false, false);
+            solrServer.commit(waitFlush, waitSearcher);
             return true;
         } catch (Exception e) {
             LOG.error("SOLR commit error", e);

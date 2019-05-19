@@ -83,7 +83,7 @@ public class SolrConnectorTest {
             } else {
                 Mockito.verify(testSolrServer, times(nInvocations)).add(anyList());
             }
-            Mockito.verify(testSolrServer, times(td.expectedCommits)).commit(false, false);
+            Mockito.verify(testSolrServer, times(td.expectedCommits)).commit(true, true);
             Mockito.reset(testSolrServer);
         }
     }
