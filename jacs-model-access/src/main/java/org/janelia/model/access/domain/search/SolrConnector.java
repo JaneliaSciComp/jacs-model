@@ -35,11 +35,9 @@ class SolrConnector {
     private static final Logger LOG = LoggerFactory.getLogger(SolrConnector.class);
 
     private final SolrServer solrServer;
-    private final int solrCommitDelayInMillis;
 
-    SolrConnector(@Nullable SolrServer solrServer, int solrCommitDelayInMillis) {
+    SolrConnector(@Nullable SolrServer solrServer) {
         this.solrServer = solrServer;
-        this.solrCommitDelayInMillis = solrCommitDelayInMillis;
     }
 
     /**
@@ -92,12 +90,13 @@ class SolrConnector {
                     int nAdded;
                     if (batchSize > 1) {
                         solrDocsBatch.add(solrDoc);
-                        if (solrDocsBatch.size() >= batchSize) {
+                        int nDocs = solrDocsBatch.size();
+                        if (nDocs >= batchSize) {
                             try {
                                 solrServer.add(solrDocsBatch);
-                                nAdded = solrDocsBatch.size();
+                                nAdded = nDocs;
                             } catch (Exception e) {
-                                LOG.error("Error while updating solr index for {}", solrDocsBatch, e);
+                                LOG.error("Error while updating solr index with {} documents", nDocs, e);
                                 nAdded = 0;
                             } finally {
                                 solrDocsBatch.clear();

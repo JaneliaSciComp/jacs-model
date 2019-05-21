@@ -1,7 +1,14 @@
 package org.janelia.model.access.domain.search;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -14,17 +21,10 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
@@ -67,8 +67,7 @@ public class SolrConnectorTest {
                 new TestData(testSolrDocs.size() + 1, 100, 1)
         };
         SolrServer testSolrServer = Mockito.mock(SolrServer.class);
-        int commitDelay = 100;
-        SolrConnector solrConnector = createSolrConnector(testSolrServer, commitDelay);
+        SolrConnector solrConnector = createSolrConnector(testSolrServer);
         for (TestData td : testData) {
             solrConnector.addDocsToIndex(testSolrDocs.stream(), td.batchSize, td.commitSize);
             int batchSize = Math.max(1, td.batchSize);
@@ -113,8 +112,7 @@ public class SolrConnectorTest {
                 new TestData(ImmutableSet.of(1L, 2L, 3L, 4L), 10L, 2, 100, Arrays.asList("id:1 OR id:2", "id:3 OR id:4"))
         };
         SolrServer testSolrServer = Mockito.mock(SolrServer.class);
-        int commitDelay = 100;
-        SolrConnector solrConnector = createSolrConnector(testSolrServer, commitDelay);
+        SolrConnector solrConnector = createSolrConnector(testSolrServer);
         for (TestData td : testData) {
             try {
                 Mockito.when(testSolrServer.query(any(SolrQuery.class))).then(invocation -> {
@@ -142,7 +140,7 @@ public class SolrConnectorTest {
                 }
             });
             if (CollectionUtils.isEmpty(td.descendantIds)) {
-                Mockito.verify(testSolrServer, never()).add(anyList(), eq(commitDelay));
+                Mockito.verify(testSolrServer, never()).add(anyList());
             } else {
                 int batchSize = Math.max(1, td.batchSize);
                 int nInvocations;
@@ -161,8 +159,8 @@ public class SolrConnectorTest {
         }
     }
 
-    private SolrConnector createSolrConnector(SolrServer testSolrServer, int commitDelay) {
-        return new SolrConnector(testSolrServer, commitDelay);
+    private SolrConnector createSolrConnector(SolrServer testSolrServer) {
+        return new SolrConnector(testSolrServer);
     }
     private SolrInputDocument createTestSolrDoc(String id) {
         SolrInputDocument solrDoc = new SolrInputDocument();

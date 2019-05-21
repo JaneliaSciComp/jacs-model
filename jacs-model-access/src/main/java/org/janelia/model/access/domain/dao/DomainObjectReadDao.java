@@ -4,6 +4,7 @@ import org.janelia.model.domain.DomainObject;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Base interface for reading domain objects.
@@ -43,4 +44,11 @@ public interface DomainObjectReadDao<T extends DomainObject> extends ReadDao<T, 
      */
     List<T> findEntitiesReadableBySubjectKey(@Nullable String subjectKey, long offset, int length);
 
+    /**
+     * Stream all records.
+     *
+     * @param <T>
+     * @return
+     */
+    Stream<T> streamAll();
 }

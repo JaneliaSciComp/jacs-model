@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Abstract Searchable DAO.
@@ -65,6 +66,11 @@ public abstract class AbstractDomainSearchablDao<T extends DomainObject>
     @Override
     public List<T> findEntitiesReadableBySubjectKey(@Nullable String subjectKey, long offset, int length) {
         return domainObjectDao.findEntitiesReadableBySubjectKey(subjectKey, offset, length);
+    }
+
+    @Override
+    public Stream<T> streamAll() {
+        return domainObjectDao.streamAll();
     }
 
     @Override

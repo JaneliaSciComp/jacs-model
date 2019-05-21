@@ -4,6 +4,6 @@ import java.util.Set;
 
 import org.janelia.model.domain.Reference;
 
-public interface DirectNodeAncestorsGetter {
-    Set<Reference> getNodeDirectAncestors(Reference nodeReference);
+public interface NodeAncestorsGetter {
+    Set<Reference> getNodeAncestors(Reference nodeReference);
 }

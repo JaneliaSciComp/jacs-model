@@ -1,47 +1,36 @@
 package org.janelia.model.access.domain.search;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrInputDocument;
 import org.janelia.model.domain.DomainObject;
-import org.janelia.model.domain.DomainUtils;
-import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.searchable.SearchableDocType;
-import org.janelia.model.domain.support.SearchAttribute;
-import org.janelia.model.domain.workspace.DirectNodeAncestorsGetter;
-import org.janelia.model.domain.workspace.NodeUtils;
-import org.janelia.model.util.ReflectionHelper;
-import org.reflections.ReflectionUtils;
+import org.janelia.model.domain.DomainObjectGetter;
+import org.janelia.model.domain.ontology.DomainAnnotationGetter;
+import org.janelia.model.domain.workspace.NodeAncestorsGetter;
 
 public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
 
     private final SolrConnector solrConnector;
-    private final DirectNodeAncestorsGetter directNodeAncestorsGetter;
+    private final DomainObject2SolrDoc domainObject2SolrDocConverter;
     private final int solrBatchSize;
     private final int solrCommitSize;
 
     public SolrBasedDomainObjectIndexer(SolrServer solrServer,
-                                        DirectNodeAncestorsGetter directNodeAncestorsGetter,
+                                        NodeAncestorsGetter nodeAncestorsGetter,
+                                        DomainAnnotationGetter nodeAnnotationGetter,
+                                        DomainObjectGetter objectGetter,
                                         int solrBatchSize,
-                                        int solrCommitSize,
-                                        int solrCommitDelayInMillis) {
-        this.solrConnector = new SolrConnector(solrServer, solrCommitDelayInMillis);
-        this.directNodeAncestorsGetter = directNodeAncestorsGetter;
+                                        int solrCommitSize) {
+        this.solrConnector = new SolrConnector(solrServer);
+        this.domainObject2SolrDocConverter = new DomainObject2SolrDoc(nodeAncestorsGetter, nodeAnnotationGetter, objectGetter);
         this.solrBatchSize = solrBatchSize;
         this.solrCommitSize = solrCommitSize;
     }
@@ -72,75 +61,16 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
 
     @Override
     public boolean indexDocument(DomainObject domainObject) {
-        return solrConnector.addDocToIndex(domainObjectToSolrDocument(domainObject));
+        return solrConnector.addDocToIndex(domainObject2SolrDocConverter.domainObjectToSolrDocument(domainObject));
     }
 
     @Override
     public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
         return solrConnector.addDocsToIndex(
-                domainObjectStream.map(this::domainObjectToSolrDocument),
+                domainObjectStream.map(domainObject2SolrDocConverter::domainObjectToSolrDocument),
                 solrBatchSize,
                 solrCommitSize
         );
-    }
-
-    private SolrInputDocument domainObjectToSolrDocument(DomainObject domainObject) {
-        Set<Long> domainObjectAncestorsIds = new LinkedHashSet<>();
-        NodeUtils.traverseAllAncestors(
-                Reference.createFor(domainObject),
-                directNodeAncestorsGetter,
-                n -> domainObjectAncestorsIds.add(n.getTargetId()));
-        return createSolrDoc(domainObject, domainObjectAncestorsIds);
-    }
-
-    @SuppressWarnings("unchecked")
-    private SolrInputDocument createSolrDoc(DomainObject domainObject, Set<Long> ancestorIds) {
-        SolrInputDocument solrDoc = new SolrInputDocument();
-        solrDoc.setField("doc_type", SearchableDocType.DOCUMENT.name(), 1.0f);
-        solrDoc.setField("class", domainObject.getClass().getName(), 1.0f);
-        solrDoc.setField("collection", DomainUtils.getCollectionName(domainObject), 1.0f);
-        solrDoc.setField("ancestor_ids", new ArrayList<>(ancestorIds), 0.2f);
-
-        Map<String, Object> attrs = new HashMap<>();
-
-        BiConsumer<SearchAttribute, Object> searchFieldHandler = (searchAttribute, fieldValue) -> {
-            if (fieldValue != null && !(fieldValue instanceof String && StringUtils.isBlank((String) fieldValue))) {
-                attrs.put(searchAttribute.key(), fieldValue);
-                if (StringUtils.isNotEmpty(searchAttribute.facet())) {
-                    attrs.put(searchAttribute.facet(), fieldValue);
-                }
-            }
-        };
-
-        Set<Field> searchableFields = ReflectionUtils.getAllFields(domainObject.getClass(), ReflectionUtils.withAnnotation(SearchAttribute.class));
-        for (Field field : searchableFields) {
-            try {
-                SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
-                Object value = ReflectionHelper.getFieldValue(domainObject, field.getName());
-                searchFieldHandler.accept(searchAttributeAnnot, value);
-            } catch (NoSuchFieldException e) {
-                throw new IllegalArgumentException("No such field " + field.getName() + " on object " + domainObject, e);
-            }
-        }
-
-        Set<Method> searchableProperties = ReflectionUtils.getAllMethods(domainObject.getClass(), ReflectionUtils.withAnnotation(SearchAttribute.class));
-        for (Method propertyMethod : searchableProperties) {
-            try {
-                SearchAttribute searchAttributeAnnot = propertyMethod.getAnnotation(SearchAttribute.class);
-                Object value = propertyMethod.invoke(domainObject);
-                searchFieldHandler.accept(searchAttributeAnnot, value);
-            } catch (InvocationTargetException | IllegalAccessException e) {
-                throw new IllegalArgumentException("Problem executing " + propertyMethod.getName() + " on object " + domainObject, e);
-            }
-        }
-
-        attrs.forEach((k, v) -> {
-            if (v != null) {
-                solrDoc.addField(k, v, 1.0f);
-            }
-        });
-
-        return solrDoc;
     }
 
     @Override

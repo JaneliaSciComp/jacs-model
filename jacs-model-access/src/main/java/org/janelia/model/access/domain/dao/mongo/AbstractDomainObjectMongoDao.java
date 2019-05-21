@@ -1,5 +1,7 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.mongodb.DBCursor;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import org.apache.commons.collections4.CollectionUtils;
@@ -14,6 +16,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Abstract Domain DAO that can handle entity access.
@@ -94,6 +100,47 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
                     -1,
                     getEntityType());
         }
+    }
+
+    @Override
+    public Stream<T> streamAll() {
+        Spliterator<T> iterator = new Spliterator<T>() {
+            Iterator<T> cursor;
+            {
+                setCursor();
+            }
+
+            private void setCursor() {
+                cursor = mongoCollection
+                        .find()
+                        .noCursorTimeout(true)
+                        .iterator();
+            }
+
+            @Override
+            public boolean tryAdvance(Consumer<? super T> action) {
+                if (cursor.hasNext()) {
+                    action.accept(cursor.next());
+                }
+                return cursor.hasNext();
+            }
+
+            @Override
+            public Spliterator<T> trySplit() {
+                return null;
+            }
+
+            @Override
+            public long estimateSize() {
+                return mongoCollection.countDocuments();
+            }
+
+            @Override
+            public int characteristics() {
+                return 0;
+            }
+        };
+        return StreamSupport.stream(iterator, false);
     }
 
     @Override
