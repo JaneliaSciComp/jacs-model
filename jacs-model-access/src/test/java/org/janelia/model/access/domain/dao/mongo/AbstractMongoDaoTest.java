@@ -5,9 +5,9 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoDatabase;
-import org.janelia.model.access.domain.dao.mongo.utils.MongoModule;
-import org.janelia.model.access.domain.dao.mongo.utils.RegistryHelper;
 import org.janelia.model.access.domain.dao.DomainDAOManager;
+import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoModule;
+import org.janelia.model.access.domain.dao.mongo.mongodbutils.RegistryHelper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -21,7 +21,7 @@ public class AbstractMongoDaoTest {
         testObjectMapper = new ObjectMapper().registerModule(new MongoModule());
         MongoClientOptions.Builder optionsBuilder = MongoClientOptions
                 .builder()
-                .codecRegistry(RegistryHelper.createCodecRegistry(testObjectMapper))
+                .codecRegistry(RegistryHelper.createCodecRegistryWithJacsksonEncoder(testObjectMapper))
                 ;
         MongoClientURI mongoConnectionURI = new MongoClientURI(
                 "mongodb://" + DomainDAOManager.DATABASE_HOST,

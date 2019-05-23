@@ -140,11 +140,21 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         try {
             Map<Coordinate, List<String>> channelTilesByOrthoProjection = rvl.listImageUris(0).stream()
                     .map(tileUri -> {
-                        String uriPath = tileUri.getPath();
-                        if (StringUtils.isBlank(uriPath)) {
+                        String fn;
+                        if (StringUtils.equalsAnyIgnoreCase("file", tileUri.getScheme())) {
+                            fn = Paths.get(tileUri).getFileName().toString();
+                        } else {
+                            String uriPath = tileUri.getPath();
+                            int fnIndex = uriPath.lastIndexOf('/');
+                            if (fnIndex == -1) {
+                                fn = uriPath;
+                            } else {
+                                fn = uriPath.substring(fnIndex + 1);
+                            }
+                        }
+                        if (StringUtils.isBlank(fn)) {
                             return null;
                         } else {
-                            String fn = Paths.get(uriPath).getFileName().toString();
                             Coordinate sliceAxis = TileInfo.getSliceAxisFromImageNameForChannel(fn);
                             if (sliceAxis != null) {
                                 return ImmutablePair.of(sliceAxis, fn);

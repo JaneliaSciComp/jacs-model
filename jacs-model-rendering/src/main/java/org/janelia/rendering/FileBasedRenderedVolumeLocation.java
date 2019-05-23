@@ -3,6 +3,7 @@ package org.janelia.rendering;
 import com.sun.media.jai.codec.FileSeekableStream;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.rendering.utils.ImageUtils;
+import org.janelia.rendering.utils.RenderedImagesWithStreamsSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocation {
 
@@ -98,25 +100,36 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
-        return ImageUtils.mergeImageBands(channelImageNames.stream()
+        Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = channelImageNames.stream()
                 .map(channelImageName -> volumeBasePath.resolve(tileRelativePath).resolve(channelImageName))
                 .filter(channelImagePath -> Files.exists(channelImagePath))
                 .map(channelImagePath -> () -> {
-                    RenderedImage rim;
+                    RenderedImagesWithStreams rims;
                     try {
+                        InputStream rimStream = new FileSeekableStream(channelImagePath.toFile());
                         LOG.debug("Load page {} from {}", pageNumber, channelImagePath);
-                        rim = ImageUtils.loadRenderedImageFromTiffStream(new FileSeekableStream(channelImagePath.toFile()), pageNumber);
+                        rims = ImageUtils.loadRenderedImageFromTiffStream(rimStream, pageNumber);
                     } catch (IOException e) {
                         LOG.error("Error reading image from {}", channelImagePath, e);
                         throw new IllegalStateException(e);
                     }
-                    if (rim == null) {
+                    if (rims == null) {
                         return Optional.empty();
                     } else {
-                        return Optional.of(rim);
+                        return Optional.of(rims);
                     }
-                })
-        ).orElseGet(() -> null);
+                });
+        RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
+        RenderedImage imageResult = mergedImages.combine("bandmerge");
+        try {
+            if (imageResult == null) {
+                return null;
+            } else {
+                return ImageUtils.renderedImageToTextureBytes(imageResult);
+            }
+        } finally {
+            mergedImages.close();
+        }
     }
 
     @Override

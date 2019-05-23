@@ -1,4 +1,4 @@
-package org.janelia.model.access.domain.dao.mongo.utils;
+package org.janelia.model.access.domain.dao.mongo.mongodbutils;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;

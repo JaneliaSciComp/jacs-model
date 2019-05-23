@@ -1,4 +1,4 @@
-package org.janelia.model.access.domain.dao.mongo.utils;
+package org.janelia.model.access.domain.dao.mongo.mongodbutils;
 
 import org.apache.commons.lang3.StringUtils;
 import org.bson.BsonReader;
@@ -9,7 +9,7 @@ import org.bson.codecs.EncoderContext;
 import org.janelia.model.domain.Reference;
 
 /**
- * ReferenceCodec implements a Codec for a Reference type.
+ * Reference2Codec implements a Codec for a Reference type.
  */
 public class ReferenceCodec implements Codec<Reference> {
 

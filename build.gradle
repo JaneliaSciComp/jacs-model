@@ -6,7 +6,7 @@ allprojects {
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
     group = 'org.janelia.jacs-model'
-    version = '2.2.0'
+    version = '2.3.0'
 }
 
 subprojects {
@@ -49,14 +49,6 @@ subprojects {
     task sourceJar(type: Jar) {
         from sourceSets.main.allJava
         archiveClassifier = 'sources'
-    }
-
-    test {
-        exclude '**/SampleDAOTest.class'
-        exclude '**/SubjectDAOTest.class'
-        exclude '**/SampleLockTests.class'
-        exclude '**/OntologyMongoDaoTest.class'
-        exclude '**/SummaryMongoDaoTest.class'
     }
 
     publishing {

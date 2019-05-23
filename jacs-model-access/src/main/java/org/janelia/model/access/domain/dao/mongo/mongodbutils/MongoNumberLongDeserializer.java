@@ -1,4 +1,4 @@
-package org.janelia.model.access.domain.dao.mongo.utils;
+package org.janelia.model.access.domain.dao.mongo.mongodbutils;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;

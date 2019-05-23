@@ -1,4 +1,4 @@
-package org.janelia.model.access.domain.dao.mongo.utils;
+package org.janelia.model.access.domain.dao.mongo.mongodbutils;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
@@ -14,4 +14,5 @@ public class MongoModule extends SimpleModule {
         addDeserializer(Double.class, new MongoNumberDoubleDeserializer());
         addDeserializer(Number.class, new MongoNumberDeserializer());
     }
+
 }

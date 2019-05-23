@@ -1,4 +1,4 @@
-package org.janelia.model.access.domain.dao.mongo.utils;
+package org.janelia.model.access.domain.dao.mongo.mongodbutils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.BsonReader;
@@ -17,7 +17,7 @@ public class JacksonCodecProvider implements CodecProvider {
 
     private final ObjectMapper objectMapper;
 
-    JacksonCodecProvider(ObjectMapper objectMapper) {
+    public JacksonCodecProvider(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 

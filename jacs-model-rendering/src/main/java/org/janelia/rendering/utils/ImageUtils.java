@@ -12,6 +12,7 @@ import com.sun.media.jai.codecimpl.TIFFImageDecoder;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.rendering.RenderedImageInfo;
+import org.janelia.rendering.RenderedImagesWithStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,14 +90,14 @@ public class ImageUtils {
     @Nullable
     public static RenderedImageInfo loadImageInfoFromTiffStream(InputStream inputStream) {
         SeekableStream tiffStream;
+        if (inputStream == null) {
+            return null;
+        } else if (inputStream instanceof SeekableStream) {
+            tiffStream = (SeekableStream) inputStream;
+        } else {
+            tiffStream = new MemoryCacheSeekableStream(inputStream);
+        }
         try {
-            if (inputStream == null) {
-                return null;
-            } else if (inputStream instanceof SeekableStream) {
-                tiffStream = (SeekableStream) inputStream;
-            } else {
-                tiffStream = new MemoryCacheSeekableStream(inputStream);
-            }
             TIFFDirectory tiffDirectory = new TIFFDirectory(tiffStream, 0);
             int imageWidth = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_IMAGE_WIDTH);
             int imageHeight = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_IMAGE_LENGTH);
@@ -109,6 +110,11 @@ public class ImageUtils {
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);
+        } finally {
+            try {
+                tiffStream.close();
+            } catch (IOException ignore) {
+            }
         }
     }
 
@@ -252,53 +258,38 @@ public class ImageUtils {
         }
     }
 
-    public static Optional<byte[]> mergeImageBands(Stream<RenderedImageSupplier> imageSuppliers) {
-        Pair<ParameterBlock, RenderedImage> pbImagePair = imageSuppliers
+    public static RenderedImagesWithStreams mergeImages(Stream<RenderedImagesWithStreamsSupplier> imageSuppliers) {
+        return imageSuppliers
                 .map(rims -> rims.get().orElse(null))
                 .filter(rim -> rim != null)
-                .reduce(ImmutablePair.of(null, null),
-                        (Pair<ParameterBlock, RenderedImage> p, RenderedImage r) -> ImageUtils.acumulateImage(p, r),
-                        (Pair<ParameterBlock, RenderedImage> p1, Pair<ParameterBlock, RenderedImage> p2) -> {
-                            if (p1.getRight() == null) {
-                                return p2;
-                            } else {
-                                RenderedImage p2Image = ImageUtils.reduceImage(p2);
-                                return ImageUtils.acumulateImage(p1, p2Image);
-                            }
-                        })
+                .reduce(RenderedImagesWithStreams.empty(), (r1, r2) -> r1.append(r2))
                 ;
-        RenderedImage imageResult = ImageUtils.reduceImage(pbImagePair);
-        if (imageResult == null) {
-            return Optional.empty();
-        } else {
-            return Optional.of(ImageUtils.renderedImageToTextureBytes(imageResult));
-        }
     }
 
-    private static Pair<ParameterBlock, RenderedImage> acumulateImage(Pair<ParameterBlock, RenderedImage> pbImagePair, RenderedImage rim) {
-        if (pbImagePair.getRight() == null) {
-            return ImmutablePair.of(null, rim);
-        } else if (pbImagePair.getLeft() == null) {
-            ParameterBlock combinedChannelsPB = new ParameterBlockJAI("bandmerge");
-            combinedChannelsPB.addSource(pbImagePair.getRight());
-            return ImmutablePair.of(combinedChannelsPB, rim);
-        } else {
-            return ImmutablePair.of(pbImagePair.getLeft().addSource(pbImagePair.getRight()), rim);
-        }
-    }
+//    private static Pair<ParameterBlock, RenderedImagesWithStreams> acumulateImage(Pair<ParameterBlock, RenderedImagesWithStreams> pbImagePair, RenderedImagesWithStreams rim) {
+//        if (pbImagePair.getRight() == null) {
+//            return ImmutablePair.of(null, rim);
+//        } else if (pbImagePair.getLeft() == null) {
+//            ParameterBlock combinedChannelsPB = new ParameterBlockJAI("bandmerge");
+//            combinedChannelsPB.addSource(pbImagePair.getRight().getRenderedImage());
+//            return ImmutablePair.of(combinedChannelsPB, rim);
+//        } else {
+//            return ImmutablePair.of(pbImagePair.getLeft().addSource(pbImagePair.getRight().getRenderedImage()), rim);
+//        }
+//    }
 
-    private static RenderedImage reduceImage(Pair<ParameterBlock, RenderedImage> pbImagePair) {
-        if (pbImagePair.getRight() == null) {
-            return null;
-        } else if (pbImagePair.getLeft() == null) {
-            return pbImagePair.getRight();
-        } else {
-            return JAI.create("bandmerge", pbImagePair.getLeft().addSource(pbImagePair.getRight()), null);
-        }
-    }
+//    private static RenderedImagesWithStreams reduceImage(Pair<ParameterBlock, RenderedImagesWithStreams> pbImagePair) {
+//        if (pbImagePair.getRight() == null) {
+//            return null;
+//        } else if (pbImagePair.getLeft() == null) {
+//            return pbImagePair.getRight();
+//        } else {
+//            return new RenderedImagesWithStreams(JAI.create("bandmerge", pbImagePair.getLeft().addSource(pbImagePair.getRight()), null));
+//        }
+//    }
 
     @Nullable
-    public static RenderedImage loadRenderedImageFromTiffStream(InputStream inputStream, int pageNumber) {
+    public static RenderedImagesWithStreams loadRenderedImageFromTiffStream(InputStream inputStream, int pageNumber) {
         SeekableStream tiffStream;
         try {
             if (inputStream == null) {
@@ -309,7 +300,7 @@ public class ImageUtils {
                 tiffStream = new MemoryCacheSeekableStream(inputStream);
             }
             ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
-            return decoder.decodeAsRenderedImage(pageNumber);
+            return RenderedImagesWithStreams.withImageAndStream(decoder.decodeAsRenderedImage(pageNumber), inputStream);
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);
