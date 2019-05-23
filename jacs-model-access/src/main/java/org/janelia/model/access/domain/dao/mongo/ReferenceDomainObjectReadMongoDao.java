@@ -5,6 +5,7 @@ import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.ReverseReference;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -39,4 +40,15 @@ public class ReferenceDomainObjectReadMongoDao extends AbstractMongoDao implemen
 
         return results.stream().findFirst().orElse(null);
     }
+
+    @Override
+    public List<? extends DomainObject> findByReferencesAndSubjectKey(List<Reference> entityReferences, String subjectKey) {
+        return null; // FIXME
+    }
+
+    @Override
+    public List<? extends DomainObject> findByReverseReferenceAndSubjectKey(ReverseReference reverseEntityReference, String subjectKey) {
+        return null; // FIXME
+    }
+
 }

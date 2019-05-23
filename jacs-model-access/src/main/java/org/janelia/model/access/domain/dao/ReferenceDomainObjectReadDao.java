@@ -2,6 +2,7 @@ package org.janelia.model.access.domain.dao;
 
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.ReverseReference;
 
 import java.util.List;
 
@@ -17,4 +18,8 @@ public interface ReferenceDomainObjectReadDao {
      * @return
      */
     <T extends DomainObject> T findByReferenceAndSubjectKey(Reference entityReference, String subjectKey);
+
+    List<? extends DomainObject> findByReferencesAndSubjectKey(List<Reference> entityReferences, String subjectKey);
+
+    List<? extends DomainObject> findByReverseReferenceAndSubjectKey(ReverseReference reverseEntityReference, String subjectKey);
 }
