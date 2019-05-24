@@ -16,7 +16,6 @@ public class DomainDAOManager {
     protected DomainDAO dao;
 
     private DomainDAOManager() {
-        // TODO: these should be run as integration tests
         this.dao = new DomainDAO(DATABASE_HOST, DATABASE_NAME);
     }
 

@@ -2,11 +2,10 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoDatabase;
 
 import org.janelia.model.access.domain.dao.DomainDAOManager;
+import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoDBHelper;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoModule;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.RegistryHelper;
 import org.junit.AfterClass;
@@ -20,16 +19,21 @@ public class AbstractMongoDaoTest {
     @BeforeClass
     public static void setUpMongoClient() {
         testObjectMapper = new ObjectMapper().registerModule(new MongoModule());
-        MongoClientOptions.Builder optionsBuilder = MongoClientOptions
-                .builder()
-                .codecRegistry(RegistryHelper.createCodecRegistryWithJacsksonEncoder(testObjectMapper))
-                ;
-        MongoClientURI mongoConnectionURI = new MongoClientURI(
-                "mongodb://" + DomainDAOManager.DATABASE_HOST,
-                optionsBuilder
+        testMongoClient = MongoDBHelper.createMongoClient(
+                null,
+                DomainDAOManager.DATABASE_HOST,
+                null,
+                null,
+                null,
+                0, // use default
+                0, // use default
+                -1, // use default
+                0,
+                0,
+                0,
+                () -> RegistryHelper.createCodecRegistryWithJacsksonEncoder(testObjectMapper)
         );
-        testMongoClient = new MongoClient(mongoConnectionURI);
-        testMongoDatabase = testMongoClient.getDatabase(DomainDAOManager.DATABASE_NAME);
+        testMongoDatabase = MongoDBHelper.createMongoDatabase(testMongoClient, DomainDAOManager.DATABASE_NAME);
     }
 
     @AfterClass

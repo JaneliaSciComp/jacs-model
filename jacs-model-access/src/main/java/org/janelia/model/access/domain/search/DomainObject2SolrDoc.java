@@ -209,7 +209,7 @@ class DomainObject2SolrDoc {
             }
         } else if (fieldValue instanceof ReverseReference) {
             ReverseReference reverseRef = (ReverseReference) fieldValue;
-            List<DomainObject> refObjs = objectGetter.getDomainObjectsReferencedBy(reverseRef);
+            List<? extends DomainObject> refObjs = objectGetter.getDomainObjectsReferencedBy(reverseRef);
             refObjs.forEach(refObj -> traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue));
         } else if (DomainObject.class.isAssignableFrom(fieldValueClass)) {
             DomainObject fieldValueAsDomainObject = (DomainObject) fieldValue;
