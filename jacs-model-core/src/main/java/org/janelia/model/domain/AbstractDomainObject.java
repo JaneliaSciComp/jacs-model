@@ -32,7 +32,7 @@ public abstract class AbstractDomainObject implements DomainObject, Serializable
     @JsonProperty(value="_id")
     @SearchAttribute(key="id",label="GUID")
     private Long id;
-    
+
     @SearchAttribute(key="name",label="Name")
     private String name;
     

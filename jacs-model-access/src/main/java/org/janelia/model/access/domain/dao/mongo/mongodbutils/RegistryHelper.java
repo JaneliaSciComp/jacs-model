@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoClient;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.PojoCodecProvider;
 import org.janelia.model.domain.ontology.Enum;
 
 public class RegistryHelper {
@@ -14,7 +15,8 @@ public class RegistryHelper {
                 CodecRegistries.fromCodecs(
                         new ReferenceCodec(),
                         new BigIntegerCodec()
-                )
+                ),
+                CodecRegistries.fromProviders(new EnumCodecProvider())
         );
     }
 
