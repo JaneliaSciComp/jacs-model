@@ -1,5 +1,9 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.assertj.core.api.Assertions;
 import org.janelia.model.domain.ontology.Category;
 import org.janelia.model.domain.ontology.Ontology;
@@ -7,10 +11,6 @@ import org.janelia.model.domain.ontology.OntologyTerm;
 import org.janelia.model.domain.ontology.Tag;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNull;

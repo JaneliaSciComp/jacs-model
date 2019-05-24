@@ -1,15 +1,16 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import org.janelia.model.domain.sample.DataSet;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+
+import org.janelia.model.domain.sample.DataSet;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 

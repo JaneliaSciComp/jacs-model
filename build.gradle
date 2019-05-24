@@ -5,6 +5,7 @@ plugins {
 allprojects {
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
+    apply plugin: 'idea'
     group = 'org.janelia.jacs-model'
     version = '2.3.0'
 }
@@ -27,6 +28,27 @@ subprojects {
             }
         }
 
+        configurations {
+            provided
+            implementation.extendsFrom(provided)
+            integrationTestCompileOnly.extendsFrom(testCompileOnly)
+            integrationTestImplementation.extendsFrom(testImplementation)
+            integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+        }
+
+        sourceSets {
+            integrationTest {
+                java {
+                    compileClasspath += main.output + test.output
+                    runtimeClasspath += main.output + test.output
+                    srcDir file('src/integrationTest/java')
+                }
+                resources {
+                    srcDir file('src/integrationTest/resources')
+                }
+            }
+        }
+
         compileJava {
             doFirst {
                 options.compilerArgs = [
@@ -44,6 +66,32 @@ subprojects {
                 ]
             }
         }
+
+        compileIntegrationTestJava {
+            doFirst {
+                options.compilerArgs = [
+                        '-Xlint:deprecation',
+                        '-Xlint:unchecked'
+                ]
+            }
+        }
+
+        idea {
+            module {
+                downloadSources = true
+                downloadJavadoc = true
+                scopes.TEST.plus += [
+                    configurations.integrationTestCompileOnly,
+                    configurations.integrationTestRuntime
+                ]
+            }
+        }
+
+        task integrationTest(type: Test) {
+            testClassesDirs += sourceSets.integrationTest.output.classesDirs
+            classpath = sourceSets.integrationTest.runtimeClasspath
+        }
+
     }
 
     task sourceJar(type: Jar) {

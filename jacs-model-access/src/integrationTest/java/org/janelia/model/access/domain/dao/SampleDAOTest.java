@@ -1,12 +1,12 @@
 package org.janelia.model.access.domain.dao;
 
+import java.util.List;
+
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.domain.sample.DataSet;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

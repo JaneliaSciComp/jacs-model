@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 /**
  * A reverse reference to a set of DomainObjects in another collection. The referring DomainObjects
- * each have type <i>referringCollectionName</i> and contain an attribute with name <i>referenceAttr</i> and
+ * each have type <i>referringClassName</i> and contain an attribute with name <i>referenceAttr</i> and
  * value <i>referenceId</i>.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>

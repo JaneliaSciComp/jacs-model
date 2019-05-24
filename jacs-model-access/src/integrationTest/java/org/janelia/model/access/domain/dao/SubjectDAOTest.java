@@ -1,19 +1,19 @@
 package org.janelia.model.access.domain.dao;
 
+import org.janelia.model.access.domain.DomainDAO;
+import org.janelia.model.domain.workspace.Workspace;
+import org.janelia.model.security.GroupRole;
+import org.janelia.model.security.Subject;
+import org.janelia.model.security.User;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
-import org.janelia.model.security.GroupRole;
-import org.janelia.model.security.Subject;
-import org.janelia.model.security.User;
-import org.janelia.model.access.domain.DomainDAO;
-import org.janelia.model.domain.workspace.Workspace;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>

@@ -1,5 +1,8 @@
 package org.janelia.model.access.domain.dao;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.sample.SampleLock;
@@ -8,10 +11,11 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for sample locking.

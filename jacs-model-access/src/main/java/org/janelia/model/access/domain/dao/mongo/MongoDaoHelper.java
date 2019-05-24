@@ -38,6 +38,22 @@ import java.util.stream.Collectors;
  */
 class MongoDaoHelper {
 
+    static Bson createAttributeFilter(String attributeName, Object attributeValue) {
+        return Filters.eq(attributeName, attributeValue);
+    }
+
+    static <I> Bson createFilterById(I id) {
+        return Filters.eq("_id", id);
+    }
+
+    static <I> Bson createFilterByIds(Collection<I> ids) {
+        return Filters.in("_id", ids);
+    }
+
+    static Bson createFilterByClass(Class<?> clazz) {
+        return Filters.eq("class", clazz.getName());
+    }
+
     static <I, T, R> R findById(I id, MongoCollection<T> mongoCollection, Class<R> documentType) {
         if (id == null) {
             return null;
@@ -52,18 +68,6 @@ class MongoDaoHelper {
             );
             return CollectionUtils.isNotEmpty(entityDocs) ? entityDocs.get(0) : null;
         }
-    }
-
-    static <I> Bson createFilterById(I id) {
-        return Filters.eq("_id", id);
-    }
-
-    static <I> Bson createFilterByIds(Collection<I> ids) {
-        return Filters.in("_id", ids);
-    }
-
-    static Bson createFilterByClass(Class<?> clazz) {
-        return Filters.eq("class", clazz.getName());
     }
 
     static <T, R> List<R> getDistinctValues(String fieldName, Bson filter, MongoCollection<T> mongoCollection, Class<R> documentType) {
