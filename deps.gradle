@@ -21,7 +21,8 @@ dependencies {
         GUAVA_LIB = "com.google.guava:guava:26.0-jre"
 
         // database
-        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver-legacy:3.9.0"
+        MONGODB_DRIVER_VERSION = "3.10.2"
+        MONGODB_DRIVER_LIB = "org.mongodb:mongo-java-driver:${MONGODB_DRIVER_VERSION}"
         MYSQL_DRIVER_LIB = "mysql:mysql-connector-java:5.1.42"
         JONGO_LIB = "org.jongo:jongo:1.4.0"
         HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
