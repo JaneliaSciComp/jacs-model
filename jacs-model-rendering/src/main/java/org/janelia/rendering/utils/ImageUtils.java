@@ -271,7 +271,7 @@ public class ImageUtils {
         RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
         RenderedImageWithStream imageResult = mergedImages.combine("bandmerge");
         if (imageResult == null) {
-            return new byte[0];
+            return null;
         } else {
             try {
                 return ImageUtils.renderedImageToTextureBytes(imageResult.getRenderedImage());
