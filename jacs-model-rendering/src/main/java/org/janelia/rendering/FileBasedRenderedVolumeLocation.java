@@ -100,36 +100,24 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
-        Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = channelImageNames.stream()
-                .map(channelImageName -> volumeBasePath.resolve(tileRelativePath).resolve(channelImageName))
-                .filter(channelImagePath -> Files.exists(channelImagePath))
-                .map(channelImagePath -> () -> {
-                    RenderedImagesWithStreams rims;
-                    try {
-                        InputStream rimStream = new FileSeekableStream(channelImagePath.toFile());
-                        LOG.debug("Load page {} from {}", pageNumber, channelImagePath);
-                        rims = ImageUtils.loadRenderedImageFromTiffStream(rimStream, pageNumber);
-                    } catch (IOException e) {
-                        LOG.error("Error reading image from {}", channelImagePath, e);
-                        throw new IllegalStateException(e);
-                    }
-                    if (rims == null) {
-                        return Optional.empty();
-                    } else {
-                        return Optional.of(rims);
-                    }
-                });
-        RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
-        RenderedImage imageResult = mergedImages.combine("bandmerge");
-        try {
-            if (imageResult == null) {
-                return null;
-            } else {
-                return ImageUtils.renderedImageToTextureBytes(imageResult);
-            }
-        } finally {
-            mergedImages.close();
-        }
+        return ImageUtils.bandMergedTextureBytesFromImageStreams(
+                channelImageNames.stream()
+                        .map(channelImageName -> volumeBasePath.resolve(tileRelativePath).resolve(channelImageName))
+                        .filter(channelImagePath -> Files.exists(channelImagePath))
+                        .map(channelImagePath -> NamedSupplier.namedSupplier(
+                                channelImagePath.toString(),
+                                () -> {
+                                    try {
+                                        return new FileSeekableStream(channelImagePath.toFile());
+                                    } catch (IOException e) {
+                                        LOG.error("Error opening image {} for reading {}", channelImagePath, pageNumber, e);
+                                        throw new IllegalStateException(e);
+                                    }
+
+                                })
+                        ),
+                pageNumber
+        );
     }
 
     @Override

@@ -6,6 +6,7 @@ import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.SequenceInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,15 +50,28 @@ public class RenderedImagesWithStreams {
                 });
     }
 
-    RenderedImage combine(String operation) {
+    public RenderedImageWithStream combine(String operation) {
         if (renderedImages.size() == 0) {
             return null;
         } else if (renderedImages.size() == 1) {
-            return renderedImages.get(0);
+            return new RenderedImageWithStream(renderedImages.get(0), renderedImageStreams.get(0));
         } else {
             ParameterBlock combinedImages = new ParameterBlockJAI(operation);
             renderedImages.forEach(rim -> combinedImages.addSource(rim));
-            return JAI.create(operation, combinedImages, null);
+            return new RenderedImageWithStream(
+                    JAI.create(operation, combinedImages, null),
+                    new InputStream() {
+                        @Override
+                        public int read() throws IOException {
+                            throw new UnsupportedOperationException("Read is not supported from a final combined stream which is created only for being able to close all underlying streams");
+                        }
+
+                        @Override
+                        public void close() throws IOException {
+                            RenderedImagesWithStreams.this.close();
+                        }
+                    }
+            );
         }
     }
 

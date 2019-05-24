@@ -1,27 +1,6 @@
 package org.janelia.rendering.utils;
 
-import com.sun.media.jai.codec.FileSeekableStream;
-import com.sun.media.jai.codec.ImageCodec;
-import com.sun.media.jai.codec.ImageDecoder;
-import com.sun.media.jai.codec.ImageEncoder;
-import com.sun.media.jai.codec.MemoryCacheSeekableStream;
-import com.sun.media.jai.codec.SeekableStream;
-import com.sun.media.jai.codec.TIFFDirectory;
-import com.sun.media.jai.codec.TIFFEncodeParam;
-import com.sun.media.jai.codecimpl.TIFFImageDecoder;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.janelia.rendering.RenderedImageInfo;
-import org.janelia.rendering.RenderedImagesWithStreams;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
-import javax.media.jai.JAI;
-import javax.media.jai.NullOpImage;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.RenderedImageAdapter;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
@@ -29,7 +8,6 @@ import java.awt.image.DataBufferUShort;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +21,27 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import javax.annotation.Nullable;
+import javax.media.jai.NullOpImage;
+import javax.media.jai.RenderedImageAdapter;
+
+import com.sun.media.jai.codec.FileSeekableStream;
+import com.sun.media.jai.codec.ImageCodec;
+import com.sun.media.jai.codec.ImageDecoder;
+import com.sun.media.jai.codec.ImageEncoder;
+import com.sun.media.jai.codec.MemoryCacheSeekableStream;
+import com.sun.media.jai.codec.SeekableStream;
+import com.sun.media.jai.codec.TIFFDirectory;
+import com.sun.media.jai.codec.TIFFEncodeParam;
+import com.sun.media.jai.codecimpl.TIFFImageDecoder;
+
+import org.janelia.rendering.NamedSupplier;
+import org.janelia.rendering.RenderedImageInfo;
+import org.janelia.rendering.RenderedImageWithStream;
+import org.janelia.rendering.RenderedImagesWithStreams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ImageUtils {
 
@@ -258,6 +257,30 @@ public class ImageUtils {
         }
     }
 
+    public static byte[] bandMergedTextureBytesFromImageStreams(Stream<NamedSupplier<InputStream>> imageStreamsSuppliers, int pageNumber) {
+        Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = imageStreamsSuppliers
+                .map(isSupplier -> () -> {
+                    LOG.debug("Read image page {} from {}", pageNumber, isSupplier.getName());
+                    RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier.get(), pageNumber);
+                    if (rims == null) {
+                        return Optional.empty();
+                    } else {
+                        return Optional.of(rims);
+                    }
+                });
+        RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
+        RenderedImageWithStream imageResult = mergedImages.combine("bandmerge");
+        if (imageResult == null) {
+            return new byte[0];
+        } else {
+            try {
+                return ImageUtils.renderedImageToTextureBytes(imageResult.getRenderedImage());
+            } finally {
+                imageResult.close();
+            }
+        }
+    }
+
     public static RenderedImagesWithStreams mergeImages(Stream<RenderedImagesWithStreamsSupplier> imageSuppliers) {
         return imageSuppliers
                 .map(rims -> rims.get().orElse(null))
@@ -265,28 +288,6 @@ public class ImageUtils {
                 .reduce(RenderedImagesWithStreams.empty(), (r1, r2) -> r1.append(r2))
                 ;
     }
-
-//    private static Pair<ParameterBlock, RenderedImagesWithStreams> acumulateImage(Pair<ParameterBlock, RenderedImagesWithStreams> pbImagePair, RenderedImagesWithStreams rim) {
-//        if (pbImagePair.getRight() == null) {
-//            return ImmutablePair.of(null, rim);
-//        } else if (pbImagePair.getLeft() == null) {
-//            ParameterBlock combinedChannelsPB = new ParameterBlockJAI("bandmerge");
-//            combinedChannelsPB.addSource(pbImagePair.getRight().getRenderedImage());
-//            return ImmutablePair.of(combinedChannelsPB, rim);
-//        } else {
-//            return ImmutablePair.of(pbImagePair.getLeft().addSource(pbImagePair.getRight().getRenderedImage()), rim);
-//        }
-//    }
-
-//    private static RenderedImagesWithStreams reduceImage(Pair<ParameterBlock, RenderedImagesWithStreams> pbImagePair) {
-//        if (pbImagePair.getRight() == null) {
-//            return null;
-//        } else if (pbImagePair.getLeft() == null) {
-//            return pbImagePair.getRight();
-//        } else {
-//            return new RenderedImagesWithStreams(JAI.create("bandmerge", pbImagePair.getLeft().addSource(pbImagePair.getRight()), null));
-//        }
-//    }
 
     @Nullable
     public static RenderedImagesWithStreams loadRenderedImageFromTiffStream(InputStream inputStream, int pageNumber) {
