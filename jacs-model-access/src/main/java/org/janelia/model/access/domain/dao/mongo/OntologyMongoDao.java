@@ -1,10 +1,19 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.IntStream;
+
+import javax.inject.Inject;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.UpdateOptions;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -14,13 +23,6 @@ import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
 import org.janelia.model.util.SortCriteria;
-
-import javax.inject.Inject;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.stream.IntStream;
 
 /**
  * {@link Ontology} Mongo DAO.
@@ -40,7 +42,9 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
             return Collections.emptyList();
         return MongoDaoHelper.find(
                 permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey),
-                MongoDaoHelper.createBsonSortCriteria(new SortCriteria("_id")),
+                MongoDaoHelper.createBsonSortCriteria(
+                        new SortCriteria("ownerKey"),
+                        new SortCriteria("_id")),
                 offset,
                 length,
                 mongoCollection,

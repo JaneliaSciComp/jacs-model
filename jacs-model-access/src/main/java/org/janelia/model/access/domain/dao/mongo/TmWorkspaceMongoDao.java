@@ -1,10 +1,20 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import javax.inject.Inject;
+
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.model.access.domain.DomainDAO;
+import org.janelia.model.access.domain.IdSource;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.DomainConstants;
@@ -15,14 +25,7 @@ import org.janelia.model.domain.tiledMicroscope.TmProtobufExchanger;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.TreeNode;
-import org.janelia.model.access.domain.IdSource;
-
-import javax.inject.Inject;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import org.janelia.model.util.SortCriteria;
 
 /**
  * {@link TmWorkspace} Mongo DAO.
@@ -51,7 +54,9 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                 MongoDaoHelper.createFilterCriteria(
                         Filters.eq("sampleRef", Reference.createFor(TmSample.class, sampleId).toString()),
                         permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
-                null,
+                MongoDaoHelper.createBsonSortCriteria(
+                        new SortCriteria("ownerKey"),
+                        new SortCriteria("_id")),
                 0,
                 -1,
                 mongoCollection,
