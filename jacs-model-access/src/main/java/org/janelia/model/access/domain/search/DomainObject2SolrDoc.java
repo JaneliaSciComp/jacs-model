@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -198,7 +199,7 @@ class DomainObject2SolrDoc {
         } else if (fieldValue instanceof Reference) {
             Reference ref = (Reference) fieldValue;
             // Don't fetch objects which we've already visited
-            if (visited.contains(ref.toString())) {
+            if (visited.contains(ref)) {
                 return;
             }
             DomainObject refObj = objectGetter.getDomainObjectByReference(ref);
@@ -255,7 +256,7 @@ class DomainObject2SolrDoc {
                                                                  Set<Reference> visited,
                                                                  FullTextIndexableValues fullTextIndexableValue) {
         currentCollection.stream()
-                .filter(member -> member != null)
+                .filter(Objects::nonNull)
                 .forEach(member -> {
                     Class<?> memberClass = member.getClass();
                     if (member instanceof String) {
@@ -263,7 +264,7 @@ class DomainObject2SolrDoc {
                     } else if (member instanceof Reference) {
                         Reference ref = (Reference) member;
                         // Don't fetch objects which we've already visited
-                        if (visited.contains(ref.toString())) {
+                        if (visited.contains(ref)) {
                             return;
                         }
                         DomainObject refObj = objectGetter.getDomainObjectByReference(ref);
