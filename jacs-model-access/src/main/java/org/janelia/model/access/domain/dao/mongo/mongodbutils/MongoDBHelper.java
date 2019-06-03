@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 import javax.inject.Provider;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
