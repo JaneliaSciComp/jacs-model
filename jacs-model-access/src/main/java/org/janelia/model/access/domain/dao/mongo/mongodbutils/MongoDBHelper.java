@@ -88,7 +88,6 @@ public class MongoDBHelper {
     }
 
     public static MongoDatabase createMongoDatabase(MongoClient mongoClient, String mongoDatabaseName) {
-        LOG.trace("Connecting to database: {}", mongoDatabaseName);
         return mongoClient.getDatabase(mongoDatabaseName);
     }
 
