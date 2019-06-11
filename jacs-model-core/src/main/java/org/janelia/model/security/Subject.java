@@ -1,7 +1,12 @@
 package org.janelia.model.security;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.janelia.model.domain.interfaces.HasIdentifier;
 import org.janelia.model.domain.interfaces.HasName;
@@ -22,7 +27,10 @@ public abstract class Subject implements HasIdentifier, HasName, Serializable {
     
     public static final String ADMIN_KEY = "group:admin";
     public static final String USERS_KEY = "group:workstation_users";
-    
+
+    @JsonIgnore
+    private final Set<GroupRole> roles = new HashSet<>();
+
     @MongoId
     @JsonProperty(value="_id")
     private Long id;
@@ -55,7 +63,7 @@ public abstract class Subject implements HasIdentifier, HasName, Serializable {
     }
 
     /**
-     * Full name of the user or gro=
+     * Full name of the user or group.
      */
     public String getFullName() {
         return fullName;
@@ -64,4 +72,25 @@ public abstract class Subject implements HasIdentifier, HasName, Serializable {
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
+
+    public void addRoles(GroupRole ...roles) {
+        for (GroupRole r : roles) {
+            if (r != null) {
+                this.roles.add(r);
+            }
+        }
+    }
+
+    public boolean hasReadPrivilege() {
+        return hasPrivilege(roles.stream(), GroupRole::isRead);
+    }
+
+    public boolean hasWritePrivilege() {
+        return hasPrivilege(roles.stream(), GroupRole::isWrite);
+    }
+
+    protected boolean hasPrivilege(Stream<GroupRole> roleStream, Predicate<GroupRole> privilegeFilter) {
+        return roleStream.filter(privilegeFilter).findFirst().map(r -> true).orElse(false);
+    }
+
 }

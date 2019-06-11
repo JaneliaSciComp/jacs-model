@@ -39,7 +39,7 @@ public class SubjectUtils {
     }
 
     public static boolean isAdmin(Subject subject) {
-        return subjectIsInGroup(subject, SubjectRole.Admin.getRole());
+        return subjectIsInGroup(subject, Subject.ADMIN_KEY);
     }
 
     public static Set<String> getReaderSet(Subject subject) {

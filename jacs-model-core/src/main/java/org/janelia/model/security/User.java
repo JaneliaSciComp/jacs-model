@@ -63,6 +63,7 @@ public class User extends Subject {
         return ugr==null ? null : ugr.getRole();
     }
 
+
     @JsonIgnore
     public Set<String> getReadGroups() {
         Set<String> groups = new HashSet<>();
@@ -112,6 +113,30 @@ public class User extends Subject {
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean hasReadPrivilege() {
+        // for users only the admin group roles apply to all the other groups
+        // so in this case only look at the roles associated with the admin group
+        // and check if it has read privileges
+        return hasPrivilege(
+                userGroupRoles.stream()
+                        .filter(groupRole -> groupRole.getGroupKey().equals(Subject.ADMIN_KEY))
+                        .map(UserGroupRole::getRole),
+                GroupRole::isRead);
+    }
+
+    @Override
+    public boolean hasWritePrivilege() {
+        // for users only the admin group roles apply to all the other groups
+        // so in this case only look at the roles associated with the admin group
+        // and check if it has write privileges
+        return hasPrivilege(
+                userGroupRoles.stream()
+                        .filter(groupRole -> groupRole.getGroupKey().equals(Subject.ADMIN_KEY))
+                        .map(UserGroupRole::getRole),
+                GroupRole::isWrite);
     }
 
     @Override
