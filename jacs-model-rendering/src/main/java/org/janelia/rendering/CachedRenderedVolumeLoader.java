@@ -85,16 +85,6 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
 
     @Override
     public Stream<RawImage> streamVolumeRawImageTiles(RenderedVolumeLocation rvl) {
-        if (renderedVolumesCache == null) {
-            return impl.streamVolumeRawImageTiles(rvl);
-        } else {
-            try {
-                return renderedVolumesCache.get(rvl.getVolumeLocation(), () -> impl.loadVolume(rvl))
-                    .map(rv -> impl.streamVolumeRawImageTiles(rv.getRvl()))
-                    .orElseGet(() -> Stream.of());
-            } catch (ExecutionException e) {
-                throw new IllegalStateException(e);
-            }
-        }
+        return impl.streamVolumeRawImageTiles(rvl);
     }
 }
