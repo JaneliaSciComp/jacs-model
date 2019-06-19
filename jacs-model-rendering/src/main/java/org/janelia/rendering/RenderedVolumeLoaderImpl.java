@@ -19,7 +19,6 @@ import javax.annotation.Nonnull;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Streams;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.rendering.ymlrepr.RawVolData;
@@ -232,7 +231,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                 LOG.warn("No rawimages found at {}", rvl.getBaseURI());
                 return Collections.emptyList();
             }
-            if (CollectionUtils.isEmpty(rawVolData.getTiles())) {
+            if (rawVolData.getTiles() == null || rawVolData.getTiles().isEmpty()) {
                 return Collections.emptyList();
             } else {
                 return rawVolData.getTiles().stream()
