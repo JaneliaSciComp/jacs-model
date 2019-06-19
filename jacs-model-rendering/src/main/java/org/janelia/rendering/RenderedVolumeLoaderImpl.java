@@ -194,7 +194,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         return loadVolume(rvl)
                 .flatMap(rv -> {
                     Integer[] p = Arrays.stream(rv.convertToMicroscopeCoord(new int[] {xVoxel, yVoxel, zVoxel})).boxed().toArray(Integer[]::new);
-                    return loadRawImageMetadataList(rvl)
+                    return streamVolumeRawImageTiles(rvl)
                             .min((t1, t2) -> {
                                 Double d1 = squaredMetricDistance(t1.getCenter(), p);
                                 Double d2 = squaredMetricDistance(t2.getCenter(), p);
@@ -210,7 +210,20 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                 });
     }
 
-    private Stream<RawImage> loadRawImageMetadataList(RenderedVolumeLocation rvl) {
+    private Double squaredMetricDistance(Integer[] p1, Integer[] p2) {
+        return Streams.zip(Arrays.stream(p1), Arrays.stream(p2), (p1_coord, p2_coord) -> Math.pow((p1_coord.doubleValue() - p2_coord.doubleValue()), 2.))
+                .reduce(0., (d1, d2) -> d1 + d2);
+    }
+
+    @Override
+    public byte[] loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
+                                                    RawImage rawImage,
+                                                    int channel, int xCenter, int yCenter, int zCenter,
+                                                    int dimx, int dimy, int dimz) {
+        return rvl.readRawTileROIPixels(rawImage, channel, xCenter, yCenter, zCenter, dimx, dimy, dimz);
+    }
+
+    public Stream<RawImage> streamVolumeRawImageTiles(RenderedVolumeLocation rvl) {
         try {
             InputStream tileBaseStream = rvl.readTileBaseData();
             RawVolData rawVolData = new RawVolReader().readRawVolData(tileBaseStream);
@@ -243,19 +256,6 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
             LOG.error("Error reading tiled volume metadata from {}", rvl.getBaseURI(), e);
             throw new IllegalStateException(e);
         }
-    }
-
-    private Double squaredMetricDistance(Integer[] p1, Integer[] p2) {
-        return Streams.zip(Arrays.stream(p1), Arrays.stream(p2), (p1_coord, p2_coord) -> Math.pow((p1_coord.doubleValue() - p2_coord.doubleValue()), 2.))
-                .reduce(0., (d1, d2) -> d1 + d2);
-    }
-
-    @Override
-    public byte[] loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
-                                                    RawImage rawImage,
-                                                    int channel, int xCenter, int yCenter, int zCenter,
-                                                    int dimx, int dimy, int dimz) {
-        return rvl.readRawTileROIPixels(rawImage, channel, xCenter, yCenter, zCenter, dimx, dimy, dimz);
     }
 
 }

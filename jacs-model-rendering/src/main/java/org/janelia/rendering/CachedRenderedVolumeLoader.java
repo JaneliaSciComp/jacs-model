@@ -8,7 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
 
@@ -81,4 +83,18 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
         return impl.loadRawImageContentFromVoxelCoord(rvl, rawImage, channel, x, y, z, dimx, dimy, dimz);
     }
 
+    @Override
+    public Stream<RawImage> streamVolumeRawImageTiles(RenderedVolumeLocation rvl) {
+        if (renderedVolumesCache == null) {
+            return impl.streamVolumeRawImageTiles(rvl);
+        } else {
+            try {
+                return renderedVolumesCache.get(rvl.getVolumeLocation(), () -> impl.loadVolume(rvl))
+                    .map(rv -> impl.streamVolumeRawImageTiles(rv.getRvl()))
+                    .orElseGet(() -> Stream.of());
+            } catch (ExecutionException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+    }
 }
