@@ -1,7 +1,7 @@
 package org.janelia.rendering;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 public interface RenderedVolumeLoader {
     Optional<RenderedVolume> loadVolume(RenderedVolumeLocation rvl);
@@ -12,5 +12,5 @@ public interface RenderedVolumeLoader {
                                              int channel,
                                              int xVoxel, int yVoxel, int zVoxel,
                                              int dimx, int dimy, int dimz);
-    Stream<RawImage> streamVolumeRawImageTiles(RenderedVolumeLocation rvl);
+    List<RawImage> loadVolumeRawImageTiles(RenderedVolumeLocation rvl);
 }

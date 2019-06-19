@@ -1,16 +1,15 @@
 package org.janelia.rendering;
 
+import java.net.URI;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.apache.commons.lang3.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.URI;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Stream;
 
 public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
 
@@ -84,7 +83,7 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     }
 
     @Override
-    public Stream<RawImage> streamVolumeRawImageTiles(RenderedVolumeLocation rvl) {
-        return impl.streamVolumeRawImageTiles(rvl);
+    public List<RawImage> loadVolumeRawImageTiles(RenderedVolumeLocation rvl) {
+        return impl.loadVolumeRawImageTiles(rvl);
     }
 }

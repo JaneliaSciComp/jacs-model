@@ -1,16 +1,5 @@
 package org.janelia.rendering;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Streams;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.janelia.rendering.ymlrepr.RawVolData;
-import org.janelia.rendering.ymlrepr.RawVolReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nonnull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,12 +7,25 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
+
+import com.google.common.base.Splitter;
+import com.google.common.collect.Streams;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.janelia.rendering.ymlrepr.RawVolData;
+import org.janelia.rendering.ymlrepr.RawVolReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
 
@@ -40,7 +42,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                     .filter(tileInfo -> tileInfo != null)
                                     .findFirst()
                                     .map(tileInfo -> tileInfo.getVolumeSize())
-                                    .orElseGet(() -> new int[] {0, 0, 0});
+                                    .orElseGet(() -> new int[]{0, 0, 0});
                             int[] volumeSizeInVoxels = Arrays.stream(tileVolumeDims).map(tileDim -> tileDim * scaleFactor).toArray();
                             TileInfo xyTileInfo = tileInfos[Coordinate.Z.index()];
                             TileInfo zxTileInfo = tileInfos[Coordinate.Y.index()];
@@ -176,7 +178,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                     tileInfos[coord.index()] = new TileInfo(
                             coord,
                             channelTilesByOrthoProjection.get(coord).size(),
-                            new int[] {imageInfo.sx, imageInfo.sy, imageInfo.sz},
+                            new int[]{imageInfo.sx, imageInfo.sy, imageInfo.sz},
                             imageInfo.cmPixelSize,
                             imageInfo.sRGBspace);
                 } else {
@@ -193,8 +195,8 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     public Optional<RawImage> findClosestRawImageFromVoxelCoord(RenderedVolumeLocation rvl, int xVoxel, int yVoxel, int zVoxel) {
         return loadVolume(rvl)
                 .flatMap(rv -> {
-                    Integer[] p = Arrays.stream(rv.convertToMicroscopeCoord(new int[] {xVoxel, yVoxel, zVoxel})).boxed().toArray(Integer[]::new);
-                    return streamVolumeRawImageTiles(rvl)
+                    Integer[] p = Arrays.stream(rv.convertToMicroscopeCoord(new int[]{xVoxel, yVoxel, zVoxel})).boxed().toArray(Integer[]::new);
+                    return loadVolumeRawImageTiles(rvl).stream()
                             .min((t1, t2) -> {
                                 Double d1 = squaredMetricDistance(t1.getCenter(), p);
                                 Double d2 = squaredMetricDistance(t2.getCenter(), p);
@@ -223,16 +225,15 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         return rvl.readRawTileROIPixels(rawImage, channel, xCenter, yCenter, zCenter, dimx, dimy, dimz);
     }
 
-    public Stream<RawImage> streamVolumeRawImageTiles(RenderedVolumeLocation rvl) {
+    public List<RawImage> loadVolumeRawImageTiles(RenderedVolumeLocation rvl) {
         try {
-            InputStream tileBaseStream = rvl.readTileBaseData();
-            RawVolData rawVolData = new RawVolReader().readRawVolData(tileBaseStream);
+            RawVolData rawVolData = loadRawVolumeData(rvl);
             if (rawVolData == null) {
                 LOG.warn("No rawimages found at {}", rvl.getBaseURI());
-                return Stream.of();
+                return Collections.emptyList();
             }
             if (CollectionUtils.isEmpty(rawVolData.getTiles())) {
-                return Stream.of();
+                return Collections.emptyList();
             } else {
                 return rawVolData.getTiles().stream()
                         .map(t -> {
@@ -258,11 +259,20 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                             tn.setTransform(t.getTransform());
                             return tn;
                         })
+                        .collect(Collectors.toList())
                         ;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error("Error reading tiled volume metadata from {}", rvl.getBaseURI(), e);
             throw new IllegalStateException(e);
+        }
+    }
+
+    private RawVolData loadRawVolumeData(RenderedVolumeLocation rvl) {
+        try (InputStream tileBaseStream = rvl.readTileBaseData()) {
+            return new RawVolReader().readRawVolData(tileBaseStream);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
