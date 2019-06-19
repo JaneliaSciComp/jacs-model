@@ -244,10 +244,18 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                 tn.setOriginInMicros(t.getAabb().getOri());
                                 tn.setDimsInMicros(t.getAabb().getShape());
                             }
-                            tn.setTransform(t.getTransform());
                             if (t.getShape() != null) {
+                                String intensityType = t.getShape().getType();
+                                if (StringUtils.equalsIgnoreCase("u16", intensityType)) {
+                                    tn.setBytesPerIntensity(2);
+                                } else {
+                                    tn.setBytesPerIntensity(1);
+                                }
                                 tn.setTileDims(t.getShape().getDims());
+                            } else {
+                                tn.setBytesPerIntensity(1);
                             }
+                            tn.setTransform(t.getTransform());
                             return tn;
                         })
                         ;

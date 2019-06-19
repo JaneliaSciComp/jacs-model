@@ -23,6 +23,7 @@ public class RawImage {
     private String relativePath;
     private Integer[] originInMicros; // image origin in microscope coordinates
     private Integer[] dimsInMicros; // image dimensions in microscope coordinates
+    private int bytesPerIntensity;
     private Double[] transform;
     private Integer[] tileDims; // image tile dimensions in form of an array [deltax, deltay, deltaz, nchannels]
 
@@ -64,6 +65,14 @@ public class RawImage {
 
     public void setDimsInMicros(Integer[] dimsInMicros) {
         this.dimsInMicros = dimsInMicros;
+    }
+
+    public int getBytesPerIntensity() {
+        return bytesPerIntensity;
+    }
+
+    public void setBytesPerIntensity(int bytesPerIntensity) {
+        this.bytesPerIntensity = bytesPerIntensity;
     }
 
     public Double[] getTransform() {
