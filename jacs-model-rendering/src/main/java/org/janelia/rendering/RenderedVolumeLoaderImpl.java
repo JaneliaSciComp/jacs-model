@@ -241,8 +241,8 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                             tn.setAcquisitionPath(rawVolData.getPath());
                             tn.setRelativePath(t.getPath());
                             if (t.getAabb() != null) {
-                                tn.setOriginInMicros(t.getAabb().getOri());
-                                tn.setDimsInMicros(t.getAabb().getShape());
+                                tn.setOriginInNanos(t.getAabb().getOri());
+                                tn.setDimsInNanos(t.getAabb().getShape());
                             }
                             if (t.getShape() != null) {
                                 String intensityType = t.getShape().getType();

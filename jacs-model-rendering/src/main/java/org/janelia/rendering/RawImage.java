@@ -21,8 +21,8 @@ public class RawImage {
     private String renderedVolumePath;
     private String acquisitionPath;
     private String relativePath;
-    private Integer[] originInMicros; // image origin in microscope coordinates
-    private Integer[] dimsInMicros; // image dimensions in microscope coordinates
+    private Integer[] originInNanos; // image origin in microscope coordinates
+    private Integer[] dimsInNanos; // image dimensions in microscope coordinates
     private int bytesPerIntensity;
     private Double[] transform;
     private Integer[] tileDims; // image tile dimensions in form of an array [deltax, deltay, deltaz, nchannels]
@@ -51,20 +51,20 @@ public class RawImage {
         this.relativePath = relativePath;
     }
 
-    public Integer[] getOriginInMicros() {
-        return originInMicros;
+    public Integer[] getOriginInNanos() {
+        return originInNanos;
     }
 
-    public void setOriginInMicros(Integer[] originInMicros) {
-        this.originInMicros = originInMicros;
+    public void setOriginInNanos(Integer[] originInNanos) {
+        this.originInNanos = originInNanos;
     }
 
-    public Integer[] getDimsInMicros() {
-        return dimsInMicros;
+    public Integer[] getDimsInNanos() {
+        return dimsInNanos;
     }
 
-    public void setDimsInMicros(Integer[] dimsInMicros) {
-        this.dimsInMicros = dimsInMicros;
+    public void setDimsInNanos(Integer[] dimsInNanos) {
+        this.dimsInNanos = dimsInNanos;
     }
 
     public int getBytesPerIntensity() {
@@ -113,9 +113,9 @@ public class RawImage {
 
     @JsonIgnore
     public Integer[] getCenter() {
-        Preconditions.checkArgument(originInMicros != null && dimsInMicros != null && originInMicros.length == dimsInMicros.length,
-                "Incompatible originInMicros and dimsInMicros vectors in " + this.toString());
-        return Streams.zip(Arrays.stream(originInMicros), Arrays.stream(dimsInMicros), (coord, size) -> coord + size / 2).toArray(Integer[]::new);
+        Preconditions.checkArgument(originInNanos != null && dimsInNanos != null && originInNanos.length == dimsInNanos.length,
+                "Incompatible originInNanos and dimsInNanos vectors in " + this.toString());
+        return Streams.zip(Arrays.stream(originInNanos), Arrays.stream(dimsInNanos), (coord, size) -> coord + size / 2).toArray(Integer[]::new);
     }
 
     @JsonIgnore
