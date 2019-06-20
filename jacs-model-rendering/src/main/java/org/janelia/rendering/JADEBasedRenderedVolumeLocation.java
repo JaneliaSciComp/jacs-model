@@ -191,7 +191,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
-        InputStream tileImageStream = openContentStream(tileRelativePath,
+        InputStream tileImageStream = openContentStreamFromRelativePathToVolumeRoot(tileRelativePath,
                 ImmutableMultimap.<String, String>builder()
                         .put("filterType", "TIFF_MERGE_BANDS")
                         .put("z", String.valueOf(pageNumber))
@@ -217,7 +217,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Override
     public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
         Path rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
-        InputStream rawImageStream = openContentStream(rawImagePath.toString(),
+        InputStream rawImageStream = openContentStreamFromAbsolutePath(rawImagePath.toString(),
                 ImmutableMultimap.<String, String>builder()
                         .put("filterType", "TIFF_ROI_PIXELS")
                         .put("xCenter", String.valueOf(xCenter - dimx / 2))
@@ -245,16 +245,16 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public InputStream readTransformData() {
-        return openContentStream(TRANSFORM_FILE_NAME, ImmutableMultimap.of());
+        return openContentStreamFromRelativePathToVolumeRoot(TRANSFORM_FILE_NAME, ImmutableMultimap.of());
     }
 
     @Nullable
     @Override
     public InputStream readTileBaseData() {
-        return openContentStream(TILED_VOL_BASE_FILE_NAME, ImmutableMultimap.of());
+        return openContentStreamFromRelativePathToVolumeRoot(TILED_VOL_BASE_FILE_NAME, ImmutableMultimap.of());
     }
 
-    private InputStream openContentStream(String contentRelativePath, Multimap<String, String> queryParams) {
+    private InputStream openContentStreamFromRelativePathToVolumeRoot(String contentRelativePath, Multimap<String, String> queryParams) {
         Client httpClient = null;
         try {
             httpClient = httpClientProvider.getClient();
@@ -263,19 +263,8 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                     .path(renderedVolumePath)
                     .path(contentRelativePath.replace('\\', '/'))
                     ;
-            for (Map.Entry<String, String> qe : queryParams.entries()) {
-                target = target.queryParam(qe.getKey(), qe.getValue());
-            }
             LOG.debug("Open stream from URI {}, volume path {}, tile path {} using {}", jadeBaseURI, renderedVolumePath, contentRelativePath, target.getUri());
-            Response response;
-            response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM)).get();
-            int responseStatus = response.getStatus();
-            if (responseStatus == Response.Status.OK.getStatusCode()) {
-                return response.readEntity(InputStream.class);
-            } else {
-                LOG.debug("Open stream from URI {}, volume path {}, tile path {} ({}) returned status {}", jadeBaseURI, renderedVolumePath, contentRelativePath, target.getUri(), responseStatus);
-                return null;
-            }
+            return openContentStream(target, queryParams);
         } catch (Exception e) {
             LOG.debug("Error opening the stream from URI {}, volume path {}, tile path {}", jadeBaseURI, renderedVolumePath, contentRelativePath, e);
             throw new IllegalStateException(e);
@@ -283,6 +272,47 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             if (httpClient != null) {
                 httpClient.close();
             }
+        }
+    }
+
+    private InputStream openContentStreamFromAbsolutePath(String contentAbsolutePath, Multimap<String, String> queryParams) {
+        Client httpClient = null;
+        try {
+            httpClient = httpClientProvider.getClient();
+            WebTarget target = httpClient.target(jadeBaseURI)
+                    .path("data_content")
+                    .path(contentAbsolutePath.replace('\\', '/'))
+                    ;
+            LOG.debug("Open stream from URI {}, path {}, tile path {} using {}", jadeBaseURI, renderedVolumePath, contentAbsolutePath, target.getUri());
+            return openContentStream(target, queryParams);
+        } catch (Exception e) {
+            LOG.debug("Error opening the stream from URI {}, path {}, tile path {}", jadeBaseURI, renderedVolumePath, contentAbsolutePath, e);
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    private InputStream openContentStream(WebTarget endpoint, Multimap<String, String> queryParams) {
+        try {
+            for (Map.Entry<String, String> qe : queryParams.entries()) {
+                endpoint = endpoint.queryParam(qe.getKey(), qe.getValue());
+            }
+            LOG.debug("Open stream from {}", endpoint.getUri());
+            Response response;
+            response = createRequestWithCredentials(endpoint.request(MediaType.APPLICATION_OCTET_STREAM)).get();
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return response.readEntity(InputStream.class);
+            } else {
+                LOG.debug("Open stream from {} returned status {}", endpoint.getUri(), responseStatus);
+                return null;
+            }
+        } catch (Exception e) {
+            LOG.debug("Error opening the stream {}", endpoint, e);
+            throw new IllegalStateException(e);
         }
     }
 
