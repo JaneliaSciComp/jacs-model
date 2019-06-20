@@ -1,22 +1,5 @@
 package org.janelia.rendering;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.io.ByteStreams;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.rendering.utils.HttpClientProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
@@ -26,10 +9,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.io.ByteStreams;
+
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.rendering.utils.HttpClientProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocation {
 
     private static final Logger LOG = LoggerFactory.getLogger(JADEBasedRenderedVolumeLocation.class);
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private static class ContentEntry {
         @JsonProperty
         String storageId;
