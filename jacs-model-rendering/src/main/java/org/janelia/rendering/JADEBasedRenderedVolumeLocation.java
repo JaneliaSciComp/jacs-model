@@ -155,6 +155,37 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Nullable
     @Override
+    public InputStream streamTileImageContent(String tileRelativePath) {
+        Client httpClient = null;
+        try {
+            httpClient = httpClientProvider.getClient();
+            WebTarget target = httpClient.target(jadeBaseURI)
+                    .path("data_content")
+                    .path(renderedVolumePath)
+                    .path(tileRelativePath.replace('\\', '/'))
+                    ;
+            LOG.debug("Read tile content from URI {}, volume path {}, tile path {} using {}", jadeBaseURI, renderedVolumePath, tileRelativePath, target.getUri());
+            Response response;
+            response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON)).get();
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return response.readEntity(InputStream.class);
+            } else {
+                LOG.warn("Retrieve content from URI {}, volume path {}, tile path {} ({}) returned status {}", jadeBaseURI, renderedVolumePath, tileRelativePath, target.getUri(), responseStatus);
+                return null;
+            }
+        } catch (Exception e) {
+            LOG.warn("Error retrieving content from URI {}, volume path {}, tile path {} returned status {}", jadeBaseURI, renderedVolumePath, tileRelativePath, e);
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    @Nullable
+    @Override
     public byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
         InputStream tileImageStream = openContentStream(tileRelativePath,
                 ImmutableMultimap.<String, String>builder()

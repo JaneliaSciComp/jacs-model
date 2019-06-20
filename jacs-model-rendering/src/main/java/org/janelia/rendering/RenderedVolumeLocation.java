@@ -40,6 +40,13 @@ public interface RenderedVolumeLocation {
     RenderedImageInfo readTileImageInfo(String tileRelativePath);
 
     /**
+     * Stream tile image content.
+     * @param tileRelativePath
+     * @return
+     */
+    InputStream streamTileImageContent(String tileRelativePath);
+
+    /**
      * Read tile image as texture bytes.
      */
     @Nullable byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber);

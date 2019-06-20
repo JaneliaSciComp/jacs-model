@@ -99,6 +99,12 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Nullable
     @Override
+    public InputStream streamTileImageContent(String tileRelativePath) {
+        return openContentStream(volumeBasePath.resolve(tileRelativePath));
+    }
+
+    @Nullable
+    @Override
     public byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
         return ImageUtils.bandMergedTextureBytesFromImageStreams(
                 channelImageNames.stream()
