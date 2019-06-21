@@ -220,9 +220,9 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         InputStream rawImageStream = openContentStreamFromAbsolutePath(rawImagePath.toString(),
                 ImmutableMultimap.<String, String>builder()
                         .put("filterType", "TIFF_ROI_PIXELS")
-                        .put("xCenter", String.valueOf(xCenter - dimx / 2))
-                        .put("yCenter", String.valueOf(yCenter - dimy / 2))
-                        .put("zCenter", String.valueOf(zCenter - dimz / 2))
+                        .put("xCenter", String.valueOf(xCenter))
+                        .put("yCenter", String.valueOf(yCenter))
+                        .put("zCenter", String.valueOf(zCenter))
                         .put("dimX", String.valueOf(dimx))
                         .put("dimY", String.valueOf(dimy))
                         .put("dimZ", String.valueOf(dimz))
