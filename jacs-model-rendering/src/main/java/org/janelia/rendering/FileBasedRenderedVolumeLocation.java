@@ -1,5 +1,6 @@
 package org.janelia.rendering;
 
+import com.google.common.base.Preconditions;
 import com.sun.media.jai.codec.FileSeekableStream;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.rendering.utils.ImageUtils;
@@ -15,6 +16,7 @@ import java.net.URI;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -99,8 +101,15 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Nullable
     @Override
-    public InputStream streamTileImageContent(String tileRelativePath) {
-        return openContentStream(volumeBasePath.resolve(tileRelativePath));
+    public InputStream streamContentFromRelativePath(String relativePath) {
+        return openContentStream(volumeBasePath.resolve(relativePath));
+    }
+
+    @Nullable
+    @Override
+    public InputStream streamContentFromAbsolutePath(String absolutePath) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
+        return openContentStream(Paths.get(absolutePath));
     }
 
     @Nullable
