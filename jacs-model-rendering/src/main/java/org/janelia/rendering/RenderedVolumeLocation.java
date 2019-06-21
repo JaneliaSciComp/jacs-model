@@ -7,23 +7,28 @@ import java.util.List;
 
 public interface RenderedVolumeLocation {
     /**
-     * Rendered volume base URI.
+     * @return the base connection URI for retrieving rendered volume data.
+     */
+    URI getConnectionURI();
+
+    /**
+     * The base URI of the storage that holds the rendered volume.
      * Note: This does not uniquely identify the location of the data.
      * For uniquely identifying the data both baseURI and renderedVolumePath are required.
      * @return
      */
-    URI getBaseURI();
+    URI getDataStorageURI();
 
     String getRenderedVolumePath();
 
     default URI getVolumeLocation() {
         String renderedVolumePath = getRenderedVolumePath();
         if (renderedVolumePath == null || renderedVolumePath.trim().length() == 0) {
-            return getBaseURI();
+            return getDataStorageURI();
         } else if (renderedVolumePath.trim().endsWith("/")) {
-            return getBaseURI().resolve(renderedVolumePath.trim());
+            return getDataStorageURI().resolve(renderedVolumePath.trim());
         } else {
-            return getBaseURI().resolve(renderedVolumePath.trim() + "/");
+            return getDataStorageURI().resolve(renderedVolumePath.trim() + "/");
         }
     }
 

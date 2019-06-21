@@ -2,7 +2,6 @@ package org.janelia.rendering;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,8 +45,12 @@ public class RenderedVolume {
         return rvl;
     }
 
-    public String getBaseURI() {
-        return rvl.getBaseURI().toString();
+    public String getConnectionURI() {
+        return rvl.getConnectionURI().toString();
+    }
+
+    public String getDataStorageURI() {
+        return rvl.getDataStorageURI().toString();
     }
 
     public String getVolumeBasePath() {

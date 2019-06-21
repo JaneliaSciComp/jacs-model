@@ -32,7 +32,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
 
     @Override
     public Optional<RenderedVolume> loadVolume(RenderedVolumeLocation rvl) {
-        LOG.debug("Load volume from {}", rvl.getBaseURI());
+        LOG.debug("Load volume from {}", rvl.getVolumeLocation());
         return loadVolumeSizeAndCoord(rvl)
                 .flatMap(coord -> loadTileInfo(rvl)
                         .map(tileInfos -> {
@@ -81,7 +81,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         try {
             InputStream transformStream = rvl.readTransformData();
             if (transformStream == null) {
-                LOG.warn("No transform file found at", rvl.getBaseURI());
+                LOG.warn("No transform file found at", rvl.getVolumeLocation());
                 return Optional.empty();
             } else {
                 RawCoord rawCoord = parseTransformStream(transformStream);
@@ -228,7 +228,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         try {
             RawVolData rawVolData = loadRawVolumeData(rvl);
             if (rawVolData == null) {
-                LOG.warn("No rawimages found at {}", rvl.getBaseURI());
+                LOG.warn("No rawimages found at {}", rvl.getVolumeLocation());
                 return Collections.emptyList();
             }
             if (rawVolData.getTiles() == null || rawVolData.getTiles().isEmpty()) {
@@ -237,7 +237,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                 return rawVolData.getTiles().stream()
                         .map(t -> {
                             RawImage tn = new RawImage();
-                            tn.setRenderedVolumePath(rvl.getBaseURI().toString());
+                            tn.setRenderedVolumePath(rvl.getVolumeLocation().toString());
                             tn.setAcquisitionPath(rawVolData.getPath());
                             tn.setRelativePath(t.getPath());
                             if (t.getAabb() != null) {
@@ -262,7 +262,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                         ;
             }
         } catch (Exception e) {
-            LOG.error("Error reading tiled volume metadata from {}", rvl.getBaseURI(), e);
+            LOG.error("Error reading tiled volume metadata from {}", rvl.getVolumeLocation(), e);
             throw new IllegalStateException(e);
         }
     }

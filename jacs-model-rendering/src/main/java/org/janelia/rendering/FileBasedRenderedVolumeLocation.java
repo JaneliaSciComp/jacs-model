@@ -68,7 +68,13 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     }
 
     @Override
-    public URI getBaseURI() {
+    public URI getConnectionURI() {
+        // for local file based location the connection URI and the base data storage URI are the same.
+        return volumeBasePath.toUri();
+    }
+
+    @Override
+    public URI getDataStorageURI() {
         return volumeBasePath.toUri();
     }
 
