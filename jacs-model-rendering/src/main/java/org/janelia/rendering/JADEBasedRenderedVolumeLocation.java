@@ -20,7 +20,6 @@ import javax.ws.rs.core.Response;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
@@ -60,17 +59,17 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         Date lastModified;
     }
 
-    final String jadeBaseURI1;
-    final String jadeVolumeId;
+    final String jadeBaseURI;
+    final String jadeVolumeBaseURI;
     final String renderedVolumePath;
     final String authToken;
     final String storageServiceApiKey;
     final HttpClientProvider httpClientProvider;
 
-    public JADEBasedRenderedVolumeLocation(String jadeBaseURI, String jadeVolumeId, String renderedVolumePath, String authToken, String storageServiceApiKey, HttpClientProvider httpClientProvider) {
+    public JADEBasedRenderedVolumeLocation(String jadeBaseURI, String jadeVolumeBaseURI, String renderedVolumePath, String authToken, String storageServiceApiKey, HttpClientProvider httpClientProvider) {
         Preconditions.checkArgument(StringUtils.isNotBlank(jadeBaseURI));
-        this.jadeBaseURI1 = jadeBaseURI;
-        this.jadeVolumeId = jadeVolumeId;
+        this.jadeBaseURI = jadeBaseURI;
+        this.jadeVolumeBaseURI = jadeVolumeBaseURI;
         this.renderedVolumePath = StringUtils.replace(StringUtils.defaultIfBlank(renderedVolumePath, ""), "\\", "/");
         this.authToken = authToken;
         this.storageServiceApiKey = storageServiceApiKey;
@@ -79,21 +78,17 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Override
     public URI getBaseURI() {
-        return getJadeVolumeBaseURI();
+        return getNormalizedURI(jadeVolumeBaseURI);
     }
 
-    private URI getJadeVolumeBaseURI() {
-        return getJadeBaseURI().resolve("agent_storage/storage_volume").resolve(jadeVolumeId);
-    }
-
-    private URI getJadeBaseURI() {
-        String normalizedJadeBaseURI;
-        if (jadeBaseURI1.endsWith("/")) {
-            normalizedJadeBaseURI = jadeBaseURI1;
+    private URI getNormalizedURI(String uri) {
+        String normalizedURI;
+        if (uri.endsWith("/")) {
+            normalizedURI = uri;
         } else {
-            normalizedJadeBaseURI = jadeBaseURI1 + "/";
+            normalizedURI = uri + "/";
         }
-        return URI.create(normalizedJadeBaseURI);
+        return URI.create(normalizedURI);
     }
 
     @Override
@@ -104,7 +99,6 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Override
     public List<URI> listImageUris(int level) {
         Client httpClient = null;
-        URI jadeVolumeBaseURI = getJadeVolumeBaseURI();
         try {
             httpClient = httpClientProvider.getClient();
             int detailLevel = level + 1;
@@ -144,7 +138,6 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Override
     public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
         Client httpClient = null;
-        URI jadeVolumeBaseURI = getJadeVolumeBaseURI();
         try {
             httpClient = httpClientProvider.getClient();
             WebTarget target = httpClient.target(jadeVolumeBaseURI)
@@ -253,7 +246,6 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     private InputStream openContentStreamFromRelativePathToVolumeRoot(String contentRelativePath, Multimap<String, String> queryParams) {
         Client httpClient = null;
-        URI jadeVolumeBaseURI = getJadeVolumeBaseURI();
         try {
             httpClient = httpClientProvider.getClient();
             WebTarget target = httpClient.target(jadeVolumeBaseURI)
@@ -277,14 +269,14 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         Client httpClient = null;
         try {
             httpClient = httpClientProvider.getClient();
-            WebTarget target = httpClient.target(jadeBaseURI1)
+            WebTarget target = httpClient.target(jadeBaseURI)
                     .path("storage_path/data_content")
                     .path(contentAbsolutePath.replace('\\', '/'))
                     ;
-            LOG.debug("Open stream from URI {}, path {}, tile path {} using {}", jadeBaseURI1, renderedVolumePath, contentAbsolutePath, target.getUri());
+            LOG.debug("Open stream from URI {}, path {}, tile path {} using {}", jadeBaseURI, renderedVolumePath, contentAbsolutePath, target.getUri());
             return openContentStream(target, queryParams);
         } catch (Exception e) {
-            LOG.debug("Error opening the stream from URI {}, path {}, tile path {}", jadeBaseURI1, renderedVolumePath, contentAbsolutePath, e);
+            LOG.debug("Error opening the stream from URI {}, path {}, tile path {}", jadeBaseURI, renderedVolumePath, contentAbsolutePath, e);
             throw new IllegalStateException(e);
         } finally {
             if (httpClient != null) {
