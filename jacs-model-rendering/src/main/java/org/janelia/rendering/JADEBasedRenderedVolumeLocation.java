@@ -275,7 +275,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         try {
             httpClient = httpClientProvider.getClient();
             WebTarget target = httpClient.target(jadeConnectionURI)
-                    .path("storage_path/data_content")
+                    .path("agent_storage/storage_path/data_content")
                     .path(contentAbsolutePath.replace('\\', '/'))
                     ;
             LOG.debug("Open stream from URI {}, path {}, tile path {} using {}", jadeConnectionURI, renderedVolumePath, contentAbsolutePath, target.getUri());
