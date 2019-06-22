@@ -11,6 +11,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -95,7 +96,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
-        InputStream tileImageStream = openContentStream(volumeBasePath.resolve(tileRelativePath));
+        InputStream tileImageStream = openContentStream(volumeBasePath.resolve(tileRelativePath), ImageUtils.getImagePathHandler());
         try {
             return ImageUtils.loadImageInfoFromTiffStream(tileImageStream);
         } finally {
@@ -129,7 +130,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
-        InputStream rawImageStream = openContentStream(rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)));
+        InputStream rawImageStream = openContentStream(rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)), ImageUtils.getImagePathHandler());
         try {
             return ImageUtils.loadImagePixelBytesFromTiffStream(
                     rawImageStream,
@@ -145,45 +146,50 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Override
     public InputStream readRawTileContent(RawImage rawImage, int channel) {
         Path rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
-        return openContentStream(rawImagePath);
+        return openContentStream(rawImagePath, ImageUtils.getImagePathHandler());
     }
 
     @Nullable
     @Override
     public InputStream readTransformData() {
-        return openContentStream(volumeBasePath.resolve(TRANSFORM_FILE_NAME));
+        return openContentStream(volumeBasePath.resolve(TRANSFORM_FILE_NAME), simpleFileSupplier());
     }
 
     @Nullable
     @Override
     public InputStream readTileBaseData() {
-        return openContentStream(volumeBasePath.resolve(TILED_VOL_BASE_FILE_NAME));
+        return openContentStream(volumeBasePath.resolve(TILED_VOL_BASE_FILE_NAME), simpleFileSupplier());
     }
 
     @Nullable
     @Override
     public InputStream streamContentFromRelativePath(String relativePath) {
-        return openContentStream(volumeBasePath.resolve(relativePath));
+        return openContentStream(volumeBasePath.resolve(relativePath), ImageUtils.getImagePathHandler());
     }
 
     @Nullable
     @Override
     public InputStream streamContentFromAbsolutePath(String absolutePath) {
         Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
-        return openContentStream(Paths.get(absolutePath));
+        return openContentStream(Paths.get(absolutePath), ImageUtils.getImagePathHandler());
     }
 
     @Nullable
-    private InputStream openContentStream(Path fp) {
-        try {
-            if (Files.exists(fp)) {
-                return Files.newInputStream(fp);
-            } else {
-                return null;
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException(e);
+    private InputStream openContentStream(Path fp, Function<Path, InputStream> contentStreamSupplier) {
+        if (Files.exists(fp)) {
+            return contentStreamSupplier.apply(fp);
+        } else {
+            return null;
         }
     }
 
+    private Function<Path, InputStream> simpleFileSupplier() {
+        return (Path p) -> {
+            try {
+                return Files.newInputStream(p);
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        };
+    }
 }
