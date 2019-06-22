@@ -45,35 +45,15 @@ public interface RenderedVolumeLocation {
     RenderedImageInfo readTileImageInfo(String tileRelativePath);
 
     /**
-     * Stream content from relative path.
-     * @param relativePath
-     * @return
-     */
-    InputStream streamContentFromRelativePath(String relativePath);
-
-    /**
-     * Stream content from absolute path.
-     * @param absolutePath
-     * @return
-     */
-    InputStream streamContentFromAbsolutePath(String absolutePath);
-
-    /**
      * Read tile image as texture bytes.
      */
     @Nullable byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber);
 
     /**
-     * Read entire raw image.
-     * @return
-     */
-    byte[] readRawTileContent(RawImage rawImage, int channel);
-
-    /**
      * Read ROI from the raw image.
      * @return
      */
-    byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz);
+    @Nullable byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz);
 
     /**
      * Read transform.txt
@@ -84,4 +64,24 @@ public interface RenderedVolumeLocation {
      * Read tilebase.cache.yml
      */
     @Nullable InputStream readTileBaseData();
+
+    /**
+     * Stream entire raw image.
+     * @return
+     */
+    @Nullable InputStream readRawTileContent(RawImage rawImage, int channel);
+
+    /**
+     * Stream content from relative path.
+     * @param relativePath
+     * @return
+     */
+    @Nullable InputStream streamContentFromRelativePath(String relativePath);
+
+    /**
+     * Stream content from absolute path.
+     * @param absolutePath
+     * @return
+     */
+    @Nullable InputStream streamContentFromAbsolutePath(String absolutePath);
 }

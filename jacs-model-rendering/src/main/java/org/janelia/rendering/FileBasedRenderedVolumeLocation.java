@@ -1,16 +1,5 @@
 package org.janelia.rendering;
 
-import com.google.common.base.Preconditions;
-import com.google.common.io.ByteStreams;
-import com.sun.media.jai.codec.FileSeekableStream;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.rendering.utils.ImageUtils;
-import org.janelia.rendering.utils.RenderedImagesWithStreamsSupplier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
-import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -22,9 +11,17 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import javax.annotation.Nullable;
+
+import com.google.common.base.Preconditions;
+import com.sun.media.jai.codec.FileSeekableStream;
+
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.rendering.utils.ImageUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocation {
 
@@ -108,19 +105,6 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Nullable
     @Override
-    public InputStream streamContentFromRelativePath(String relativePath) {
-        return openContentStream(volumeBasePath.resolve(relativePath));
-    }
-
-    @Nullable
-    @Override
-    public InputStream streamContentFromAbsolutePath(String absolutePath) {
-        Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
-        return openContentStream(Paths.get(absolutePath));
-    }
-
-    @Nullable
-    @Override
     public byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
         return ImageUtils.bandMergedTextureBytesFromImageStreams(
                 channelImageNames.stream()
@@ -142,24 +126,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         );
     }
 
-    @Override
-    public byte[] readRawTileContent(RawImage rawImage, int channel) {
-        Path rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
-        InputStream rawImageStream = openContentStream(rawImagePath);
-        try {
-            if (rawImageStream == null) {
-                return null;
-            } else {
-                return ByteStreams.toByteArray(rawImageStream);
-            }
-        } catch (Exception e) {
-            LOG.error("Error reading {} from {}", rawImagePath, rawImage, e);
-            throw new IllegalStateException(e);
-        } finally {
-            closeContentStream(rawImageStream);
-        }
-    }
-
+    @Nullable
     @Override
     public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
         InputStream rawImageStream = openContentStream(rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)));
@@ -176,6 +143,13 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Nullable
     @Override
+    public InputStream readRawTileContent(RawImage rawImage, int channel) {
+        Path rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
+        return openContentStream(rawImagePath);
+    }
+
+    @Nullable
+    @Override
     public InputStream readTransformData() {
         return openContentStream(volumeBasePath.resolve(TRANSFORM_FILE_NAME));
     }
@@ -184,6 +158,19 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Override
     public InputStream readTileBaseData() {
         return openContentStream(volumeBasePath.resolve(TILED_VOL_BASE_FILE_NAME));
+    }
+
+    @Nullable
+    @Override
+    public InputStream streamContentFromRelativePath(String relativePath) {
+        return openContentStream(volumeBasePath.resolve(relativePath));
+    }
+
+    @Nullable
+    @Override
+    public InputStream streamContentFromAbsolutePath(String absolutePath) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
+        return openContentStream(Paths.get(absolutePath));
     }
 
     @Nullable
