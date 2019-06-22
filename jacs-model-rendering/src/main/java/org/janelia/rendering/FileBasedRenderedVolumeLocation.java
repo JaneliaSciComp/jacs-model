@@ -1,6 +1,7 @@
 package org.janelia.rendering;
 
 import com.google.common.base.Preconditions;
+import com.google.common.io.ByteStreams;
 import com.sun.media.jai.codec.FileSeekableStream;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.rendering.utils.ImageUtils;
@@ -139,6 +140,24 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                         ),
                 pageNumber
         );
+    }
+
+    @Override
+    public byte[] readRawTileContent(RawImage rawImage, int channel) {
+        Path rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
+        InputStream rawImageStream = openContentStream(rawImagePath);
+        try {
+            if (rawImageStream == null) {
+                return null;
+            } else {
+                return ByteStreams.toByteArray(rawImageStream);
+            }
+        } catch (Exception e) {
+            LOG.error("Error reading {} from {}", rawImagePath, rawImage, e);
+            throw new IllegalStateException(e);
+        } finally {
+            closeContentStream(rawImageStream);
+        }
     }
 
     @Override

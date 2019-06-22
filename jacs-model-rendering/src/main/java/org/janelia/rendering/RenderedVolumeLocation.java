@@ -64,6 +64,12 @@ public interface RenderedVolumeLocation {
     @Nullable byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber);
 
     /**
+     * Read entire raw image.
+     * @return
+     */
+    byte[] readRawTileContent(RawImage rawImage, int channel);
+
+    /**
      * Read ROI from the raw image.
      * @return
      */
