@@ -133,7 +133,7 @@ public class RawImage {
         if (StringUtils.isBlank(relativePath)) {
             imagePath = Paths.get(acquisitionPath);
         } else {
-            imagePath = Paths.get(acquisitionPath).resolve(StringUtils.stripStart(relativePath, "/"));
+            imagePath = Paths.get(acquisitionPath, StringUtils.stripStart(relativePath, "/"));
         }
         Path fullImagePath = imagePath.resolve(imagePath.getFileName().toString() + suffix);
         return fullImagePath.toString().replace('\\', '/');
