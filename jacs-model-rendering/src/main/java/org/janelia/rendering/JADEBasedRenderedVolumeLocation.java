@@ -199,8 +199,8 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
-        Path rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
-        InputStream rawImageStream = openContentStreamFromAbsolutePath(rawImagePath.toString(),
+        String rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
+        InputStream rawImageStream = openContentStreamFromAbsolutePath(rawImagePath,
                 ImmutableMultimap.<String, String>builder()
                         .put("filterType", "TIFF_ROI_PIXELS")
                         .put("xCenter", String.valueOf(xCenter))
@@ -228,8 +228,8 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public InputStream readRawTileContent(RawImage rawImage, int channel) {
-        Path rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
-        return openContentStreamFromAbsolutePath(rawImagePath.toString(), ImmutableMultimap.of());
+        String rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
+        return openContentStreamFromAbsolutePath(rawImagePath, ImmutableMultimap.of());
     }
 
     @Nullable

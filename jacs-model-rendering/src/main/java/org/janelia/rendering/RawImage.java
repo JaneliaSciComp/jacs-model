@@ -128,14 +128,14 @@ public class RawImage {
     }
 
     @JsonIgnore
-    public Path getRawImagePath(String suffix) {
+    public String getRawImagePath(String suffix) {
         Path imagePath;
         if (StringUtils.isBlank(relativePath)) {
             imagePath = Paths.get(acquisitionPath);
         } else {
             imagePath = Paths.get(acquisitionPath).resolve(StringUtils.stripStart(relativePath, "/"));
         }
-        return imagePath.resolve(imagePath.getFileName().toString() + suffix);
+        return imagePath.resolve(imagePath.getFileName().toString() + suffix).toString().replace('\\', '/');
     }
 
     @Override

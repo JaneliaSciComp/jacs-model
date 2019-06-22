@@ -67,6 +67,8 @@ public interface RenderedVolumeLocation {
 
     /**
      * Stream entire raw image.
+     * @param rawImage
+     * @param channel
      * @return
      */
     @Nullable InputStream readRawTileContent(RawImage rawImage, int channel);

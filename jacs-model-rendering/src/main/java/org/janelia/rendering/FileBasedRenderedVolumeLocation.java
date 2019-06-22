@@ -130,7 +130,8 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
-        InputStream rawImageStream = openContentStream(rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)), ImageUtils.getImagePathHandler());
+        Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)));
+        InputStream rawImageStream = openContentStream(rawImagePath, ImageUtils.getImagePathHandler());
         try {
             return ImageUtils.loadImagePixelBytesFromTiffStream(
                     rawImageStream,
@@ -145,7 +146,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public InputStream readRawTileContent(RawImage rawImage, int channel) {
-        Path rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
+        Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)));
         return openContentStream(rawImagePath, ImageUtils.getImagePathHandler());
     }
 
