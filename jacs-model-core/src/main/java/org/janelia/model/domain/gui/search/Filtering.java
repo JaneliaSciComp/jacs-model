@@ -15,10 +15,9 @@ public interface Filtering extends DomainObject, IsParent {
         
     boolean hasCriteria();
 
-    public String getSearchClass();
+    String getSearchClass();
 
-    public String getSearchString();
+    String getSearchString();
 
-    public List<Criteria> getCriteriaList();
-    
+    List<Criteria> getCriteriaList();
 }
