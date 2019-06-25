@@ -1,8 +1,13 @@
 package org.janelia.model.domain.sample;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.Sets;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.DomainUtils;
+import org.janelia.model.domain.gui.search.Filtering;
+import org.janelia.model.domain.gui.search.criteria.AttributeValueCriteria;
+import org.janelia.model.domain.gui.search.criteria.Criteria;
+import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchType;
@@ -19,7 +24,7 @@ import java.util.Map;
  */
 @MongoMapped(collectionName="dataSet",label="Data Set")
 @SearchType(key="dataSet",label="Data Set")
-public class DataSet extends AbstractDomainObject {
+public class DataSet extends AbstractDomainObject implements Filtering {
 
     @SearchAttribute(key="identifier_txt",label="Data Set Identifier")
     private String identifier;
@@ -48,6 +53,9 @@ public class DataSet extends AbstractDomainObject {
     private CompressionStrategy compressionStrategy;
 
     private Map<String,Integer> colorDepthCounts = new HashMap<>();
+
+    @JsonIgnore
+    private List<Criteria> lazyCriteria;
 
     public String getIdentifier() {
         return identifier;
@@ -189,4 +197,42 @@ public class DataSet extends AbstractDomainObject {
         if (colorDepthCounts==null) throw new IllegalArgumentException("Property cannot be null");
         this.colorDepthCounts = colorDepthCounts;
     }
+
+    /* implement Filtering interface */
+
+    @JsonIgnore
+    @Override
+    public String getSearchClass() {
+        return Sample.class.getName();
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean hasCriteria() {
+        return true;
+    }
+
+    @JsonIgnore
+    @Override
+    public String getSearchString() {
+        return null;
+    }
+
+    @JsonIgnore
+    @Override
+    public List<Criteria> getCriteriaList() {
+        if (lazyCriteria==null) {
+            lazyCriteria = new ArrayList<>();
+            FacetCriteria sageSynced = new FacetCriteria();
+            sageSynced.setAttributeName("sageSynced");
+            sageSynced.setValues(Sets.newHashSet("true"));
+            lazyCriteria.add(sageSynced);
+            AttributeValueCriteria dataSet = new AttributeValueCriteria();
+            dataSet.setAttributeName("dataSet");
+            dataSet.setValue(getIdentifier());
+            lazyCriteria.add(dataSet);
+        }
+        return lazyCriteria;
+    }
+
 }
