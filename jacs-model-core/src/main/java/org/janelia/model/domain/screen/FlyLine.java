@@ -3,6 +3,7 @@ package org.janelia.model.domain.screen;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.search.Filtering;
@@ -38,38 +39,10 @@ public class FlyLine extends AbstractDomainObject implements Filtering {
     
     @SearchAttribute(key="split_part_txt",label="Split Part",facet="split_part_s")
     private String splitPart;
-    
-    @Override
-    public String getSearchClass() {
-        return Sample.class.getName();
-    }
-    
-    @Override
-    public boolean hasCriteria() {
-        return true;
-    }
-    
-    @Override
-    public String getSearchString() {
-        return null;
-    }
 
+    @JsonIgnore
     private List<Criteria> lazyCriteria;
-    public List<Criteria> getCriteriaList() {
-        if (lazyCriteria==null) {
-            lazyCriteria = new ArrayList<>();
-            FacetCriteria sageSynced = new FacetCriteria();
-            sageSynced.setAttributeName("sageSynced");
-            sageSynced.setValues(Sets.newHashSet("true"));
-            lazyCriteria.add(sageSynced);
-            AttributeValueCriteria line = new AttributeValueCriteria();
-            line.setAttributeName("line");
-            line.setValue(getName());
-            lazyCriteria.add(line);
-        }
-        return lazyCriteria;
-    }
-    
+
     public Integer getRobotId() {
         return robotId;
     }
@@ -110,4 +83,40 @@ public class FlyLine extends AbstractDomainObject implements Filtering {
         this.splitPart = splitPart;
     }
 
+    /* implement Filtering interface */
+
+    @JsonIgnore
+    @Override
+    public String getSearchClass() {
+        return Sample.class.getName();
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean hasCriteria() {
+        return true;
+    }
+
+    @JsonIgnore
+    @Override
+    public String getSearchString() {
+        return null;
+    }
+
+    @JsonIgnore
+    @Override
+    public List<Criteria> getCriteriaList() {
+        if (lazyCriteria==null) {
+            lazyCriteria = new ArrayList<>();
+            FacetCriteria sageSynced = new FacetCriteria();
+            sageSynced.setAttributeName("sageSynced");
+            sageSynced.setValues(Sets.newHashSet("true"));
+            lazyCriteria.add(sageSynced);
+            AttributeValueCriteria line = new AttributeValueCriteria();
+            line.setAttributeName("line");
+            line.setValue(getName());
+            lazyCriteria.add(line);
+        }
+        return lazyCriteria;
+    }
 }
