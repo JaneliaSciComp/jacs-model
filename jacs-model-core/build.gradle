@@ -5,7 +5,8 @@ project(":jacs-model-core") {
             PROTOSTUFF_RUNTIME_LIB,
             REFLECTIONS_LIB
 
-        implementation JONGO_LIB,
+        implementation COMMONS_IO_LIB,
+                       JONGO_LIB,
                        JACKSON_CORE_LIB,
                        JACKSON_ANNOTATIONS_LIB,
                        JAMA_LIB,

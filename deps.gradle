@@ -34,6 +34,7 @@ dependencies {
         // apache commons
         COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:3.5"
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:4.1"
+        COMMONS_IO_LIB = "commons-io:commons-io:2.6"
 
         // JAX-RS client
         JERSEY_VERSION = "2.27"
