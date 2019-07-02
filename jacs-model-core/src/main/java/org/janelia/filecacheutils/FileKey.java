@@ -1,11 +1,9 @@
-package org.janelia.cacheutils;
+package org.janelia.filecacheutils;
 
 import java.nio.file.Path;
-import java.util.Map;
 
-public interface CachedFileKey {
+public interface FileKey {
     Path getLocalPath(LocalFileCacheStorage localFileCacheStorage);
     Path getTempLocalPath(LocalFileCacheStorage localFileCacheStorage);
     String getRemoteFileName();
-    Map<String, String> getRemoteFileParams();
 }
