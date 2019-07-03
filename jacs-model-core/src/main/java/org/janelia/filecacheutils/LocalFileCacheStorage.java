@@ -40,6 +40,12 @@ public class LocalFileCacheStorage {
 
     private long getLocalFileCacheStorageSizeInKB() {
         try {
+            Files.createDirectories(localFileCacheDir);
+        } catch (IOException e) {
+            LOG.error("Error creating local cache directory: {}", localFileCacheDir, e);
+            throw new IllegalStateException(e);
+        }
+        try {
             return Files.walk(localFileCacheDir)
                     .filter(fp -> Files.isRegularFile(fp, LinkOption.NOFOLLOW_LINKS))
                     .map(fp -> getFileSizeInKB(fp))

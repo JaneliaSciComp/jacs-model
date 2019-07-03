@@ -4,6 +4,5 @@ import java.nio.file.Path;
 
 public interface FileKey {
     Path getLocalPath(LocalFileCacheStorage localFileCacheStorage);
-    Path getTempLocalPath(LocalFileCacheStorage localFileCacheStorage);
     String getRemoteFileName();
 }

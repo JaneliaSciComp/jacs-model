@@ -20,7 +20,6 @@ public class RemoteFileLoader<K extends FileKey> extends CacheLoader<K, FileProx
         if (localPath == null) {
             throw new IllegalArgumentException("Local path cannot be retrieved from cachedFileKey " + cachedFileKey);
         }
-        Path tempLocalPath = cachedFileKey.getTempLocalPath(localFileCacheStorage);
-        return new CachedFileProxy(localPath, tempLocalPath, fileRetriever.retrieve(cachedFileKey), localFileCacheStorage);
+        return new CachedFileProxy(localPath, fileRetriever.retrieve(cachedFileKey), localFileCacheStorage);
     }
 }
