@@ -14,7 +14,7 @@ public class LocalFileCache<K extends FileKey> {
     public LocalFileCache(LocalFileCacheStorage localFileCacheStorage, RemoteFileRetriever<K> remoteFileRetriever, Executor asyncRemovalExecutor) {
         this.localCache =
                 CacheBuilder.newBuilder()
-                        .concurrencyLevel(1)
+                        .concurrencyLevel(2)
                         .maximumWeight(localFileCacheStorage.getCapacityInKB())
                         .weigher((FileKey key, FileProxy value) -> {
                             long sizeInKB = LocalFileCacheStorage.BYTES_TO_KB.apply(value.getSizeInBytes());
