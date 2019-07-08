@@ -11,7 +11,7 @@ public class LocalFileCache<K extends FileKey> {
 
     private final LoadingCache<K, FileProxy> localCache;
 
-    public LocalFileCache(LocalFileCacheStorage localFileCacheStorage, RemoteFileRetriever<K> remoteFileRetriever, Executor asyncRemovalExecutor) {
+    public LocalFileCache(LocalFileCacheStorage localFileCacheStorage, FileKeyToProxySupplier<K> keyToProxySupplier, Executor asyncRemovalExecutor) {
         this.localCache =
                 CacheBuilder.newBuilder()
                         .concurrencyLevel(2)
@@ -21,7 +21,7 @@ public class LocalFileCache<K extends FileKey> {
                             return sizeInKB > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) sizeInKB;
                         })
                         .removalListener(RemovalListeners.asynchronous(new CachedFileRemovalListener(), asyncRemovalExecutor))
-                        .build(new RemoteFileLoader<>(localFileCacheStorage, remoteFileRetriever));
+                        .build(new RemoteFileLoader<>(localFileCacheStorage, keyToProxySupplier));
     }
 
     public FileProxy getCachedFileEntry(K cachedFileKey, boolean forceRefresh) {

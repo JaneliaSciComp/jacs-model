@@ -199,7 +199,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
-        String rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
+        String rawImagePath = rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel));
         InputStream rawImageStream = openContentStreamFromAbsolutePath(rawImagePath,
                 ImmutableMultimap.<String, String>builder()
                         .put("filterType", "TIFF_ROI_PIXELS")
@@ -223,25 +223,6 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         } finally {
             closeContentStream(rawImageStream);
         }
-    }
-
-    @Nullable
-    @Override
-    public InputStream readRawTileContent(RawImage rawImage, int channel) {
-        String rawImagePath = rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel));
-        return openContentStreamFromAbsolutePath(rawImagePath, ImmutableMultimap.of());
-    }
-
-    @Nullable
-    @Override
-    public InputStream readTransformData() {
-        return openContentStreamFromRelativePathToVolumeRoot(TRANSFORM_FILE_NAME, ImmutableMultimap.of());
-    }
-
-    @Nullable
-    @Override
-    public InputStream readTileBaseData() {
-        return openContentStreamFromRelativePathToVolumeRoot(TILED_VOL_BASE_FILE_NAME, ImmutableMultimap.of());
     }
 
     @Nullable

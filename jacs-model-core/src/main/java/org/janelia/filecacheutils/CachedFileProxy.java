@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
@@ -19,13 +20,13 @@ public class CachedFileProxy implements FileProxy {
     private static final Logger LOG = LoggerFactory.getLogger(CachedFileProxy.class);
 
     private final Path localFilePath;
-    private final FileProxy remoteFileProxy;
+    private final Supplier<FileProxy> fileProxySupplier;
     private final LocalFileCacheStorage localFileCacheStorage;
 
-    public CachedFileProxy(Path localFilePath, FileProxy remoteFileProxy, LocalFileCacheStorage localFileCacheStorage) {
+    CachedFileProxy(Path localFilePath, Supplier<FileProxy> fileProxySupplier, LocalFileCacheStorage localFileCacheStorage) {
         this.localFileCacheStorage = localFileCacheStorage;
         this.localFilePath = localFilePath;
-        this.remoteFileProxy = remoteFileProxy;
+        this.fileProxySupplier = fileProxySupplier;
     }
 
     @Override
@@ -33,7 +34,7 @@ public class CachedFileProxy implements FileProxy {
         if (localFilePath != null) {
             return localFilePath.toString();
         } else {
-            return remoteFileProxy.getFileId();
+            return fileProxySupplier.get().getFileId();
         }
     }
 
@@ -73,7 +74,7 @@ public class CachedFileProxy implements FileProxy {
             try {
                 Path downloadingLocalFilePath = getDownloadingLocalFilePath();
                 FileOutputStream tmpCacheFileStream = new FileOutputStream(downloadingLocalFilePath.toFile());
-                return new TeeInputStream(remoteFileProxy.getContentStream(), tmpCacheFileStream, false) {
+                return new TeeInputStream(fileProxySupplier.get().getContentStream(), tmpCacheFileStream, false) {
                     @Override
                     protected void afterRead(int n) throws IOException {
                         try {
@@ -120,7 +121,7 @@ public class CachedFileProxy implements FileProxy {
             // download remote file
             makeDownloadDir();
             try {
-                Files.copy(remoteFileProxy.getContentStream(), getDownloadingLocalFilePath(), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(fileProxySupplier.get().getContentStream(), getDownloadingLocalFilePath(), StandardCopyOption.REPLACE_EXISTING);
                 updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getSizeInBytes()));
             } catch (IOException e) {
                 LOG.error("Error saving downloadable stream to {}", getDownloadingLocalFilePath(), e);
@@ -149,7 +150,7 @@ public class CachedFileProxy implements FileProxy {
     }
 
     @Override
-    public boolean delete() {
+    public boolean deleteProxy() {
         long sizeInBytes = getSizeInBytes();
         try {
             Path localCanonicalPath = localFilePath.toRealPath();

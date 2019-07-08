@@ -52,12 +52,8 @@ public class LocalFileProxy implements FileProxy {
     }
 
     @Override
-    public boolean delete() {
-        try {
-            return Files.deleteIfExists(localFilePath);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    public boolean deleteProxy() {
+        return false;
     }
 
 }

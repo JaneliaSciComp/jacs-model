@@ -28,12 +28,12 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     private static final Logger LOG = LoggerFactory.getLogger(FileBasedRenderedVolumeLocation.class);
 
-    private static class OctreeImageVisitor extends SimpleFileVisitor<Path> {
+    private static class TiffOctreeImageVisitor extends SimpleFileVisitor<Path> {
         private final List<Path> tileImages = new ArrayList<>();
         private final int detailLevel;
         private int currentLevel;
 
-        OctreeImageVisitor(int detailLevel) {
+        TiffOctreeImageVisitor(int detailLevel) {
             this.detailLevel = detailLevel;
             this.currentLevel = 0;
         }
@@ -84,7 +84,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Override
     public List<URI> listImageUris(int level) {
-        OctreeImageVisitor imageVisitor = new OctreeImageVisitor(level);
+        TiffOctreeImageVisitor imageVisitor = new TiffOctreeImageVisitor(level);
         try {
             Files.walkFileTree(volumeBasePath, imageVisitor);
             return imageVisitor.tileImages.stream().map(p -> p.toUri()).collect(Collectors.toList());
@@ -130,7 +130,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
-        Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)));
+        Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel)));
         InputStream rawImageStream = openContentStream(rawImagePath, ImageUtils.getImagePathHandler());
         try {
             return ImageUtils.loadImagePixelBytesFromTiffStream(
@@ -146,20 +146,8 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public InputStream readRawTileContent(RawImage rawImage, int channel) {
-        Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(RAW_CH_TIFF_PATTERN, channel)));
+        Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel)));
         return openContentStream(rawImagePath, ImageUtils.getImagePathHandler());
-    }
-
-    @Nullable
-    @Override
-    public InputStream readTransformData() {
-        return openContentStream(volumeBasePath.resolve(TRANSFORM_FILE_NAME), simpleFileSupplier());
-    }
-
-    @Nullable
-    @Override
-    public InputStream readTileBaseData() {
-        return openContentStream(volumeBasePath.resolve(TILED_VOL_BASE_FILE_NAME), simpleFileSupplier());
     }
 
     @Nullable
@@ -184,13 +172,4 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         }
     }
 
-    private Function<Path, InputStream> simpleFileSupplier() {
-        return (Path p) -> {
-            try {
-                return Files.newInputStream(p);
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
-        };
-    }
 }

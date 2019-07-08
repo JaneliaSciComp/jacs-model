@@ -7,11 +7,11 @@ import com.google.common.cache.CacheLoader;
 public class RemoteFileLoader<K extends FileKey> extends CacheLoader<K, FileProxy> {
 
     private final LocalFileCacheStorage localFileCacheStorage;
-    private final RemoteFileRetriever<K> fileRetriever;
+    private final FileKeyToProxySupplier<K> fileKeyToProxySupplier;
 
-    RemoteFileLoader(LocalFileCacheStorage localFileCacheStorage, RemoteFileRetriever<K> fileRetriever) {
+    RemoteFileLoader(LocalFileCacheStorage localFileCacheStorage, FileKeyToProxySupplier<K> fileKeyToProxySupplier) {
         this.localFileCacheStorage = localFileCacheStorage;
-        this.fileRetriever = fileRetriever;
+        this.fileKeyToProxySupplier = fileKeyToProxySupplier;
     }
 
     @Override
@@ -20,6 +20,6 @@ public class RemoteFileLoader<K extends FileKey> extends CacheLoader<K, FileProx
         if (localPath == null) {
             throw new IllegalArgumentException("Local path cannot be retrieved from cachedFileKey " + cachedFileKey);
         }
-        return new CachedFileProxy(localPath, fileRetriever.retrieve(cachedFileKey), localFileCacheStorage);
+        return new CachedFileProxy(localPath, fileKeyToProxySupplier.getProxyFromKey(cachedFileKey), localFileCacheStorage);
     }
 }

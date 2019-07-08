@@ -67,7 +67,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                     .mapToObj(channel -> TileInfo.getImageNameForChannel(tileKey.getSliceAxis(), channel))
                                     .collect(Collectors.toList());
                             LOG.trace("Retrieve imagefiles {} for tile {} from {} and {}", chanelImageNames, tileKey, renderedVolume.volumeLocation(), tileRelativePath);
-                            byte[] content = renderedVolume.getRvl().readTileImagePageAsTexturedBytes(tileRelativePath.toString(), chanelImageNames, tileKey.getSliceIndex());
+                            byte[] content = renderedVolume.getRvl().readTileImagePageAsTexturedBytes(tileRelativePath, chanelImageNames, tileKey.getSliceIndex());
                             if (content == null) {
                                 return Optional.empty();
                             } else {

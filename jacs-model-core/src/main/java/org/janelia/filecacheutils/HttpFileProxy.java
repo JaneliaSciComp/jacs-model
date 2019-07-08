@@ -56,7 +56,7 @@ public class HttpFileProxy implements FileProxy {
     }
 
     @Override
-    public boolean delete() {
+    public boolean deleteProxy() {
         return false;
     }
 }

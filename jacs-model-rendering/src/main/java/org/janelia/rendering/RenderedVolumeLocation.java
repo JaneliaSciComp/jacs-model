@@ -5,7 +5,22 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
+import com.google.common.collect.ImmutableMultimap;
+
 public interface RenderedVolumeLocation {
+    /**
+     * Default raw tile channel suffix pattern
+     */
+    String DEFAULT_RAW_CH_SUFFIX_PATTERN = "-ngc.%s.tif";
+    /**
+     * Default transform file name.
+     */
+    String DEFAULT_TRANSFORM_FILE_NAME = "transform.txt";
+    /**
+     * Default tilebase file name.
+     */
+    String DEFAULT_TILED_VOL_BASE_FILE_NAME = "tilebase.cache.yml";
+
     /**
      * @return the base connection URI for retrieving rendered volume data.
      */
@@ -58,12 +73,16 @@ public interface RenderedVolumeLocation {
     /**
      * Read transform.txt
 \     */
-    @Nullable InputStream readTransformData();
+    @Nullable default InputStream readTransformData() {
+        return streamContentFromRelativePath(DEFAULT_TRANSFORM_FILE_NAME);
+    }
 
     /**
      * Read tilebase.cache.yml
      */
-    @Nullable InputStream readTileBaseData();
+    @Nullable default InputStream readTileBaseData() {
+        return streamContentFromRelativePath(DEFAULT_TILED_VOL_BASE_FILE_NAME);
+    }
 
     /**
      * Stream entire raw image.
@@ -71,7 +90,10 @@ public interface RenderedVolumeLocation {
      * @param channel
      * @return
      */
-    @Nullable InputStream readRawTileContent(RawImage rawImage, int channel);
+    @Nullable default InputStream readRawTileContent(RawImage rawImage, int channel) {
+        String rawImagePath = rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel));
+        return streamContentFromAbsolutePath(rawImagePath);
+    }
 
     /**
      * Stream content from relative path.

@@ -8,7 +8,7 @@ public class CachedFileRemovalListener implements RemovalListener<FileKey, FileP
     @Override
     public void onRemoval(RemovalNotification<FileKey, FileProxy> notification) {
         if (notification.getValue() != null && notification.wasEvicted()) {
-            notification.getValue().delete();
+            notification.getValue().deleteProxy();
         }
     }
 }

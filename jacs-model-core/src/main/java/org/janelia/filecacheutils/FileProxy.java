@@ -10,5 +10,5 @@ public interface FileProxy {
     @Nullable Long getSizeInBytes();
     InputStream getContentStream();
     File getLocalFile();
-    boolean delete();
+    boolean deleteProxy();
 }
