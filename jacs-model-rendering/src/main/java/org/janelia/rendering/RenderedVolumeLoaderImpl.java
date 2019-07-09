@@ -71,11 +71,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                     .collect(Collectors.toList());
                             LOG.trace("Retrieve imagefiles {} for tile {} from {} and {}", chanelImageNames, tileKey, rvl.getVolumeLocation(), tileRelativePath);
                             byte[] content = rvl.readTileImagePageAsTexturedBytes(tileRelativePath, chanelImageNames, tileKey.getSliceIndex());
-                            if (content == null) {
-                                return Optional.empty();
-                            } else {
-                                return Optional.of(content);
-                            }
+                            return content != null && content.length > 0 ? Optional.of(content) : Optional.empty();
                         }))
                 ;
     }
@@ -228,7 +224,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                                               int channel, int xCenter, int yCenter, int zCenter,
                                                               int dimx, int dimy, int dimz) {
         byte[] rawImageBytes = rvl.readRawTileROIPixels(rawImage, channel, xCenter, yCenter, zCenter, dimx, dimy, dimz);
-        return rawImageBytes != null ? Optional.of(rawImageBytes) : Optional.empty();
+        return rawImageBytes != null && rawImageBytes.length > 0 ? Optional.of(rawImageBytes) : Optional.empty();
     }
 
     public List<RawImage> loadVolumeRawImageTiles(RenderedVolumeLocation rvl) {
@@ -282,7 +278,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         }
     }
 
-    public int[] convertToMicroscopeCoord(int[] screenCoord, int[] origin, double[] microsPerVoxel) {
+    private int[] convertToMicroscopeCoord(int[] screenCoord, int[] origin, double[] microsPerVoxel) {
         int[] microscopeCoord = new int[3];
         for (int i = 0; i < screenCoord.length; i++) {
             microscopeCoord[i] = origin[i] + (int)(screenCoord[i] * microsPerVoxel[i]);
