@@ -16,7 +16,7 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     private static final Logger LOG = LoggerFactory.getLogger(CachedRenderedVolumeLoader.class);
 
     private final RenderedVolumeLoader impl;
-    private final Cache<URI, Optional<RenderedVolume>> renderedVolumesCache;
+    private final Cache<URI, Optional<RenderedVolumeMetadata>> renderedVolumesCache;
     private final Cache<URI, Optional<byte[]>> renderedTileImagesCache;
 
     public CachedRenderedVolumeLoader(RenderedVolumeLoader impl, int volumesCacheSize, int tileImagesCacheSize) {
@@ -38,7 +38,7 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     }
 
     @Override
-    public Optional<RenderedVolume> loadVolume(RenderedVolumeLocation rvl) {
+    public Optional<RenderedVolumeMetadata> loadVolume(RenderedVolumeLocation rvl) {
         if (renderedVolumesCache == null) {
             return impl.loadVolume(rvl);
         } else {
@@ -51,16 +51,16 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     }
 
     @Override
-    public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
-        return renderedVolume.getRelativeTilePath(tileKey)
-                .map(tilePath -> renderedVolume.getRvl().getVolumeLocation().resolve(tilePath + "/").resolve(tileKey.asPathComponents() + "/"))
+    public Optional<byte[]> loadSlice(RenderedVolumeLocation rvl, RenderedVolumeMetadata renderedVolumeMetadata, TileKey tileKey) {
+        return renderedVolumeMetadata.getRelativeTilePath(tileKey)
+                .map(tilePath -> rvl.getVolumeLocation().resolve(tilePath + "/").resolve(tileKey.asPathComponents() + "/"))
                 .flatMap(tileURI -> {
                     if (renderedTileImagesCache == null) {
-                        return impl.loadSlice(renderedVolume, tileKey);
+                        return impl.loadSlice(rvl, renderedVolumeMetadata, tileKey);
                     } else {
                         try {
-                            LOG.trace("Try to retrieve tile {} from {} cache using {}", tileKey, renderedVolume.volumeLocation(), tileURI);
-                            return renderedTileImagesCache.get(tileURI, () -> impl.loadSlice(renderedVolume, tileKey));
+                            LOG.trace("Try to retrieve tile {} from {} cache using {}", tileKey, rvl.getVolumeLocation(), tileURI);
+                            return renderedTileImagesCache.get(tileURI, () -> impl.loadSlice(rvl, renderedVolumeMetadata, tileKey));
                         } catch (ExecutionException e) {
                             throw new IllegalStateException(e);
                         }
@@ -74,7 +74,7 @@ public class CachedRenderedVolumeLoader implements RenderedVolumeLoader {
     }
 
     @Override
-    public byte[] loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
+    public Optional<byte[]> loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
                                                     RawImage rawImage,
                                                     int channel,
                                                     int x, int y, int z,

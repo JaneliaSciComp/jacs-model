@@ -69,12 +69,16 @@ public class CachedFileProxy implements FileProxy {
                 throw new IllegalStateException(e);
             }
         } else {
-            // download remote file
-            makeDownloadDir();
             try {
+                InputStream contentStream = fileProxySupplier.get().getContentStream();
+                if (contentStream == null) {
+                    return null;
+                }
+                // download remote file
+                makeDownloadDir();
                 Path downloadingLocalFilePath = getDownloadingLocalFilePath();
                 FileOutputStream tmpCacheFileStream = new FileOutputStream(downloadingLocalFilePath.toFile());
-                return new TeeInputStream(fileProxySupplier.get().getContentStream(), tmpCacheFileStream, false) {
+                return new TeeInputStream(contentStream, tmpCacheFileStream, false) {
                     @Override
                     protected void afterRead(int n) throws IOException {
                         try {
@@ -119,9 +123,13 @@ public class CachedFileProxy implements FileProxy {
             return localFilePath.toFile();
         } else {
             // download remote file
-            makeDownloadDir();
             try {
-                Files.copy(fileProxySupplier.get().getContentStream(), getDownloadingLocalFilePath(), StandardCopyOption.REPLACE_EXISTING);
+                InputStream contentStream = fileProxySupplier.get().getContentStream();
+                if (contentStream == null) {
+                    return null;
+                }
+                makeDownloadDir();
+                Files.copy(contentStream, getDownloadingLocalFilePath(), StandardCopyOption.REPLACE_EXISTING);
                 updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getSizeInBytes()));
             } catch (IOException e) {
                 LOG.error("Error saving downloadable stream to {}", getDownloadingLocalFilePath(), e);
