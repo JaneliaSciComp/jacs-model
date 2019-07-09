@@ -77,15 +77,15 @@ public class CachedFileProxy implements FileProxy {
                 // download remote file
                 makeDownloadDir();
                 Path downloadingLocalFilePath = getDownloadingLocalFilePath();
-                FileOutputStream tmpCacheFileStream = new FileOutputStream(downloadingLocalFilePath.toFile());
-                return new TeeInputStream(contentStream, tmpCacheFileStream, false) {
+                FileOutputStream downloadingLocalFileStream = new FileOutputStream(downloadingLocalFilePath.toFile());
+                return new TeeInputStream(contentStream, downloadingLocalFileStream, false) {
                     @Override
                     protected void afterRead(int n) throws IOException {
                         try {
                             super.afterRead(n);
                         } finally {
                             if (n == -1) {
-                                tmpCacheFileStream.close();
+                                downloadingLocalFileStream.close();
                                 persistToLocalCache();
                             }
                         }
@@ -93,21 +93,33 @@ public class CachedFileProxy implements FileProxy {
 
                     @Override
                     public void close() throws IOException {
-                        super.close();
-                        tmpCacheFileStream.close();
-                        persistToLocalCache();
+                        try {
+                            super.close();
+                        } finally {
+                            downloadingLocalFileStream.close();
+                            persistToLocalCache();
+                        }
                     }
 
                     private void persistToLocalCache() {
                         try {
                             Path localDir = localFilePath.getParent();
-                            if (localDir != null) {
+                            if (localDir != null && Files.notExists(localDir)) {
                                 Files.createDirectories(localDir);
                             }
-                            Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING);
-                            updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getSizeInBytes()));
+                            if (Files.notExists(localFilePath)) {
+                                Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                            }
                         } catch (IOException e) {
                             LOG.error("Error moving downloaded file {} to local cache file {}", downloadingLocalFilePath, localFilePath, e);
+                        } finally {
+                            try {
+                                Files.deleteIfExists(downloadingLocalFilePath);
+                            } catch (IOException e) {
+                                LOG.debug("Error deleting {}", downloadingLocalFilePath, e);
+                            } finally {
+                                updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getSizeInBytes()));
+                            }
                         }
                     }
                 };

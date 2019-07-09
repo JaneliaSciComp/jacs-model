@@ -141,7 +141,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
             Map<Coordinate, List<String>> channelTilesByOrthoProjection = rvl.listImageUris(0).stream()
                     .map(tileUri -> {
                         String fn;
-                        if (StringUtils.equalsAnyIgnoreCase("file", tileUri.getScheme())) {
+                        if (StringUtils.equalsIgnoreCase("file", tileUri.getScheme())) {
                             fn = Paths.get(tileUri).getFileName().toString();
                         } else {
                             String uriPath = tileUri.getPath();
