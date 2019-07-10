@@ -5,9 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Optional;
 import java.util.function.Function;
-
-import javax.annotation.Nullable;
 
 import com.google.common.io.CountingInputStream;
 
@@ -32,13 +31,12 @@ public class HttpFileProxy implements FileProxy {
         return url;
     }
 
-    @Nullable
     @Override
-    public Long getSizeInBytes() {
+    public Optional<Long> estimateSizeInBytes() {
         if (contentStream == null) {
-            return null;
+            return Optional.empty();
         } else {
-            return contentStream.getCount();
+            return Optional.of(contentStream.getCount());
         }
     }
 

@@ -8,9 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Optional;
 import java.util.function.Supplier;
-
-import javax.annotation.Nullable;
 
 import org.apache.commons.io.input.TeeInputStream;
 import org.slf4j.Logger;
@@ -22,11 +21,13 @@ public class CachedFileProxy implements FileProxy {
     private final Path localFilePath;
     private final Supplier<FileProxy> fileProxySupplier;
     private final LocalFileCacheStorage localFileCacheStorage;
+    private FileProxy fileProxy;
 
     CachedFileProxy(Path localFilePath, Supplier<FileProxy> fileProxySupplier, LocalFileCacheStorage localFileCacheStorage) {
         this.localFileCacheStorage = localFileCacheStorage;
         this.localFilePath = localFilePath;
         this.fileProxySupplier = fileProxySupplier;
+        this.fileProxy = null;
     }
 
     @Override
@@ -38,9 +39,18 @@ public class CachedFileProxy implements FileProxy {
         }
     }
 
-    @Nullable
     @Override
-    public Long getSizeInBytes() {
+    public Optional<Long> estimateSizeInBytes() {
+        long currentSize = getCurrentSizeInBytes();
+        if (currentSize > 0) {
+            return Optional.of(currentSize);
+        } else if (fileProxy == null) {
+            fileProxy = fileProxySupplier.get();
+        }
+        return fileProxy.estimateSizeInBytes();
+    }
+
+    private long getCurrentSizeInBytes() {
         return getFileSize(localFilePath) + getFileSize(getDownloadingLocalFilePath());
     }
 
@@ -70,7 +80,10 @@ public class CachedFileProxy implements FileProxy {
             }
         } else {
             try {
-                InputStream contentStream = fileProxySupplier.get().getContentStream();
+                if (fileProxy == null) {
+                    fileProxy = fileProxySupplier.get();
+                }
+                InputStream contentStream = fileProxy.getContentStream();
                 if (contentStream == null) {
                     return null;
                 }
@@ -121,7 +134,7 @@ public class CachedFileProxy implements FileProxy {
                             } catch (IOException e) {
                                 LOG.debug("Error deleting {}", downloadingLocalFilePath, e);
                             } finally {
-                                updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getSizeInBytes()));
+                                updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
                             }
                         }
                     }
@@ -145,14 +158,14 @@ public class CachedFileProxy implements FileProxy {
                 }
                 makeDownloadDir();
                 Files.copy(contentStream, getDownloadingLocalFilePath(), StandardCopyOption.REPLACE_EXISTING);
-                updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getSizeInBytes()));
+                updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
             } catch (IOException e) {
                 LOG.error("Error saving downloadable stream to {}", getDownloadingLocalFilePath(), e);
                 throw new IllegalStateException(e);
             }
             try {
                 Files.move(getDownloadingLocalFilePath(), localFilePath, StandardCopyOption.REPLACE_EXISTING);
-                updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getSizeInBytes()));
+                updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
             } catch (IOException e) {
                 LOG.error("Error moving downloaded file {} to {}", getDownloadingLocalFilePath(), localFilePath, e);
                 throw new IllegalStateException(e);
@@ -174,7 +187,7 @@ public class CachedFileProxy implements FileProxy {
 
     @Override
     public boolean deleteProxy() {
-        long sizeInBytes = getSizeInBytes();
+        long sizeInBytes = getCurrentSizeInBytes();
         try {
             Path localCanonicalPath = localFilePath.toRealPath();
             Path cacheDirCanonicalPath = localFileCacheStorage.getLocalFileCacheDir().toRealPath();

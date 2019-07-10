@@ -7,8 +7,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 public class LocalFileProxy implements FileProxy {
 
@@ -23,14 +22,13 @@ public class LocalFileProxy implements FileProxy {
         return localFilePath.toString();
     }
 
-    @Nullable
     @Override
-    public Long getSizeInBytes() {
+    public Optional<Long> estimateSizeInBytes() {
         try {
             if (Files.exists(localFilePath)) {
-                return Files.size(localFilePath);
+                return Optional.of(Files.size(localFilePath));
             } else {
-                return null;
+                return Optional.of(0L);
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);

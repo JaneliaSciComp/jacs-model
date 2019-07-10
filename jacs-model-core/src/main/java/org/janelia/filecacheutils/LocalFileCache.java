@@ -4,6 +4,8 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
+import javax.annotation.Nullable;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListeners;
@@ -18,13 +20,14 @@ public class LocalFileCache<K extends FileKey> {
                         .concurrencyLevel(2)
                         .maximumWeight(localFileCacheStorage.getCapacityInKB())
                         .weigher((FileKey key, Optional<FileProxy> value) -> {
-                            long sizeInKB = LocalFileCacheStorage.BYTES_TO_KB.apply(value.map(fp -> fp.getSizeInBytes()).orElse(0L));
+                            long sizeInKB = LocalFileCacheStorage.BYTES_TO_KB.apply(value.flatMap(fp -> fp.estimateSizeInBytes()).orElse(1L));
                             return sizeInKB > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) sizeInKB;
                         })
                         .removalListener(RemovalListeners.asynchronous(new CachedFileRemovalListener(), asyncRemovalExecutor))
                         .build(new RemoteFileLoader<>(localFileCacheStorage, keyToProxySupplier));
     }
 
+    @Nullable
     public FileProxy getCachedFileEntry(K cachedFileKey, boolean forceRefresh) {
         if (forceRefresh) {
             localCache.invalidate(cachedFileKey);

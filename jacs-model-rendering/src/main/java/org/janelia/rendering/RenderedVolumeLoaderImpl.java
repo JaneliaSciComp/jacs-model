@@ -78,13 +78,22 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
 
     private Optional<RawCoord> loadVolumeSizeAndCoord(RenderedVolumeLocation rvl) {
         try {
-            InputStream transformStream = rvl.readTransformData();
-            if (transformStream == null) {
+            StreamableContent streamableTransform = rvl.readTransformData();
+            if (streamableTransform == null) {
                 LOG.warn("No transform file found at", rvl.getVolumeLocation());
                 return Optional.empty();
             } else {
-                RawCoord rawCoord = parseTransformStream(transformStream);
-                return Optional.of(rawCoord);
+                InputStream transformStream = streamableTransform.getStream();
+                try {
+                    RawCoord rawCoord = parseTransformStream(transformStream);
+                    return Optional.of(rawCoord);
+                } finally {
+                    try {
+                        transformStream.close();
+                    } catch (IOException ignore) {
+                        LOG.trace("Exception while trying to close transform stream for {}", rvl.getDataStorageURI(), ignore);
+                    }
+                }
             }
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
@@ -271,8 +280,12 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     private RawVolData loadRawVolumeData(RenderedVolumeLocation rvl) {
-        try (InputStream tileBaseStream = rvl.readTileBaseData()) {
-            return new RawVolReader().readRawVolData(tileBaseStream);
+        try (StreamableContent streamableTileBase = rvl.readTileBaseData()) {
+            if (streamableTileBase != null) {
+                return new RawVolReader().readRawVolData(streamableTileBase.getStream());
+            } else {
+                return null;
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

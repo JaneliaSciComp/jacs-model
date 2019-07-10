@@ -1,13 +1,11 @@
 package org.janelia.rendering;
 
-import java.io.InputStream;
-
 abstract class AbstractRenderedVolumeLocation implements RenderedVolumeLocation {
 
-    void closeContentStream(InputStream contentStream) {
+    void closeContentStream(StreamableContent contentStream) {
         if (contentStream != null) {
             try {
-                contentStream.close();
+                contentStream.getStream().close();
             } catch (Exception ignore) {
             }
         }

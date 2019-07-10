@@ -11,6 +11,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -96,12 +97,15 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
-        InputStream tileImageStream = openContentStream(volumeBasePath.resolve(tileRelativePath), ImageUtils.getImagePathHandler());
-        try {
-            return ImageUtils.loadImageInfoFromTiffStream(tileImageStream);
-        } finally {
-            closeContentStream(tileImageStream);
-        }
+        return openContentStream(volumeBasePath.resolve(tileRelativePath), ImageUtils.getImagePathHandler())
+                .map(streamableTiffImage -> {
+                    try {
+                        return ImageUtils.loadImageInfoFromTiffStream(streamableTiffImage.getStream());
+                    } finally {
+                        closeContentStream(streamableTiffImage);
+                    }
+                })
+                .orElse(null);
     }
 
     @Nullable
@@ -131,44 +135,46 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Override
     public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
         Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel)));
-        InputStream rawImageStream = openContentStream(rawImagePath, ImageUtils.getImagePathHandler());
-        try {
-            return ImageUtils.loadImagePixelBytesFromTiffStream(
-                    rawImageStream,
-                    xCenter, yCenter, zCenter,
-                    dimx, dimy, dimz
-            );
-        } finally {
-            closeContentStream(rawImageStream);
-        }
+        return openContentStream(volumeBasePath.resolve(rawImagePath), ImageUtils.getImagePathHandler())
+                .map(streamableRawImage -> {
+                    try {
+                        return ImageUtils.loadImagePixelBytesFromTiffStream(streamableRawImage.getStream(), xCenter, yCenter, zCenter, dimx, dimy, dimz);
+                    } finally {
+                        closeContentStream(streamableRawImage);
+                    }
+                })
+                .orElse(null);
     }
 
     @Nullable
     @Override
-    public InputStream readRawTileContent(RawImage rawImage, int channel) {
+    public StreamableContent readRawTileContent(RawImage rawImage, int channel) {
         Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel)));
-        return openContentStream(rawImagePath, ImageUtils.getImagePathHandler());
+        return openContentStream(rawImagePath, ImageUtils.getImagePathHandler()).orElse(null);
     }
 
     @Nullable
     @Override
-    public InputStream streamContentFromRelativePath(String relativePath) {
-        return openContentStream(volumeBasePath.resolve(relativePath), ImageUtils.getImagePathHandler());
+    public StreamableContent streamContentFromRelativePath(String relativePath) {
+        return openContentStream(volumeBasePath.resolve(relativePath), ImageUtils.getImagePathHandler()).orElse(null);
     }
 
     @Nullable
     @Override
-    public InputStream streamContentFromAbsolutePath(String absolutePath) {
+    public StreamableContent streamContentFromAbsolutePath(String absolutePath) {
         Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
-        return openContentStream(Paths.get(absolutePath), ImageUtils.getImagePathHandler());
+        return openContentStream(Paths.get(absolutePath), ImageUtils.getImagePathHandler()).orElse(null);
     }
 
-    @Nullable
-    private InputStream openContentStream(Path fp, Function<Path, InputStream> contentStreamSupplier) {
+    private Optional<StreamableContent> openContentStream(Path fp, Function<Path, InputStream> contentStreamSupplier) {
         if (Files.exists(fp)) {
-            return contentStreamSupplier.apply(fp);
+            try {
+                return Optional.of(new StreamableContent(Files.size(fp), contentStreamSupplier.apply(fp)));
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
         } else {
-            return null;
+            return Optional.empty();
         }
     }
 

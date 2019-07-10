@@ -1,11 +1,10 @@
 package org.janelia.rendering;
 
-import javax.annotation.Nullable;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
-import com.google.common.collect.ImmutableMultimap;
+import javax.annotation.Nullable;
 
 public interface RenderedVolumeLocation {
     /**
@@ -73,14 +72,14 @@ public interface RenderedVolumeLocation {
     /**
      * Read transform.txt
 \     */
-    @Nullable default InputStream readTransformData() {
+    @Nullable default StreamableContent readTransformData() {
         return streamContentFromRelativePath(DEFAULT_TRANSFORM_FILE_NAME);
     }
 
     /**
      * Read tilebase.cache.yml
      */
-    @Nullable default InputStream readTileBaseData() {
+    @Nullable default StreamableContent readTileBaseData() {
         return streamContentFromRelativePath(DEFAULT_TILED_VOL_BASE_FILE_NAME);
     }
 
@@ -90,7 +89,7 @@ public interface RenderedVolumeLocation {
      * @param channel
      * @return
      */
-    @Nullable default InputStream readRawTileContent(RawImage rawImage, int channel) {
+    @Nullable default StreamableContent readRawTileContent(RawImage rawImage, int channel) {
         String rawImagePath = rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel));
         return streamContentFromAbsolutePath(rawImagePath);
     }
@@ -100,12 +99,12 @@ public interface RenderedVolumeLocation {
      * @param relativePath
      * @return
      */
-    @Nullable InputStream streamContentFromRelativePath(String relativePath);
+    @Nullable StreamableContent streamContentFromRelativePath(String relativePath);
 
     /**
      * Stream content from absolute path.
      * @param absolutePath
      * @return
      */
-    @Nullable InputStream streamContentFromAbsolutePath(String absolutePath);
+    @Nullable StreamableContent streamContentFromAbsolutePath(String absolutePath);
 }
