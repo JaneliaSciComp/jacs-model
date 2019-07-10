@@ -1,8 +1,8 @@
 package org.janelia.rendering;
 
-import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -56,7 +56,7 @@ public interface RenderedVolumeLocation {
      * @param tileRelativePath
      * @return
      */
-    RenderedImageInfo readTileImageInfo(String tileRelativePath);
+    @Nullable RenderedImageInfo readTileImageInfo(String tileRelativePath);
 
     /**
      * Read tile image as texture bytes.
@@ -72,15 +72,15 @@ public interface RenderedVolumeLocation {
     /**
      * Read transform.txt
 \     */
-    @Nullable default StreamableContent readTransformData() {
-        return streamContentFromRelativePath(DEFAULT_TRANSFORM_FILE_NAME);
+    default Optional<StreamableContent> getTransformData() {
+        return getContentFromRelativePath(DEFAULT_TRANSFORM_FILE_NAME);
     }
 
     /**
      * Read tilebase.cache.yml
      */
-    @Nullable default StreamableContent readTileBaseData() {
-        return streamContentFromRelativePath(DEFAULT_TILED_VOL_BASE_FILE_NAME);
+    default Optional<StreamableContent> getTileBaseData() {
+        return getContentFromRelativePath(DEFAULT_TILED_VOL_BASE_FILE_NAME);
     }
 
     /**
@@ -89,9 +89,9 @@ public interface RenderedVolumeLocation {
      * @param channel
      * @return
      */
-    @Nullable default StreamableContent readRawTileContent(RawImage rawImage, int channel) {
+    default Optional<StreamableContent> getRawTileContent(RawImage rawImage, int channel) {
         String rawImagePath = rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel));
-        return streamContentFromAbsolutePath(rawImagePath);
+        return getContentFromAbsolutePath(rawImagePath);
     }
 
     /**
@@ -99,12 +99,12 @@ public interface RenderedVolumeLocation {
      * @param relativePath
      * @return
      */
-    @Nullable StreamableContent streamContentFromRelativePath(String relativePath);
+    Optional<StreamableContent> getContentFromRelativePath(String relativePath);
 
     /**
      * Stream content from absolute path.
      * @param absolutePath
      * @return
      */
-    @Nullable StreamableContent streamContentFromAbsolutePath(String absolutePath);
+    Optional<StreamableContent> getContentFromAbsolutePath(String absolutePath);
 }

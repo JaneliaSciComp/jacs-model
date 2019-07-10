@@ -88,7 +88,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         TiffOctreeImageVisitor imageVisitor = new TiffOctreeImageVisitor(level);
         try {
             Files.walkFileTree(volumeBasePath, imageVisitor);
-            return imageVisitor.tileImages.stream().map(p -> p.toUri()).collect(Collectors.toList());
+            return imageVisitor.tileImages.stream().map(Path::toUri).collect(Collectors.toList());
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -146,24 +146,21 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                 .orElse(null);
     }
 
-    @Nullable
     @Override
-    public StreamableContent readRawTileContent(RawImage rawImage, int channel) {
+    public Optional<StreamableContent> getRawTileContent(RawImage rawImage, int channel) {
         Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel)));
-        return openContentStream(rawImagePath, ImageUtils.getImagePathHandler()).orElse(null);
+        return openContentStream(rawImagePath, ImageUtils.getImagePathHandler());
     }
 
-    @Nullable
     @Override
-    public StreamableContent streamContentFromRelativePath(String relativePath) {
-        return openContentStream(volumeBasePath.resolve(relativePath), ImageUtils.getImagePathHandler()).orElse(null);
+    public Optional<StreamableContent> getContentFromRelativePath(String relativePath) {
+        return openContentStream(volumeBasePath.resolve(relativePath), ImageUtils.getImagePathHandler());
     }
 
-    @Nullable
     @Override
-    public StreamableContent streamContentFromAbsolutePath(String absolutePath) {
+    public Optional<StreamableContent> getContentFromAbsolutePath(String absolutePath) {
         Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
-        return openContentStream(Paths.get(absolutePath), ImageUtils.getImagePathHandler()).orElse(null);
+        return openContentStream(Paths.get(absolutePath), ImageUtils.getImagePathHandler());
     }
 
     private Optional<StreamableContent> openContentStream(Path fp, Function<Path, InputStream> contentStreamSupplier) {

@@ -77,27 +77,23 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     private Optional<RawCoord> loadVolumeSizeAndCoord(RenderedVolumeLocation rvl) {
-        try {
-            StreamableContent streamableTransform = rvl.readTransformData();
-            if (streamableTransform == null) {
-                LOG.warn("No transform file found at", rvl.getVolumeLocation());
-                return Optional.empty();
-            } else {
-                InputStream transformStream = streamableTransform.getStream();
-                try {
-                    RawCoord rawCoord = parseTransformStream(transformStream);
-                    return Optional.of(rawCoord);
-                } finally {
+        return rvl.getTransformData()
+                .map(streamableTransform -> {
+                    InputStream transformStream = streamableTransform.getStream();
                     try {
-                        transformStream.close();
-                    } catch (IOException ignore) {
-                        LOG.trace("Exception while trying to close transform stream for {}", rvl.getDataStorageURI(), ignore);
+                        RawCoord rawCoord = parseTransformStream(transformStream);
+                        return Optional.of(rawCoord);
+                    } finally {
+                        try {
+                            transformStream.close();
+                        } catch (IOException ignore) {
+                            LOG.trace("Exception while trying to close transform stream for {}", rvl.getDataStorageURI(), ignore);
+                        }
                     }
-                }
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException(e);
-        }
+                }).orElseGet(() -> {
+                    LOG.warn("No transform file found at", rvl.getVolumeLocation());
+                    return Optional.empty();
+                });
     }
 
     private RawCoord parseTransformStream(@Nonnull InputStream stream) {
@@ -280,21 +276,28 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     private RawVolData loadRawVolumeData(RenderedVolumeLocation rvl) {
-        try (StreamableContent streamableTileBase = rvl.readTileBaseData()) {
-            if (streamableTileBase != null) {
-                return new RawVolReader().readRawVolData(streamableTileBase.getStream());
-            } else {
-                return null;
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return rvl.getTileBaseData()
+                .map(streamableTileBase -> {
+                    try (InputStream tileBaseStream = streamableTileBase.getStream()) {
+                        return new RawVolReader().readRawVolData(tileBaseStream);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    } finally {
+                        try {
+                            streamableTileBase.close();
+                        } catch (IOException ignore) {
+                            // ignore this exception
+                            LOG.trace("Error closing tilebase stream from  {}", rvl.getDataStorageURI(), ignore);
+                        }
+                    }
+                })
+                .orElse(null);
     }
 
     private int[] convertToMicroscopeCoord(int[] screenCoord, int[] origin, double[] microsPerVoxel) {
         int[] microscopeCoord = new int[3];
         for (int i = 0; i < screenCoord.length; i++) {
-            microscopeCoord[i] = origin[i] + (int)(screenCoord[i] * microsPerVoxel[i]);
+            microscopeCoord[i] = origin[i] + (int) (screenCoord[i] * microsPerVoxel[i]);
         }
         return microscopeCoord;
     }
