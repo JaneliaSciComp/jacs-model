@@ -107,8 +107,11 @@ public class CachedFileProxy implements FileProxy {
                             if (localDir != null && Files.notExists(localDir)) {
                                 Files.createDirectories(localDir);
                             }
-                            if (Files.notExists(localFilePath)) {
-                                Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                            if (Files.notExists(localFilePath) && Files.exists(downloadingLocalFilePath)) {
+                                long downloadedFileSize = Files.size(downloadingLocalFilePath);
+                                if (downloadedFileSize / 1024 < localFileCacheStorage.getCapacityInKB()) {
+                                    Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                                }
                             }
                         } catch (IOException e) {
                             LOG.error("Error moving downloaded file {} to local cache file {}", downloadingLocalFilePath, localFilePath, e);

@@ -9,15 +9,18 @@ import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
+import com.google.common.io.CountingInputStream;
+
 public class HttpFileProxy implements FileProxy {
 
     private final String url;
-
     private final Function<String, InputStream> httpToContentStreamProvider;
+    private CountingInputStream contentStream;
 
     public HttpFileProxy(String url, Function<String, InputStream> httpToContentStreamProvider) {
         this.url = url;
         this.httpToContentStreamProvider = httpToContentStreamProvider;
+        this.contentStream = null;
     }
 
     public HttpFileProxy(URL url, Function<String, InputStream> httpToContentStreamProvider) {
@@ -32,22 +35,27 @@ public class HttpFileProxy implements FileProxy {
     @Nullable
     @Override
     public Long getSizeInBytes() {
-        return null;
+        if (contentStream == null) {
+            return null;
+        } else {
+            return contentStream.getCount();
+        }
     }
 
     @Override
     public InputStream getContentStream() {
         if (url.startsWith("http://") || url.startsWith("https://")) {
-            return httpToContentStreamProvider.apply(url);
+            contentStream = new CountingInputStream(httpToContentStreamProvider.apply(url));
         } else if (url.startsWith("file://")) {
             try {
-                return new FileInputStream(url);
+                contentStream = new CountingInputStream(new FileInputStream(url));
             } catch (FileNotFoundException e) {
                 throw new IllegalStateException(e);
             }
         } else {
             throw new IllegalArgumentException("URL scheme is not supported " + url);
         }
+        return contentStream;
     }
 
     @Override

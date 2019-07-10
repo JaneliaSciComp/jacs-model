@@ -2,7 +2,6 @@ package org.janelia.rendering;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
