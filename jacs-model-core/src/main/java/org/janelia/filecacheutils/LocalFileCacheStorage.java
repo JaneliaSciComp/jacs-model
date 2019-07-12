@@ -1,5 +1,6 @@
 package org.janelia.filecacheutils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -7,8 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,23 +38,45 @@ public class LocalFileCacheStorage {
     public LocalFileCacheStorage(Path localFileCacheDir, long capacityInKB) {
         this.localFileCacheDir = localFileCacheDir;
         this.capacityInKB = capacityInKB;
-        this.currentSizeInKB = new AtomicLong(getLocalFileCacheStorageSizeInKB());
+        init();
     }
 
-    private long getLocalFileCacheStorageSizeInKB() {
+    private void init() {
         try {
             Files.createDirectories(localFileCacheDir);
         } catch (IOException e) {
             LOG.error("Error creating local cache directory: {}", localFileCacheDir, e);
             throw new IllegalStateException(e);
         }
+        deleteEmptySubDirs();
+        this.currentSizeInKB = new AtomicLong(getLocalFileCacheStorageSizeInKB());
+    }
+
+    private void deleteEmptySubDirs() {
+        walk().sorted(Comparator.reverseOrder())
+                .filter(p -> Files.isDirectory(p))
+                .map(Path::toFile)
+                .forEach(f -> {
+                    File[] dirList = f.listFiles();
+                    if (dirList != null && dirList.length == 0) {
+                        f.delete();
+                    }
+                });
+    }
+
+    private long getLocalFileCacheStorageSizeInKB() {
+        return walk()
+                .map(fp -> getFileSizeInKB(fp))
+                .reduce(0L, (s1, s2) -> s1 + s2);
+    }
+
+    Stream<Path> walk() {
         try {
             return Files.walk(localFileCacheDir)
                     .filter(fp -> Files.isRegularFile(fp, LinkOption.NOFOLLOW_LINKS))
-                    .map(fp -> getFileSizeInKB(fp))
-                    .reduce(0L, (s1, s2) -> s1 + s2);
+                    ;
         } catch (IOException e) {
-            LOG.warn("Error initializing local file cache size for {}", localFileCacheDir, e);
+            LOG.warn("Error traversing local cache directory {}", localFileCacheDir, e);
             throw new IllegalStateException(e);
         }
     }

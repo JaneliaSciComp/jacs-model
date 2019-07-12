@@ -36,7 +36,7 @@ public class LocalFileProxy implements FileProxy {
     }
 
     @Override
-    public InputStream getContentStream() {
+    public InputStream openContentStream() {
         try {
             return Files.newInputStream(localFilePath);
         } catch (IOException e) {

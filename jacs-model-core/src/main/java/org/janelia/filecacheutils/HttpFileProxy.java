@@ -41,7 +41,7 @@ public class HttpFileProxy implements FileProxy {
     }
 
     @Override
-    public InputStream getContentStream() {
+    public InputStream openContentStream() {
         if (url.startsWith("http://") || url.startsWith("https://")) {
             contentStream = new CountingInputStream(httpToContentStreamProvider.apply(url));
         } else if (url.startsWith("file://")) {

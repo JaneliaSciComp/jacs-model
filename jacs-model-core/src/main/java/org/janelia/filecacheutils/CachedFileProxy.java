@@ -1,22 +1,24 @@
 package org.janelia.filecacheutils;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import org.apache.commons.io.input.TeeInputStream;
+import org.apache.commons.io.output.NullOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Supplier;
-
-import org.apache.commons.io.input.TeeInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class CachedFileProxy implements FileProxy {
     private static final Logger LOG = LoggerFactory.getLogger(CachedFileProxy.class);
+    private static final Set<String> DOWNLOADING_FILES = new ConcurrentSkipListSet<>();
 
     private final Path localFilePath;
     private final Supplier<FileProxy> fileProxySupplier;
@@ -70,27 +72,32 @@ public class CachedFileProxy implements FileProxy {
     }
 
     @Override
-    public InputStream getContentStream() {
+    public InputStream openContentStream() {
         if (Files.exists(localFilePath)) {
             try {
+                Files.setLastModifiedTime(localFilePath, FileTime.fromMillis(System.currentTimeMillis()));
                 return Files.newInputStream(localFilePath);
             } catch (IOException e) {
                 LOG.error("Error reading {}", localFilePath, e);
                 throw new IllegalStateException(e);
             }
         } else {
+            if (fileProxy == null) {
+                fileProxy = fileProxySupplier.get();
+            }
+            InputStream contentStream = fileProxy.openContentStream();
+            if (contentStream == null) {
+                return null;
+            }
+            if (!DOWNLOADING_FILES.add(localFilePath.toString())) {
+                // some other thread is already downloading this file so no need to save it twice
+                return contentStream;
+            }
             try {
-                if (fileProxy == null) {
-                    fileProxy = fileProxySupplier.get();
-                }
-                InputStream contentStream = fileProxy.getContentStream();
-                if (contentStream == null) {
-                    return null;
-                }
                 // download remote file
                 makeDownloadDir();
                 Path downloadingLocalFilePath = getDownloadingLocalFilePath();
-                FileOutputStream downloadingLocalFileStream = new FileOutputStream(downloadingLocalFilePath.toFile());
+                OutputStream downloadingLocalFileStream = new FileOutputStream(downloadingLocalFilePath.toFile());
                 return new TeeInputStream(contentStream, downloadingLocalFileStream, false) {
                     @Override
                     protected void afterRead(int n) throws IOException {
@@ -98,7 +105,12 @@ public class CachedFileProxy implements FileProxy {
                             super.afterRead(n);
                         } finally {
                             if (n == -1) {
-                                downloadingLocalFileStream.close();
+                                try {
+                                    downloadingLocalFileStream.close();
+                                } catch (Exception e) {
+                                    // Instead of ignoring this, it's a warning because on Windows file cannot be moved if it is in use
+                                    LOG.warn("Error closing downloading local file {}", downloadingLocalFilePath, e);
+                                }
                                 persistToLocalCache();
                             }
                         }
@@ -109,7 +121,12 @@ public class CachedFileProxy implements FileProxy {
                         try {
                             super.close();
                         } finally {
-                            downloadingLocalFileStream.close();
+                            try {
+                                downloadingLocalFileStream.close();
+                            } catch (Exception e) {
+                                // Instead of ignoring this, it's a warning because on Windows file cannot be moved if it is in use
+                                LOG.warn("Error closing downloading local file {}", downloadingLocalFilePath, e);
+                            }
                             persistToLocalCache();
                         }
                     }
@@ -134,6 +151,10 @@ public class CachedFileProxy implements FileProxy {
                             } catch (IOException e) {
                                 LOG.debug("Error deleting {}", downloadingLocalFilePath, e);
                             } finally {
+                                // this is safe to remove because this block should be executed only if no other thread
+                                // was downloading this file at the time of this was requested
+                                DOWNLOADING_FILES.remove(localFilePath.toString());
+                                // update the cache size
                                 updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
                             }
                         }
@@ -148,27 +169,44 @@ public class CachedFileProxy implements FileProxy {
     @Override
     public File getLocalFile() {
         if (Files.exists(localFilePath)) {
-            return localFilePath.toFile();
+            File localFile = localFilePath.toFile();
+            localFile.setLastModified(System.currentTimeMillis());
+            return localFile;
         } else {
-            // download remote file
-            try {
-                InputStream contentStream = fileProxySupplier.get().getContentStream();
-                if (contentStream == null) {
-                    return null;
-                }
-                makeDownloadDir();
-                Files.copy(contentStream, getDownloadingLocalFilePath(), StandardCopyOption.REPLACE_EXISTING);
-                updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
-            } catch (IOException e) {
-                LOG.error("Error saving downloadable stream to {}", getDownloadingLocalFilePath(), e);
-                throw new IllegalStateException(e);
+            if (fileProxy == null) {
+                fileProxy = fileProxySupplier.get();
             }
+            InputStream contentStream = fileProxy.openContentStream();
+            if (contentStream == null) {
+                return null;
+            }
+            if (!DOWNLOADING_FILES.add(localFilePath.toString())) {
+                // some other thread may also be downloading this file so in this case simply return the file
+                // without trying to cache it locally again.
+                // this is a bit risky because the download may fail but this entire method should be scrapped
+                // and the calls to it should be refactored to use FileProxy instead of File
+                return localFilePath.toFile();
+            }
+            // download remote file
+            Path downloadingLocalFilePath = getDownloadingLocalFilePath();
             try {
-                Files.move(getDownloadingLocalFilePath(), localFilePath, StandardCopyOption.REPLACE_EXISTING);
-                updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
-            } catch (IOException e) {
-                LOG.error("Error moving downloaded file {} to {}", getDownloadingLocalFilePath(), localFilePath, e);
-                throw new IllegalStateException(e);
+                try {
+                    makeDownloadDir();
+                    Files.copy(contentStream, downloadingLocalFilePath, StandardCopyOption.REPLACE_EXISTING);
+                    updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
+                } catch (IOException e) {
+                    LOG.error("Error saving downloadable stream to {}", downloadingLocalFilePath, e);
+                    throw new IllegalStateException(e);
+                }
+                try {
+                    Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                    updateLocalCacheSizeInKB(LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
+                } catch (IOException e) {
+                    LOG.error("Error moving downloaded file {} to {}", downloadingLocalFilePath, localFilePath, e);
+                    throw new IllegalStateException(e);
+                }
+            } finally {
+                DOWNLOADING_FILES.remove(localFilePath.toString());
             }
         }
         return null;
@@ -191,7 +229,7 @@ public class CachedFileProxy implements FileProxy {
         try {
             Path localCanonicalPath = localFilePath.toRealPath();
             Path cacheDirCanonicalPath = localFileCacheStorage.getLocalFileCacheDir().toRealPath();
-            if (cacheDirCanonicalPath == null || !cacheDirCanonicalPath.toString().startsWith(localCanonicalPath.toString())) {
+            if (cacheDirCanonicalPath == null || !localCanonicalPath.toString().startsWith(cacheDirCanonicalPath.toString())) {
                 LOG.info("Local file name {}({}) does not appeared to be located inside the cache dir {}({})",
                         localFilePath, localCanonicalPath, localFileCacheStorage.getLocalFileCacheDir(), cacheDirCanonicalPath);
                 return false;
@@ -206,10 +244,11 @@ public class CachedFileProxy implements FileProxy {
             LOG.warn("Error deleting locally cached file {}", localFilePath, e);
             bresult = false;
         }
+        Path downloadingLocalFilePath = getDownloadingLocalFilePath();
         try {
-            Files.deleteIfExists(getDownloadingLocalFilePath());
+            Files.deleteIfExists(downloadingLocalFilePath);
         } catch (IOException e) {
-            LOG.warn("Error deleting temp cached file {}", getDownloadingLocalFilePath(), e);
+            LOG.warn("Error deleting temp cached file {}", downloadingLocalFilePath, e);
         }
         updateLocalCacheSizeInKB(-LocalFileCacheStorage.BYTES_TO_KB.apply(sizeInBytes));
         return bresult;

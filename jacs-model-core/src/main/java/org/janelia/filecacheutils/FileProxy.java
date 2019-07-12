@@ -11,7 +11,7 @@ public interface FileProxy {
 
     Optional<Long> estimateSizeInBytes();
 
-    @Nullable InputStream getContentStream();
+    @Nullable InputStream openContentStream();
 
     File getLocalFile();
 
