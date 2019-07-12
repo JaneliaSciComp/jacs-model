@@ -53,24 +53,30 @@ public class LocalFileCacheStorage {
     }
 
     private void deleteEmptySubDirs() {
-        walk().sorted(Comparator.reverseOrder())
-                .filter(p -> Files.isDirectory(p))
-                .map(Path::toFile)
-                .forEach(f -> {
-                    File[] dirList = f.listFiles();
-                    if (dirList != null && dirList.length == 0) {
-                        f.delete();
-                    }
-                });
+        try {
+            Files.walk(localFileCacheDir).sorted(Comparator.reverseOrder())
+                    .filter(p -> Files.isDirectory(p))
+                    .filter(p -> !p.equals(localFileCacheDir))
+                    .map(Path::toFile)
+                    .forEach(f -> {
+                        File[] dirList = f.listFiles();
+                        if (dirList != null && dirList.length == 0) {
+                            f.delete();
+                        }
+                    });
+        } catch (IOException e) {
+            // log this but don't rethrow it
+            LOG.warn("Error while trying to cleanup cache sub-directories", e);
+        }
     }
 
     private long getLocalFileCacheStorageSizeInKB() {
-        return walk()
+        return walkCachedFiles()
                 .map(fp -> getFileSizeInKB(fp))
                 .reduce(0L, (s1, s2) -> s1 + s2);
     }
 
-    Stream<Path> walk() {
+    Stream<Path> walkCachedFiles() {
         try {
             return Files.walk(localFileCacheDir)
                     .filter(fp -> Files.isRegularFile(fp, LinkOption.NOFOLLOW_LINKS))

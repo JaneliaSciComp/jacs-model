@@ -46,7 +46,7 @@ public class LocalFileCache<K extends FileKey> {
             FileProxy fp = localCache.get(cachedFileKey).orElse(null);
             if (localFileCacheStorage.getCurrentSizeInKB() > 0.85 * localFileCacheStorage.getCapacityInKB()) {
                 Set<Path> locallyCached = localCache.asMap().keySet().stream().map(k -> k.getLocalPath(localFileCacheStorage)).collect(Collectors.toSet());
-                localFileCacheStorage.walk()
+                localFileCacheStorage.walkCachedFiles()
                         .filter(p -> p.toFile().lastModified() < System.currentTimeMillis() - 600000L) // not touched in the last 10min
                         .filter(p -> !locallyCached.contains(p)) // only remove the files that are not in memory - the others will be handled by the cache eviction mechanism
                         .limit(20)
