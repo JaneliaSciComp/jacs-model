@@ -9,6 +9,9 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Comparator;
+import java.util.NavigableSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -32,12 +35,57 @@ public class LocalFileCacheStorage {
     };
 
     private final Path localFileCacheDir;
+    private final NavigableSet<Path> allFilesFromCache;
     private long capacityInKB;
     private AtomicLong currentSizeInKB;
 
     public LocalFileCacheStorage(Path localFileCacheDir, long capacityInKB) {
         this.localFileCacheDir = localFileCacheDir;
         this.capacityInKB = capacityInKB;
+        this.currentSizeInKB = new AtomicLong(0);
+        this.allFilesFromCache = new ConcurrentSkipListSet<Path>((p1, p2) -> {
+            try {
+                long s1;
+                long s2;
+                long t1;
+                long t2;
+                if (Files.exists(p1)) {
+                    s1 = Files.size(p1);
+                    t1 = Files.getLastModifiedTime(p1).toMillis();
+                } else {
+                    s1 = 0;
+                    t1 = 0;
+                }
+                if (Files.exists(p2)) {
+                    s2 = Files.size(p2);
+                    t2 = Files.getLastModifiedTime(p2).toMillis();
+                } else {
+                    s2 = 0;
+                    t2 = 0;
+                }
+                if (s1 == 0) {
+                    return -1;
+                } else if (s2 == 0) {
+                    return 1;
+                } else if (s1 == s2) {
+                    // older file before newer one
+                    if (t1 < t2) {
+                        return -1;
+                    } else if (t1 > t2) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                } else if (s1 < s2) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            } catch (IOException e) {
+                LOG.error("Error comparing the sizes of {} and {}", p1, p2, e);
+                throw new IllegalStateException(e);
+            }
+        });
         init();
     }
 
@@ -48,32 +96,29 @@ public class LocalFileCacheStorage {
             LOG.error("Error creating local cache directory: {}", localFileCacheDir, e);
             throw new IllegalStateException(e);
         }
-        deleteEmptySubDirs();
-        this.currentSizeInKB = new AtomicLong(getLocalFileCacheStorageSizeInKB());
+        initializeCachedFiles();
     }
 
-    private void deleteEmptySubDirs() {
+    private void initializeCachedFiles() {
         try {
-            Files.walk(localFileCacheDir).sorted(Comparator.reverseOrder())
-                    .filter(p -> Files.isDirectory(p))
+            Files.walk(localFileCacheDir)
+                    .sorted(Comparator.reverseOrder())
                     .filter(p -> !p.equals(localFileCacheDir))
-                    .map(Path::toFile)
-                    .forEach(f -> {
-                        File[] dirList = f.listFiles();
-                        if (dirList != null && dirList.length == 0) {
-                            f.delete();
+                    .forEach(p -> {
+                        if (Files.isDirectory(p)) {
+                            File f = p.toFile();
+                            File[] dirList = f.listFiles();
+                            if (dirList.length == 0) {
+                                f.delete();
+                            }
+                        } else if (Files.isRegularFile(p)) {
+                            updateCachedFiles(p, getFileSizeInKB(p));
                         }
                     });
         } catch (IOException e) {
             // log this but don't rethrow it
             LOG.warn("Error while trying to cleanup cache sub-directories", e);
         }
-    }
-
-    private long getLocalFileCacheStorageSizeInKB() {
-        return walkCachedFiles()
-                .map(fp -> getFileSizeInKB(fp))
-                .reduce(0L, (s1, s2) -> s1 + s2);
     }
 
     Stream<Path> walkCachedFiles() {
@@ -111,11 +156,19 @@ public class LocalFileCacheStorage {
         }
     }
 
-    void updateCurrentSizeInKB(long s) {
-        currentSizeInKB.accumulateAndGet(s, (v1, v2) -> {
-            long v = v1 + v2;
-            return v < 0 ? 0 : v;
-        });
+    void updateCachedFiles(Path file, long size) {
+        Function<Path, Boolean> op;
+        if (size > 0) {
+            op = p -> allFilesFromCache.add(p);
+        } else {
+            op = p -> allFilesFromCache.remove(p);
+        }
+        if (op.apply(file)) {
+            currentSizeInKB.accumulateAndGet(size, (v1, v2) -> {
+                long v = v1 + v2;
+                return v < 0 ? 0 : v;
+            });
+        }
     }
 
     public void clear() {
