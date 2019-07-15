@@ -32,7 +32,7 @@ public class TmSampleMongoDao extends AbstractDomainObjectMongoDao<TmSample> imp
     public TmSample createTmSample(String subjectKey, TmSample tmSample) {
         try {
             TmSample sample = domainDao.save(subjectKey, tmSample);
-            TreeNode folder = domainDao.getOrCreateDefaultFolder(subjectKey, DomainConstants.NAME_TM_SAMPLE_FOLDER);
+            TreeNode folder = domainDao.getOrCreateDefaultTreeNodeFolder(subjectKey, DomainConstants.NAME_TM_SAMPLE_FOLDER);
             domainDao.addChildren(subjectKey, folder, Arrays.asList(Reference.createFor(sample)));
             return sample;
         } catch (Exception e) {

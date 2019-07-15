@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.janelia.model.domain.DomainUtils.abbr;
 
@@ -488,7 +489,7 @@ public class DomainDAO {
      * @return boolean
      * @throws Exception
      */
-    public List<Reference> getContainerReferences(DomainObject domainObject) throws Exception {
+    public List<Reference> getAllNodeReferences(DomainObject domainObject) {
 
         log.trace("Checking to see whether  " + domainObject.getId() + " has any parent references");
         if (domainObject == null || domainObject.getId() == null) {
@@ -496,19 +497,15 @@ public class DomainDAO {
         }
 
         String refStr = Reference.createFor(domainObject).toString();
-        List<Reference> refList = new ArrayList<>();
 
-        // TODO: the node implementations should be decoupled from this method
-
-        for (TreeNode item : treeNodeCollection.find("{children:#}", refStr).as(TreeNode.class)) {
-            refList.add(Reference.createFor(item));
-        }
-
-        for (ColorDepthMask item : colorDepthMaskCollection.find("{children:#}", refStr).as(ColorDepthMask.class)) {
-            refList.add(Reference.createFor(item));
-        }
-
-        return refList;
+        Set<Class<? extends DomainObject>> nodeClasses = DomainUtils.getObjectClasses(Node.class);
+        return nodeClasses.stream()
+                .map(nodeClass -> DomainUtils.getCollectionName(nodeClass))
+                .map(collectionName -> getCollectionByName(collectionName))
+                .flatMap(collection -> toList(collection.find("{children:#}", refStr).as(Node.class)).stream())
+                .map(item -> Reference.createFor(item))
+                .collect(Collectors.toList())
+                ;
     }
 
     /**
@@ -518,7 +515,7 @@ public class DomainDAO {
      * @return
      * @throws Exception
      */
-    public long getContainerReferenceCount(DomainObject domainObject) throws Exception {
+    public long getTreeNodeContainerReferenceCount(DomainObject domainObject) throws Exception {
 
         log.trace("Checking to see whether  " + domainObject.getId() + " has any parent references");
         if (domainObject == null || domainObject.getId() == null) {
@@ -536,7 +533,7 @@ public class DomainDAO {
      * @return
      * @throws Exception
      */
-    public long getContainerReferenceCount(Collection<Reference> references) throws Exception {
+    public long getTreeNodeContainerReferenceCount(Collection<Reference> references) throws Exception {
 
         List<String> refStrings = new ArrayList<>();
         for (Reference reference : references) {
@@ -546,7 +543,7 @@ public class DomainDAO {
         return treeNodeCollection.count("{children:{$in:#}}", refStrings);
     }
 
-    public <T extends DomainObject> List<TreeNode> getContainers(String subjectKey, Collection<Reference> references) throws Exception {
+    public List<TreeNode> getTreeNodeContainers(String subjectKey, Collection<Reference> references) throws Exception {
 
         long start = System.currentTimeMillis();
 
@@ -1046,7 +1043,6 @@ public class DomainDAO {
     }
 
     public DataSet createDataSet(String subjectKey, DataSet dataSet) throws Exception {
-
         DataSet saved = save(subjectKey, dataSet);
 
         String filterName = dataSet.getName();
@@ -1055,7 +1051,7 @@ public class DomainDAO {
 
         // Now add it to the owner's Data Sets folder
 
-        TreeNode sharedDataFolder = getOrCreateDefaultFolder(subjectKey, DomainConstants.NAME_DATA_SETS);
+        TreeNode sharedDataFolder = getOrCreateDefaultTreeNodeFolder(subjectKey, DomainConstants.NAME_DATA_SETS);
         addChildren(subjectKey, sharedDataFolder, Arrays.asList(Reference.createFor(filter)));
 
         return saved;
@@ -1708,7 +1704,7 @@ public class DomainDAO {
         }
     }
 
-    public TreeNode getOrCreateDefaultFolder(String subjectKey, String folderName) throws Exception {
+    public TreeNode getOrCreateDefaultTreeNodeFolder(String subjectKey, String folderName) throws Exception {
         Workspace defaultWorkspace = getDefaultWorkspace(subjectKey);
         if (defaultWorkspace == null) {
             throw new IllegalStateException("Subject does not have a default workspace: " + subjectKey);
@@ -2122,7 +2118,7 @@ public class DomainDAO {
 
                                 // Now add it to their Saved Data folder
 
-                                TreeNode sharedDataFolder = getOrCreateDefaultFolder(granteeKey, DomainConstants.NAME_SHARED_DATA);
+                                TreeNode sharedDataFolder = getOrCreateDefaultTreeNodeFolder(granteeKey, DomainConstants.NAME_SHARED_DATA);
                                 addChildren(granteeKey, sharedDataFolder, Arrays.asList(Reference.createFor(filter)));
                             }
                         }
@@ -2163,7 +2159,7 @@ public class DomainDAO {
 
                 for (String grantee : grantees) {
                     if (!grantee.equals(subjectKey)) {
-                        TreeNode sharedDataFolder = getOrCreateDefaultFolder(grantee, DomainConstants.NAME_SHARED_DATA);
+                        TreeNode sharedDataFolder = getOrCreateDefaultTreeNodeFolder(grantee, DomainConstants.NAME_SHARED_DATA);
                         if (grant) {
                             addChildren(grantee, sharedDataFolder, objectRefs);
                         } else {

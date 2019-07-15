@@ -13,12 +13,12 @@ import java.util.List;
 /**
  * {@link Workspace} Mongo DAO.
  */
-public class WorkspaceNodeMongoDao extends AbstractNodeMongoDao<Workspace> implements WorkspaceNodeDao {
+public class WorkspaceTreeNodeMongoDao extends AbstractTreeNodeMongoDao<Workspace> implements WorkspaceNodeDao {
 
     @Inject
-    WorkspaceNodeMongoDao(MongoDatabase mongoDatabase,
-                          DomainPermissionsMongoHelper permissionsHelper,
-                          DomainUpdateMongoHelper updateHelper) {
+    WorkspaceTreeNodeMongoDao(MongoDatabase mongoDatabase,
+                              DomainPermissionsMongoHelper permissionsHelper,
+                              DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, permissionsHelper, updateHelper);
     }
 

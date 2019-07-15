@@ -67,7 +67,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     public TmWorkspace createTmWorkspace(String subjectKey, TmWorkspace tmWorkspace) {
         try {
             TmWorkspace workspace = domainDao.save(subjectKey, tmWorkspace);
-            TreeNode folder = domainDao.getOrCreateDefaultFolder(subjectKey, DomainConstants.NAME_TM_WORKSPACE_FOLDER);
+            TreeNode folder = domainDao.getOrCreateDefaultTreeNodeFolder(subjectKey, DomainConstants.NAME_TM_WORKSPACE_FOLDER);
             domainDao.addChildren(subjectKey, folder, Arrays.asList(Reference.createFor(workspace)));
             return workspace;
         } catch (Exception e) {
