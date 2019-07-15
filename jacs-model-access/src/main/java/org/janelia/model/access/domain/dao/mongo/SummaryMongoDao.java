@@ -71,7 +71,6 @@ public class SummaryMongoDao extends AbstractMongoDao implements SummaryDao {
         List<Bson> diskUsagePipeline = ImmutableList.<Bson>builder()
                 .add(Aggregates.match(Filters.eq("ownerKey", subjectKey)))
                 .add(Aggregates.group(null, Accumulators.sum("diskSpaceUsage", "$diskSpaceUsage")))
-                .add(Aggregates.project(Projections.excludeId()))
                 .build();
 
         List<Document> diskUsage = MongoDaoHelper.findPipeline(
