@@ -1,5 +1,7 @@
 package org.janelia.model.domain.gui.colordepth;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.model.domain.AbstractDomainObject;
@@ -11,11 +13,6 @@ import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.support.SearchType;
-import org.janelia.model.domain.workspace.Node;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A color depth mask is an image file which is used to search against the color depth image database.
@@ -25,7 +22,7 @@ import java.util.Map;
  */
 @MongoMapped(collectionName="colorDepthMask",label="Color Depth Mask")
 @SearchType(key="colorDepthMask",label="Color Depth Mask")
-public class ColorDepthMask extends AbstractDomainObject implements Node, HasFilepath, HasFiles {
+public class ColorDepthMask extends AbstractDomainObject implements HasFilepath, HasFiles {
 
     @SearchTraversal({ColorDepthMask.class})
     private Reference sourceSampleRef;
@@ -38,8 +35,6 @@ public class ColorDepthMask extends AbstractDomainObject implements Node, HasFil
 
     @SearchAttribute(key="threshold_i",label="Threshold for Mask")
     private Integer maskThreshold;
-
-    private List<Reference> children = new ArrayList<>();
 
     public Reference getSample() {
         return sourceSampleRef;
@@ -73,17 +68,6 @@ public class ColorDepthMask extends AbstractDomainObject implements Node, HasFil
 
     public void setMaskThreshold(Integer maskThreshold) {
         this.maskThreshold = maskThreshold;
-    }
-
-    @Override
-    public List<Reference> getChildren() {
-        return children;
-    }
-
-    @Override
-    public void setChildren(List<Reference> children) {
-        if (children==null) throw new IllegalArgumentException("Property cannot be null");
-        this.children = children;
     }
 
     @JsonIgnore
