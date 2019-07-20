@@ -1,15 +1,13 @@
-package org.janelia.model.domain.gui.colordepth;
-
-import org.janelia.model.domain.Reference;
+package org.janelia.model.domain.gui.color_depth;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.janelia.model.domain.Reference;
+
 /**
- * @deprecated use org.janelia.model.domain.gui.color_depth.ColorDepthParameters
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@Deprecated
 public class ColorDepthParameters {
 
     private List<String> dataSets = new ArrayList<>();

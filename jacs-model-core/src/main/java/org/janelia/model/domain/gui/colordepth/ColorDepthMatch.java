@@ -17,8 +17,10 @@ import java.util.regex.Pattern;
  * A color depth search is batched so that searches use the Spark cluster efficiently. Therefore, each
  * search runs against several masks in the same alignment space.
  *
+ * @deprecated use org.janelia.model.domain.gui.color_depth.ColorDepthMatch
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Deprecated
 public class ColorDepthMatch implements HasFilepath, HasFiles {
 
     private Reference maskRef;

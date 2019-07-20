@@ -19,7 +19,10 @@ import java.util.Map;
 
 /**
  * A data set definition which controls how Samples are processed. 
- * 
+ *
+ * The color depth counts in this class are for legacy clients.
+ * See the corresponding ColorDepthLibrary for the current implementation.
+ *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MongoMapped(collectionName="dataSet",label="Data Set")
@@ -52,6 +55,10 @@ public class DataSet extends AbstractDomainObject implements Filtering {
 
     private CompressionStrategy compressionStrategy;
 
+    /**
+     * @deprecated Moved to ColorDepthLibrary
+     */
+    @Deprecated
     private Map<String,Integer> colorDepthCounts = new HashMap<>();
 
     @JsonIgnore
@@ -194,10 +201,18 @@ public class DataSet extends AbstractDomainObject implements Filtering {
         compressionStrategy.setSeparation(compressionType);
     }
 
+    /**
+     * @deprecated Moved to ColorDepthLibrary
+     */
+    @Deprecated
     public Map<String, Integer> getColorDepthCounts() {
         return colorDepthCounts;
     }
 
+    /**
+     * @deprecated Moved to ColorDepthLibrary
+     */
+    @Deprecated
     public void setColorDepthCounts(Map<String, Integer> colorDepthCounts) {
         if (colorDepthCounts==null) throw new IllegalArgumentException("Property cannot be null");
         this.colorDepthCounts = colorDepthCounts;

@@ -1,4 +1,4 @@
-package org.janelia.model.domain.gui.colordepth;
+package org.janelia.model.domain.gui.color_depth;
 
 import java.util.Map;
 
@@ -18,10 +18,8 @@ import org.janelia.model.domain.support.SearchType;
  * A color depth mask is an image file which is used to search against the color depth image database.
  * It is also a node which can be used to organize color depth search matches
  *
- * @deprecated use org.janelia.model.domain.gui.color_depth.ColorDepthMask
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@Deprecated
 @MongoMapped(collectionName="colorDepthMask",label="Color Depth Mask")
 @SearchType(key="colorDepthMask",label="Color Depth Mask")
 public class ColorDepthMask extends AbstractDomainObject implements HasFilepath, HasFiles {

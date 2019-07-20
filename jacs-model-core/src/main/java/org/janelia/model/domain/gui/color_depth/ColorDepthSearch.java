@@ -1,4 +1,7 @@
-package org.janelia.model.domain.gui.colordepth;
+package org.janelia.model.domain.gui.color_depth;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
@@ -8,17 +11,12 @@ import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchType;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * A color depth search is batched so that searches use the Spark cluster efficiently. Therefore, each
  * search runs against several masks in the same alignment space.
  *
- * @deprecated use org.janelia.model.domain.gui.color_depth.ColorDepthSearch
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@Deprecated
 @MongoMapped(collectionName="colorDepthSearch",label="Color Depth Search")
 @SearchType(key="colorDepthSearch",label="Color Depth Search")
 public class ColorDepthSearch extends AbstractDomainObject implements IsParent {

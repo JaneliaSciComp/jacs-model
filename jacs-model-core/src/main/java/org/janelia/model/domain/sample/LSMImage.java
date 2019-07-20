@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @SearchType(key="lsmImage",label="LSM Image")
-public class LSMImage extends Image implements HasAnatomicalArea {
+public class LSMImage extends Image3d implements HasAnatomicalArea {
 
     @SearchTraversal({})
     private Reference sampleRef;
@@ -39,8 +39,6 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     @SearchAttribute(key="completion_dt",label="Completion Date")
     private Date completionDate;
-    
-    // SAGE Terms
 
     @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     @SAGEAttribute(cvName="image_query", termName="create_date")
@@ -97,11 +95,6 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="capture_dt",label="Capture Date")
     private Date captureDate;
 
-    @ReprocessOnChange
-    @SAGEAttribute(cvName="light_imagery", termName="channel_spec")
-    @SearchAttribute(key="chanspec_txt",label="Channel Specification",facet="chanspec_s")
-    private String chanSpec;
-
     @SAGEAttribute(cvName="light_imagery", termName="lsm_detection_channel_1_detector_gain")
     @SearchAttribute(key="dc1_gain_d",label="Detection Channel #1 Detector Gain")
     private String detectionChannel1DetectorGain;
@@ -117,10 +110,6 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SAGEAttribute(cvName="light_imagery", termName="driver")
     @SearchAttribute(key="driver_txt",label="Driver")
     private String driver;
-
-    @SAGEAttribute(cvName="light_imagery", termName="file_size")
-    @SearchAttribute(key="file_size_l",label="File Size")
-    private Long fileSize;
     
     @SAGEAttribute(cvName="fly", termName="effector")
     @SearchAttribute(key="effector_txt",label="Effector")
@@ -526,14 +515,6 @@ public class LSMImage extends Image implements HasAnatomicalArea {
         this.captureDate = captureDate;
     }
 
-    public String getChanSpec() {
-        return chanSpec;
-    }
-
-    public void setChanSpec(String chanSpec) {
-        this.chanSpec = chanSpec;
-    }
-
     public String getDetectionChannel1DetectorGain() {
         return detectionChannel1DetectorGain;
     }
@@ -565,14 +546,6 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     public void setDriver(String driver) {
         this.driver = driver;
     }
-
-    public Long getFileSize() {
-		return fileSize;
-	}
-
-	public void setFileSize(Long fileSize) {
-		this.fileSize = fileSize;
-	}
 
 	public String getEffector() {
         return effector;
