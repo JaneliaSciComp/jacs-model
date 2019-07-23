@@ -31,10 +31,12 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     private static class TiffOctreeImageVisitor extends SimpleFileVisitor<Path> {
         private final List<Path> tileImages = new ArrayList<>();
+        private final Path startPath;
         private final int detailLevel;
         private int currentLevel;
 
-        TiffOctreeImageVisitor(int detailLevel) {
+        TiffOctreeImageVisitor(Path startPath, int detailLevel) {
+            this.startPath = startPath;
             this.detailLevel = detailLevel;
             this.currentLevel = 0;
         }
@@ -51,14 +53,15 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         }
 
         @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-            ++currentLevel;
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            currentLevel = startPath.relativize(dir).getNameCount() - 1;
             if (currentLevel > detailLevel) {
                 return FileVisitResult.TERMINATE;
             } else {
                 return FileVisitResult.CONTINUE;
             }
         }
+
     }
 
     private final Path volumeBasePath;
@@ -85,7 +88,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Override
     public List<URI> listImageUris(int level) {
-        TiffOctreeImageVisitor imageVisitor = new TiffOctreeImageVisitor(level);
+        TiffOctreeImageVisitor imageVisitor = new TiffOctreeImageVisitor(volumeBasePath, level);
         try {
             Files.walkFileTree(volumeBasePath, imageVisitor);
             return imageVisitor.tileImages.stream().map(Path::toUri).collect(Collectors.toList());
