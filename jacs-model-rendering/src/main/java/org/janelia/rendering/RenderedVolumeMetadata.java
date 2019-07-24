@@ -7,6 +7,8 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class RenderedVolumeMetadata {
     private String connectionURI;
     private String dataStorageURI;
@@ -175,7 +177,15 @@ public class RenderedVolumeMetadata {
                     + 4 * ds[2];
             pathComps.add(String.valueOf(octreeCoord));
         }
-        return Optional.of(pathComps.stream().reduce("", (c1, c2) -> c1 + "/" + c2));
+        return Optional.of(pathComps.stream().reduce(
+                "",
+                (c1, c2) -> {
+                    if (StringUtils.isBlank(c1)) {
+                        return c2;
+                    } else {
+                        return c1 + "/" + c2;
+                    }
+                }));
     }
 }
 

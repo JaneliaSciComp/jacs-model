@@ -3,6 +3,7 @@ package org.janelia.rendering;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,6 +11,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -43,7 +45,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-            if (currentLevel == detailLevel) {
+            if (currentLevel <= detailLevel) {
                 String fn = file.getFileName().toString().toLowerCase();
                 if (fn.endsWith(".tif") || fn.endsWith(".tiff")) {
                     tileImages.add(file);
@@ -54,7 +56,11 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
         @Override
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-            currentLevel = startPath.relativize(dir).getNameCount() - 1;
+            if (startPath.equals(dir)) {
+                currentLevel = 0;
+            } else {
+                currentLevel = startPath.relativize(dir).getNameCount();
+            }
             if (currentLevel > detailLevel) {
                 return FileVisitResult.TERMINATE;
             } else {
@@ -90,7 +96,7 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     public List<URI> listImageUris(int level) {
         TiffOctreeImageVisitor imageVisitor = new TiffOctreeImageVisitor(volumeBasePath, level);
         try {
-            Files.walkFileTree(volumeBasePath, imageVisitor);
+            Files.walkFileTree(volumeBasePath, EnumSet.noneOf(FileVisitOption.class), level + 1, imageVisitor);
             return imageVisitor.tileImages.stream().map(Path::toUri).collect(Collectors.toList());
         } catch (IOException e) {
             throw new IllegalStateException(e);
