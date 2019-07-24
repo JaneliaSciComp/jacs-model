@@ -73,7 +73,12 @@ public class DataSet extends AbstractDomainObject implements Filtering {
         this.sampleNamePattern = sampleNamePattern;
     }
 
+    @JsonIgnore
     public boolean isSageSync() {
+        return sageSync;
+    }
+
+    public boolean getSageSync() {
         return sageSync;
     }
 
