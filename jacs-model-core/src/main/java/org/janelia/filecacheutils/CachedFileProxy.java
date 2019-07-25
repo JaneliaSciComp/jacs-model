@@ -1,5 +1,6 @@
 package org.janelia.filecacheutils;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.commons.io.output.NullOutputStream;
 import org.slf4j.Logger;
@@ -229,12 +230,16 @@ public class CachedFileProxy implements FileProxy {
     public boolean deleteProxy() {
         long sizeInBytes = getCurrentSizeInBytes();
         try {
-            Path localCanonicalPath = localFilePath.toRealPath();
-            Path cacheDirCanonicalPath = localFileCacheStorage.getLocalFileCacheDir().toRealPath();
-            if (cacheDirCanonicalPath == null || !localCanonicalPath.toString().startsWith(cacheDirCanonicalPath.toString())) {
-                LOG.info("Local file name {}({}) does not appeared to be located inside the cache dir {}({})",
-                        localFilePath, localCanonicalPath, localFileCacheStorage.getLocalFileCacheDir(), cacheDirCanonicalPath);
-                return false;
+            if (Files.exists(localFilePath)) {
+                // This can happen if user deleted the cache directory manually
+                // and I don't think this should be an error
+                Path localCanonicalPath = localFilePath.toRealPath();
+                Path cacheDirCanonicalPath = localFileCacheStorage.getLocalFileCacheDir().toRealPath();
+                if (cacheDirCanonicalPath == null || !localCanonicalPath.toString().startsWith(cacheDirCanonicalPath.toString())) {
+                    LOG.info("Local file name {}({}) does not appeared to be located inside the cache dir {}({})",
+                            localFilePath, localCanonicalPath, localFileCacheStorage.getLocalFileCacheDir(), cacheDirCanonicalPath);
+                    return false;
+                }
             }
         } catch (IOException e) {
             LOG.error("Error getting canonical path(s) for {} and/or {}", localFilePath, localFileCacheStorage.getLocalFileCacheDir(), e);
