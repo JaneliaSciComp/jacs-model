@@ -1,4 +1,4 @@
-package org.janelia.model.domain.gui.color_depth;
+package org.janelia.model.domain.gui.cdmip;
 
 import java.io.File;
 import java.text.ParseException;
@@ -9,6 +9,8 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.sample.Sample;
 
 /**
+ * Parse a standardized color depth MIP filename to extract various metadata.
+ *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class ColorDepthFilepathParser {
@@ -16,7 +18,6 @@ public class ColorDepthFilepathParser {
     private File file;
     private Reference sampleRef;
     private String alignmentSpace;
-    private String libraryIdentifier;
     private String sampleName;
     private String objective;
     private String anatomicalArea;
@@ -24,12 +25,6 @@ public class ColorDepthFilepathParser {
 
     private ColorDepthFilepathParser(String filepath) throws ParseException {
         this.file = new File(filepath);
-
-        // e.g. JFRC2013_63x/flylight_gen1_mcfo_case_1/
-        // GMR_SS00313-20170324_26_C5-40x-Brain-JFRC2013_63x-2391787101235445858-CH1_CDM.png
-
-        this.libraryIdentifier = file.getParentFile().getName();
-        this.alignmentSpace = file.getParentFile().getParentFile().getName();
 
         Pattern p = Pattern.compile("^(?<sampleName>.*?)-(?<objective>\\d+x)-(?<anatomicalArea>\\w+?)-" +
                 "(?<alignmentSpace>\\w+?)-(?<sampleId>\\d+)-CH(?<channelNum>\\d)_CDM\\.\\w+$");
@@ -41,9 +36,7 @@ public class ColorDepthFilepathParser {
             this.anatomicalArea = m.group("anatomicalArea");
             sampleRef = Reference.createFor(Sample.class, new Long(m.group("sampleId")));
             channelNumber = new Integer(m.group("channelNum"));
-            if (!m.group("alignmentSpace").equals(alignmentSpace)) {
-                throw new IllegalStateException("Alignment space does not match path");
-            }
+            alignmentSpace = m.group("alignmentSpace");
         }
         else {
             throw new ParseException("Could not parse path "+filepath, 0);
@@ -64,10 +57,6 @@ public class ColorDepthFilepathParser {
 
     public String getAlignmentSpace() {
         return alignmentSpace;
-    }
-
-    public String getLibraryIdentifier() {
-        return libraryIdentifier;
     }
 
     public String getSampleName() {

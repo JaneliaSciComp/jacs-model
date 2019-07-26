@@ -15,9 +15,11 @@ import org.janelia.model.domain.enums.OrderStatus;
 import org.janelia.model.domain.enums.PipelineStatus;
 import org.janelia.model.domain.gui.alignment_board.AlignmentBoard;
 import org.janelia.model.domain.gui.alignment_board.AlignmentContext;
-import org.janelia.model.domain.gui.colordepth.ColorDepthMask;
-import org.janelia.model.domain.gui.colordepth.ColorDepthResult;
-import org.janelia.model.domain.gui.colordepth.ColorDepthSearch;
+import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
+import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
+import org.janelia.model.domain.gui.cdmip.ColorDepthSearch;
 import org.janelia.model.domain.gui.search.Filter;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.ontology.*;
@@ -39,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.janelia.model.domain.DomainUtils.abbr;
 
@@ -80,6 +83,8 @@ public class DomainDAO {
     protected MongoCollection colorDepthMaskCollection;
     protected MongoCollection colorDepthSearchCollection;
     protected MongoCollection colorDepthResultCollection;
+    protected MongoCollection colorDepthImageCollection;
+    protected MongoCollection colorDepthLibraryCollection;
 
     public DomainDAO(String serverUrl, String databaseName) {
         this(serverUrl, databaseName, null, null);
@@ -142,7 +147,8 @@ public class DomainDAO {
         this.colorDepthMaskCollection = getCollectionByClass(ColorDepthMask.class);
         this.colorDepthSearchCollection = getCollectionByClass(ColorDepthSearch.class);
         this.colorDepthResultCollection = getCollectionByClass(ColorDepthResult.class);
-
+        this.colorDepthImageCollection = getCollectionByClass(ColorDepthImage.class);
+        this.colorDepthLibraryCollection = getCollectionByClass(ColorDepthLibrary.class);
     }
 
     public com.mongodb.client.MongoCollection<Document> getNativeCollection(String collectionName) {
@@ -504,10 +510,6 @@ public class DomainDAO {
             refList.add(Reference.createFor(item));
         }
 
-        for (ColorDepthMask item : colorDepthMaskCollection.find("{children:#}", refStr).as(ColorDepthMask.class)) {
-            refList.add(Reference.createFor(item));
-        }
-
         return refList;
     }
 
@@ -520,13 +522,15 @@ public class DomainDAO {
      */
     public long getContainerReferenceCount(DomainObject domainObject) throws Exception {
 
-        log.trace("Checking to see whether  " + domainObject.getId() + " has any parent references");
         if (domainObject == null || domainObject.getId() == null) {
             throw new IllegalArgumentException("DomainObject and its id must be not-null");
         }
 
+
         String refStr = Reference.createFor(domainObject).toString();
-        return treeNodeCollection.count("{children:#}", refStr);
+        long count = treeNodeCollection.count("{children:#}", refStr);
+        log.trace("Found {} parent references for {}", count, domainObject.getId());
+        return count;
     }
 
     /**
@@ -938,7 +942,9 @@ public class DomainDAO {
         log.debug("getOntologies({})", subjectKey);
         Set<String> subjects = getReaderSet(subjectKey);
         List<Ontology> ontologies = toList(ontologyCollection.find("{readers:{$in:#}}", subjects).as(Ontology.class));
-        Collections.sort(ontologies, new DomainObjectComparator(subjectKey));
+        if (subjectKey != null) {
+            ontologies.sort(new DomainObjectComparator(subjectKey));
+        }
         return ontologies;
     }
 
@@ -1005,7 +1011,7 @@ public class DomainDAO {
     }
 
     public List<DataSet> getDataSets(String subjectKey) {
-        log.debug("getDataSets({})", subjectKey);
+        log.debug("getLibraries({})", subjectKey);
         Set<String> subjects = getReaderSet(subjectKey);
         List<DataSet> dataSets;
         if (subjects == null) {
@@ -1013,7 +1019,9 @@ public class DomainDAO {
         } else {
             dataSets = toList(dataSetCollection.find("{readers:{$in:#}}", subjects).as(DataSet.class));
         }
-        Collections.sort(dataSets, new DomainObjectComparator(subjectKey));
+        if (subjectKey != null) {
+            dataSets.sort(new DomainObjectComparator(subjectKey));
+        }
         return dataSets;
     }
 
@@ -1038,11 +1046,65 @@ public class DomainDAO {
         }
     }
 
-    public List<DataSet> getDataSetsWithColorDepthImages(String subjectKey, String alignmentSpace) {
-        // subjectKey is ignored, because all users can known about the existence of all data sets
-        List<DataSet> dataSets = toList(dataSetCollection.find("{'colorDepthCounts." + alignmentSpace + "':{$exists:1}}").as(DataSet.class));
-        Collections.sort(dataSets, new DomainObjectComparator(subjectKey));
-        return dataSets;
+    public ColorDepthLibrary getColorDepthLibraryByIdentifier(String subjectKey, String libraryIdentifier) {
+        log.debug("getColorDepthLibraryByIdentifier({}, libraryIdentifier={})", subjectKey, libraryIdentifier);
+
+        Set<String> subjects = getReaderSet(subjectKey);
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            return colorDepthLibraryCollection.findOne("{identifier:#}", libraryIdentifier).as(ColorDepthLibrary.class);
+        } else {
+            return colorDepthLibraryCollection.findOne("{readers:{$in:#},identifier:#}", subjects, libraryIdentifier).as(ColorDepthLibrary.class);
+        }
+    }
+
+    public List<ColorDepthImage> getColorDepthImages(String subjectKey, String libraryIdentifier, String alignmentSpace) {
+        log.debug("getColorDepthImagesByIdentifier({}, libraryIdentifier={}, alignmentSpace={})", subjectKey, libraryIdentifier, alignmentSpace);
+
+        long start = System.currentTimeMillis();
+
+        Set<String> subjects = getReaderSet(subjectKey);
+
+        MongoCursor<ColorDepthImage> cursor;
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            cursor = colorDepthImageCollection.find("{libraries:#,alignmentSpace:#}", libraryIdentifier, alignmentSpace).as(ColorDepthImage.class);
+        } else {
+            cursor = colorDepthImageCollection.find("{libraries:#,alignmentSpace:#,readers:{$in:#}}", libraryIdentifier, alignmentSpace, subjects).as(ColorDepthImage.class);
+        }
+
+        List<ColorDepthImage> list = toList(cursor);
+        log.trace("Getting {} ColorDepthImage objects took {} ms", list.size(), (System.currentTimeMillis() - start));
+        return list;
+    }
+
+    public List<String> getColorDepthPaths(String subjectKey, String libraryIdentifier, String alignmentSpace) {
+        log.debug("getColorDepthPaths({}, libraryIdentifier={}, alignmentSpace={})", subjectKey, libraryIdentifier, alignmentSpace);
+        return getColorDepthImages(subjectKey, libraryIdentifier, alignmentSpace).stream().map(c -> c.getFilepath()).collect(Collectors.toList());
+    }
+
+    public ColorDepthImage getColorDepthImageByPath(String subjectKey, String filepath) {
+        List<ColorDepthImage> images = getDomainObjectsWithProperty(subjectKey, ColorDepthImage.class, "filepath", filepath);
+        if (images.isEmpty()) {
+            return null;
+        }
+        else if (images.size()>1) {
+            log.warn("More than one image with filepath {}", filepath);
+        }
+        return images.iterator().next();
+    }
+
+    public List<ColorDepthLibrary> getLibrariesWithColorDepthImages(String subjectKey, String alignmentSpace) {
+
+        List<ColorDepthLibrary> libraries;
+        Set<String> subjects = getReaderSet(subjectKey);
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            libraries = toList(colorDepthLibraryCollection.find("{'colorDepthCounts." + alignmentSpace + "':{$exists:1}}").as(ColorDepthLibrary.class));
+        } else {
+            libraries = toList(colorDepthLibraryCollection.find("{'colorDepthCounts." + alignmentSpace + "':{$exists:1}, readers:{$in:#}}", subjects).as(ColorDepthLibrary.class));
+        }
+        if (subjectKey != null) {
+            libraries.sort(new DomainObjectComparator(subjectKey));
+        }
+        return libraries;
     }
 
     public DataSet createDataSet(String subjectKey, DataSet dataSet) throws Exception {
@@ -2058,7 +2120,17 @@ public class DomainDAO {
                     WriteResult wr2 = colorDepthResultCollection.update("{_id:{$in:#}," + updateQueryClause + "}", search.getResults(), updateQueryParam).multi().with(withClause, readers, writers);
                     log.trace("Updated permissions on {} results", wr2.getN());
                 }
-            } else if ("sample".equals(collectionName)) {
+            }
+            if (ColorDepthLibrary.class.isAssignableFrom(clazz)) {
+                for (ColorDepthLibrary library : getDomainObjectsAs(objectRefs, ColorDepthLibrary.class)) {
+
+                    log.trace("Changing permissions on all images associated with {}", library);
+
+                    WriteResult wr1 = colorDepthImageCollection.update("{libraries:#," + updateQueryClause + "}", library.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
+                    log.trace("Updated permissions on {} masks", wr1.getN());
+                }
+            }
+            else if ("sample".equals(collectionName)) {
 
                 log.trace("Changing permissions on all fragments and lsms associated with samples: {}", logIds);
 
@@ -2070,7 +2142,8 @@ public class DomainDAO {
                 WriteResult wr2 = imageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} lsms", wr2.getN());
 
-            } else if ("fragment".equals(collectionName)) {
+            }
+            else if ("fragment".equals(collectionName)) {
 
                 Set<Long> sampleIds = new HashSet<>();
                 for (NeuronFragment fragment : getDomainObjectsAs(subjectKey, objectRefs, NeuronFragment.class)) {
@@ -2079,7 +2152,8 @@ public class DomainDAO {
 
                 log.trace("Changing permissions on {} samples associated with fragments: {}", sampleIds.size(), logIds);
                 changePermissions(subjectKey, Sample.class.getName(), sampleIds, readers, writers, grant, allowWriters, forceChildUpdates, false);
-            } else if ("dataSet".equals(collectionName)) {
+            }
+            else if ("dataSet".equals(collectionName)) {
                 log.trace("Changing permissions on all samples and LSMs of the data sets: {}", logIds);
                 for (Long id : ids) {
 
@@ -2105,8 +2179,16 @@ public class DomainDAO {
                     WriteResult wr3 = imageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
                     log.trace("Updated permissions on {} lsms", wr3.getN());
 
-                    // JW-25275: Automatically create data set filters when sharing data sets
+                    WriteResult wr4 = colorDepthLibraryCollection.update("{identifier:#," + updateQueryClause + "}", dataSet.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
 
+                    // Recurse to change corresponding color depth library, if any
+                    ColorDepthLibrary colorDepthLibrary = getColorDepthLibraryByIdentifier(dataSet.getOwnerKey(), dataSet.getIdentifier());
+                    if (colorDepthLibrary != null) {
+                        changePermissions(subjectKey, ColorDepthLibrary.class.getName(), Collections.singletonList(colorDepthLibrary.getId()),
+                                readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
+                    }
+
+                    // JW-25275: Automatically create data set filters when sharing data sets
                     if (grant) {
                         for (String granteeKey : readers) {
 
@@ -2128,7 +2210,8 @@ public class DomainDAO {
                         }
                     }
                 }
-            } else if ("tmWorkspace".equals(collectionName)) {
+            }
+            else if ("tmWorkspace".equals(collectionName)) {
 
                 log.trace("Changing permissions on the TmSamples associated with the TmWorkspaces: {}", logIds);
 
@@ -2149,7 +2232,7 @@ public class DomainDAO {
 
         if (createSharedDataLinks) {
             // Ensure shared items are in the grantee's Shared Data folder
-            Set<String> grantees = new HashSet<String>();
+            Set<String> grantees = new HashSet<>();
             grantees.addAll(readers);
             grantees.addAll(writers);
 
@@ -2284,7 +2367,9 @@ public class DomainDAO {
         } else {
             releases = toList(releaseCollection.find("{readers:{$in:#}}", subjects).as(LineRelease.class));
         }
-        Collections.sort(releases, new DomainObjectComparator(subjectKey));
+        if (subjectKey != null) {
+            releases.sort(new DomainObjectComparator(subjectKey));
+        }
         return releases;
     }
 
@@ -2296,7 +2381,9 @@ public class DomainDAO {
         } else {
             releases = toList(releaseCollection.find("{name: #}", subjectKey).as(LineRelease.class));
         }
-        Collections.sort(releases, new DomainObjectComparator(subjectKey));
+        if (subjectKey != null) {
+            releases.sort(new DomainObjectComparator(subjectKey));
+        }
         return releases;
     }
 
@@ -2346,12 +2433,6 @@ public class DomainDAO {
         if (wr.getN() != 1) {
             throw new Exception("Could not update disk space usage for DataSet " + dataSetIdentifier);
         }
-    }
-
-    public void addColorDepthSearchMask(String subjectKey, Long searchId, ColorDepthMask mask) {
-        Set<String> subjects = getWriterSet(subjectKey);
-        Reference ref = Reference.createFor(mask);
-        colorDepthSearchCollection.update("{_id:#, writers:{$in:#}}", searchId, subjects).with("{$push: { masks: # } }", ref);
     }
 
     public void addColorDepthSearchResult(String subjectKey, Long searchId, ColorDepthResult result) {

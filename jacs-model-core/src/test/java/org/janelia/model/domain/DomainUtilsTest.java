@@ -1,5 +1,12 @@
 package org.janelia.model.domain;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
@@ -11,6 +18,8 @@ import org.janelia.model.domain.interfaces.HasFileGroups;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.sample.FileGroup;
 import org.janelia.model.domain.sample.Image;
+import org.janelia.model.domain.sample.Image2d;
+import org.janelia.model.domain.sample.Image3d;
 import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.sample.LSMSummaryResult;
 import org.janelia.model.domain.sample.NeuronFragment;
@@ -23,12 +32,6 @@ import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Tests for the DomainUtils utility class.
@@ -62,7 +65,7 @@ public class DomainUtilsTest {
 
     @Test
     public void testGet2dTypeNames() {
-        
+
         FileGroup group1 = new FileGroup("group1");
         group1.setFilepath("/group1");
         group1.getFiles().put(FileType.AllMip, "allmip.png");
@@ -238,13 +241,15 @@ public class DomainUtilsTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testGetObjectClasses() throws Exception {
-        Assert.assertEquals(Sets.newHashSet(Image.class, LSMImage.class), Sets.newHashSet(DomainUtils.getObjectClasses(Image.class)));
+        HashSet<Class<? extends DomainObject>> classes = Sets.newHashSet(DomainUtils.getObjectClasses(Image.class));
+        Assert.assertTrue(classes.contains(Image.class));
+        Assert.assertTrue(classes.contains(Image2d.class));
+        Assert.assertTrue(classes.contains(Image3d.class));
+        Assert.assertTrue(classes.contains(LSMImage.class));
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testGetAllObjectClasses() throws Exception {
         Set<Class<? extends DomainObject>> objectClasses = DomainUtils.getObjectClasses(DomainObject.class);
         Assert.assertTrue(objectClasses.contains(TreeNode.class));
@@ -254,9 +259,12 @@ public class DomainUtilsTest {
     }
     
     @Test
-    @SuppressWarnings("unchecked")
     public void testGetObjectClasses2() throws Exception {
-        Assert.assertEquals(Sets.newHashSet(Image.class, LSMImage.class), Sets.newHashSet(DomainUtils.getObjectClasses("image")));
+        HashSet<Class<? extends DomainObject>> classes = Sets.newHashSet(DomainUtils.getObjectClasses("image"));
+        Assert.assertTrue(classes.contains(Image.class));
+        Assert.assertTrue(classes.contains(Image2d.class));
+        Assert.assertTrue(classes.contains(Image3d.class));
+        Assert.assertTrue(classes.contains(LSMImage.class));
     }
 
     @Test
@@ -307,7 +315,10 @@ public class DomainUtilsTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testGetSubClasses() throws Exception {
-        Assert.assertEquals(Sets.newHashSet(LSMImage.class), DomainUtils.getSubClasses(Image.class));
+        Set<Class<? extends DomainObject>> subClasses = DomainUtils.getSubClasses(Image.class);
+        Assert.assertTrue(subClasses.contains(Image2d.class));
+        Assert.assertTrue(subClasses.contains(Image3d.class));
+        Assert.assertTrue(subClasses.contains(LSMImage.class));
     }
 
     @Test

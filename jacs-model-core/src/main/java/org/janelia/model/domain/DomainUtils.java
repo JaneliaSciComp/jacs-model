@@ -64,16 +64,26 @@ public class DomainUtils {
 
     private static final String DOMAIN_OBJECT_PACKAGE_NAME = "org.janelia.model.domain";
 
+    /** Bi-directional mapping of collection names to object classes */
     private static final BiMap<String, Class<? extends DomainObject>> typeClasses = HashBiMap.create();
+
+    /** Mapping of root classes to a list of descendants which are stored in the same collection */
     private static final Multimap<Class<? extends DomainObject>, Class<? extends DomainObject>> subClasses = ArrayListMultimap.create();
+
+    /** List of classes which are full-text indexed for search */
     private static final List<Class<? extends DomainObject>> searchClasses = new ArrayList<>();
+
+    /** Mapping of search types to class names */
     private static final Map<String,String> searchTypeToClassName = new HashMap<>();
+
+    /** Mapping of simple class names to qualified names */
     private static final Map<String,String> simpleToQualifiedNames = new HashMap<>();
     
     static {
         try {
             registerAnnotatedClasses();
-        } catch (Throwable e) {
+        }
+        catch (Throwable e) {
             log.error("Error initializing DomainUtils", e);
         }
     }
@@ -86,31 +96,51 @@ public class DomainUtils {
         
         log.info("Scanning domain object package: {}", DOMAIN_OBJECT_PACKAGE_NAME);
         Reflections reflections = ReflectionsFixer.getReflections(DOMAIN_OBJECT_PACKAGE_NAME, DomainObject.class);
-        
+
+        // Walk through every class annotationed with the @MongoMapped annotation
         for (Class<?> clazz : reflections.getTypesAnnotatedWith(MongoMapped.class)) {
+
+            if (!DomainObject.class.isAssignableFrom(clazz)) {
+                // This loop only pertains to DomainObjects. Other types of MongoMapped objects are handled separately.
+                continue;
+            }
+
             Class<? extends DomainObject> nodeClass = (Class<? extends DomainObject>)clazz;
             MongoMapped annotation = nodeClass.getAnnotation(MongoMapped.class);
+
             // Newer versions of Reflections will return subclasses of annotated classes.
             // But we only want things which are actually annotated.
             if (annotation==null) continue;
+
             try {
                 String collectionName = annotation.collectionName();
+                log.info("Registering "+nodeClass.getName()+" as mapped class for type '"+collectionName+"'");
+
                 if (typeClasses.containsKey(collectionName)) {
                     log.warn("Overridding existing class mapping ("+typeClasses.get(collectionName).getName()+") for collection '"+collectionName+"'");
                 }
-                log.info("Registering "+nodeClass.getName()+" as mapped class for type '"+collectionName+"'");
                 typeClasses.put(collectionName, nodeClass);
-                simpleToQualifiedNames.put(nodeClass.getSimpleName(), nodeClass.getName());
-                
-                subClasses.put(DomainObject.class, nodeClass);
-                
-                // TODO: make this recursive to support more than 1 level of subtypes
-                for(Class<? extends DomainObject> subclass : reflections.getSubTypesOf(nodeClass)) {
-                    log.info("  Registering "+subclass.getName()+" as a subtype");
-                    subClasses.put(nodeClass, subclass);
-                    simpleToQualifiedNames.put(subclass.getSimpleName(), subclass.getName());
+
+                if (simpleToQualifiedNames.containsKey(nodeClass.getSimpleName())) {
+                    log.warn("Overridding existing name mapping "+nodeClass.getSimpleName()+" -> "+nodeClass.getName());
                 }
-                
+                simpleToQualifiedNames.put(nodeClass.getSimpleName(), nodeClass.getName());
+                subClasses.put(DomainObject.class, nodeClass);
+
+                // Find all descendants of this class in the class hierarchy which are not MongoMapped to another collection
+                for(Class<? extends DomainObject> subclass : reflections.getSubTypesOf(nodeClass)) {
+
+                    MongoMapped subclassAnnotation = subclass.getAnnotation(MongoMapped.class);
+                    if (subclassAnnotation==null) {
+                        log.info("  Registering " + subclass.getName() + " as a subtype");
+                        subClasses.put(nodeClass, subclass);
+
+                        if (simpleToQualifiedNames.containsKey(subclass.getSimpleName())) {
+                            log.warn("Overridding existing name mapping "+subclass.getSimpleName()+" -> "+subclass.getName());
+                        }
+                        simpleToQualifiedNames.put(subclass.getSimpleName(), subclass.getName());
+                    }
+                }
             }
             catch (Exception e) {
                 log.error("Error registering MongoMapped domain object "+clazz.getName(), e);
@@ -124,13 +154,10 @@ public class DomainUtils {
             }
         }
 
-        Collections.sort(searchClasses, new Comparator<Class<? extends DomainObject>>() {
-            @Override
-            public int compare(Class<? extends DomainObject> o1, Class<? extends DomainObject> o2) {
-                final String l1 = o1.getAnnotation(SearchType.class).label();
-                final String l2 = o2.getAnnotation(SearchType.class).label();
-                return l1.compareTo(l2);
-            }
+        searchClasses.sort((o1, o2) -> {
+            final String l1 = o1.getAnnotation(SearchType.class).label();
+            final String l2 = o2.getAnnotation(SearchType.class).label();
+            return l1.compareTo(l2);
         });
 
         for(Class<?> searchClazz : searchClasses) {
@@ -151,7 +178,7 @@ public class DomainUtils {
         if (objectClass==null) return null;
         MongoMapped mongoMappedAnnotation = null;
         Class<?> clazz = objectClass;
-        while (mongoMappedAnnotation==null&&clazz!=null) {
+        while (mongoMappedAnnotation==null && clazz!=null) {
             mongoMappedAnnotation = clazz.getAnnotation(MongoMapped.class);
             clazz = clazz.getSuperclass();
         }

@@ -65,6 +65,9 @@ dependencies {
         JUNIT_LIB = "junit:junit:${JUNIT_VERSION}"
         HAMCREST_LIB = "org.hamcrest:java-hamcrest:${HAMCREST_VERSION}"
         MOCKITO_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
+
+        SLF4J_SIMPLE = "org.slf4j:slf4j-simple:1.7.26"
+
     }
 
     implementation COMMONS_LANG_LIB,
@@ -77,6 +80,7 @@ dependencies {
     testImplementation ASSERTJ_LIB,
                        HAMCREST_LIB,
                        JUNIT_LIB,
-                       MOCKITO_LIB
+                       MOCKITO_LIB,
+                       SLF4J_SIMPLE
 
 }

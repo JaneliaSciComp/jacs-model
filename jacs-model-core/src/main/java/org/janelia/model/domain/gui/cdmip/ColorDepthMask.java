@@ -1,14 +1,14 @@
-package org.janelia.model.domain.gui.color_depth;
+package org.janelia.model.domain.gui.cdmip;
 
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableMap;
-import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasFilepath;
 import org.janelia.model.domain.interfaces.HasFiles;
+import org.janelia.model.domain.sample.AlignedImage2d;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
@@ -20,18 +20,12 @@ import org.janelia.model.domain.support.SearchType;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName="colorDepthMask",label="Color Depth Mask")
-@SearchType(key="colorDepthMask",label="Color Depth Mask")
-public class ColorDepthMask extends AbstractDomainObject implements HasFilepath, HasFiles {
+@MongoMapped(collectionName="cdmipMask",label="Color Depth Mask")
+@SearchType(key="cdmipMask",label="Color Depth Mask")
+public class ColorDepthMask extends AlignedImage2d implements HasFilepath, HasFiles {
 
     @SearchTraversal({ColorDepthMask.class})
     private Reference sourceSampleRef;
-
-    @SearchAttribute(key="alignment_space_txt",label="Alignment Space",facet="alignment_space_s")
-    private String alignmentSpace;
-
-    @SearchAttribute(key="filepath_txt",label="Filepath")
-    private String filepath;
 
     @SearchAttribute(key="threshold_i",label="Threshold for Mask")
     private Integer maskThreshold;
@@ -44,24 +38,6 @@ public class ColorDepthMask extends AbstractDomainObject implements HasFilepath,
         this.sourceSampleRef = sample;
     }
 
-    public String getAlignmentSpace() {
-        return alignmentSpace;
-    }
-
-    public void setAlignmentSpace(String alignmentSpace) {
-        this.alignmentSpace = alignmentSpace;
-    }
-
-    @Override
-    public String getFilepath() {
-        return filepath;
-    }
-
-    @Override
-    public void setFilepath(String filepath) {
-        this.filepath = filepath;
-    }
-
     public Integer getMaskThreshold() {
         return maskThreshold;
     }
@@ -70,8 +46,9 @@ public class ColorDepthMask extends AbstractDomainObject implements HasFilepath,
         this.maskThreshold = maskThreshold;
     }
 
+    @Override
     @JsonIgnore
     public Map<FileType, String> getFiles() {
-        return ImmutableMap.of(FileType.Unclassified2d, filepath);
+        return ImmutableMap.of(FileType.Unclassified2d, getFilepath());
     }
 }

@@ -1,4 +1,4 @@
-package org.janelia.model.domain.gui.color_depth;
+package org.janelia.model.domain.gui.cdmip;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,7 @@ import org.janelia.model.domain.support.MongoMapped;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName="colorDepthResult",label="Color Depth Result")
+@MongoMapped(collectionName="cdmipResult",label="Color Depth Result")
 public class ColorDepthResult extends AbstractDomainObject {
 
     /** Properties of the search at the time that this search was run */

@@ -1,8 +1,11 @@
-package org.janelia.model.domain.gui.color_depth;
+package org.janelia.model.domain.gui.cdmip;
 
 import java.io.File;
 import java.text.ParseException;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableMap;
@@ -10,16 +13,18 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.sample.AlignedImage2d;
 import org.janelia.model.domain.support.MongoMapped;
+import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchType;
 
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName="colorDepthImage",label="Color Depth Image")
-@SearchType(key="colorDepthImage",label="Color Depth Image")
+@MongoMapped(collectionName="cdmipImage",label="Color Depth Image")
+@SearchType(key="cdmipImage",label="Color Depth Image")
 public class ColorDepthImage extends AlignedImage2d {
 
-    private String libraryIdentifier;
+    @SearchAttribute(key="library_sm",label="Color Depth Library", facet="library_sm")
+    private Set<String> libraries = new HashSet<>();
 
     @JsonIgnore
     private transient ColorDepthFilepathParser parser;
@@ -37,12 +42,13 @@ public class ColorDepthImage extends AlignedImage2d {
         return parser;
     }
 
-    public String getLibraryIdentifier() {
-        return libraryIdentifier;
+    public Set<String> getLibraries() {
+        return libraries;
     }
 
-    public void setLibraryIdentifier(String libraryIdentifier) {
-        this.libraryIdentifier = libraryIdentifier;
+    public void setLibraries(Set<String> libraries) {
+        if (libraries==null) throw new IllegalArgumentException("Property cannot be null");
+        this.libraries = libraries;
     }
 
     @JsonIgnore

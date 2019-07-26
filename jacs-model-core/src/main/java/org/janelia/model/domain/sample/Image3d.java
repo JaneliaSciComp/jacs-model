@@ -1,16 +1,12 @@
 package org.janelia.model.domain.sample;
 
-import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.ReprocessOnChange;
 import org.janelia.model.domain.support.SAGEAttribute;
 import org.janelia.model.domain.support.SearchAttribute;
-import org.janelia.model.domain.support.SearchType;
 
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName="image",label="3D Image")
-@SearchType(key="image",label="3D Image")
 public class Image3d extends Image {
 
     @SAGEAttribute(cvName="light_imagery", termName="channels")

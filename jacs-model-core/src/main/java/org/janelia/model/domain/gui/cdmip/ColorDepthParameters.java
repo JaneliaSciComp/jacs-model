@@ -1,18 +1,16 @@
-package org.janelia.model.domain.gui.colordepth;
-
-import org.janelia.model.domain.Reference;
+package org.janelia.model.domain.gui.cdmip;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.janelia.model.domain.Reference;
+
 /**
- * @deprecated use org.janelia.model.domain.gui.color_depth.ColorDepthParameters
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@Deprecated
 public class ColorDepthParameters {
 
-    private List<String> dataSets = new ArrayList<>();
+    private List<String> libraries = new ArrayList<>();
 
     private List<Reference> masks = new ArrayList<>();
 
@@ -25,12 +23,12 @@ public class ColorDepthParameters {
     /** Pix Color Fluctuation, 1.18 per slice */
     private Double pixColorFluctuation;
 
-    public List<String> getDataSets() {
-        return dataSets;
+    public List<String> getLibraries() {
+        return libraries;
     }
 
-    public void setDataSets(List<String> dataSets) {
-        this.dataSets = dataSets;
+    public void setLibraries(List<String> libraries) {
+        this.libraries = libraries;
     }
 
     public Integer getDataThreshold() {

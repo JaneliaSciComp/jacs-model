@@ -1,4 +1,4 @@
-package org.janelia.model.domain.gui.color_depth;
+package org.janelia.model.domain.gui.cdmip;
 
 import org.janelia.model.domain.Reference;
 
