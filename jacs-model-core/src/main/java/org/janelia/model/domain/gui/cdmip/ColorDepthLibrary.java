@@ -11,6 +11,7 @@ import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.gui.search.Filtering;
 import org.janelia.model.domain.gui.search.criteria.AttributeValueCriteria;
 import org.janelia.model.domain.gui.search.criteria.Criteria;
+import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
@@ -76,27 +77,12 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
     @Override
     public List<Criteria> getCriteriaList() {
         if (lazyCriteria==null) {
-
             lazyCriteria = new ArrayList<>();
-
             // Search for images in this library
-            AttributeValueCriteria libraryIdentifier = new AttributeValueCriteria();
-            libraryIdentifier.setAttributeName("identifier");
-            libraryIdentifier.setValue(getIdentifier());
+            FacetCriteria libraryIdentifier = new FacetCriteria();
+            libraryIdentifier.setAttributeName("libraries");
+            libraryIdentifier.getValues().add(getIdentifier());
             lazyCriteria.add(libraryIdentifier);
-
-            if (!colorDepthCounts.isEmpty()) {
-                Optional<String> first = colorDepthCounts.keySet().stream().sorted().findFirst();
-                if (first.isPresent()) {
-                    // Default to first available alignment space. User can change it.
-                    String firstAlignmentSpace = first.get();
-                    AttributeValueCriteria alignmentSpace = new AttributeValueCriteria();
-                    alignmentSpace.setAttributeName("alignmentSpace");
-                    alignmentSpace.setValue(firstAlignmentSpace);
-                    lazyCriteria.add(alignmentSpace);
-                }
-            }
-
         }
         return lazyCriteria;
     }

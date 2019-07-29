@@ -1,21 +1,20 @@
 package org.janelia.model.domain.sample;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.Sets;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.gui.search.Filtering;
-import org.janelia.model.domain.gui.search.criteria.AttributeValueCriteria;
 import org.janelia.model.domain.gui.search.criteria.Criteria;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchType;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A data set definition which controls how Samples are processed. 
@@ -247,9 +246,9 @@ public class DataSet extends AbstractDomainObject implements Filtering {
             sageSynced.setAttributeName("sageSynced");
             sageSynced.setValues(Sets.newHashSet("true"));
             lazyCriteria.add(sageSynced);
-            AttributeValueCriteria dataSet = new AttributeValueCriteria();
+            FacetCriteria dataSet = new FacetCriteria();
             dataSet.setAttributeName("dataSet");
-            dataSet.setValue(getIdentifier());
+            dataSet.getValues().add(getIdentifier());
             lazyCriteria.add(dataSet);
         }
         return lazyCriteria;
