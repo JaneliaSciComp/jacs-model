@@ -1565,6 +1565,9 @@ public class DomainDAO {
     }
 
     private <T extends DomainObject> T saveImpl(String subjectKey, T domainObject) throws Exception {
+        if (subjectKey==null) {
+            throw new IllegalArgumentException("Owner cannot be null");
+        }
         String collectionName = DomainUtils.getCollectionName(domainObject);
         MongoCollection collection = getCollectionByName(collectionName);
         try {
@@ -2154,7 +2157,7 @@ public class DomainDAO {
                 changePermissions(subjectKey, Sample.class.getName(), sampleIds, readers, writers, grant, allowWriters, forceChildUpdates, false);
             }
             else if ("dataSet".equals(collectionName)) {
-                log.trace("Changing permissions on all samples and LSMs of the data sets: {}", logIds);
+                log.trace("Changing permissions on all objects in data sets: {}", logIds);
                 for (Long id : ids) {
 
                     // Retrieve the data set in order to find its identifier
@@ -2171,43 +2174,20 @@ public class DomainDAO {
 
                     // This could just call changePermissions recursively, but batching is far more efficient.
                     WriteResult wr1 = sampleCollection.update("{dataSet:#," + updateQueryClause + "}", dataSet.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
-                    log.trace("Changed permissions on {} samples", wr1.getN());
+                    log.debug("Changed permissions on {} samples", wr1.getN());
 
                     WriteResult wr2 = fragmentCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
-                    log.trace("Updated permissions on {} fragments", wr2.getN());
+                    log.debug("Updated permissions on {} fragments", wr2.getN());
 
                     WriteResult wr3 = imageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
-                    log.trace("Updated permissions on {} lsms", wr3.getN());
-
-                    WriteResult wr4 = colorDepthLibraryCollection.update("{identifier:#," + updateQueryClause + "}", dataSet.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
+                    log.debug("Updated permissions on {} lsms", wr3.getN());
 
                     // Recurse to change corresponding color depth library, if any
                     ColorDepthLibrary colorDepthLibrary = getColorDepthLibraryByIdentifier(dataSet.getOwnerKey(), dataSet.getIdentifier());
                     if (colorDepthLibrary != null) {
+                        log.info("Sharing associated color depth library: {}", colorDepthLibrary);
                         changePermissions(subjectKey, ColorDepthLibrary.class.getName(), Collections.singletonList(colorDepthLibrary.getId()),
-                                readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
-                    }
-
-                    // JW-25275: Automatically create data set filters when sharing data sets
-                    if (grant) {
-                        for (String granteeKey : readers) {
-
-                            if (granteeKey.equals(dataSet.getOwnerKey())) continue;
-
-                            String filterName = dataSet.getName() + " (" + dataSet.getOwnerName() + ")";
-
-                            if (getUserDomainObjectsByName(granteeKey, Filter.class, filterName).isEmpty()) {
-                                // Grantee has no filters for this data set, so let's create one
-
-                                log.info("Creating data set filter for " + filterName + ", shared with " + granteeKey);
-                                Filter filter = createDataSetFilter(granteeKey, dataSet, filterName);
-
-                                // Now add it to their Saved Data folder
-
-                                TreeNode sharedDataFolder = getOrCreateDefaultFolder(granteeKey, DomainConstants.NAME_SHARED_DATA);
-                                addChildren(granteeKey, sharedDataFolder, Arrays.asList(Reference.createFor(filter)));
-                            }
-                        }
+                                readers, writers, grant, forceChildUpdates, allowWriters, false);
                     }
                 }
             }
