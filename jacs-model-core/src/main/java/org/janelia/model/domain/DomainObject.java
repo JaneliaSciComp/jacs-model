@@ -19,41 +19,41 @@ public interface DomainObject extends HasIdentifier, HasName {
 
     /** Returns a Globally Unique Identifier for the object */
     @Override
-    public Long getId();
+    Long getId();
 
-    public void setId(Long id);
+    void setId(Long id);
 
     /** Returns a user-readable, non-unique label for the object instance */
     @Override
-    public String getName();
+    String getName();
 
-    public void setName(String name);
+    void setName(String name);
     
     /** Returns the key for the subject who knows the object instance */
-    public abstract String getOwnerKey();
+    String getOwnerKey();
 
-    public abstract void setOwnerKey(String ownerKey);
+    void setOwnerKey(String ownerKey);
 
     /** Returns all the keys of subjects who have read access to the object instance */ 
-    public abstract Set<String> getReaders();
+    Set<String> getReaders();
 
-    public abstract void setReaders(Set<String> readers);
+    void setReaders(Set<String> readers);
 
     /** Returns all the keys of subjects who have write access to the object instance */
-    public abstract Set<String> getWriters();
+    Set<String> getWriters();
 
-    public abstract void setWriters(Set<String> writers);
+    void setWriters(Set<String> writers);
 
     /** Returns the date/time when the object was created */
-    public Date getCreationDate();
+    Date getCreationDate();
 
-    public void setCreationDate(Date creationDate);
+    void setCreationDate(Date creationDate);
 
     /** Returns the date/time when the object was last updated */
-    public Date getUpdatedDate();
+    Date getUpdatedDate();
 
-    public void setUpdatedDate(Date updatedDate);
+    void setUpdatedDate(Date updatedDate);
     
     /** Returns a user-readable label for the domain object sub-type */
-    public String getType();
+    String getType();
 }
