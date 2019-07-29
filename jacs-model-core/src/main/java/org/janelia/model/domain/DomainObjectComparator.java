@@ -2,10 +2,8 @@ package org.janelia.model.domain;
 
 import java.util.Comparator;
 
-import org.janelia.model.domain.DomainObject;
-
 import com.google.common.collect.ComparisonChain;
-import org.janelia.model.domain.DomainUtils;
+import org.janelia.model.security.util.SubjectUtils;
 
 /**
  * Intuitive ordering for domain objects, with owned objects first, then by owner, and
@@ -25,7 +23,8 @@ public class DomainObjectComparator implements Comparator<DomainObject> {
     public int compare(DomainObject o1, DomainObject o2) {
         return ComparisonChain.start()
                 .compareTrueFirst(isOwner(o1), isOwner(o2))
-                .compare(o1.getOwnerKey(), o2.getOwnerKey())
+                .compare(SubjectUtils.getSubjectName(o1.getOwnerKey()),
+                         SubjectUtils.getSubjectName(o2.getOwnerKey()))
                 .compare(o1.getId(), o2.getId()).result();
     }
 
