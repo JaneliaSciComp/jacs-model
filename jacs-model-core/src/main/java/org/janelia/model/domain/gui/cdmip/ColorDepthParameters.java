@@ -23,6 +23,13 @@ public class ColorDepthParameters {
     /** Pix Color Fluctuation, 1.18 per slice */
     private Double pixColorFluctuation;
 
+    /** Number of pixels to try shifting in XY plane */
+    private Integer xyShift;
+
+    /** Should the mask be mirrored across the Y axis? */
+    private Boolean mirrorMask;
+
+
     public List<String> getLibraries() {
         return libraries;
     }
@@ -53,6 +60,22 @@ public class ColorDepthParameters {
 
     public void setPixColorFluctuation(Double pixColorFluctuation) {
         this.pixColorFluctuation = pixColorFluctuation;
+    }
+
+    public Integer getXyShift() {
+        return xyShift;
+    }
+
+    public void setXyShift(Integer xyShift) {
+        this.xyShift = xyShift;
+    }
+
+    public Boolean getMirrorMask() {
+        return mirrorMask;
+    }
+
+    public void setMirrorMask(Boolean mirrorMask) {
+        this.mirrorMask = mirrorMask;
     }
 
     public List<Reference> getMasks() {

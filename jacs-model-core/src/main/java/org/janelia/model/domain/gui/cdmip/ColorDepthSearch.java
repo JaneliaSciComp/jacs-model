@@ -78,6 +78,19 @@ public class ColorDepthSearch extends AbstractDomainObject implements IsParent {
         return parameters.getPixColorFluctuation();
     }
 
+
+    @JsonIgnore
+    @SearchAttribute(key="xyshift_d",label="XY Shift")
+    public Integer getXyShift() {
+        return parameters.getXyShift();
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="mirror_b",label="Mirror Mask?")
+    public Boolean getMirrorMask() {
+        return parameters.getMirrorMask();
+    }
+
     @JsonIgnore
     public List<Reference> getMasks() {
         return parameters.getMasks();
