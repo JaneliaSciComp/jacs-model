@@ -6,8 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
-import org.janelia.model.domain.interfaces.HasFilepath;
-import org.janelia.model.domain.interfaces.HasFiles;
+import org.janelia.model.domain.interfaces.HasAnatomicalArea;
 import org.janelia.model.domain.sample.AlignedImage2d;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
@@ -22,13 +21,16 @@ import org.janelia.model.domain.support.SearchType;
  */
 @MongoMapped(collectionName="cdmipMask",label="Color Depth Mask")
 @SearchType(key="cdmipMask",label="Color Depth Mask")
-public class ColorDepthMask extends AlignedImage2d implements HasFilepath, HasFiles {
+public class ColorDepthMask extends AlignedImage2d implements HasAnatomicalArea {
 
     @SearchTraversal({ColorDepthMask.class})
     private Reference sourceSampleRef;
 
     @SearchAttribute(key="threshold_i",label="Threshold for Mask")
     private Integer maskThreshold;
+
+    @SearchAttribute(key="area_txt",label="Anatomical Area",facet="area_s")
+    private String anatomicalArea;
 
     public Reference getSample() {
         return sourceSampleRef;
@@ -44,6 +46,15 @@ public class ColorDepthMask extends AlignedImage2d implements HasFilepath, HasFi
 
     public void setMaskThreshold(Integer maskThreshold) {
         this.maskThreshold = maskThreshold;
+    }
+
+    @Override
+    public String getAnatomicalArea() {
+        return anatomicalArea;
+    }
+
+    public void setAnatomicalArea(String anatomicalArea) {
+        this.anatomicalArea = anatomicalArea;
     }
 
     @Override
