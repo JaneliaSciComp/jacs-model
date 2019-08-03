@@ -48,56 +48,56 @@ public class RenderedVolumeLoaderImplTest {
     @Test
     public void loadVolumeWithNoTransform() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "default.0.tif");
-        RenderedVolume rv = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
-        assertNull(rv);
+        RenderedVolumeMetadata rvm = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
+        assertNull(rvm);
     }
 
     @Test
     public void loadVolumeWithNoTiles() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt");
-        RenderedVolume rv = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
-        assertNull(rv);
+        RenderedVolumeMetadata rvm = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
+        assertNull(rvm);
     }
 
     @Test
     public void loadVolumeWithXYTiles() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif", "default.1.tif");
-        RenderedVolume rv = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
-        assertNotNull(rv);
-        assertFalse(rv.hasXSlices());
-        assertFalse(rv.hasYSlices());
-        assertTrue(rv.hasZSlices());
-        assertArrayEquals(new int[] {234764, 50122, 27931}, rv.getOriginVoxel());
+        RenderedVolumeMetadata rvm = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
+        assertNotNull(rvm);
+        assertFalse(rvm.hasXSlices());
+        assertFalse(rvm.hasYSlices());
+        assertTrue(rvm.hasZSlices());
+        assertArrayEquals(new int[] {234764, 50122, 27931}, rvm.getOriginVoxel());
     }
 
     @Test
     public void loadVolumeWithYZTiles() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "YZ.0.tif", "YZ.1.tif");
-        RenderedVolume rv = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
-        assertNotNull(rv);
-        assertTrue(rv.hasXSlices());
-        assertFalse(rv.hasYSlices());
-        assertFalse(rv.hasZSlices());
+        RenderedVolumeMetadata rvm = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
+        assertNotNull(rvm);
+        assertTrue(rvm.hasXSlices());
+        assertFalse(rvm.hasYSlices());
+        assertFalse(rvm.hasZSlices());
     }
 
     @Test
     public void loadVolumeWithZXTiles() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "ZX.0.tif", "ZX.1.tif");
-        RenderedVolume rv = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
-        assertNotNull(rv);
-        assertFalse(rv.hasXSlices());
-        assertTrue(rv.hasYSlices());
-        assertFalse(rv.hasZSlices());
+        RenderedVolumeMetadata rvm = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
+        assertNotNull(rvm);
+        assertFalse(rvm.hasXSlices());
+        assertTrue(rvm.hasYSlices());
+        assertFalse(rvm.hasZSlices());
     }
 
     @Test
     public void loadVolumeWithAllOrthoTiles() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif", "default.1.tif", "YZ.0.tif", "YZ.1.tif", "ZX.0.tif", "ZX.1.tif");
-        RenderedVolume rv = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
-        assertNotNull(rv);
-        assertTrue(rv.hasXSlices());
-        assertTrue(rv.hasYSlices());
-        assertTrue(rv.hasZSlices());
+        RenderedVolumeMetadata rvm = renderedVolumeLoader.loadVolume(testVolumeLocation).orElse(null);
+        assertNotNull(rvm);
+        assertTrue(rvm.hasXSlices());
+        assertTrue(rvm.hasYSlices());
+        assertTrue(rvm.hasZSlices());
     }
 
     @Test
@@ -112,7 +112,7 @@ public class RenderedVolumeLoaderImplTest {
                                 rv.getNumZoomLevels() - 1,
                                 Coordinate.Z,
                                 0))
-                        .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(rv, tileIndex)))
+                        .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(testVolumeLocation, rv, tileIndex)))
                 .orElse(null);
         assertNotNull(sliceBytes);
     }
@@ -129,7 +129,7 @@ public class RenderedVolumeLoaderImplTest {
                                 rv.getNumZoomLevels() - 1,
                                 Coordinate.Z,
                                 1))
-                        .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(rv, tileIndex)))
+                        .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(testVolumeLocation, rv, tileIndex)))
                 .orElse(null);
         assertNotNull(sliceBytes);
     }
@@ -138,7 +138,7 @@ public class RenderedVolumeLoaderImplTest {
     public void loadMissingXYSlice() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif", "default.1.tif");
         byte[] sliceBytes = renderedVolumeLoader.loadVolume(testVolumeLocation)
-                .flatMap(rv -> rv.getTileInfo(Coordinate.Z)
+                .flatMap(rvm -> rvm.getTileInfo(Coordinate.Z)
                         .map(tileInfo -> TileKey.fromTileCoord(
                                 1,
                                 1,
@@ -146,7 +146,7 @@ public class RenderedVolumeLoaderImplTest {
                                 0,
                                 Coordinate.Z,
                                 0))
-                        .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(rv, tileIndex)))
+                        .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(testVolumeLocation, rvm, tileIndex)))
                 .orElse(null);
         assertNull(sliceBytes);
     }
@@ -203,7 +203,8 @@ public class RenderedVolumeLoaderImplTest {
                 new TestData(10, 11, 9, -1, -1, -1, 0, imageBytes -> assertNotNull("Test 5", imageBytes)),
         };
         for (TestData td : testData) {
-            td.resultAssertion.accept(renderedVolumeLoader.loadRawImageContentFromVoxelCoord(testVolumeLocation, rawImage, td.channel, td.xVoxel, td.yVoxel, td.zVoxel, td.dimx, td.dimy, td.dimz));
+            renderedVolumeLoader.loadRawImageContentFromVoxelCoord(testVolumeLocation, rawImage, td.channel, td.xVoxel, td.yVoxel, td.zVoxel, td.dimx, td.dimy, td.dimz)
+                    .ifPresent(td.resultAssertion);
         }
     }
 

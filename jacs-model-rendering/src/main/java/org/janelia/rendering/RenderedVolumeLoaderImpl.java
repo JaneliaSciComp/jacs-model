@@ -31,7 +31,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     private static final Logger LOG = LoggerFactory.getLogger(RenderedVolumeLoaderImpl.class);
 
     @Override
-    public Optional<RenderedVolume> loadVolume(RenderedVolumeLocation rvl) {
+    public Optional<RenderedVolumeMetadata> loadVolume(RenderedVolumeLocation rvl) {
         LOG.debug("Load volume from {}", rvl.getVolumeLocation());
         return loadVolumeSizeAndCoord(rvl)
                 .flatMap(coord -> loadTileInfo(rvl)
@@ -43,53 +43,57 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                     .map(tileInfo -> tileInfo.getVolumeSize())
                                     .orElseGet(() -> new int[]{0, 0, 0});
                             int[] volumeSizeInVoxels = Arrays.stream(tileVolumeDims).map(tileDim -> tileDim * scaleFactor).toArray();
-                            TileInfo xyTileInfo = tileInfos[Coordinate.Z.index()];
-                            TileInfo zxTileInfo = tileInfos[Coordinate.Y.index()];
-                            TileInfo yzTileInfo = tileInfos[Coordinate.X.index()];
-                            return new RenderedVolume(rvl,
-                                    RenderingType.OCTREE,
-                                    coord.getOriginVoxel(),
-                                    volumeSizeInVoxels,
-                                    coord.getHighestResMicromsPerVoxel(),
-                                    coord.getNumZoomLevels(),
-                                    xyTileInfo,
-                                    yzTileInfo,
-                                    zxTileInfo);
+
+                            RenderedVolumeMetadata renderedVolumeMetadata = new RenderedVolumeMetadata();
+                            renderedVolumeMetadata.setConnectionURI(rvl.getConnectionURI().toString());
+                            renderedVolumeMetadata.setDataStorageURI(rvl.getDataStorageURI().toString());
+                            renderedVolumeMetadata.setVolumeBasePath(rvl.getRenderedVolumePath());
+                            renderedVolumeMetadata.setRenderingType(RenderingType.OCTREE);
+                            renderedVolumeMetadata.setOriginVoxel(coord.getOriginVoxel());
+                            renderedVolumeMetadata.setVolumeSizeInVoxels(volumeSizeInVoxels);
+                            renderedVolumeMetadata.setMicromsPerVoxel(coord.getHighestResMicromsPerVoxel());
+                            renderedVolumeMetadata.setNumZoomLevels(coord.getNumZoomLevels());
+                            renderedVolumeMetadata.setXyTileInfo(tileInfos[Coordinate.Z.index()]);
+                            renderedVolumeMetadata.setYzTileInfo(tileInfos[Coordinate.X.index()]);
+                            renderedVolumeMetadata.setZxTileInfo(tileInfos[Coordinate.Y.index()]);
+
+                            return renderedVolumeMetadata;
                         }));
     }
 
     @Override
-    public Optional<byte[]> loadSlice(RenderedVolume renderedVolume, TileKey tileKey) {
-        return renderedVolume.getTileInfo(tileKey.getSliceAxis())
-                .flatMap(tileInfo -> renderedVolume.getRelativeTilePath(tileKey)
+    public Optional<byte[]> loadSlice(RenderedVolumeLocation rvl, RenderedVolumeMetadata renderedVolumeMetada, TileKey tileKey) {
+        return renderedVolumeMetada.getTileInfo(tileKey.getSliceAxis())
+                .flatMap(tileInfo -> renderedVolumeMetada.getRelativeTilePath(tileKey)
                         .flatMap(tileRelativePath -> {
                             List<String> chanelImageNames = IntStream.range(0, tileInfo.getChannelCount())
                                     .mapToObj(channel -> TileInfo.getImageNameForChannel(tileKey.getSliceAxis(), channel))
                                     .collect(Collectors.toList());
-                            LOG.trace("Retrieve imagefiles {} for tile {} from {} and {}", chanelImageNames, tileKey, renderedVolume.volumeLocation(), tileRelativePath);
-                            byte[] content = renderedVolume.getRvl().readTileImagePageAsTexturedBytes(tileRelativePath.toString(), chanelImageNames, tileKey.getSliceIndex());
-                            if (content == null) {
-                                return Optional.empty();
-                            } else {
-                                return Optional.of(content);
-                            }
+                            LOG.trace("Retrieve imagefiles {} for tile {} from {} and {}", chanelImageNames, tileKey, rvl.getVolumeLocation(), tileRelativePath);
+                            byte[] content = rvl.readTileImagePageAsTexturedBytes(tileRelativePath, chanelImageNames, tileKey.getSliceIndex());
+                            return content != null && content.length > 0 ? Optional.of(content) : Optional.empty();
                         }))
                 ;
     }
 
     private Optional<RawCoord> loadVolumeSizeAndCoord(RenderedVolumeLocation rvl) {
-        try {
-            InputStream transformStream = rvl.readTransformData();
-            if (transformStream == null) {
-                LOG.warn("No transform file found at", rvl.getVolumeLocation());
-                return Optional.empty();
-            } else {
-                RawCoord rawCoord = parseTransformStream(transformStream);
-                return Optional.of(rawCoord);
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException(e);
-        }
+        return rvl.getTransformData()
+                .map(streamableTransform -> {
+                    InputStream transformStream = streamableTransform.getStream();
+                    try {
+                        RawCoord rawCoord = parseTransformStream(transformStream);
+                        return Optional.of(rawCoord);
+                    } finally {
+                        try {
+                            transformStream.close();
+                        } catch (IOException ignore) {
+                            LOG.trace("Exception while trying to close transform stream for {}", rvl.getDataStorageURI(), ignore);
+                        }
+                    }
+                }).orElseGet(() -> {
+                    LOG.warn("No transform file found at", rvl.getVolumeLocation());
+                    return Optional.empty();
+                });
     }
 
     private RawCoord parseTransformStream(@Nonnull InputStream stream) {
@@ -142,7 +146,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
             Map<Coordinate, List<String>> channelTilesByOrthoProjection = rvl.listImageUris(0).stream()
                     .map(tileUri -> {
                         String fn;
-                        if (StringUtils.equalsAnyIgnoreCase("file", tileUri.getScheme())) {
+                        if (StringUtils.equalsIgnoreCase("file", tileUri.getScheme())) {
                             fn = Paths.get(tileUri).getFileName().toString();
                         } else {
                             String uriPath = tileUri.getPath();
@@ -194,7 +198,10 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     public Optional<RawImage> findClosestRawImageFromVoxelCoord(RenderedVolumeLocation rvl, int xVoxel, int yVoxel, int zVoxel) {
         return loadVolume(rvl)
                 .flatMap(rv -> {
-                    Integer[] p = Arrays.stream(rv.convertToMicroscopeCoord(new int[]{xVoxel, yVoxel, zVoxel})).boxed().toArray(Integer[]::new);
+                    Integer[] p = Arrays.stream(convertToMicroscopeCoord(
+                            new int[]{xVoxel, yVoxel, zVoxel},
+                            rv.getOriginVoxel(),
+                            rv.getMicromsPerVoxel())).boxed().toArray(Integer[]::new);
                     return loadVolumeRawImageTiles(rvl).stream()
                             .min((t1, t2) -> {
                                 Double d1 = squaredMetricDistance(t1.getCenter(), p);
@@ -217,11 +224,12 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     @Override
-    public byte[] loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
-                                                    RawImage rawImage,
-                                                    int channel, int xCenter, int yCenter, int zCenter,
-                                                    int dimx, int dimy, int dimz) {
-        return rvl.readRawTileROIPixels(rawImage, channel, xCenter, yCenter, zCenter, dimx, dimy, dimz);
+    public Optional<byte[]> loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
+                                                              RawImage rawImage,
+                                                              int channel, int xCenter, int yCenter, int zCenter,
+                                                              int dimx, int dimy, int dimz) {
+        byte[] rawImageBytes = rvl.readRawTileROIPixels(rawImage, channel, xCenter, yCenter, zCenter, dimx, dimy, dimz);
+        return rawImageBytes != null && rawImageBytes.length > 0 ? Optional.of(rawImageBytes) : Optional.empty();
     }
 
     public List<RawImage> loadVolumeRawImageTiles(RenderedVolumeLocation rvl) {
@@ -268,11 +276,30 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     private RawVolData loadRawVolumeData(RenderedVolumeLocation rvl) {
-        try (InputStream tileBaseStream = rvl.readTileBaseData()) {
-            return new RawVolReader().readRawVolData(tileBaseStream);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        return rvl.getTileBaseData()
+                .map(streamableTileBase -> {
+                    try (InputStream tileBaseStream = streamableTileBase.getStream()) {
+                        return new RawVolReader().readRawVolData(tileBaseStream);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    } finally {
+                        try {
+                            streamableTileBase.close();
+                        } catch (IOException ignore) {
+                            // ignore this exception
+                            LOG.trace("Error closing tilebase stream from  {}", rvl.getDataStorageURI(), ignore);
+                        }
+                    }
+                })
+                .orElse(null);
+    }
+
+    private int[] convertToMicroscopeCoord(int[] screenCoord, int[] origin, double[] microsPerVoxel) {
+        int[] microscopeCoord = new int[3];
+        for (int i = 0; i < screenCoord.length; i++) {
+            microscopeCoord[i] = origin[i] + (int) (screenCoord[i] * microsPerVoxel[i]);
         }
+        return microscopeCoord;
     }
 
 }

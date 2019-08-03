@@ -20,12 +20,12 @@ import static org.junit.Assert.assertEquals;
 
 public class TreeNodeMongoDaoTest extends AbstractMongoDaoTest {
 
-    private TreeNodeMongoDao treeNodeMongoDao;
+    private TreeTreeNodeMongoDao treeNodeMongoDao;
 
     @Before
     public void setUp() {
         SubjectMongoDao subjectMongoDao = new SubjectMongoDao(testMongoDatabase);
-        treeNodeMongoDao = new TreeNodeMongoDao(
+        treeNodeMongoDao = new TreeTreeNodeMongoDao(
                 testMongoDatabase,
                 new DomainPermissionsMongoHelper(subjectMongoDao),
                 new DomainUpdateMongoHelper(testObjectMapper));

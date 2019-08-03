@@ -1,11 +1,25 @@
 package org.janelia.rendering;
 
-import javax.annotation.Nullable;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
 
 public interface RenderedVolumeLocation {
+    /**
+     * Default raw tile channel suffix pattern
+     */
+    String DEFAULT_RAW_CH_SUFFIX_PATTERN = "-ngc.%s.tif";
+    /**
+     * Default transform file name.
+     */
+    String DEFAULT_TRANSFORM_FILE_NAME = "transform.txt";
+    /**
+     * Default tilebase file name.
+     */
+    String DEFAULT_TILED_VOL_BASE_FILE_NAME = "tilebase.cache.yml";
+
     /**
      * @return the base connection URI for retrieving rendered volume data.
      */
@@ -42,7 +56,7 @@ public interface RenderedVolumeLocation {
      * @param tileRelativePath
      * @return
      */
-    RenderedImageInfo readTileImageInfo(String tileRelativePath);
+    @Nullable RenderedImageInfo readTileImageInfo(String tileRelativePath);
 
     /**
      * Read tile image as texture bytes.
@@ -58,12 +72,16 @@ public interface RenderedVolumeLocation {
     /**
      * Read transform.txt
 \     */
-    @Nullable InputStream readTransformData();
+    default Optional<StreamableContent> getTransformData() {
+        return getContentFromRelativePath(DEFAULT_TRANSFORM_FILE_NAME);
+    }
 
     /**
      * Read tilebase.cache.yml
      */
-    @Nullable InputStream readTileBaseData();
+    default Optional<StreamableContent> getTileBaseData() {
+        return getContentFromRelativePath(DEFAULT_TILED_VOL_BASE_FILE_NAME);
+    }
 
     /**
      * Stream entire raw image.
@@ -71,19 +89,22 @@ public interface RenderedVolumeLocation {
      * @param channel
      * @return
      */
-    @Nullable InputStream readRawTileContent(RawImage rawImage, int channel);
+    default Optional<StreamableContent> getRawTileContent(RawImage rawImage, int channel) {
+        String rawImagePath = rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel));
+        return getContentFromAbsolutePath(rawImagePath);
+    }
 
     /**
      * Stream content from relative path.
      * @param relativePath
      * @return
      */
-    @Nullable InputStream streamContentFromRelativePath(String relativePath);
+    Optional<StreamableContent> getContentFromRelativePath(String relativePath);
 
     /**
      * Stream content from absolute path.
      * @param absolutePath
      * @return
      */
-    @Nullable InputStream streamContentFromAbsolutePath(String absolutePath);
+    Optional<StreamableContent> getContentFromAbsolutePath(String absolutePath);
 }

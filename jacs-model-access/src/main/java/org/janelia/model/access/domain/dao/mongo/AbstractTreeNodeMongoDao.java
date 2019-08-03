@@ -12,10 +12,10 @@ import java.util.List;
 /**
  * {@link TreeNode} Mongo DAO.
  */
-public abstract class AbstractNodeMongoDao<T extends TreeNode> extends AbstractDomainObjectMongoDao<T> implements NodeDao<T> {
-    AbstractNodeMongoDao(MongoDatabase mongoDatabase,
-                         DomainPermissionsMongoHelper permissionsHelper,
-                         DomainUpdateMongoHelper updateHelper) {
+public abstract class AbstractTreeNodeMongoDao<T extends TreeNode> extends AbstractDomainObjectMongoDao<T> implements NodeDao<T> {
+    AbstractTreeNodeMongoDao(MongoDatabase mongoDatabase,
+                             DomainPermissionsMongoHelper permissionsHelper,
+                             DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, permissionsHelper, updateHelper);
     }
 
