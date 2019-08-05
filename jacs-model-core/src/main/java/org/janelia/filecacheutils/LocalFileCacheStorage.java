@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.Comparator;
 import java.util.NavigableSet;
 import java.util.Set;
@@ -112,7 +113,13 @@ public class LocalFileCacheStorage {
                                 f.delete();
                             }
                         } else if (Files.isRegularFile(p)) {
-                            updateCachedFiles(p, getFileSizeInKB(p));
+                            // right now the cache eviction does not apply to file that already exist on the file system
+                            // to prevent continuous accumulation of these for now simply remove files older than 2h
+                            if (p.toFile().lastModified() < System.currentTimeMillis() - 2 * 3600 * 1000L) {
+                                p.toFile().delete();
+                            } else {
+                                updateCachedFiles(p, getFileSizeInKB(p));
+                            }
                         }
                     });
         } catch (IOException e) {
