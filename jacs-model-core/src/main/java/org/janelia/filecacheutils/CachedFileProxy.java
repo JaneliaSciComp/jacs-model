@@ -1,12 +1,10 @@
 package org.janelia.filecacheutils;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.input.TeeInputStream;
-import org.apache.commons.io.output.NullOutputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,8 +13,15 @@ import java.nio.file.attribute.FileTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Cached file representation.
+ */
 public class CachedFileProxy implements FileProxy {
     private static final Logger LOG = LoggerFactory.getLogger(CachedFileProxy.class);
     private static final Set<String> DOWNLOADING_FILES = new ConcurrentSkipListSet<>();
@@ -24,12 +29,14 @@ public class CachedFileProxy implements FileProxy {
     private final Path localFilePath;
     private final Supplier<FileProxy> fileProxySupplier;
     private final LocalFileCacheStorage localFileCacheStorage;
+    private final ExecutorService localFileWriterExecutor;
     private FileProxy fileProxy;
 
-    CachedFileProxy(Path localFilePath, Supplier<FileProxy> fileProxySupplier, LocalFileCacheStorage localFileCacheStorage) {
+    CachedFileProxy(Path localFilePath, Supplier<FileProxy> fileProxySupplier, LocalFileCacheStorage localFileCacheStorage, ExecutorService localFileWriterExecutor) {
         this.localFileCacheStorage = localFileCacheStorage;
         this.localFilePath = localFilePath;
         this.fileProxySupplier = fileProxySupplier;
+        this.localFileWriterExecutor = localFileWriterExecutor;
         this.fileProxy = null;
     }
 
@@ -91,10 +98,10 @@ public class CachedFileProxy implements FileProxy {
                 return null;
             }
             long estimatedSize = fileProxy.estimateSizeInBytes().orElse(0L);
-            if (LocalFileCacheStorage.BYTES_TO_KB.apply(estimatedSize) + localFileCacheStorage.getCurrentSizeInKB() > localFileCacheStorage.getCapacityInKB() || !DOWNLOADING_FILES.add(localFilePath.toString())) {
-                // if caching this file will exceed the size of cache or
-                // some other thread is already downloading this file
-                // simply return the stream directly without any attempt to store it in the local cache
+            if (!localFileCacheStorage.isBytesSizeAcceptable(estimatedSize) || !DOWNLOADING_FILES.add(localFilePath.toString())) {
+                // if this file cannot be cached because it's either to large or caching it will exceed the cache capacity
+                // or some other thread is already downloading this file
+                // simply return the stream directly
                 return contentStream;
             }
             try {
@@ -102,7 +109,7 @@ public class CachedFileProxy implements FileProxy {
                 makeDownloadDir();
                 Path downloadingLocalFilePath = getDownloadingLocalFilePath();
                 OutputStream downloadingLocalFileStream = new FileOutputStream(downloadingLocalFilePath.toFile());
-                return new TeeInputStream(contentStream, downloadingLocalFileStream, false) {
+                return new TeeInputStream(contentStream, downloadingLocalFileStream, localFileWriterExecutor) {
                     @Override
                     protected void afterRead(int n) throws IOException {
                         try {

@@ -2,6 +2,7 @@ package org.janelia.filecacheutils;
 
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 import com.google.common.cache.CacheLoader;
 
@@ -9,10 +10,12 @@ public class RemoteFileLoader<K extends FileKey> extends CacheLoader<K, Optional
 
     private final LocalFileCacheStorage localFileCacheStorage;
     private final FileKeyToProxySupplier<K> fileKeyToProxySupplier;
+    private final ExecutorService localFileWriterExecutor;
 
-    RemoteFileLoader(LocalFileCacheStorage localFileCacheStorage, FileKeyToProxySupplier<K> fileKeyToProxySupplier) {
+    RemoteFileLoader(LocalFileCacheStorage localFileCacheStorage, FileKeyToProxySupplier<K> fileKeyToProxySupplier, ExecutorService localFileWriterExecutor) {
         this.localFileCacheStorage = localFileCacheStorage;
         this.fileKeyToProxySupplier = fileKeyToProxySupplier;
+        this.localFileWriterExecutor = localFileWriterExecutor;
     }
 
     @Override
@@ -21,6 +24,6 @@ public class RemoteFileLoader<K extends FileKey> extends CacheLoader<K, Optional
         if (localPath == null) {
             throw new IllegalArgumentException("Local path cannot be retrieved from cachedFileKey " + cachedFileKey);
         }
-        return Optional.of(new CachedFileProxy(localPath, fileKeyToProxySupplier.getProxyFromKey(cachedFileKey), localFileCacheStorage));
+        return Optional.of(new CachedFileProxy(localPath, fileKeyToProxySupplier.getProxyFromKey(cachedFileKey), localFileCacheStorage, localFileWriterExecutor));
     }
 }

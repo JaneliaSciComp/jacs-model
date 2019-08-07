@@ -5,20 +5,21 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Comparator;
 import java.util.NavigableSet;
-import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
-import java.util.stream.Stream;
+
+import com.google.common.base.Preconditions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class represents the storage used for local file caching.
+ */
 public class LocalFileCacheStorage {
     private static final Logger LOG = LoggerFactory.getLogger(LocalFileCacheStorage.class);
 
@@ -37,11 +38,18 @@ public class LocalFileCacheStorage {
     private final Path localFileCacheDir;
     private final NavigableSet<Path> allFilesFromCache;
     private long capacityInKB;
+    private long maxCachedFileSizeInKB;
     private AtomicLong currentSizeInKB;
 
-    public LocalFileCacheStorage(Path localFileCacheDir, long capacityInKB) {
+    /**
+     * @param localFileCacheDir cache directory
+     * @param capacityInKB cache capacity in kiloBytes
+     */
+    LocalFileCacheStorage(Path localFileCacheDir, long capacityInKB, long maxCachedFileSizeInKB) {
+        Preconditions.checkState(Files.exists(localFileCacheDir), "Cache directory " + localFileCacheDir + " must exist");
         this.localFileCacheDir = localFileCacheDir;
         this.capacityInKB = capacityInKB;
+        this.maxCachedFileSizeInKB = maxCachedFileSizeInKB;
         this.currentSizeInKB = new AtomicLong(0);
         this.allFilesFromCache = new ConcurrentSkipListSet<Path>((p1, p2) -> {
             try {
@@ -86,50 +94,6 @@ public class LocalFileCacheStorage {
                 throw new IllegalStateException(e);
             }
         });
-        init();
-    }
-
-    private void init() {
-        try {
-            Files.createDirectories(localFileCacheDir);
-        } catch (IOException e) {
-            LOG.error("Error creating local cache directory: {}", localFileCacheDir, e);
-            throw new IllegalStateException(e);
-        }
-        initializeCachedFiles();
-    }
-
-    private void initializeCachedFiles() {
-        try {
-            Files.walk(localFileCacheDir)
-                    .sorted(Comparator.reverseOrder())
-                    .filter(p -> !p.equals(localFileCacheDir))
-                    .forEach(p -> {
-                        if (Files.isDirectory(p)) {
-                            File f = p.toFile();
-                            File[] dirList = f.listFiles();
-                            if (dirList.length == 0) {
-                                f.delete();
-                            }
-                        } else if (Files.isRegularFile(p)) {
-                            updateCachedFiles(p, getFileSizeInKB(p));
-                        }
-                    });
-        } catch (IOException e) {
-            // log this but don't rethrow it
-            LOG.warn("Error while trying to cleanup cache sub-directories", e);
-        }
-    }
-
-    Stream<Path> walkCachedFiles() {
-        try {
-            return Files.walk(localFileCacheDir)
-                    .filter(fp -> Files.isRegularFile(fp, LinkOption.NOFOLLOW_LINKS))
-                    ;
-        } catch (IOException e) {
-            LOG.warn("Error traversing local cache directory {}", localFileCacheDir, e);
-            throw new IllegalStateException(e);
-        }
     }
 
     public Path getLocalFileCacheDir() {
@@ -148,11 +112,40 @@ public class LocalFileCacheStorage {
         this.capacityInKB = capacityInKB;
     }
 
+    public long getMaxCachedFileSizeInKB() {
+        return maxCachedFileSizeInKB;
+    }
+
+    public void setMaxCachedFileSizeInKB(long maxCachedFileSizeInKB) {
+        this.maxCachedFileSizeInKB = maxCachedFileSizeInKB;
+    }
+
+    public boolean isBytesSizeAcceptable(long sizeInBytes) {
+        if (sizeInBytes <= 0) {
+            return false;
+        } else {
+            if (maxCachedFileSizeInKB <= 0) {
+                return true;
+            } else {
+                long sizeInKB = BYTES_TO_KB.apply(sizeInBytes);
+                return sizeInKB < maxCachedFileSizeInKB && sizeInKB + getCurrentSizeInKB() < capacityInKB;
+            }
+        }
+    }
+
     long getFileSizeInKB(Path fp) {
         if (Files.exists(fp)) {
             return BYTES_TO_KB.apply(fp.toFile().length());
         } else {
             return 0;
+        }
+    }
+
+    int getUsage() {
+        if (capacityInKB == 0) {
+            return 0;
+        } else {
+            return (int) ((currentSizeInKB.doubleValue() / (double) capacityInKB) * 100);
         }
     }
 
@@ -175,7 +168,7 @@ public class LocalFileCacheStorage {
         try {
             Files.walkFileTree(localFileCacheDir, new FileVisitor<Path>() {
                 @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                     return FileVisitResult.CONTINUE;
                 }
 
@@ -186,7 +179,7 @@ public class LocalFileCacheStorage {
                 }
 
                 @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                public FileVisitResult visitFileFailed(Path file, IOException exc) {
                     return FileVisitResult.CONTINUE;
                 }
 

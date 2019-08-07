@@ -6,6 +6,9 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+/**
+ * Proxy for accessing content.
+ */
 public interface FileProxy {
     String getFileId();
 
