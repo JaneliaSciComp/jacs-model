@@ -17,9 +17,10 @@ import org.slf4j.LoggerFactory;
 public class LocalFileCacheStorageBuilder {
     private static final Logger LOG = LoggerFactory.getLogger(LocalFileCacheStorageBuilder.class);
 
+    private Path cacheDir;
     private long capacityInKB;
     private long maxFileSizeInKB;
-    private Path cacheDir;
+    private boolean disabled;
     private ExecutorService executorService;
 
     public LocalFileCacheStorageBuilder withCapacityInKB(long capacityInKB) {
@@ -42,10 +43,16 @@ public class LocalFileCacheStorageBuilder {
         return this;
     }
 
+    public LocalFileCacheStorageBuilder withDisabled(boolean disabled) {
+        this.disabled = disabled;
+        return this;
+    }
+
     public LocalFileCacheStorage build() {
         Preconditions.checkArgument(cacheDir != null, "Cache base directory must be provided");
         prepareCacheDir();
         LocalFileCacheStorage localFileCacheStorage = new LocalFileCacheStorage(cacheDir, capacityInKB, maxFileSizeInKB);
+        localFileCacheStorage.setDisabled(disabled);
         initializeCache(localFileCacheStorage);
         return localFileCacheStorage;
     }
@@ -107,7 +114,7 @@ public class LocalFileCacheStorageBuilder {
                             }
                         });
                 LOG.info("Finished initializing current cache storage which currently is {}% full ({}KB / {}KB)",
-                        localFileCacheStorage.getUsage(), localFileCacheStorage.getCurrentSizeInKB(), localFileCacheStorage.getCapacityInKB());
+                        localFileCacheStorage.getUsageAsPercentage(), localFileCacheStorage.getCurrentSizeInKB(), localFileCacheStorage.getCapacityInKB());
             } catch (Exception e) {
                 // log this but don't rethrow it
                 LOG.warn("Error while trying to calculate current cache storage size", e);

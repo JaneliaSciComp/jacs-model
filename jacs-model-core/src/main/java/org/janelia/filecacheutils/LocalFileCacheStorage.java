@@ -39,6 +39,7 @@ public class LocalFileCacheStorage {
     private long capacityInKB;
     private long maxCachedFileSizeInKB;
     private AtomicLong currentSizeInKB;
+    private boolean disabled;
 
     /**
      * @param localFileCacheDir cache directory
@@ -119,8 +120,16 @@ public class LocalFileCacheStorage {
         this.maxCachedFileSizeInKB = maxCachedFileSizeInKB;
     }
 
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
+    }
+
     public boolean isBytesSizeAcceptable(long sizeInBytes) {
-        if (sizeInBytes <= 0) {
+        if (disabled || sizeInBytes <= 0) {
             return false;
         } else {
             if (maxCachedFileSizeInKB <= 0) {
@@ -132,19 +141,19 @@ public class LocalFileCacheStorage {
         }
     }
 
+    public int getUsageAsPercentage() {
+        if (capacityInKB == 0) {
+            return 0;
+        } else {
+            return (int) ((currentSizeInKB.doubleValue() / (double) capacityInKB) * 100);
+        }
+    }
+
     long getFileSizeInKB(Path fp) {
         if (Files.exists(fp)) {
             return BYTES_TO_KB.apply(fp.toFile().length());
         } else {
             return 0;
-        }
-    }
-
-    int getUsage() {
-        if (capacityInKB == 0) {
-            return 0;
-        } else {
-            return (int) ((currentSizeInKB.doubleValue() / (double) capacityInKB) * 100);
         }
     }
 

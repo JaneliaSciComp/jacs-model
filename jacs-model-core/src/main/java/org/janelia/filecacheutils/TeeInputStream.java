@@ -7,7 +7,14 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,12 +23,16 @@ public class TeeInputStream extends FilterInputStream {
     private static final Logger LOG = LoggerFactory.getLogger(TeeInputStream.class);
 
     private final WritableByteChannel outputChannel;
+    private final Consumer<Void> onCloseHandler;
     private final ExecutorService outputExecutor;
+    private CompletionStage<Void> writeOp;
 
-    TeeInputStream(InputStream in, OutputStream os, ExecutorService outputExecutor) {
+    TeeInputStream(InputStream in, OutputStream os, Consumer<Void> onCloseHandler, ExecutorService outputExecutor) {
         super(in);
         this.outputChannel = Channels.newChannel(os);
+        this.onCloseHandler = onCloseHandler;
         this.outputExecutor = outputExecutor;
+        writeOp = CompletableFuture.completedFuture(null);
     }
 
     @Override
@@ -30,7 +41,7 @@ public class TeeInputStream extends FilterInputStream {
         if (b != -1) {
             writeBuffer(new byte[] {(byte) b}, 0, 1);
         }
-        afterRead(b);
+        executeAfterRead(b);
         return b;
     }
 
@@ -40,7 +51,7 @@ public class TeeInputStream extends FilterInputStream {
         if (n > 0) {
             writeBuffer(buf, 0, n);
         }
-        afterRead(n);
+        executeAfterRead(n);
         return n;
     }
 
@@ -50,11 +61,19 @@ public class TeeInputStream extends FilterInputStream {
         if (n > 0) {
             writeBuffer(buf, off, n);
         }
-        afterRead(n);
+        executeAfterRead(n);
         return n;
     }
 
-    protected void afterRead(int n) throws IOException {
+    private void executeAfterRead(int n) {
+        if (outputExecutor != null) {
+            writeOp = writeOp.thenAcceptAsync((Void) -> afterRead(n), outputExecutor);
+        } else {
+            writeOp = writeOp.thenAccept((Void) -> afterRead(n));
+        }
+    }
+
+    protected void afterRead(int n) {
     }
 
     /**
@@ -70,7 +89,7 @@ public class TeeInputStream extends FilterInputStream {
         ByteBuffer readyToReadFromBuffer = ByteBuffer.allocate(length);
         readyToReadFromBuffer.put(buf, offset, length);
         readyToReadFromBuffer.flip();
-        performOutput(() -> {
+        executeWrite(() -> {
             try {
                 while(readyToReadFromBuffer.hasRemaining()){
                     outputChannel.write(readyToReadFromBuffer);
@@ -82,11 +101,24 @@ public class TeeInputStream extends FilterInputStream {
         });
     }
 
-    private void performOutput(Runnable r) {
+    private void executeWrite(Runnable r) {
         if (outputExecutor != null) {
-            outputExecutor.submit(r);
+            writeOp = writeOp.thenRunAsync(r, outputExecutor);
         } else {
-            r.run();
+            writeOp = writeOp.thenRun(r);
         }
     }
+
+    @Override
+    public void close() throws IOException {
+        super.close();
+        if (onCloseHandler != null) {
+            if (outputExecutor != null) {
+                writeOp.thenAcceptAsync(onCloseHandler, outputExecutor);
+            } else {
+                writeOp.thenAccept(onCloseHandler);
+            }
+        }
+    }
+
 }

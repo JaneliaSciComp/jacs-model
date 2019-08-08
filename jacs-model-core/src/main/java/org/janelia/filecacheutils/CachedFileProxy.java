@@ -109,9 +109,21 @@ public class CachedFileProxy implements FileProxy {
                 makeDownloadDir();
                 Path downloadingLocalFilePath = getDownloadingLocalFilePath();
                 OutputStream downloadingLocalFileStream = new FileOutputStream(downloadingLocalFilePath.toFile());
-                return new TeeInputStream(contentStream, downloadingLocalFileStream, localFileWriterExecutor) {
+                return new TeeInputStream(contentStream,
+                        downloadingLocalFileStream,
+                        (Void) -> {
+                            try {
+                                downloadingLocalFileStream.close();
+                            } catch (Exception e) {
+                                // Instead of ignoring this, it's a warning because on Windows file cannot be moved if it is in use
+                                LOG.warn("Error closing downloading local file {}", downloadingLocalFilePath, e);
+                            }
+                            persistToLocalCache(downloadingLocalFilePath);
+                        },
+                        localFileWriterExecutor) {
+
                     @Override
-                    protected void afterRead(int n) throws IOException {
+                    protected void afterRead(int n) {
                         try {
                             super.afterRead(n);
                         } finally {
@@ -122,57 +134,40 @@ public class CachedFileProxy implements FileProxy {
                                     // Instead of ignoring this, it's a warning because on Windows file cannot be moved if it is in use
                                     LOG.warn("Error closing downloading local file {}", downloadingLocalFilePath, e);
                                 }
-                                persistToLocalCache();
+                                persistToLocalCache(downloadingLocalFilePath);
                             }
                         }
                     }
 
-                    @Override
-                    public void close() throws IOException {
-                        try {
-                            super.close();
-                        } finally {
-                            try {
-                                downloadingLocalFileStream.close();
-                            } catch (Exception e) {
-                                // Instead of ignoring this, it's a warning because on Windows file cannot be moved if it is in use
-                                LOG.warn("Error closing downloading local file {}", downloadingLocalFilePath, e);
-                            }
-                            persistToLocalCache();
-                        }
-                    }
-
-                    private void persistToLocalCache() {
-                        try {
-                            Path localDir = localFilePath.getParent();
-                            if (localDir != null && Files.notExists(localDir)) {
-                                Files.createDirectories(localDir);
-                            }
-                            if (Files.notExists(localFilePath) && Files.exists(downloadingLocalFilePath)) {
-                                long downloadedFileSize = Files.size(downloadingLocalFilePath);
-                                if (downloadedFileSize / 1024 < localFileCacheStorage.getCapacityInKB()) {
-                                    Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-                                }
-                            }
-                        } catch (IOException e) {
-                            LOG.error("Error moving downloaded file {} to local cache file {}", downloadingLocalFilePath, localFilePath, e);
-                        } finally {
-                            try {
-                                Files.deleteIfExists(downloadingLocalFilePath);
-                            } catch (IOException e) {
-                                LOG.debug("Error deleting {}", downloadingLocalFilePath, e);
-                            } finally {
-                                // this is safe to remove because this block should be executed only if no other thread
-                                // was downloading this file at the time of this was requested
-                                DOWNLOADING_FILES.remove(localFilePath.toString());
-                                // update the cache size
-                                localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
-                            }
-                        }
-                    }
                 };
             } catch (IOException e) {
                 throw new IllegalStateException(e);
+            }
+        }
+    }
+
+    private void persistToLocalCache(Path downloadedFilePath) {
+        try {
+            Path localDir = localFilePath.getParent();
+            if (localDir != null && Files.notExists(localDir)) {
+                Files.createDirectories(localDir);
+            }
+            if (Files.notExists(localFilePath) && Files.exists(downloadedFilePath)) {
+                Files.move(downloadedFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            }
+        } catch (IOException e) {
+            LOG.error("Error moving downloaded file {} to local cache file {}", downloadedFilePath, localFilePath, e);
+        } finally {
+            try {
+                Files.deleteIfExists(downloadedFilePath);
+            } catch (IOException e) {
+                LOG.debug("Error deleting {}", downloadedFilePath, e);
+            } finally {
+                // this is safe to remove because this block should be executed only if no other thread
+                // was downloading this file at the time of this was requested
+                DOWNLOADING_FILES.remove(localFilePath.toString());
+                // update the cache size
+                localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
             }
         }
     }
