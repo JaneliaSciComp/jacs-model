@@ -59,12 +59,12 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         Date lastModified;
     }
 
-    final String jadeConnectionURI;
-    final String jadeBaseDataStorageURI;
-    final String renderedVolumePath;
-    final String authToken;
-    final String storageServiceApiKey;
-    final HttpClientProvider httpClientProvider;
+    private final String jadeConnectionURI;
+    private final String jadeBaseDataStorageURI;
+    private final String renderedVolumePath;
+    private final String authToken;
+    private final String storageServiceApiKey;
+    private final Client httpClient;
 
     public JADEBasedRenderedVolumeLocation(String jadeConnectionURI, String jadeBaseDataStorageURI, String renderedVolumePath, String authToken, String storageServiceApiKey, HttpClientProvider httpClientProvider) {
         Preconditions.checkArgument(StringUtils.isNotBlank(jadeConnectionURI));
@@ -73,7 +73,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         this.renderedVolumePath = StringUtils.replace(StringUtils.defaultIfBlank(renderedVolumePath, ""), "\\", "/");
         this.authToken = authToken;
         this.storageServiceApiKey = storageServiceApiKey;
-        this.httpClientProvider = httpClientProvider;
+        this.httpClient = httpClientProvider.getClient();
     }
 
     @Override
@@ -104,7 +104,6 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Override
     public List<URI> listImageUris(int level) {
         try {
-            Client httpClient = getHttpClient();
             int detailLevel = level + 1;
             WebTarget target = httpClient.target(jadeBaseDataStorageURI)
                     .path("list")
@@ -138,7 +137,6 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Override
     public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
         try {
-            Client httpClient = getHttpClient();
             WebTarget target = httpClient.target(jadeBaseDataStorageURI)
                     .path("data_info")
                     .path(renderedVolumePath)
@@ -224,7 +222,6 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     private Optional<StreamableContent> openContentStreamFromRelativePathToVolumeRoot(String contentRelativePath, Multimap<String, String> queryParams) {
         try {
-            Client httpClient = getHttpClient();
             WebTarget target = httpClient.target(jadeBaseDataStorageURI)
                     .path("data_content")
                     .path(renderedVolumePath)
@@ -240,7 +237,6 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     private Optional<StreamableContent> openContentStreamFromAbsolutePath(String contentAbsolutePath, Multimap<String, String> queryParams) {
         try {
-            Client httpClient = getHttpClient();
             WebTarget target = httpClient.target(jadeConnectionURI)
                     .path("agent_storage/storage_path/data_content")
                     .path(contentAbsolutePath.replace('\\', '/'))
@@ -249,15 +245,6 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             return openContentStream(target, queryParams);
         } catch (Exception e) {
             LOG.debug("Error opening the stream from URI {}, path {}, tile path {}", jadeConnectionURI, renderedVolumePath, contentAbsolutePath, e);
-            throw new IllegalStateException(e);
-        }
-    }
-
-    private Client getHttpClient() {
-        try {
-            return httpClientProvider.getClient();
-        } catch (Exception e) {
-            LOG.debug("Error opening an HTTP client for {} ({})", jadeConnectionURI, renderedVolumePath, e);
             throw new IllegalStateException(e);
         }
     }
