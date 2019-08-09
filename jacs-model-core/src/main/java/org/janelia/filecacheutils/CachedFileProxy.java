@@ -109,6 +109,7 @@ public class CachedFileProxy implements FileProxy {
                 makeDownloadDir();
                 Path downloadingLocalFilePath = getDownloadingLocalFilePath();
                 OutputStream downloadingLocalFileStream = new FileOutputStream(downloadingLocalFilePath.toFile());
+                // the method tees the remote stream to a local file image which is being written as the remote stream is being read.
                 return new TeeInputStream(contentStream,
                         downloadingLocalFileStream,
                         (Void) -> {
@@ -167,7 +168,7 @@ public class CachedFileProxy implements FileProxy {
                 // was downloading this file at the time of this was requested
                 DOWNLOADING_FILES.remove(localFilePath.toString());
                 // update the cache size
-                localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
+                localFileCacheStorage.updateCachedFiles(LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
             }
         }
     }
@@ -205,7 +206,7 @@ public class CachedFileProxy implements FileProxy {
                 }
                 try {
                     Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-                    localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
+                    localFileCacheStorage.updateCachedFiles(LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
                 } catch (IOException e) {
                     LOG.error("Error moving downloaded file {} to {}", downloadingLocalFilePath, localFilePath, e);
                     throw new IllegalStateException(e);
@@ -259,7 +260,7 @@ public class CachedFileProxy implements FileProxy {
         } catch (IOException e) {
             LOG.warn("Error deleting temp cached file {}", downloadingLocalFilePath, e);
         }
-        localFileCacheStorage.updateCachedFiles(localFilePath, -LocalFileCacheStorage.BYTES_TO_KB.apply(sizeInBytes));
+        localFileCacheStorage.updateCachedFiles(-LocalFileCacheStorage.BYTES_TO_KB.apply(sizeInBytes));
         return bresult;
     }
 

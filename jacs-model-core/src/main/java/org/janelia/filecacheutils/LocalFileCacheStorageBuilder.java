@@ -106,7 +106,7 @@ public class LocalFileCacheStorageBuilder {
                                             LOG.debug("Could not delete file {}", f);
                                         }
                                     } else {
-                                        localFileCacheStorage.updateCachedFiles(p, localFileCacheStorage.getFileSizeInKB(p));
+                                        localFileCacheStorage.updateCachedFiles(localFileCacheStorage.getFileSizeInKB(p));
                                     }
                                 }
                             } catch (Exception e) {

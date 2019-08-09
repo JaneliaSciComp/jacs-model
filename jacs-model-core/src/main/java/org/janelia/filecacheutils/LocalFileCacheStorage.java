@@ -35,7 +35,6 @@ public class LocalFileCacheStorage {
     };
 
     private final Path localFileCacheDir;
-    private final NavigableSet<Path> allFilesFromCache;
     private long capacityInKB;
     private long maxCachedFileSizeInKB;
     private AtomicLong currentSizeInKB;
@@ -51,49 +50,6 @@ public class LocalFileCacheStorage {
         this.capacityInKB = capacityInKB;
         this.maxCachedFileSizeInKB = maxCachedFileSizeInKB;
         this.currentSizeInKB = new AtomicLong(0);
-        this.allFilesFromCache = new ConcurrentSkipListSet<Path>((p1, p2) -> {
-            try {
-                long s1;
-                long s2;
-                long t1;
-                long t2;
-                if (Files.exists(p1)) {
-                    s1 = Files.size(p1);
-                    t1 = Files.getLastModifiedTime(p1).toMillis();
-                } else {
-                    s1 = 0;
-                    t1 = 0;
-                }
-                if (Files.exists(p2)) {
-                    s2 = Files.size(p2);
-                    t2 = Files.getLastModifiedTime(p2).toMillis();
-                } else {
-                    s2 = 0;
-                    t2 = 0;
-                }
-                if (s1 == 0) {
-                    return -1;
-                } else if (s2 == 0) {
-                    return 1;
-                } else if (s1 == s2) {
-                    // older file before newer one
-                    if (t1 < t2) {
-                        return -1;
-                    } else if (t1 > t2) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                } else if (s1 < s2) {
-                    return 1;
-                } else {
-                    return -1;
-                }
-            } catch (IOException e) {
-                LOG.error("Error comparing the sizes of {} and {}", p1, p2, e);
-                throw new IllegalStateException(e);
-            }
-        });
     }
 
     public Path getLocalFileCacheDir() {
@@ -157,19 +113,11 @@ public class LocalFileCacheStorage {
         }
     }
 
-    void updateCachedFiles(Path file, long size) {
-        Function<Path, Boolean> op;
-        if (size > 0) {
-            op = p -> allFilesFromCache.add(p);
-        } else {
-            op = p -> allFilesFromCache.remove(p);
-        }
-        if (op.apply(file)) {
-            currentSizeInKB.accumulateAndGet(size, (v1, v2) -> {
-                long v = v1 + v2;
-                return v < 0 ? 0 : v;
-            });
-        }
+    void updateCachedFiles(long size) {
+        currentSizeInKB.accumulateAndGet(size, (v1, v2) -> {
+            long v = v1 + v2;
+            return v < 0 ? 0 : v;
+        });
     }
 
     public void clear() {

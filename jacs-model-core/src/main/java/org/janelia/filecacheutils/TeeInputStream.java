@@ -7,25 +7,25 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TeeInputStream extends FilterInputStream {
+class TeeInputStream extends FilterInputStream {
     private static final Logger LOG = LoggerFactory.getLogger(TeeInputStream.class);
 
     private final WritableByteChannel outputChannel;
     private final Consumer<Void> onCloseHandler;
     private final ExecutorService outputExecutor;
     private CompletionStage<Void> writeOp;
+    // InputStream implementation sometime uses read() to implement read(buf)
+    // so we use writingInProgress flag to prevent duplicated bytes written to the output
+    // however this is not thread safe
+    private volatile boolean writingInProgress;
 
     TeeInputStream(InputStream in, OutputStream os, Consumer<Void> onCloseHandler, ExecutorService outputExecutor) {
         super(in);
@@ -33,30 +33,25 @@ public class TeeInputStream extends FilterInputStream {
         this.onCloseHandler = onCloseHandler;
         this.outputExecutor = outputExecutor;
         writeOp = CompletableFuture.completedFuture(null);
+        writingInProgress = false;
     }
 
     @Override
     public int read() throws IOException {
-        int b = this.in.read();
-        if (b != -1) {
-            writeBuffer(new byte[] {(byte) b}, 0, 1);
-        }
-        executeAfterRead(b);
-        return b;
+        return readBytes(new byte[1], 0, 1);
     }
 
     @Override
     public int read(byte[] buf) throws IOException {
-        int n = super.read(buf);
-        if (n > 0) {
-            writeBuffer(buf, 0, n);
-        }
-        executeAfterRead(n);
-        return n;
+        return readBytes(buf, 0, buf.length);
     }
 
     @Override
     public int read(byte[] buf, int off, int len) throws IOException {
+        return readBytes(buf, off, len);
+    }
+
+    private int readBytes(byte[] buf, int off, int len) throws IOException {
         int n = super.read(buf, off, len);
         if (n > 0) {
             writeBuffer(buf, off, n);
@@ -83,6 +78,10 @@ public class TeeInputStream extends FilterInputStream {
      * @param length how many bytes to write
      */
     private void writeBuffer(byte[] buf, int offset, int length) {
+        if (writingInProgress) {
+            return;
+        }
+        writingInProgress = true;
         // this seems costly especially if the buffer is large but because
         // write buffer is an asynchronous operation, simply wrapping it may not be enough
         // so we actually copy the bytes to a new allocated buffer
@@ -99,6 +98,7 @@ public class TeeInputStream extends FilterInputStream {
                 LOG.error("Error writing {} bytes to output", length, e);
             }
         });
+        writingInProgress = false;
     }
 
     private void executeWrite(Runnable r) {
