@@ -232,6 +232,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         return rawImageBytes != null && rawImageBytes.length > 0 ? Optional.of(rawImageBytes) : Optional.empty();
     }
 
+    @Override
     public List<RawImage> loadVolumeRawImageTiles(RenderedVolumeLocation rvl) {
         try {
             RawVolData rawVolData = loadRawVolumeData(rvl);
@@ -275,6 +276,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         }
     }
 
+    @Override
     public RawVolData loadRawVolumeData(RenderedVolumeLocation rvl) {
         return rvl.getTileBaseData()
                 .map(streamableTileBase -> {
