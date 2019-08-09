@@ -48,6 +48,20 @@ public class ImageUtils {
     private static final int DEFAULT_BORDER = 0;
     private static final Logger LOG = LoggerFactory.getLogger(ImageUtils.class);
 
+    private static class TiffROI {
+        SeekableStream tiffStream;
+        int imageWidth;
+        int imageHeight;
+        int numSlices;
+        int bytesPerPixel;
+        int startX;
+        int endX;
+        int startY;
+        int endY;
+        int startZ;
+        int endZ;
+    }
+
     @FunctionalInterface
     private interface DataCopier<B> {
         /**
@@ -121,6 +135,68 @@ public class ImageUtils {
     public static byte[] loadImagePixelBytesFromTiffStream(InputStream inputStream,
                                                            int x0, int y0, int z0,
                                                            int deltax, int deltay, int deltaz) {
+        try {
+            TiffROI tiffROI = getROIFromTiffStream(inputStream, x0, y0, z0, deltax, deltay, deltaz);
+            if (tiffROI == null) {
+                return null;
+            }
+            // allocate the buffer
+            int sliceSize = (tiffROI.endX - tiffROI.startX) * (tiffROI.endY - tiffROI.startY);
+            int totalVoxels = sliceSize * (tiffROI.endZ - tiffROI.startZ);
+            byte[] rgbBuffer = new byte[totalVoxels * tiffROI.bytesPerPixel];
+
+            PixelDataHandlers<?> pixelDataHandlers = createDataHandlers(tiffROI.imageWidth, tiffROI.imageHeight, tiffROI.bytesPerPixel);;
+
+            ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffROI.tiffStream, null);
+            IntStream.range(0, tiffROI.endZ - tiffROI.startZ)
+                    .forEach(sliceIndex -> {
+                        try {
+                            BufferedImage sliceImage = ImageUtils.renderedImageToBufferedImage(
+                                    new NullOpImage(
+                                    decoder.decodeAsRenderedImage(tiffROI.startZ + sliceIndex),
+                                    null,
+                                    null,
+                                    NullOpImage.OP_IO_BOUND),
+                                    0, 0, -1, -1);
+                            transferPixels(sliceImage, tiffROI.startX, tiffROI.startY, tiffROI.endX, tiffROI.endY, rgbBuffer,
+                                    sliceIndex * sliceSize, pixelDataHandlers);
+                        } catch (IOException e) {
+                            LOG.error("Error reading slice {}", sliceIndex, e);
+                            throw new IllegalStateException(e);
+                        }
+                    });
+            return rgbBuffer;
+        } catch (Exception e) {
+            LOG.error("Error reading TIFF image stream", e);
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static long sizeImagePixelBytesFromTiffStream(InputStream inputStream,
+                                                         int x0, int y0, int z0,
+                                                         int deltax, int deltay, int deltaz) {
+        TiffROI tiffROI = getROIFromTiffStream(inputStream, x0, y0, z0, deltax, deltay, deltaz);
+        if (tiffROI == null) {
+            return 0L;
+        } else {
+            try {
+                return (tiffROI.endX - tiffROI.startX) *
+                        (tiffROI.endY - tiffROI.startY) *
+                        (tiffROI.endZ - tiffROI.startZ) *
+                        tiffROI.bytesPerPixel;
+            } finally {
+                try {
+                    tiffROI.tiffStream.close();
+                } catch (IOException ignore) {
+                }
+            }
+        }
+    }
+
+    @Nullable
+    private static TiffROI getROIFromTiffStream(InputStream inputStream,
+                                                int x0, int y0, int z0,
+                                                int deltax, int deltay, int deltaz) {
         SeekableStream tiffStream;
         try {
             if (inputStream == null) {
@@ -170,32 +246,20 @@ public class ImageUtils {
                 return null;
             }
 
-            // allocate the buffer
-            int sliceSize = (endX - startX) * (endY - startY);
-            int totalVoxels = sliceSize * (endZ - startZ);
-            byte[] rgbBuffer = new byte[totalVoxels * bytesPerPixel];
+            TiffROI tiffROI = new TiffROI();
+            tiffROI.tiffStream = tiffStream;
+            tiffROI.imageWidth = imageWidth;
+            tiffROI.imageHeight = imageHeight;
+            tiffROI.numSlices = numSlices;
+            tiffROI.bytesPerPixel = bytesPerPixel;
+            tiffROI.startX = startX;
+            tiffROI.endX = endX;
+            tiffROI.startY = startY;
+            tiffROI.endY = endY;
+            tiffROI.startZ = startZ;
+            tiffROI.endZ = endZ;
 
-            PixelDataHandlers<?> pixelDataHandlers = createDataHandlers(imageWidth, imageHeight, bytesPerPixel);;
-
-            ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
-            IntStream.range(0, endZ - startZ)
-                    .forEach(sliceIndex -> {
-                        try {
-                            BufferedImage sliceImage = ImageUtils.renderedImageToBufferedImage(
-                                    new NullOpImage(
-                                    decoder.decodeAsRenderedImage(startZ + sliceIndex),
-                                    null,
-                                    null,
-                                    NullOpImage.OP_IO_BOUND),
-                                    0, 0, -1, -1);
-                            transferPixels(sliceImage, startX, startY, endX, endY, rgbBuffer,
-                                    sliceIndex * sliceSize, pixelDataHandlers);
-                        } catch (IOException e) {
-                            LOG.error("Error reading slice {}", sliceIndex, e);
-                            throw new IllegalStateException(e);
-                        }
-                    });
-            return rgbBuffer;
+            return tiffROI;
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);
@@ -281,7 +345,31 @@ public class ImageUtils {
         }
     }
 
-    public static RenderedImagesWithStreams mergeImages(Stream<RenderedImagesWithStreamsSupplier> imageSuppliers) {
+    public static long sizeBandMergedTextureBytesFromImageStreams(Stream<NamedSupplier<InputStream>> imageStreamsSuppliers, int pageNumber) {
+        Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = imageStreamsSuppliers
+                .map(isSupplier -> () -> {
+                    LOG.debug("Read image page {} from {}", pageNumber, isSupplier.getName());
+                    RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier.get(), pageNumber);
+                    if (rims == null) {
+                        return Optional.empty();
+                    } else {
+                        return Optional.of(rims);
+                    }
+                });
+        RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
+        RenderedImageWithStream imageResult = mergedImages.combine("bandmerge");
+        if (imageResult == null) {
+            return 0L;
+        } else {
+            try {
+                return ImageUtils.sizeOfRenderedImageAsTextureBytes(imageResult.getRenderedImage());
+            } finally {
+                imageResult.close();
+            }
+        }
+    }
+
+    private static RenderedImagesWithStreams mergeImages(Stream<RenderedImagesWithStreamsSupplier> imageSuppliers) {
         return imageSuppliers
                 .map(rims -> rims.get().orElse(null))
                 .filter(rim -> rim != null)
@@ -290,7 +378,7 @@ public class ImageUtils {
     }
 
     @Nullable
-    public static RenderedImagesWithStreams loadRenderedImageFromTiffStream(InputStream inputStream, int pageNumber) {
+    private static RenderedImagesWithStreams loadRenderedImageFromTiffStream(InputStream inputStream, int pageNumber) {
         SeekableStream tiffStream;
         try {
             if (inputStream == null) {
@@ -501,6 +589,41 @@ public class ImageUtils {
             }
         }
         return dataBytesArray;
+    }
+
+    private static long sizeOfRenderedImageAsTextureBytes(RenderedImage renderedImage) {
+        RenderedImage rgbImage;
+        // If input image uses indexed color table, convert to RGB first.
+        if (renderedImage.getColorModel() instanceof IndexColorModel) {
+            IndexColorModel indexColorModel = (IndexColorModel) renderedImage.getColorModel();
+            rgbImage = indexColorModel.convertToIntDiscrete(renderedImage.getData(), false);
+        } else {
+            rgbImage = renderedImage;
+        }
+        ColorModel colorModel = rgbImage.getColorModel();
+        int mipmapLevel = 0;
+        int usedWidth = rgbImage.getWidth();
+        // pad image to a multiple of 8
+        int width;
+        if ((usedWidth % 8) != 0) {
+            width = usedWidth + 8 - (usedWidth % 8);
+        } else {
+            width = usedWidth;
+        }
+        int height = rgbImage.getHeight();
+        int channelCount = colorModel.getNumComponents();
+        int perChannelBitDepth = colorModel.getPixelSize() / channelCount;
+        int bitDepth;
+        // treat indexed image as rgb
+        if (perChannelBitDepth < 8)
+            bitDepth = 8;
+        else
+            bitDepth = perChannelBitDepth;
+        int pixelByteCount = channelCount * bitDepth / 8;
+        int rowByteCount = pixelByteCount * width;
+        int imageByteCount = height * rowByteCount;
+
+        return (Integer.SIZE / 8) * 8 + (Float.SIZE / 8) + imageByteCount;
     }
 
     private static BufferedImage renderedImageToBufferedImage(RenderedImage img, int x0, int y0, int width, int height) {
