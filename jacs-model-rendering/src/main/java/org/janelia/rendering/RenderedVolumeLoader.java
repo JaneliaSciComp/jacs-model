@@ -3,6 +3,8 @@ package org.janelia.rendering;
 import java.util.List;
 import java.util.Optional;
 
+import org.janelia.rendering.ymlrepr.RawVolData;
+
 public interface RenderedVolumeLoader {
     Optional<RenderedVolumeMetadata> loadVolume(RenderedVolumeLocation rvl);
 
@@ -17,4 +19,6 @@ public interface RenderedVolumeLoader {
                                                        int dimx, int dimy, int dimz);
 
     List<RawImage> loadVolumeRawImageTiles(RenderedVolumeLocation rvl);
+
+    RawVolData loadRawVolumeData(RenderedVolumeLocation rvl);
 }

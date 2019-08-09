@@ -47,7 +47,7 @@ public enum FileType {
     
     // Alignment outputs
     AlignmentVerificationMovie("Alignment Verification Movie", false, false, false),
-    AlignedCondolidatedLabel("Aligned Consolidated Label", false, false, false),
+    AlignedConsolidatedLabel("Aligned Consolidated Label", false, false, false),
     
     // Heatmaps for pattern data
     HeatmapStack("Heatmap Stack", false, true, false),
@@ -68,7 +68,12 @@ public enum FileType {
     CellCountStackMip("Cell Counting Stack MIP", true, false, false),
     CellCountImage("Cell Counting Image", false, true, false),
     CellCountImageMip("Cell Counting Image MIP", true, false, false),
-    
+
+    // Tiled microscope data for MouseLight
+    LargeVolumeOctree("Large Volume Octree", false, false, false),
+    LargeVolumeKTX("Large Volume KTX", false, false, false),
+    TwoPhotonAcquisition("Two Photon Acquisition", false, false, false),
+
     // Legacy files
     Unclassified2d("2D Image", true, false, false),
     Unclassified3d("3D Image", false, true, false),
@@ -98,9 +103,9 @@ public enum FileType {
 
     public static FileType getByLabel(String label) {
         FileType[] values = FileType.values();
-        for (int i=0; i<values.length; i++) {
-            if (values[i].getLabel().equals(label)) {
-                return values[i];
+        for (FileType value : values) {
+            if (value.getLabel().equals(label)) {
+                return value;
             }
         }
         return null;

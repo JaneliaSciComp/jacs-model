@@ -275,7 +275,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         }
     }
 
-    private RawVolData loadRawVolumeData(RenderedVolumeLocation rvl) {
+    public RawVolData loadRawVolumeData(RenderedVolumeLocation rvl) {
         return rvl.getTileBaseData()
                 .map(streamableTileBase -> {
                     try (InputStream tileBaseStream = streamableTileBase.getStream()) {
