@@ -47,7 +47,7 @@ public enum FileType {
     
     // Alignment outputs
     AlignmentVerificationMovie("Alignment Verification Movie", false, false, false),
-    AlignedConsolidatedLabel("Aligned Consolidated Label", false, false, false),
+    AlignedCondolidatedLabel("Aligned Consolidated Label", false, false, false),
     
     // Heatmaps for pattern data
     HeatmapStack("Heatmap Stack", false, true, false),
