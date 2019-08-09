@@ -3,6 +3,7 @@ package org.janelia.rendering;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -136,6 +137,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Nullable
     @Override
     public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
+        long startTime = System.currentTimeMillis();
         try {
             WebTarget target = httpClient.target(jadeBaseDataStorageURI)
                     .path("data_info")
@@ -155,12 +157,15 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         } catch (Exception e) {
             LOG.warn("Error retrieving content info from URI {}, volume path {}, tile path {} returned status {}", jadeBaseDataStorageURI, renderedVolumePath, tileRelativePath, e);
             throw new IllegalStateException(e);
+        } finally {
+            LOG.info("Read tile info for {} in {}", tileRelativePath, Duration.ofMillis(System.currentTimeMillis() - startTime));
         }
     }
 
     @Nullable
     @Override
     public byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
+        long startTime = System.currentTimeMillis();
         Optional<StreamableContent> tileImageContent = openContentStreamFromRelativePathToVolumeRoot(tileRelativePath,
                 ImmutableMultimap.<String, String>builder()
                         .put("filterType", "TIFF_MERGE_BANDS")
@@ -178,6 +183,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                 throw new IllegalStateException(e);
             } finally {
                 closeContentStream(streamableTileImage);
+                LOG.info("Read texture bytes for {}:{} in {}", tileRelativePath, pageNumber, Duration.ofMillis(System.currentTimeMillis() - startTime));
             }
         }).orElse(null);
     }
@@ -216,8 +222,13 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Override
     public Optional<StreamableContent> getContentFromAbsolutePath(String absolutePath) {
-        Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
-        return openContentStreamFromAbsolutePath(absolutePath, ImmutableMultimap.of());
+        long startTime = System.currentTimeMillis();
+        try {
+            Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
+            return openContentStreamFromAbsolutePath(absolutePath, ImmutableMultimap.of());
+        } finally {
+            LOG.info("Read content bytes for {} in {}", absolutePath, Duration.ofMillis(System.currentTimeMillis() - startTime));
+        }
     }
 
     private Optional<StreamableContent> openContentStreamFromRelativePathToVolumeRoot(String contentRelativePath, Multimap<String, String> queryParams) {
