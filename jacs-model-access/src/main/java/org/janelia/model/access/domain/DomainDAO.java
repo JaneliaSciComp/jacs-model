@@ -500,7 +500,7 @@ public class DomainDAO {
             return null;
         }
         String refStr = Reference.createFor(domainObject).toString();
-        Set<Class<? extends DomainObject>> nodeClasses = DomainUtils.getObjectClasses(Node.class); // !!!!1 FIXME
+        Set<Class<? extends DomainObject>> nodeClasses = DomainUtils.getObjectClasses(Node.class);
         return nodeClasses.stream()
                 .filter(nodeClass -> DomainUtils.hasCollectionName(nodeClass))
                 .map(nodeClass -> DomainUtils.getCollectionName(nodeClass))
