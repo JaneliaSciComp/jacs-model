@@ -500,10 +500,12 @@ public class DomainDAO {
             return null;
         }
         String refStr = Reference.createFor(domainObject).toString();
-        Set<Class<? extends DomainObject>> nodeClasses = DomainUtils.getObjectClasses(Node.class);
-        return nodeClasses.stream()
+        Set<String> nodeCollections = DomainUtils.getObjectClasses(Node.class).stream()
                 .filter(nodeClass -> DomainUtils.hasCollectionName(nodeClass))
                 .map(nodeClass -> DomainUtils.getCollectionName(nodeClass))
+                .collect(Collectors.toSet())
+                ;
+        return nodeCollections.stream()
                 .map(collectionName -> getCollectionByName(collectionName))
                 .flatMap(collection -> toList(collection.find("{children:#}", refStr).as(Node.class)).stream())
                 .map(item -> Reference.createFor(item))
@@ -1968,20 +1970,20 @@ public class DomainDAO {
         }
     }
 
-    public void addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean forceChildUpdates) throws Exception {
-        addPermissions(ownerKey, className, id, permissionTemplate, true, forceChildUpdates);
+    public Collection<DomainObject> addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean forceChildUpdates) throws Exception {
+        return addPermissions(ownerKey, className, id, permissionTemplate, true, forceChildUpdates);
     }
 
-    public void addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean allowWriters, boolean forceChildUpdates) throws Exception {
+    public Collection<DomainObject> addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean allowWriters, boolean forceChildUpdates) throws Exception {
         log.debug("addPermissions({}, className={}, id={}, permissionTemplate={}, forceChildUpdates={})", ownerKey, className, id, permissionTemplate, forceChildUpdates);
-        changePermissions(ownerKey, className, Arrays.asList(id), permissionTemplate.getReaders(), permissionTemplate.getWriters(), true, allowWriters, forceChildUpdates, false);
+        return changePermissions(ownerKey, className, Arrays.asList(id), permissionTemplate.getReaders(), permissionTemplate.getWriters(), true, allowWriters, forceChildUpdates, false);
     }
 
-    public void setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception {
-        setPermissions(ownerKey, className, id, grantee, read, write, true, forceChildUpdates);
+    public DomainObject setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception {
+        return setPermissions(ownerKey, className, id, grantee, read, write, true, forceChildUpdates);
     }
 
-    public void setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean allowWriters, boolean forceChildUpdates) throws Exception {
+    public DomainObject setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean allowWriters, boolean forceChildUpdates) throws Exception {
 
         DomainObject targetObject = getDomainObject(ownerKey, className, id);
 
@@ -2025,6 +2027,8 @@ public class DomainDAO {
         if (!readRemove.isEmpty() || !writeRemove.isEmpty()) {
             changePermissions(ownerKey, className, Arrays.asList(id), readRemove, writeRemove, false, allowWriters, forceChildUpdates, true);
         }
+
+        return targetObject;
     }
 
 
@@ -2042,13 +2046,13 @@ public class DomainDAO {
      * @param createSharedDataLinks Create links to the parent objects in the readers' Shared Data directory
      * @throws Exception
      */
-    private void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers,
-                                   boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks) throws Exception {
-        changePermissions(subjectKey, className, ids, readers, writers, grant, allowWriters, forceChildUpdates, createSharedDataLinks, new HashSet<>());
+    private Collection<DomainObject> changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers,
+                                                       boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks) throws Exception {
+        return changePermissions(subjectKey, className, ids, readers, writers, grant, allowWriters, forceChildUpdates, createSharedDataLinks, new HashSet<>());
     }
 
-    private void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers,
-                                   boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks, Set<Long> visited) throws Exception {
+    private Collection<DomainObject> changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers,
+                                                       boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks, Set<Long> visited) throws Exception {
 
         String logIds = DomainUtils.abbr(ids);
         String updateQueryClause = allowWriters ? "writers:{$in:#}" : "ownerKey:#";
@@ -2060,6 +2064,8 @@ public class DomainDAO {
         Object updateQueryParam = allowWriters ? getWriterSet(subjectKey) : subjectKey;
 
         Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(className);
+        List<DomainObject> updatedDomainObjects = new ArrayList<>();
+
         List<Reference> objectRefs = new ArrayList<>();
         for (Long id : ids) {
             objectRefs.add(Reference.createFor(clazz, id));
@@ -2071,7 +2077,7 @@ public class DomainDAO {
             log.debug("revokePermissions({}, {}, ids={}, readers={}, writers={})", subjectKey, collectionName, logIds, readers, writers);
         }
 
-        if (readers.isEmpty() && writers.isEmpty()) return;
+        if (readers.isEmpty() && writers.isEmpty()) return updatedDomainObjects;
 
         MongoCollection collection = getCollectionByName(collectionName);
         WriteResult wr = collection.update("{_id:{$in:#}," + updateQueryClause + "}", ids, updateQueryParam).multi().with(withClause, readers, writers);
@@ -2096,6 +2102,7 @@ public class DomainDAO {
                     if (node == null) {
                         log.warn("Could not find node with id=" + nodeId);
                     } else if (node.hasChildren()) {
+                        updatedDomainObjects.add(node);
                         Multimap<String, Long> groupedIds = HashMultimap.create();
                         for (Reference ref : node.getChildren()) {
                             groupedIds.put(ref.getTargetClassName(), ref.getTargetId());
@@ -2103,7 +2110,7 @@ public class DomainDAO {
 
                         for (String refClassName : groupedIds.keySet()) {
                             Collection<Long> refIds = groupedIds.get(refClassName);
-                            changePermissions(subjectKey, refClassName, refIds, readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
+                            updatedDomainObjects.addAll(changePermissions(subjectKey, refClassName, refIds, readers, writers, grant, forceChildUpdates, allowWriters, false, visited));
                         }
                     }
                 }
@@ -2111,7 +2118,6 @@ public class DomainDAO {
 
             if (ColorDepthSearch.class.isAssignableFrom(clazz)) {
                 for (ColorDepthSearch search : getDomainObjectsAs(objectRefs, ColorDepthSearch.class)) {
-
                     log.trace("Changing permissions on all masks and results associated with {}", search);
 
                     WriteResult wr1 = colorDepthMaskCollection.update("{_id:{$in:#}," + updateQueryClause + "}", search.getMasks(), updateQueryParam).multi().with(withClause, readers, writers);
@@ -2119,15 +2125,16 @@ public class DomainDAO {
 
                     WriteResult wr2 = colorDepthResultCollection.update("{_id:{$in:#}," + updateQueryClause + "}", search.getResults(), updateQueryParam).multi().with(withClause, readers, writers);
                     log.trace("Updated permissions on {} results", wr2.getN());
+                    // FIXME !!!! need to be added to result
                 }
             }
             if (ColorDepthLibrary.class.isAssignableFrom(clazz)) {
                 for (ColorDepthLibrary library : getDomainObjectsAs(objectRefs, ColorDepthLibrary.class)) {
-
                     log.trace("Changing permissions on all images associated with {}", library);
 
                     WriteResult wr1 = colorDepthImageCollection.update("{libraries:#," + updateQueryClause + "}", library.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
                     log.trace("Updated permissions on {} masks", wr1.getN());
+                    // FIXME !!!! need to be added to result
                 }
             }
             else if ("sample".equals(collectionName)) {
@@ -2233,6 +2240,7 @@ public class DomainDAO {
                 }
             }
         }
+        return updatedDomainObjects;
     }
 
     private Filter createDataSetFilter(String subjectKey, DataSet dataSet, String filterName) throws Exception {
