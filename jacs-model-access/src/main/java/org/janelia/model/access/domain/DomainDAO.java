@@ -488,7 +488,7 @@ public class DomainDAO {
     }
 
     /**
-     * Returns any TreeNodes which reference the given object.
+     * Returns any Nodes which reference the given object.
      *
      * @param domainObject
      * @return boolean
