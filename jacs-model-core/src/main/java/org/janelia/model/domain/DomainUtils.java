@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -186,17 +187,29 @@ public class DomainUtils {
     }
 
     public static String getCollectionName(Class<?> objectClass) {
-        if (objectClass==null) return null;
-        MongoMapped mongoMappedAnnotation = null;
+        return getCollectionAnnotation(objectClass)
+                .map(mongoMapped -> mongoMapped.collectionName())
+                .orElseThrow(() -> new IllegalArgumentException("Cannot get MongoDB collection for class hierarchy not marked with @MongoMapped annotation: " + objectClass.getName()))
+                ;
+    }
+
+    public static boolean hasCollectionName(Class<?> objectClass) {
+        return getCollectionAnnotation(objectClass).isPresent();
+
+    }
+
+    private static Optional<MongoMapped> getCollectionAnnotation(Class<?> objectClass) {
+        if (objectClass == null) return Optional.empty();
         Class<?> clazz = objectClass;
-        while (mongoMappedAnnotation==null && clazz!=null) {
-            mongoMappedAnnotation = clazz.getAnnotation(MongoMapped.class);
-            clazz = clazz.getSuperclass();
+        while (clazz != null) {
+            MongoMapped mongoMappedAnnotation = clazz.getAnnotation(MongoMapped.class);
+            if (mongoMappedAnnotation != null) {
+                return Optional.of(mongoMappedAnnotation);
+            } else {
+                clazz = clazz.getSuperclass();
+            }
         }
-        if (mongoMappedAnnotation==null) {
-            throw new IllegalArgumentException("Cannot get MongoDB collection for class hierarchy not marked with @MongoMapped annotation: "+objectClass.getName());
-        }
-        return mongoMappedAnnotation.collectionName();
+        return Optional.empty();
     }
 
     public static Set<String> getCollectionNames() {

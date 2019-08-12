@@ -495,16 +495,14 @@ public class DomainDAO {
      * @throws Exception
      */
     public List<Reference> getAllNodeReferences(DomainObject domainObject) {
-
         log.trace("Checking to see whether  " + domainObject.getId() + " has any parent references");
         if (domainObject == null || domainObject.getId() == null) {
             return null;
         }
-
         String refStr = Reference.createFor(domainObject).toString();
-
-        Set<Class<? extends DomainObject>> nodeClasses = DomainUtils.getObjectClasses(Node.class);
+        Set<Class<? extends DomainObject>> nodeClasses = DomainUtils.getObjectClasses(Node.class); // !!!!1 FIXME
         return nodeClasses.stream()
+                .filter(nodeClass -> DomainUtils.hasCollectionName(nodeClass))
                 .map(nodeClass -> DomainUtils.getCollectionName(nodeClass))
                 .map(collectionName -> getCollectionByName(collectionName))
                 .flatMap(collection -> toList(collection.find("{children:#}", refStr).as(Node.class)).stream())
