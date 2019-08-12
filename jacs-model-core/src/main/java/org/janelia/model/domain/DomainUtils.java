@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
@@ -29,6 +30,7 @@ import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchType;
+import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.security.Subject;
 import org.janelia.model.util.ModelStringUtil;
 import org.janelia.model.util.ReflectionHelper;
@@ -63,6 +65,11 @@ public class DomainUtils {
     private static final Logger log = LoggerFactory.getLogger(DomainUtils.class);
 
     private static final String DOMAIN_OBJECT_PACKAGE_NAME = "org.janelia.model.domain";
+
+    private static final Set<Class<? extends DomainObject>> DOMAIN_TYPE_INTERFACES = ImmutableSet.of(
+            DomainObject.class,
+            Node.class
+    );
 
     /** Bi-directional mapping of collection names to object classes */
     private static final BiMap<String, Class<? extends DomainObject>> typeClasses = HashBiMap.create();
@@ -125,11 +132,15 @@ public class DomainUtils {
                     log.warn("Overridding existing name mapping "+nodeClass.getSimpleName()+" -> "+nodeClass.getName());
                 }
                 simpleToQualifiedNames.put(nodeClass.getSimpleName(), nodeClass.getName());
-                subClasses.put(DomainObject.class, nodeClass);
+
+                DOMAIN_TYPE_INTERFACES.forEach(domainType -> {
+                    if (domainType.isAssignableFrom(nodeClass)) {
+                        subClasses.put(domainType, nodeClass);
+                    }
+                });
 
                 // Find all descendants of this class in the class hierarchy which are not MongoMapped to another collection
                 for(Class<? extends DomainObject> subclass : reflections.getSubTypesOf(nodeClass)) {
-
                     MongoMapped subclassAnnotation = subclass.getAnnotation(MongoMapped.class);
                     if (subclassAnnotation==null) {
                         log.info("  Registering " + subclass.getName() + " as a subtype");

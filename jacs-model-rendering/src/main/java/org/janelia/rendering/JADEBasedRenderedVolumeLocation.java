@@ -3,7 +3,6 @@ package org.janelia.rendering;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -158,7 +157,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             LOG.warn("Error retrieving content info from URI {}, volume path {}, tile path {} returned status {}", jadeBaseDataStorageURI, renderedVolumePath, tileRelativePath, e);
             throw new IllegalStateException(e);
         } finally {
-            LOG.info("Read tile info for {} in {}", tileRelativePath, Duration.ofMillis(System.currentTimeMillis() - startTime));
+            LOG.info("Read tile info for {} in {} ms", tileRelativePath, System.currentTimeMillis() - startTime);
         }
     }
 
@@ -183,7 +182,11 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                 throw new IllegalStateException(e);
             } finally {
                 closeContentStream(streamableTileImage);
-                LOG.info("Read texture bytes for {}:{} in {}", tileRelativePath, pageNumber, Duration.ofMillis(System.currentTimeMillis() - startTime));
+                LOG.info("Read texture bytes for {}[{}]:{} in {} ms",
+                        Paths.get(renderedVolumePath, tileRelativePath),
+                        channelImageNames.stream().reduce((c1, c2) -> c1 + "," + c2).orElse(""),
+                        pageNumber,
+                        System.currentTimeMillis() - startTime);
             }
         }).orElse(null);
     }
@@ -227,7 +230,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
             return openContentStreamFromAbsolutePath(absolutePath, ImmutableMultimap.of());
         } finally {
-            LOG.info("Read content bytes for {} in {}", absolutePath, Duration.ofMillis(System.currentTimeMillis() - startTime));
+            LOG.info("Opened content bytes for streaming of {} in {} ms", absolutePath, System.currentTimeMillis() - startTime);
         }
     }
 
