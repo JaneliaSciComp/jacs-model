@@ -2058,19 +2058,12 @@ public class DomainDAO {
 
         Object updateQueryParam = allowWriters ? getWriterSet(subjectKey) : subjectKey;
 
-        Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(className);
         List<DomainObject> updatedDomainObjects = new ArrayList<>();
 
-        List<Reference> objectRefs = new ArrayList<>();
-        for (Long id : ids) {
-            objectRefs.add(Reference.createFor(clazz, id));
-        }
+        Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(className);
+        List<Reference> objectRefs = ids.stream().map(id -> Reference.createFor(clazz, id)).collect(Collectors.toList());
 
-        if (grant) {
-            log.debug("grantPermissions({}, {}, ids={}, readers={}, writers={})", subjectKey, collectionName, logIds, readers, writers);
-        } else {
-            log.debug("revokePermissions({}, {}, ids={}, readers={}, writers={})", subjectKey, collectionName, logIds, readers, writers);
-        }
+        log.debug("{}({}, {}, ids={}, readers={}, writers={})", grant ? "grantPermissions" : "revokePermissions", subjectKey, collectionName, logIds, readers, writers);
 
         if (readers.isEmpty() && writers.isEmpty()) return updatedDomainObjects;
 
