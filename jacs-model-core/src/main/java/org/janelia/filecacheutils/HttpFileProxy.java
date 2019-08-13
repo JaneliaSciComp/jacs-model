@@ -10,6 +10,9 @@ import java.util.function.Function;
 
 import com.google.common.io.CountingInputStream;
 
+/**
+ * Proxy for accessing content using http.
+ */
 public class HttpFileProxy implements FileProxy {
 
     private final String url;

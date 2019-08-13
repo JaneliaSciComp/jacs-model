@@ -6,6 +6,11 @@ import java.util.concurrent.ExecutorService;
 
 import com.google.common.cache.CacheLoader;
 
+/**
+ * Local file cache loader.
+ *
+ * @param <K> cache entry key
+ */
 public class RemoteFileLoader<K extends FileKey> extends CacheLoader<K, Optional<FileProxy>> {
 
     private final LocalFileCacheStorage localFileCacheStorage;

@@ -14,6 +14,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * LocalFileCacheStorage builder.
+ */
 public class LocalFileCacheStorageBuilder {
     private static final Logger LOG = LoggerFactory.getLogger(LocalFileCacheStorageBuilder.class);
 

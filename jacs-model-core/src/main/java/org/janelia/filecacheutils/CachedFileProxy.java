@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Cached file representation.
+ * Cached file representation - implements a proxy for accessing content from a locally cached file.
  */
 public class CachedFileProxy implements FileProxy {
     private static final Logger LOG = LoggerFactory.getLogger(CachedFileProxy.class);

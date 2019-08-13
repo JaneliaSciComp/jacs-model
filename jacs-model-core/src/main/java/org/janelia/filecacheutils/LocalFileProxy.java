@@ -9,6 +9,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+/**
+ * Proxy for accessing content from locally accessible files.
+ */
 public class LocalFileProxy implements FileProxy {
 
     private final Path localFilePath;
