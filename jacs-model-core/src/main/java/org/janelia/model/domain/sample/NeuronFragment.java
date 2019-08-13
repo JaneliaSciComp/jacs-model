@@ -17,7 +17,6 @@ import org.janelia.model.domain.support.SearchTraversal;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MongoMapped(collectionName="fragment",label="Neuron Fragment")
-//@SearchType(key="fragment",label="Neuron Fragment")
 public class NeuronFragment extends AbstractDomainObject implements HasRelativeFiles {
 
     @SearchTraversal({NeuronFragment.class})

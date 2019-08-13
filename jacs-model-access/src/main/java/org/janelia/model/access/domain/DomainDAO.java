@@ -54,37 +54,33 @@ public class DomainDAO {
 
     private static final Logger log = LoggerFactory.getLogger(DomainDAO.class);
 
-    protected MongoClient m;
-    protected Jongo jongo;
+    private MongoClient m;
+    private Jongo jongo;
 
-    protected String databaseName;
+    private String databaseName;
 
-    protected MongoCollection preferenceCollection;
-    protected MongoCollection alignmentBoardCollection;
-    protected MongoCollection alignmentContextCollection;
-    protected MongoCollection annotationCollection;
-    protected MongoCollection compartmentSetCollection;
-    protected MongoCollection dataSetCollection;
-    protected MongoCollection releaseCollection;
-    protected MongoCollection flyLineCollection;
-    protected MongoCollection fragmentCollection;
-    protected MongoCollection imageCollection;
-    protected MongoCollection ontologyCollection;
-    protected MongoCollection pipelineStatusCollection;
-    protected MongoCollection intakeOrdersCollection;
-    protected MongoCollection sampleCollection;
-    protected MongoCollection sampleLockCollection;
-    protected MongoCollection subjectCollection;
-    protected MongoCollection treeNodeCollection;
-    protected MongoCollection tmSampleCollection;
-    protected MongoCollection tmWorkspaceCollection;
-    protected MongoCollection tmNeuronCollection;
-    protected MongoCollection tmReviewTaskCollection;
-    protected MongoCollection colorDepthMaskCollection;
-    protected MongoCollection colorDepthSearchCollection;
-    protected MongoCollection colorDepthResultCollection;
-    protected MongoCollection colorDepthImageCollection;
-    protected MongoCollection colorDepthLibraryCollection;
+    private MongoCollection preferenceCollection;
+    private MongoCollection annotationCollection;
+    private MongoCollection dataSetCollection;
+    private MongoCollection releaseCollection;
+    private MongoCollection fragmentCollection;
+    private MongoCollection imageCollection;
+    private MongoCollection ontologyCollection;
+    private MongoCollection pipelineStatusCollection;
+    private MongoCollection intakeOrdersCollection;
+    private MongoCollection sampleCollection;
+    private MongoCollection sampleLockCollection;
+    private MongoCollection subjectCollection;
+    private MongoCollection treeNodeCollection;
+    private MongoCollection tmSampleCollection;
+    private MongoCollection tmWorkspaceCollection;
+    private MongoCollection tmNeuronCollection;
+    private MongoCollection tmReviewTaskCollection;
+    private MongoCollection colorDepthMaskCollection;
+    private MongoCollection colorDepthSearchCollection;
+    private MongoCollection colorDepthResultCollection;
+    private MongoCollection colorDepthImageCollection;
+    private MongoCollection colorDepthLibraryCollection;
 
     public DomainDAO(String serverUrl, String databaseName) {
         this(serverUrl, databaseName, null, null);
@@ -123,13 +119,9 @@ public class DomainDAO {
                         .enable(MapperFeature.AUTO_DETECT_GETTERS)
                         .enable(MapperFeature.AUTO_DETECT_SETTERS)
                         .build());
-        this.alignmentBoardCollection = getCollectionByClass(AlignmentBoard.class);
-        this.alignmentContextCollection = getCollectionByClass(AlignmentContext.class);
         this.annotationCollection = getCollectionByClass(Annotation.class);
-        this.compartmentSetCollection = getCollectionByClass(CompartmentSet.class);
         this.dataSetCollection = getCollectionByClass(DataSet.class);
         this.releaseCollection = getCollectionByClass(LineRelease.class);
-        this.flyLineCollection = getCollectionByClass(FlyLine.class);
         this.fragmentCollection = getCollectionByClass(NeuronFragment.class);
         this.imageCollection = getCollectionByClass(Image.class);
         this.ontologyCollection = getCollectionByClass(Ontology.class);
@@ -521,11 +513,9 @@ public class DomainDAO {
      * @throws Exception
      */
     public long getTreeNodeContainerReferenceCount(DomainObject domainObject) throws Exception {
-
         if (domainObject == null || domainObject.getId() == null) {
             throw new IllegalArgumentException("DomainObject and its id must be not-null");
         }
-
 
         String refStr = Reference.createFor(domainObject).toString();
         long count = treeNodeCollection.count("{children:#}", refStr);
@@ -541,7 +531,6 @@ public class DomainDAO {
      * @throws Exception
      */
     public long getTreeNodeContainerReferenceCount(Collection<Reference> references) throws Exception {
-
         List<String> refStrings = new ArrayList<>();
         for (Reference reference : references) {
             refStrings.add(reference.toString());
@@ -1970,11 +1959,11 @@ public class DomainDAO {
         }
     }
 
-    public Collection<DomainObject> addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean forceChildUpdates) throws Exception {
+    public Collection<? extends DomainObject> addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean forceChildUpdates) throws Exception {
         return addPermissions(ownerKey, className, id, permissionTemplate, true, forceChildUpdates);
     }
 
-    public Collection<DomainObject> addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean allowWriters, boolean forceChildUpdates) throws Exception {
+    public Collection<? extends DomainObject> addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean allowWriters, boolean forceChildUpdates) throws Exception {
         log.debug("addPermissions({}, className={}, id={}, permissionTemplate={}, forceChildUpdates={})", ownerKey, className, id, permissionTemplate, forceChildUpdates);
         return changePermissions(ownerKey, className, Arrays.asList(id), permissionTemplate.getReaders(), permissionTemplate.getWriters(), true, allowWriters, forceChildUpdates, false);
     }
@@ -2046,13 +2035,13 @@ public class DomainDAO {
      * @param createSharedDataLinks Create links to the parent objects in the readers' Shared Data directory
      * @throws Exception
      */
-    private Collection<DomainObject> changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers,
-                                                       boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks) throws Exception {
+    private Collection<? extends DomainObject> changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers,
+                                                                 boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks) throws Exception {
         return changePermissions(subjectKey, className, ids, readers, writers, grant, allowWriters, forceChildUpdates, createSharedDataLinks, new HashSet<>());
     }
 
-    private Collection<DomainObject> changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers,
-                                                       boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks, Set<Long> visited) throws Exception {
+    private Collection<? extends DomainObject> changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers,
+                                                                 boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks, Set<Long> visited) throws Exception {
 
         String logIds = DomainUtils.abbr(ids);
         String updateQueryClause = allowWriters ? "writers:{$in:#}" : "ownerKey:#";
@@ -2091,7 +2080,6 @@ public class DomainDAO {
             if (Node.class.isAssignableFrom(clazz)) {
                 log.trace("Changing permissions on all members of the nodes: {}", logIds);
                 for (Long nodeId : ids) {
-
                     if (visited.contains(nodeId)) {
                         log.trace("Already visited folder with id=" + nodeId);
                         continue;
@@ -2115,17 +2103,21 @@ public class DomainDAO {
                     }
                 }
             }
-
             if (ColorDepthSearch.class.isAssignableFrom(clazz)) {
                 for (ColorDepthSearch search : getDomainObjectsAs(objectRefs, ColorDepthSearch.class)) {
                     log.trace("Changing permissions on all masks and results associated with {}", search);
 
                     WriteResult wr1 = colorDepthMaskCollection.update("{_id:{$in:#}," + updateQueryClause + "}", search.getMasks(), updateQueryParam).multi().with(withClause, readers, writers);
                     log.trace("Updated permissions on {} masks", wr1.getN());
+                    // add updated masks to the updates list
+                    colorDepthMaskCollection.find("{_id:{$in:#}," + updateQueryClause + "}", search.getMasks(), updateQueryParam).as(ColorDepthMask.class)
+                            .forEach(updatedDomainObjects::add);
 
                     WriteResult wr2 = colorDepthResultCollection.update("{_id:{$in:#}," + updateQueryClause + "}", search.getResults(), updateQueryParam).multi().with(withClause, readers, writers);
                     log.trace("Updated permissions on {} results", wr2.getN());
-                    // FIXME !!!! need to be added to result
+                    // add updated color depth results to the updates list
+                    colorDepthResultCollection.find("{_id:{$in:#}," + updateQueryClause + "}", search.getResults(), updateQueryParam).as(ColorDepthResult.class)
+                            .forEach(updatedDomainObjects::add);
                 }
             }
             if (ColorDepthLibrary.class.isAssignableFrom(clazz)) {
@@ -2134,69 +2126,71 @@ public class DomainDAO {
 
                     WriteResult wr1 = colorDepthImageCollection.update("{libraries:#," + updateQueryClause + "}", library.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
                     log.trace("Updated permissions on {} masks", wr1.getN());
-                    // FIXME !!!! need to be added to result
+                    // add updated color depth images to the updates list
+                    colorDepthImageCollection.find("{libraries:#," + updateQueryClause + "}", library.getIdentifier(), updateQueryParam).as(ColorDepthImage.class)
+                            .forEach(updatedDomainObjects::add);
                 }
-            }
-            else if ("sample".equals(collectionName)) {
-
+            } else if ("sample".equals(collectionName)) {
                 log.trace("Changing permissions on all fragments and lsms associated with samples: {}", logIds);
 
                 List<String> sampleRefs = DomainUtils.getRefStrings(objectRefs);
 
                 WriteResult wr1 = fragmentCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} fragments", wr1.getN());
+                fragmentCollection.find("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).as(NeuronFragment.class)
+                        .forEach(updatedDomainObjects::add);
 
                 WriteResult wr2 = imageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} lsms", wr2.getN());
-
-            }
-            else if ("fragment".equals(collectionName)) {
-
+                imageCollection.find("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).as(Image.class)
+                        .forEach(updatedDomainObjects::add);
+            } else if ("fragment".equals(collectionName)) {
                 Set<Long> sampleIds = new HashSet<>();
                 for (NeuronFragment fragment : getDomainObjectsAs(subjectKey, objectRefs, NeuronFragment.class)) {
                     sampleIds.add(fragment.getSample().getTargetId());
                 }
-
                 log.trace("Changing permissions on {} samples associated with fragments: {}", sampleIds.size(), logIds);
-                changePermissions(subjectKey, Sample.class.getName(), sampleIds, readers, writers, grant, allowWriters, forceChildUpdates, false);
-            }
-            else if ("dataSet".equals(collectionName)) {
+                updatedDomainObjects.addAll(changePermissions(subjectKey, Sample.class.getName(), sampleIds, readers, writers, grant, allowWriters, forceChildUpdates, false));
+            } else if ("dataSet".equals(collectionName)) {
                 log.trace("Changing permissions on all objects in data sets: {}", logIds);
                 for (Long id : ids) {
-
                     // Retrieve the data set in order to find its identifier
                     DataSet dataSet = collection.findOne("{_id:#," + updateQueryClause + "}", id, updateQueryParam).as(DataSet.class);
                     if (dataSet == null) {
                         throw new IllegalArgumentException("Could not find an writeable data set with id=" + id);
                     }
-
                     // Get all sample ids for a given data set
                     List<String> sampleRefs = new ArrayList<>();
                     for (Sample sample : sampleCollection.find("{dataSet:#}", dataSet.getIdentifier()).projection("{class:1,_id:1}").as(Sample.class)) {
                         sampleRefs.add("Sample#" + sample.getId());
                     }
-
                     // This could just call changePermissions recursively, but batching is far more efficient.
                     WriteResult wr1 = sampleCollection.update("{dataSet:#," + updateQueryClause + "}", dataSet.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
                     log.debug("Changed permissions on {} samples", wr1.getN());
+                    sampleCollection.find("{dataSet:#," + updateQueryClause + "}", dataSet.getIdentifier(), updateQueryParam).as(Sample.class)
+                            .forEach(updatedDomainObjects::add);
 
                     WriteResult wr2 = fragmentCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
                     log.debug("Updated permissions on {} fragments", wr2.getN());
+                    fragmentCollection.find("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).as(NeuronFragment.class)
+                            .forEach(updatedDomainObjects::add);
 
                     WriteResult wr3 = imageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
                     log.debug("Updated permissions on {} lsms", wr3.getN());
+                    imageCollection.find("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).as(Image.class)
+                            .forEach(updatedDomainObjects::add);
 
                     // Recurse to change corresponding color depth library, if any
                     ColorDepthLibrary colorDepthLibrary = getColorDepthLibraryByIdentifier(dataSet.getOwnerKey(), dataSet.getIdentifier());
                     if (colorDepthLibrary != null) {
                         log.info("Sharing associated color depth library: {}", colorDepthLibrary);
-                        changePermissions(subjectKey, ColorDepthLibrary.class.getName(), Collections.singletonList(colorDepthLibrary.getId()),
-                                readers, writers, grant, forceChildUpdates, allowWriters, false);
+                        updatedDomainObjects.addAll(
+                                changePermissions(subjectKey,
+                                        ColorDepthLibrary.class.getName(), Collections.singletonList(colorDepthLibrary.getId()),
+                                        readers, writers, grant, forceChildUpdates, allowWriters, false));
                     }
                 }
-            }
-            else if ("tmWorkspace".equals(collectionName)) {
-
+            } else if ("tmWorkspace".equals(collectionName)) {
                 log.trace("Changing permissions on the TmSamples associated with the TmWorkspaces: {}", logIds);
 
                 List<Long> sampleIds = new ArrayList<>();
@@ -2206,11 +2200,20 @@ public class DomainDAO {
 
                 WriteResult wr1 = tmSampleCollection.update("{_id:{$in:#}," + updateQueryClause + "}", sampleIds, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} TmSamples", wr1.getN());
+                tmSampleCollection.find("{_id:{$in:#}," + updateQueryClause + "}", sampleIds, updateQueryParam).as(TmSample.class)
+                        .forEach(updatedDomainObjects::add);
 
                 List<String> workspaceRefs = DomainUtils.getRefStrings(objectRefs);
                 log.trace("Changing permissions on the TmNeurons associated with the TmWorkspaces: {}", workspaceRefs);
                 WriteResult wr2 = tmNeuronCollection.update("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} TmNeurons", wr2.getN());
+                tmNeuronCollection.find("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).as(TmNeuronMetadata.class)
+                        .forEach(updatedDomainObjects::add);
+
+                WriteResult wr3 = tmReviewTaskCollection.update("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
+                log.trace("Updated permissions on {} TmReviewTask", wr3.getN());
+                tmReviewTaskCollection.find("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).as(TmReviewTask.class)
+                        .forEach(updatedDomainObjects::add);
             }
         }
 
