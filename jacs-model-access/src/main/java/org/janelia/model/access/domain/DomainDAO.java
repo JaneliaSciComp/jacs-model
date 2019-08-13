@@ -1949,14 +1949,20 @@ public class DomainDAO {
         return domainObject;
     }
 
-    public <T extends DomainObject> void deleteProperty(String ownerKey, Class<T> clazz, String propName) {
+    public <T extends DomainObject> Collection<? extends DomainObject> deleteProperty(String ownerKey, Class<T> clazz, String propName) {
         String collectionName = DomainUtils.getCollectionName(clazz);
         log.debug("deleteProperty({}, collection={}, name={})", ownerKey, collectionName, propName);
+
+        List<DomainObject> updatedDomainObjects = new ArrayList<>();
         MongoCollection collection = getCollectionByName(collectionName);
         WriteResult wr = collection.update("{ownerKey:#}", ownerKey).with("{$unset: {" + propName + ":\"\"}}");
         if (wr.getN() != 1) {
             log.warn("Could not delete property " + collectionName + "." + propName);
+        } else {
+            collection.find("{ownerKey:#}", ownerKey).as(DomainObject.class)
+                    .forEach(updatedDomainObjects::add);
         }
+        return updatedDomainObjects;
     }
 
     public Collection<? extends DomainObject> addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean forceChildUpdates) throws Exception {
