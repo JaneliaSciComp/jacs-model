@@ -1974,12 +1974,11 @@ public class DomainDAO {
         return changePermissions(ownerKey, className, Arrays.asList(id), permissionTemplate.getReaders(), permissionTemplate.getWriters(), true, allowWriters, forceChildUpdates, false);
     }
 
-    public DomainObject setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception {
+    public Collection<? extends DomainObject> setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception {
         return setPermissions(ownerKey, className, id, grantee, read, write, true, forceChildUpdates);
     }
 
-    public DomainObject setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean allowWriters, boolean forceChildUpdates) throws Exception {
-
+    public Collection<? extends DomainObject> setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean allowWriters, boolean forceChildUpdates) throws Exception {
         DomainObject targetObject = getDomainObject(ownerKey, className, id);
 
         Set<String> readAdd = new HashSet<>();
@@ -2015,15 +2014,15 @@ public class DomainDAO {
             }
         }
 
+        Collection<DomainObject> updatedDomainObjects = new LinkedHashSet<>();
         if (!readAdd.isEmpty() || !writeAdd.isEmpty()) {
-            changePermissions(ownerKey, className, Arrays.asList(id), readAdd, writeAdd, true, allowWriters, forceChildUpdates, true);
+            updatedDomainObjects.addAll(changePermissions(ownerKey, className, Arrays.asList(id), readAdd, writeAdd, true, allowWriters, forceChildUpdates, true));
         }
-
         if (!readRemove.isEmpty() || !writeRemove.isEmpty()) {
-            changePermissions(ownerKey, className, Arrays.asList(id), readRemove, writeRemove, false, allowWriters, forceChildUpdates, true);
+            updatedDomainObjects.addAll(changePermissions(ownerKey, className, Arrays.asList(id), readRemove, writeRemove, false, allowWriters, forceChildUpdates, true));
         }
 
-        return targetObject;
+        return updatedDomainObjects;
     }
 
 
@@ -2058,7 +2057,7 @@ public class DomainDAO {
 
         Object updateQueryParam = allowWriters ? getWriterSet(subjectKey) : subjectKey;
 
-        List<DomainObject> updatedDomainObjects = new ArrayList<>();
+        Collection<DomainObject> updatedDomainObjects = new LinkedHashSet<>();
 
         Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(className);
         List<Reference> objectRefs = ids.stream().map(id -> Reference.createFor(clazz, id)).collect(Collectors.toList());
@@ -2069,6 +2068,8 @@ public class DomainDAO {
 
         MongoCollection collection = getCollectionByName(collectionName);
         WriteResult wr = collection.update("{_id:{$in:#}," + updateQueryClause + "}", ids, updateQueryParam).multi().with(withClause, readers, writers);
+        collection.find("{_id:{$in:#}," + updateQueryClause + "}", ids, updateQueryParam).as(DomainObject.class)
+                .forEach(updatedDomainObjects::add);
 
         log.debug("Changing permissions on {} documents", wr.getN());
 
@@ -2089,7 +2090,6 @@ public class DomainDAO {
                     if (node == null) {
                         log.warn("Could not find node with id=" + nodeId);
                     } else if (node.hasChildren()) {
-                        updatedDomainObjects.add(node);
                         Multimap<String, Long> groupedIds = HashMultimap.create();
                         for (Reference ref : node.getChildren()) {
                             groupedIds.put(ref.getTargetClassName(), ref.getTargetId());
