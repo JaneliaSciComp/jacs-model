@@ -17,6 +17,7 @@ import java.nio.ShortBuffer;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -26,6 +27,7 @@ import javax.annotation.Nullable;
 import javax.media.jai.NullOpImage;
 import javax.media.jai.RenderedImageAdapter;
 
+import com.google.common.base.Stopwatch;
 import com.sun.media.jai.codec.FileSeekableStream;
 import com.sun.media.jai.codec.ImageCodec;
 import com.sun.media.jai.codec.ImageDecoder;
@@ -322,63 +324,79 @@ public class ImageUtils {
     }
 
     public static byte[] bandMergedTextureBytesFromImageStreams(Stream<NamedSupplier<InputStream>> imageStreamsSuppliers, int pageNumber) {
-        Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = imageStreamsSuppliers
-                .map(isSupplier -> () -> {
-                    LOG.debug("Read image page {} from {}", pageNumber, isSupplier.getName());
-                    RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier.get(), pageNumber);
-                    if (rims == null) {
-                        return Optional.empty();
-                    } else {
-                        return Optional.of(rims);
-                    }
-                });
-        RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
-        RenderedImageWithStream imageResult = mergedImages.combine("bandmerge");
-        if (imageResult == null) {
-            return null;
-        } else {
-            try {
-                return ImageUtils.renderedImageToTextureBytes(imageResult.getRenderedImage());
-            } finally {
-                imageResult.close();
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = imageStreamsSuppliers
+                    .map(isSupplier -> () -> {
+                        LOG.debug("Read image page {} from {}", pageNumber, isSupplier.getName());
+                        RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier.get(), pageNumber);
+                        if (rims == null) {
+                            return Optional.empty();
+                        } else {
+                            return Optional.of(rims);
+                        }
+                    });
+            RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
+            RenderedImageWithStream imageResult = mergedImages.combine("bandmerge");
+            if (imageResult == null) {
+                return null;
+            } else {
+                try {
+                    return ImageUtils.renderedImageToTextureBytes(imageResult.getRenderedImage());
+                } finally {
+                    imageResult.close();
+                }
             }
+        } finally {
+            LOG.debug("bandMergedTextureBytesFromImageStreams page {} took {} ms", pageNumber, stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
 
     public static long sizeBandMergedTextureBytesFromImageStreams(Stream<NamedSupplier<InputStream>> imageStreamsSuppliers, int pageNumber) {
-        Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = imageStreamsSuppliers
-                .map(isSupplier -> () -> {
-                    LOG.debug("Read image page {} from {}", pageNumber, isSupplier.getName());
-                    RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier.get(), pageNumber);
-                    if (rims == null) {
-                        return Optional.empty();
-                    } else {
-                        return Optional.of(rims);
-                    }
-                });
-        RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
-        RenderedImageWithStream imageResult = mergedImages.combine("bandmerge");
-        if (imageResult == null) {
-            return 0L;
-        } else {
-            try {
-                return ImageUtils.sizeOfRenderedImageAsTextureBytes(imageResult.getRenderedImage());
-            } finally {
-                imageResult.close();
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = imageStreamsSuppliers
+                    .map(isSupplier -> () -> {
+                        LOG.debug("Read image page {} from {}", pageNumber, isSupplier.getName());
+                        RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier.get(), pageNumber);
+                        if (rims == null) {
+                            return Optional.empty();
+                        } else {
+                            return Optional.of(rims);
+                        }
+                    });
+            RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
+            RenderedImageWithStream imageResult = mergedImages.combine("bandmerge");
+            if (imageResult == null) {
+                return 0L;
+            } else {
+                try {
+                    return ImageUtils.sizeOfRenderedImageAsTextureBytes(imageResult.getRenderedImage());
+                } finally {
+                    imageResult.close();
+                }
             }
+        } finally {
+            LOG.debug("sizeBandMergedTextureBytesFromImageStreams page {} took {} ms", pageNumber, stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
 
     private static RenderedImagesWithStreams mergeImages(Stream<RenderedImagesWithStreamsSupplier> imageSuppliers) {
-        return imageSuppliers
-                .map(rims -> rims.get().orElse(null))
-                .filter(rim -> rim != null)
-                .reduce(RenderedImagesWithStreams.empty(), (r1, r2) -> r1.append(r2))
-                ;
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            return imageSuppliers
+                    .map(rims -> rims.get().orElse(null))
+                    .filter(rim -> rim != null)
+                    .reduce(RenderedImagesWithStreams.empty(), (r1, r2) -> r1.append(r2))
+                    ;
+        } finally {
+            LOG.debug("mergeImages {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        }
     }
 
     @Nullable
     private static RenderedImagesWithStreams loadRenderedImageFromTiffStream(InputStream inputStream, int pageNumber) {
+        Stopwatch stopwatch = Stopwatch.createStarted();
         SeekableStream tiffStream;
         try {
             if (inputStream == null) {
@@ -393,6 +411,8 @@ public class ImageUtils {
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);
+        } finally {
+            LOG.debug("loadRenderedImageFromTiffStream page {} took {} ms", pageNumber, stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
 
@@ -495,100 +515,101 @@ public class ImageUtils {
     }
 
     public static byte[] renderedImageToTextureBytes(RenderedImage renderedImage) {
-        RenderedImage rgbImage;
-        // If input image uses indexed color table, convert to RGB first.
-        if (renderedImage.getColorModel() instanceof IndexColorModel) {
-            IndexColorModel indexColorModel = (IndexColorModel) renderedImage.getColorModel();
-            rgbImage = indexColorModel.convertToIntDiscrete(renderedImage.getData(), false);
-        } else {
-            rgbImage = renderedImage;
-        }
-        ColorModel colorModel = rgbImage.getColorModel();
-        int mipmapLevel = 0;
-        int usedWidth = rgbImage.getWidth();
-        // pad image to a multiple of 8
-        int width;
-        float textureCoordX;
-        if ((usedWidth % 8) != 0) {
-            width = usedWidth + 8 - (usedWidth % 8);
-            textureCoordX = usedWidth / (float)width;
-        } else {
-            width = usedWidth;
-            textureCoordX = 1.0f;
-        }
-        int height = rgbImage.getHeight();
-        int srgb = colorModel.getColorSpace().isCS_sRGB() ? 1 : 0;
-        int channelCount = colorModel.getNumComponents();
-        int perChannelBitDepth = colorModel.getPixelSize() / channelCount;
-        int bitDepth;
-        // treat indexed image as rgb
-        if (perChannelBitDepth < 8)
-            bitDepth = 8;
-        else
-            bitDepth = perChannelBitDepth;
-        int pixelByteCount = channelCount * bitDepth / 8;
-        int rowByteCount = pixelByteCount * width;
-        int imageByteCount = height * rowByteCount;
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            RenderedImage rgbImage;
+            // If input image uses indexed color table, convert to RGB first.
+            if (renderedImage.getColorModel() instanceof IndexColorModel) {
+                IndexColorModel indexColorModel = (IndexColorModel) renderedImage.getColorModel();
+                rgbImage = indexColorModel.convertToIntDiscrete(renderedImage.getData(), false);
+            } else {
+                rgbImage = renderedImage;
+            }
+            ColorModel colorModel = rgbImage.getColorModel();
+            int mipmapLevel = 0;
+            int usedWidth = rgbImage.getWidth();
+            // pad image to a multiple of 8
+            int width;
+            float textureCoordX;
+            if ((usedWidth % 8) != 0) {
+                width = usedWidth + 8 - (usedWidth % 8);
+                textureCoordX = usedWidth / (float) width;
+            } else {
+                width = usedWidth;
+                textureCoordX = 1.0f;
+            }
+            int height = rgbImage.getHeight();
+            int srgb = colorModel.getColorSpace().isCS_sRGB() ? 1 : 0;
+            int channelCount = colorModel.getNumComponents();
+            int perChannelBitDepth = colorModel.getPixelSize() / channelCount;
+            int bitDepth = Math.max(perChannelBitDepth, 8);
+            // treat indexed image as rgb
+            int pixelByteCount = channelCount * bitDepth / 8;
+            int rowByteCount = pixelByteCount * width;
+            int imageByteCount = height * rowByteCount;
 
-        int byteBufferSize = (Integer.SIZE / 8) * 8 + (Float.SIZE / 8) + imageByteCount;
-        byte[] dataBytesArray = new byte[byteBufferSize];
-        ByteBuffer dataBytesBuffer = ByteBuffer.wrap(dataBytesArray);
+            int byteBufferSize = (Integer.SIZE / 8) * 8 + (Float.SIZE / 8) + imageByteCount;
+            byte[] dataBytesArray = new byte[byteBufferSize];
+            ByteBuffer dataBytesBuffer = ByteBuffer.wrap(dataBytesArray);
 
-        dataBytesBuffer.putInt(mipmapLevel);
-        dataBytesBuffer.putInt(width);
-        dataBytesBuffer.putInt(usedWidth);
-        dataBytesBuffer.putInt(height);
-        dataBytesBuffer.putInt(DEFAULT_BORDER);
-        dataBytesBuffer.putInt(srgb);
-        dataBytesBuffer.putInt(bitDepth);
-        dataBytesBuffer.putInt(channelCount);
-        dataBytesBuffer.putFloat(textureCoordX);
+            dataBytesBuffer.putInt(mipmapLevel);
+            dataBytesBuffer.putInt(width);
+            dataBytesBuffer.putInt(usedWidth);
+            dataBytesBuffer.putInt(height);
+            dataBytesBuffer.putInt(DEFAULT_BORDER);
+            dataBytesBuffer.putInt(srgb);
+            dataBytesBuffer.putInt(bitDepth);
+            dataBytesBuffer.putInt(channelCount);
+            dataBytesBuffer.putFloat(textureCoordX);
 
-        ByteBuffer pixelsBuffer = ByteBuffer.wrap(dataBytesArray, dataBytesBuffer.position(), dataBytesBuffer.capacity() - dataBytesBuffer.position());
-        pixelsBuffer.order(ByteOrder.nativeOrder());
+            ByteBuffer pixelsBuffer = ByteBuffer.wrap(dataBytesArray, dataBytesBuffer.position(), dataBytesBuffer.capacity() - dataBytesBuffer.position());
+            pixelsBuffer.order(ByteOrder.nativeOrder());
 
-        Raster raster = rgbImage.getData();
+            Raster raster = rgbImage.getData();
 
-        int pixelData[] = new int[channelCount];
-        int padData[] = new int[channelCount]; // color for edge padding
-        final boolean is16Bit = bitDepth == 16;
-        if (is16Bit) {
-            ShortBuffer shortPixelsBuffer = pixelsBuffer.asShortBuffer(); // for 16-bit case
-            for (int y = 0; y < height; y++) {
-                // Choose ragged right edge pad color from right
-                // edge of used portion of scan line.
-                raster.getPixel(usedWidth-1, y, padData);
-                for (int x = 0; x < width; ++x) {
-                    if (x < usedWidth) { // used portion of scan line
-                        raster.getPixel(x, y, pixelData);
-                        for (int i : pixelData) {
-                            shortPixelsBuffer.put((short)i);
+            int pixelData[] = new int[channelCount];
+            int padData[] = new int[channelCount]; // color for edge padding
+            final boolean is16Bit = bitDepth == 16;
+            if (is16Bit) {
+                ShortBuffer shortPixelsBuffer = pixelsBuffer.asShortBuffer(); // for 16-bit case
+                for (int y = 0; y < height; y++) {
+                    // Choose ragged right edge pad color from right
+                    // edge of used portion of scan line.
+                    raster.getPixel(usedWidth - 1, y, padData);
+                    for (int x = 0; x < width; ++x) {
+                        if (x < usedWidth) { // used portion of scan line
+                            raster.getPixel(x, y, pixelData);
+                            for (int i : pixelData) {
+                                shortPixelsBuffer.put((short) i);
+                            }
+                        } else { // (not zero) pad right edge
+                            for (int i : padData) {
+                                shortPixelsBuffer.put((short) i);
+                            }
                         }
-                    } else { // (not zero) pad right edge
-                        for (int i : padData) {
-                            shortPixelsBuffer.put((short)i);
+                    }
+                }
+            } else { // 8-bit
+                for (int y = 0; y < height; ++y) {
+                    raster.getPixel(usedWidth - 1, y, padData);
+                    for (int x = 0; x < width; ++x) {
+                        if (x < usedWidth) {
+                            raster.getPixel(x, y, pixelData);
+                            for (int i : pixelData) {
+                                pixelsBuffer.put((byte) i);
+                            }
+                        } else { // zero pad right edge
+                            for (int i : padData) {
+                                pixelsBuffer.put((byte) i);
+                            }
                         }
                     }
                 }
             }
-        } else { // 8-bit
-            for (int y = 0; y < height; ++y) {
-                raster.getPixel(usedWidth-1, y, padData);
-                for (int x = 0; x < width; ++x) {
-                    if (x < usedWidth) {
-                        raster.getPixel(x, y, pixelData);
-                        for (int i : pixelData) {
-                            pixelsBuffer.put((byte)i);
-                        }
-                    } else { // zero pad right edge
-                        for (int i : padData) {
-                            pixelsBuffer.put((byte)i);
-                        }
-                    }
-                }
-            }
+            return dataBytesArray;
+        } finally {
+            LOG.debug("Render texture bytes took {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
-        return dataBytesArray;
     }
 
     private static long sizeOfRenderedImageAsTextureBytes(RenderedImage renderedImage) {
