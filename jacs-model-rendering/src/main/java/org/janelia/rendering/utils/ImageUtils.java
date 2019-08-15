@@ -1,6 +1,7 @@
 package org.janelia.rendering.utils;
 
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
@@ -26,7 +27,9 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.media.jai.JAI;
 import javax.media.jai.NullOpImage;
+import javax.media.jai.OpImage;
 import javax.media.jai.PlanarImage;
+import javax.media.jai.RasterFactory;
 import javax.media.jai.RenderedImageAdapter;
 
 import com.google.common.base.Stopwatch;
@@ -407,7 +410,11 @@ public class ImageUtils {
             LOG.debug("Load page {} from {}", pageNumber, namedInputStreamSupplier.getName());
             ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
             LOG.debug("Created decoder for page {} from {} after {} ms", pageNumber, namedInputStreamSupplier.getName(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-            RenderedImage renderedImage = PlanarImage.wrapRenderedImage(decoder.decodeAsRenderedImage()); // !!!! FIXME
+            RenderedImage renderedImage = new NullOpImage(
+                    decoder.decodeAsRenderedImage(pageNumber),
+                    null,
+                    null,
+                    OpImage.OP_IO_BOUND);
             return RenderedImagesWithStreams.withImageAndStream(namedInputStreamSupplier.getName(), renderedImage, tiffStream);
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
