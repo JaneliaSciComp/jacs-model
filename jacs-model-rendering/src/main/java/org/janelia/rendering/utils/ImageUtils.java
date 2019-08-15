@@ -24,7 +24,9 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
+import javax.media.jai.JAI;
 import javax.media.jai.NullOpImage;
+import javax.media.jai.PlanarImage;
 import javax.media.jai.RenderedImageAdapter;
 
 import com.google.common.base.Stopwatch;
@@ -271,14 +273,14 @@ public class ImageUtils {
     @Nullable
     public static byte[] loadRenderedImageBytesFromTiffStream(InputStream inputStream, int x0, int y0, int z0, int deltax, int deltay, int deltaz) {
         SeekableStream tiffStream;
+        if (inputStream == null) {
+            return null;
+        } else if (inputStream instanceof SeekableStream) {
+            tiffStream = (SeekableStream) inputStream;
+        } else {
+            tiffStream = new MemoryCacheSeekableStream(inputStream);
+        }
         try {
-            if (inputStream == null) {
-                return null;
-            } else if (inputStream instanceof SeekableStream) {
-                tiffStream = (SeekableStream) inputStream;
-            } else {
-                tiffStream = new MemoryCacheSeekableStream(inputStream);
-            }
             int numSlices = TIFFDirectory.getNumDirectories(tiffStream);
             int startZ;
             int endZ;
@@ -320,6 +322,11 @@ public class ImageUtils {
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);
+        } finally {
+            try {
+                tiffStream.close();
+            } catch (IOException ignore) {
+            }
         }
     }
 
@@ -387,21 +394,20 @@ public class ImageUtils {
     @Nullable
     private static RenderedImagesWithStreams loadRenderedImageFromTiffStream(NamedSupplier<InputStream> namedInputStreamSupplier, int pageNumber) {
         Stopwatch stopwatch = Stopwatch.createStarted();
+        SeekableStream tiffStream;
+        InputStream inputStream = namedInputStreamSupplier.get();
+        if (inputStream == null) {
+            return null;
+        } else if (inputStream instanceof SeekableStream) {
+            tiffStream = (SeekableStream) inputStream;
+        } else {
+            tiffStream = new MemoryCacheSeekableStream(inputStream);
+        }
         try {
             LOG.debug("Load page {} from {}", pageNumber, namedInputStreamSupplier.getName());
-            SeekableStream tiffStream;
-            InputStream inputStream = namedInputStreamSupplier.get();
-            if (inputStream == null) {
-                return null;
-            } else if (inputStream instanceof SeekableStream) {
-                tiffStream = (SeekableStream) inputStream;
-            } else {
-                tiffStream = new MemoryCacheSeekableStream(inputStream);
-            }
             ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
-            LOG.debug("Created decoded for page {} from {} after {} ms", pageNumber, namedInputStreamSupplier.getName(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-            RenderedImage renderedImage = decoder.decodeAsRenderedImage(pageNumber);
-            LOG.debug("Created rendered image for page {} from {} after {} ms", pageNumber, namedInputStreamSupplier.getName(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            LOG.debug("Created decoder for page {} from {} after {} ms", pageNumber, namedInputStreamSupplier.getName(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            RenderedImage renderedImage = PlanarImage.wrapRenderedImage(decoder.decodeAsRenderedImage()); // !!!! FIXME
             return RenderedImagesWithStreams.withImageAndStream(namedInputStreamSupplier.getName(), renderedImage, tiffStream);
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
@@ -617,7 +623,6 @@ public class ImageUtils {
             rgbImage = renderedImage;
         }
         ColorModel colorModel = rgbImage.getColorModel();
-        int mipmapLevel = 0;
         int usedWidth = rgbImage.getWidth();
         // pad image to a multiple of 8
         int width;
@@ -629,12 +634,8 @@ public class ImageUtils {
         int height = rgbImage.getHeight();
         int channelCount = colorModel.getNumComponents();
         int perChannelBitDepth = colorModel.getPixelSize() / channelCount;
-        int bitDepth;
+        int bitDepth = Math.max(perChannelBitDepth, 8);
         // treat indexed image as rgb
-        if (perChannelBitDepth < 8)
-            bitDepth = 8;
-        else
-            bitDepth = perChannelBitDepth;
         int pixelByteCount = channelCount * bitDepth / 8;
         int rowByteCount = pixelByteCount * width;
         int imageByteCount = height * rowByteCount;
