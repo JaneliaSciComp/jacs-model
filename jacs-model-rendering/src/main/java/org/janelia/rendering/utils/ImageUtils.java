@@ -325,71 +325,63 @@ public class ImageUtils {
 
     public static byte[] bandMergedTextureBytesFromImageStreams(Stream<NamedSupplier<InputStream>> imageStreamsSuppliers, int pageNumber) {
         Stopwatch stopwatch = Stopwatch.createStarted();
-        try {
-            Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = imageStreamsSuppliers
-                    .map(isSupplier -> () -> {
-                        RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier, pageNumber);
-                        if (rims == null) {
-                            return Optional.empty();
-                        } else {
-                            return Optional.of(rims);
-                        }
-                    });
-            RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
-            RenderedImageWithStream imageResult = mergedImages.combine("bandmerge");
-            if (imageResult == null) {
-                return null;
-            } else {
-                try {
-                    return ImageUtils.renderedImageToTextureBytes(imageResult.getRenderedImage());
-                } finally {
-                    imageResult.close();
-                }
+        Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = imageStreamsSuppliers
+                .map(isSupplier -> () -> {
+                    RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier, pageNumber);
+                    if (rims == null) {
+                        return Optional.empty();
+                    } else {
+                        return Optional.of(rims);
+                    }
+                });
+        RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
+        RenderedImageWithStream imageResult = mergedImages.combine("bandmerge");
+        if (imageResult == null) {
+            return null;
+        } else {
+            try {
+                return ImageUtils.renderedImageToTextureBytes(imageResult.getRenderedImage());
+            } finally {
+                imageResult.close();
+                LOG.debug("bandMergedTextureBytesFromImageStreams {} page {} for {} took {} ms", mergedImages.getRenderedImageNames(), pageNumber, stopwatch.elapsed(TimeUnit.MILLISECONDS));
             }
-        } finally {
-            LOG.debug("bandMergedTextureBytesFromImageStreams page {} took {} ms", pageNumber, stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
 
     public static long sizeBandMergedTextureBytesFromImageStreams(Stream<NamedSupplier<InputStream>> imageStreamsSuppliers, int pageNumber) {
         Stopwatch stopwatch = Stopwatch.createStarted();
-        try {
-            Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = imageStreamsSuppliers
-                    .map(isSupplier -> () -> {
-                        RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier, pageNumber);
-                        if (rims == null) {
-                            return Optional.empty();
-                        } else {
-                            return Optional.of(rims);
-                        }
-                    });
-            RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
-            RenderedImageWithStream imageResult = mergedImages.combine("bandmerge");
-            if (imageResult == null) {
-                return 0L;
-            } else {
-                try {
-                    return ImageUtils.sizeOfRenderedImageAsTextureBytes(imageResult.getRenderedImage());
-                } finally {
-                    imageResult.close();
-                }
+        Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = imageStreamsSuppliers
+                .map(isSupplier -> () -> {
+                    RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier, pageNumber);
+                    if (rims == null) {
+                        return Optional.empty();
+                    } else {
+                        return Optional.of(rims);
+                    }
+                });
+        RenderedImagesWithStreams mergedImages = ImageUtils.mergeImages(imageSuppliers);
+        RenderedImageWithStream imageResult = mergedImages.combine("bandmerge");
+        if (imageResult == null) {
+            return 0L;
+        } else {
+            try {
+                return ImageUtils.sizeOfRenderedImageAsTextureBytes(imageResult.getRenderedImage());
+            } finally {
+                imageResult.close();
+                LOG.debug("sizeBandMergedTextureBytesFromImageStreams {} page {} for {} took {} ms", mergedImages.getRenderedImageNames(), pageNumber, stopwatch.elapsed(TimeUnit.MILLISECONDS));
             }
-        } finally {
-            LOG.debug("sizeBandMergedTextureBytesFromImageStreams page {} took {} ms", pageNumber, stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
 
     private static RenderedImagesWithStreams mergeImages(Stream<RenderedImagesWithStreamsSupplier> imageSuppliers) {
         Stopwatch stopwatch = Stopwatch.createStarted();
-        try {
-            return imageSuppliers
-                    .map(rims -> rims.get().orElse(null))
-                    .filter(rim -> rim != null)
-                    .reduce(RenderedImagesWithStreams.empty(), (r1, r2) -> r1.append(r2))
-                    ;
-        } finally {
-            LOG.debug("mergeImages {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        }
+        RenderedImagesWithStreams mergedImage = imageSuppliers
+                .map(rims -> rims.get().orElse(null))
+                .filter(rim -> rim != null)
+                .reduce(RenderedImagesWithStreams.empty(), (r1, r2) -> r1.append(r2))
+                ;
+        LOG.debug("mergeImages {} took {} ms", mergedImage.getRenderedImageNames(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        return mergedImage;
     }
 
     @Nullable
@@ -410,7 +402,7 @@ public class ImageUtils {
             LOG.debug("Created decoded for page {} from {} after {} ms", pageNumber, namedInputStreamSupplier.getName(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
             RenderedImage renderedImage = decoder.decodeAsRenderedImage(pageNumber);
             LOG.debug("Created rendered image for page {} from {} after {} ms", pageNumber, namedInputStreamSupplier.getName(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-            return RenderedImagesWithStreams.withImageAndStream(renderedImage, tiffStream);
+            return RenderedImagesWithStreams.withImageAndStream(namedInputStreamSupplier.getName(), renderedImage, tiffStream);
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);

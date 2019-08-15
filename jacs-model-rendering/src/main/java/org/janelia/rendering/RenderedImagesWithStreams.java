@@ -1,16 +1,25 @@
 package org.janelia.rendering;
 
-import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.SequenceInputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import javax.media.jai.JAI;
+import javax.media.jai.ParameterBlockJAI;
+
+import com.google.common.base.Stopwatch;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RenderedImagesWithStreams {
+    private static final Logger LOG = LoggerFactory.getLogger(RenderedImagesWithStreams.class);
+
+    private final List<String> renderedImageNames = new ArrayList<>();
     private final List<RenderedImage> renderedImages = new ArrayList<>();
     private final List<InputStream> renderedImageStreams = new ArrayList<>();
 
@@ -18,15 +27,9 @@ public class RenderedImagesWithStreams {
         return new RenderedImagesWithStreams();
     }
 
-    public static RenderedImagesWithStreams withImageOnly(RenderedImage renderedImage) {
+    public static RenderedImagesWithStreams withImageAndStream(String renderedImageName, RenderedImage renderedImage, InputStream rennderedImageStream) {
         RenderedImagesWithStreams rims = new RenderedImagesWithStreams();
-        rims.addImageAndStream(renderedImage, null);
-        return rims;
-    }
-
-    public static RenderedImagesWithStreams withImageAndStream(RenderedImage renderedImage, InputStream rennderedImageStream) {
-        RenderedImagesWithStreams rims = new RenderedImagesWithStreams();
-        rims.addImageAndStream(renderedImage, rennderedImageStream);
+        rims.addImageAndStream(renderedImageName, renderedImage, rennderedImageStream);
         return rims;
     }
 
@@ -34,6 +37,7 @@ public class RenderedImagesWithStreams {
     }
 
     public RenderedImagesWithStreams append(RenderedImagesWithStreams rims) {
+        this.renderedImageNames.addAll(rims.renderedImageNames);
         this.renderedImages.addAll(rims.renderedImages);
         this.renderedImageStreams.addAll(rims.renderedImageStreams);
         return this;
@@ -51,32 +55,43 @@ public class RenderedImagesWithStreams {
     }
 
     public RenderedImageWithStream combine(String operation) {
-        if (renderedImages.size() == 0) {
-            return null;
-        } else if (renderedImages.size() == 1) {
-            return new RenderedImageWithStream(renderedImages.get(0), renderedImageStreams.get(0));
-        } else {
-            ParameterBlock combinedImages = new ParameterBlockJAI(operation);
-            renderedImages.forEach(rim -> combinedImages.addSource(rim));
-            return new RenderedImageWithStream(
-                    JAI.create(operation, combinedImages, null),
-                    new InputStream() {
-                        @Override
-                        public int read() throws IOException {
-                            throw new UnsupportedOperationException("Read is not supported from a final combined stream which is created only for being able to close all underlying streams");
-                        }
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            if (renderedImages.size() == 0) {
+                return null;
+            } else if (renderedImages.size() == 1) {
+                return new RenderedImageWithStream(renderedImages.get(0), renderedImageStreams.get(0));
+            } else {
+                ParameterBlock combinedImages = new ParameterBlockJAI(operation);
+                renderedImages.forEach(rim -> combinedImages.addSource(rim));
+                LOG.debug("Adding all sources {} for {} took {} ms", renderedImageNames, operation, stopwatch.elapsed(TimeUnit.MILLISECONDS));
+                return new RenderedImageWithStream(
+                        JAI.create(operation, combinedImages, null),
+                        new InputStream() {
+                            @Override
+                            public int read() throws IOException {
+                                throw new UnsupportedOperationException("Read is not supported from a final combined stream which is created only for being able to close all underlying streams");
+                            }
 
-                        @Override
-                        public void close() throws IOException {
-                            RenderedImagesWithStreams.this.close();
+                            @Override
+                            public void close() throws IOException {
+                                RenderedImagesWithStreams.this.close();
+                            }
                         }
-                    }
-            );
+                );
+            }
+        } finally {
+            LOG.debug("Combining {} with {} took {} ms", renderedImageNames, operation, stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
 
-    private void addImageAndStream(RenderedImage renderedImage, InputStream renderedImageStream) {
+    public List<String> getRenderedImageNames() {
+        return renderedImageNames;
+    }
+
+    private void addImageAndStream(String renderedImageName, RenderedImage renderedImage, InputStream renderedImageStream) {
         if (renderedImage != null) {
+            renderedImageNames.add(renderedImageName);
             renderedImages.add(renderedImage);
             renderedImageStreams.add(renderedImageStream);
         }
