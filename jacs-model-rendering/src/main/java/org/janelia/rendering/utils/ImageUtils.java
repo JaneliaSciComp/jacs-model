@@ -353,7 +353,7 @@ public class ImageUtils {
                 return ImageUtils.renderedImageToTextureBytes(imageResult.getRenderedImage());
             } finally {
                 imageResult.close();
-                LOG.debug("bandMergedTextureBytesFromImageStreams {} page {} for {} took {} ms", mergedImages.getRenderedImageNames(), pageNumber, stopwatch.elapsed(TimeUnit.MILLISECONDS));
+                LOG.debug("bandMergedTextureBytesFromImageStreams page {} for {} took {} ms", pageNumber, mergedImages.getRenderedImageNames(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
             }
         }
     }
@@ -378,7 +378,7 @@ public class ImageUtils {
                 return ImageUtils.sizeOfRenderedImageAsTextureBytes(imageResult.getRenderedImage());
             } finally {
                 imageResult.close();
-                LOG.debug("sizeBandMergedTextureBytesFromImageStreams {} page {} for {} took {} ms", mergedImages.getRenderedImageNames(), pageNumber, stopwatch.elapsed(TimeUnit.MILLISECONDS));
+                LOG.debug("sizeBandMergedTextureBytesFromImageStreams page {} for {} took {} ms", pageNumber, mergedImages.getRenderedImageNames(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
             }
         }
     }
