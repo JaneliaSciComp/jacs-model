@@ -328,8 +328,7 @@ public class ImageUtils {
         try {
             Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = imageStreamsSuppliers
                     .map(isSupplier -> () -> {
-                        LOG.debug("Read image page {} from {}", pageNumber, isSupplier.getName());
-                        RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier.get(), pageNumber);
+                        RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier, pageNumber);
                         if (rims == null) {
                             return Optional.empty();
                         } else {
@@ -357,8 +356,7 @@ public class ImageUtils {
         try {
             Stream<RenderedImagesWithStreamsSupplier> imageSuppliers = imageStreamsSuppliers
                     .map(isSupplier -> () -> {
-                        LOG.debug("Read image page {} from {}", pageNumber, isSupplier.getName());
-                        RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier.get(), pageNumber);
+                        RenderedImagesWithStreams rims = ImageUtils.loadRenderedImageFromTiffStream(isSupplier, pageNumber);
                         if (rims == null) {
                             return Optional.empty();
                         } else {
@@ -395,10 +393,12 @@ public class ImageUtils {
     }
 
     @Nullable
-    private static RenderedImagesWithStreams loadRenderedImageFromTiffStream(InputStream inputStream, int pageNumber) {
+    private static RenderedImagesWithStreams loadRenderedImageFromTiffStream(NamedSupplier<InputStream> namedInputStreamSupplier, int pageNumber) {
         Stopwatch stopwatch = Stopwatch.createStarted();
-        SeekableStream tiffStream;
         try {
+            LOG.debug("Load page {} from {}", pageNumber, namedInputStreamSupplier.getName());
+            SeekableStream tiffStream;
+            InputStream inputStream = namedInputStreamSupplier.get();
             if (inputStream == null) {
                 return null;
             } else if (inputStream instanceof SeekableStream) {
@@ -407,12 +407,15 @@ public class ImageUtils {
                 tiffStream = new MemoryCacheSeekableStream(inputStream);
             }
             ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
-            return RenderedImagesWithStreams.withImageAndStream(decoder.decodeAsRenderedImage(pageNumber), inputStream);
+            LOG.debug("Created decoded for page {} from {} after {} ms", pageNumber, namedInputStreamSupplier.getName(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            RenderedImage renderedImage = decoder.decodeAsRenderedImage(pageNumber);
+            LOG.debug("Created rendered image for page {} from {} after {} ms", pageNumber, namedInputStreamSupplier.getName(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            return RenderedImagesWithStreams.withImageAndStream(renderedImage, tiffStream);
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);
         } finally {
-            LOG.debug("loadRenderedImageFromTiffStream page {} took {} ms", pageNumber, stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            LOG.debug("Finished loading page {} from {} after {} ms", pageNumber, namedInputStreamSupplier.getName(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
 
