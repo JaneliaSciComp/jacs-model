@@ -312,6 +312,6 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     }
 
     private Client getHttpClient() {
-        return httpClientProvider.getCloseableClient();
+        return httpClientProvider.getClient();
     }
 }

@@ -12,12 +12,20 @@ import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriBuilder;
 
-abstract class AbstractClientDelegate implements Client {
+/**
+ * This implements a REST client delegator.
+ */
+public class ClientDelegate implements Client {
 
     final Client delegate;
 
-    AbstractClientDelegate(Client delegate) {
+    public ClientDelegate(Client delegate) {
         this.delegate = delegate;
+    }
+
+    @Override
+    public void close() {
+        delegate.close();
     }
 
     @Override

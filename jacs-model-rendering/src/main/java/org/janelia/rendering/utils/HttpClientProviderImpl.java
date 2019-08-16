@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -20,17 +19,19 @@ import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJsonProvi
 public class HttpClientProviderImpl implements HttpClientProvider {
 
     @Override
-    public Client getClient() {
+    public ClientDelegate getClient() {
         SSLContext sslContext = createSSLContext();
         JacksonJsonProvider jacksonProvider = new JacksonJaxbJsonProvider()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        return ClientBuilder.newBuilder()
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .sslContext(sslContext)
-                .hostnameVerifier((s, sslSession) -> true)
-                .register(jacksonProvider)
-                .build();
+        return new ClientDelegate(
+                ClientBuilder.newBuilder()
+                        .connectTimeout(5, TimeUnit.SECONDS)
+                        .sslContext(sslContext)
+                        .hostnameVerifier((s, sslSession) -> true)
+                        .register(jacksonProvider)
+                        .build()
+        );
     }
 
     private static SSLContext createSSLContext() {
