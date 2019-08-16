@@ -9,6 +9,8 @@ import java.awt.image.DataBufferUShort;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
+import java.awt.image.renderable.ParameterBlock;
+import java.awt.image.renderable.RenderableImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +33,7 @@ import javax.media.jai.OpImage;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RasterFactory;
 import javax.media.jai.RenderedImageAdapter;
+import javax.media.jai.RenderedOp;
 
 import com.google.common.base.Stopwatch;
 import com.sun.media.jai.codec.FileSeekableStream;
@@ -39,6 +42,7 @@ import com.sun.media.jai.codec.ImageDecoder;
 import com.sun.media.jai.codec.ImageEncoder;
 import com.sun.media.jai.codec.MemoryCacheSeekableStream;
 import com.sun.media.jai.codec.SeekableStream;
+import com.sun.media.jai.codec.TIFFDecodeParam;
 import com.sun.media.jai.codec.TIFFDirectory;
 import com.sun.media.jai.codec.TIFFEncodeParam;
 import com.sun.media.jai.codecimpl.TIFFImageDecoder;
@@ -410,11 +414,16 @@ public class ImageUtils {
             LOG.debug("Load page {} from {}", pageNumber, namedInputStreamSupplier.getName());
             ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
             LOG.debug("Created decoder for page {} from {} after {} ms", pageNumber, namedInputStreamSupplier.getName(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-            RenderedImage renderedImage = new NullOpImage(
-                    decoder.decodeAsRenderedImage(pageNumber),
-                    null,
-                    null,
-                    OpImage.OP_IO_BOUND);
+            ParameterBlock pb0 = new ParameterBlock();
+            pb0.add(tiffStream);
+            pb0.add(null);
+            pb0.add(pageNumber);
+            RenderedOp renderedImage = JAI.create("tiff", pb0);
+//            RenderedImage renderedImage = new NullOpImage(
+//                    decoder.decodeAsRenderedImage(pageNumber),
+//                    null,
+//                    null,
+//                    OpImage.OP_IO_BOUND);
             return RenderedImagesWithStreams.withImageAndStream(namedInputStreamSupplier.getName(), renderedImage, tiffStream);
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
