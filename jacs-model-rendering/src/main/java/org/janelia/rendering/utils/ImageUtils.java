@@ -412,18 +412,11 @@ public class ImageUtils {
         }
         try {
             LOG.debug("Load page {} from {}", pageNumber, namedInputStreamSupplier.getName());
-            ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
-            LOG.debug("Created decoder for page {} from {} after {} ms", pageNumber, namedInputStreamSupplier.getName(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-            ParameterBlock pb0 = new ParameterBlock();
-            pb0.add(tiffStream);
-            pb0.add(null);
-            pb0.add(pageNumber);
-            RenderedOp renderedImage = JAI.create("tiff", pb0);
-//            RenderedImage renderedImage = new NullOpImage(
-//                    decoder.decodeAsRenderedImage(pageNumber),
-//                    null,
-//                    null,
-//                    OpImage.OP_IO_BOUND);
+            ParameterBlock decodeTiffPB = new ParameterBlock()
+                    .add(tiffStream)
+                    .add(null)
+                    .add(pageNumber);
+            RenderedOp renderedImage = JAI.create("tiff", decodeTiffPB);
             return RenderedImagesWithStreams.withImageAndStream(namedInputStreamSupplier.getName(), renderedImage, tiffStream);
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
@@ -543,6 +536,8 @@ public class ImageUtils {
                 rgbImage = renderedImage;
             }
             ColorModel colorModel = rgbImage.getColorModel();
+            LOG.debug("renderedImageToTextureBytes.getColorModel after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+
             int mipmapLevel = 0;
             int usedWidth = rgbImage.getWidth();
             // pad image to a multiple of 8
@@ -564,6 +559,7 @@ public class ImageUtils {
             int pixelByteCount = channelCount * bitDepth / 8;
             int rowByteCount = pixelByteCount * width;
             int imageByteCount = height * rowByteCount;
+            LOG.debug("renderedImageToTextureBytes.getImageSize after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
             int byteBufferSize = (Integer.SIZE / 8) * 8 + (Float.SIZE / 8) + imageByteCount;
             byte[] dataBytesArray = new byte[byteBufferSize];
@@ -631,6 +627,7 @@ public class ImageUtils {
 
     private static long sizeOfRenderedImageAsTextureBytes(RenderedImage renderedImage) {
         RenderedImage rgbImage;
+        Stopwatch stopwatch = Stopwatch.createStarted();
         // If input image uses indexed color table, convert to RGB first.
         if (renderedImage.getColorModel() instanceof IndexColorModel) {
             IndexColorModel indexColorModel = (IndexColorModel) renderedImage.getColorModel();
@@ -639,6 +636,8 @@ public class ImageUtils {
             rgbImage = renderedImage;
         }
         ColorModel colorModel = rgbImage.getColorModel();
+        LOG.debug("sizeOfRenderedImageAsTextureBytes.getColorModel after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+
         int usedWidth = rgbImage.getWidth();
         // pad image to a multiple of 8
         int width;
@@ -655,6 +654,7 @@ public class ImageUtils {
         int pixelByteCount = channelCount * bitDepth / 8;
         int rowByteCount = pixelByteCount * width;
         int imageByteCount = height * rowByteCount;
+        LOG.debug("sizeOfRenderedImageAsTextureBytes.getImageSize after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
         return (Integer.SIZE / 8) * 8 + (Float.SIZE / 8) + imageByteCount;
     }
