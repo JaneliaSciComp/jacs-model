@@ -1,25 +1,30 @@
 package org.janelia.rendering.utils;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
-import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJsonProvider;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.concurrent.TimeUnit;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJsonProvider;
 
 public class HttpClientProviderImpl implements HttpClientProvider {
 
+    @Override
     public Client getClient() {
         SSLContext sslContext = createSSLContext();
         JacksonJsonProvider jacksonProvider = new JacksonJaxbJsonProvider()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         return ClientBuilder.newBuilder()
                 .connectTimeout(5, TimeUnit.SECONDS)
                 .sslContext(sslContext)
