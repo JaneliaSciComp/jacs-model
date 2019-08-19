@@ -13,13 +13,13 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriBuilder;
 
 /**
- * This implements a REST client delegator.
+ * This implements a REST client wrapper.
  */
-public class ClientDelegate implements Client {
+public class ClientProxy implements Client {
 
     final Client delegate;
 
-    public ClientDelegate(Client delegate) {
+    public ClientProxy(Client delegate) {
         this.delegate = delegate;
     }
 

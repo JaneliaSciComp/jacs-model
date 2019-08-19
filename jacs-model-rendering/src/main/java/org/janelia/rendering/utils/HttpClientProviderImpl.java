@@ -19,12 +19,12 @@ import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJsonProvi
 public class HttpClientProviderImpl implements HttpClientProvider {
 
     @Override
-    public ClientDelegate getClient() {
+    public ClientProxy getClient() {
         SSLContext sslContext = createSSLContext();
         JacksonJsonProvider jacksonProvider = new JacksonJaxbJsonProvider()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        return new ClientDelegate(
+        return new ClientProxy(
                 ClientBuilder.newBuilder()
                         .connectTimeout(5, TimeUnit.SECONDS)
                         .sslContext(sslContext)

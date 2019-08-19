@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
@@ -25,7 +24,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.rendering.utils.ClientDelegate;
+import org.janelia.rendering.utils.ClientProxy;
 import org.janelia.rendering.utils.HttpClientProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,7 +103,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
 
     @Override
     public List<URI> listImageUris(int level) {
-        ClientDelegate httpClient = getHttpClient();
+        ClientProxy httpClient = getHttpClient();
         try {
             int detailLevel = level + 1;
             WebTarget target = httpClient.target(jadeBaseDataStorageURI)
@@ -141,7 +140,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Override
     public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
         long startTime = System.currentTimeMillis();
-        ClientDelegate httpClient = getHttpClient();
+        ClientProxy httpClient = getHttpClient();
         try {
             WebTarget target = httpClient.target(jadeBaseDataStorageURI)
                     .path("data_info")
@@ -241,7 +240,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     }
 
     private Optional<StreamableContent> openContentStreamFromRelativePathToVolumeRoot(String contentRelativePath, Multimap<String, String> queryParams) {
-        ClientDelegate httpClient = getHttpClient();
+        ClientProxy httpClient = getHttpClient();
         try {
             WebTarget target = httpClient.target(jadeBaseDataStorageURI)
                     .path("data_content")
@@ -259,7 +258,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     }
 
     private Optional<StreamableContent> openContentStreamFromAbsolutePath(String contentAbsolutePath, Multimap<String, String> queryParams) {
-        ClientDelegate httpClient = getHttpClient();
+        ClientProxy httpClient = getHttpClient();
         try {
             WebTarget target = httpClient.target(jadeConnectionURI)
                     .path("agent_storage/storage_path/data_content")
@@ -312,7 +311,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         return requestInvocationBuilder;
     }
 
-    private ClientDelegate getHttpClient() {
+    private ClientProxy getHttpClient() {
         return httpClientProvider.getClient();
     }
 }
