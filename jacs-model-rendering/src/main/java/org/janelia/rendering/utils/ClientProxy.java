@@ -17,15 +17,17 @@ import javax.ws.rs.core.UriBuilder;
  */
 public class ClientProxy implements Client {
 
-    final Client delegate;
+    private final Client delegate;
+    private final boolean closeable;
 
-    public ClientProxy(Client delegate) {
+    public ClientProxy(Client delegate, boolean closeable) {
         this.delegate = delegate;
+        this.closeable = closeable;
     }
 
     @Override
     public void close() {
-        delegate.close();
+        if (closeable) delegate.close();
     }
 
     @Override

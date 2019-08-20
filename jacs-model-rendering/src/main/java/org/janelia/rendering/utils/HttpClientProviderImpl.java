@@ -30,7 +30,8 @@ public class HttpClientProviderImpl implements HttpClientProvider {
                         .sslContext(sslContext)
                         .hostnameVerifier((s, sslSession) -> true)
                         .register(jacksonProvider)
-                        .build()
+                        .build(),
+                true
         );
     }
 
