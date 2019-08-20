@@ -1,7 +1,6 @@
 package org.janelia.rendering.utils;
 
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
@@ -10,7 +9,6 @@ import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
-import java.awt.image.renderable.RenderableImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,9 +27,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.media.jai.JAI;
 import javax.media.jai.NullOpImage;
-import javax.media.jai.OpImage;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.RasterFactory;
 import javax.media.jai.RenderedImageAdapter;
 import javax.media.jai.RenderedOp;
 
@@ -42,7 +37,6 @@ import com.sun.media.jai.codec.ImageDecoder;
 import com.sun.media.jai.codec.ImageEncoder;
 import com.sun.media.jai.codec.MemoryCacheSeekableStream;
 import com.sun.media.jai.codec.SeekableStream;
-import com.sun.media.jai.codec.TIFFDecodeParam;
 import com.sun.media.jai.codec.TIFFDirectory;
 import com.sun.media.jai.codec.TIFFEncodeParam;
 import com.sun.media.jai.codecimpl.TIFFImageDecoder;
@@ -417,7 +411,7 @@ public class ImageUtils {
                     .add(null)
                     .add(pageNumber);
             RenderedOp renderedImage = JAI.create("tiff", decodeTiffPB);
-            return RenderedImagesWithStreams.withImageAndStream(namedInputStreamSupplier.getName(), renderedImage, tiffStream);
+            return RenderedImagesWithStreams.withImageAndStream(namedInputStreamSupplier.getName() + ":" + pageNumber, renderedImage, tiffStream);
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);
@@ -531,7 +525,9 @@ public class ImageUtils {
             // If input image uses indexed color table, convert to RGB first.
             if (renderedImage.getColorModel() instanceof IndexColorModel) {
                 IndexColorModel indexColorModel = (IndexColorModel) renderedImage.getColorModel();
-                rgbImage = indexColorModel.convertToIntDiscrete(renderedImage.getData(), false);
+                Raster renderedImageData = renderedImage.getData();
+                LOG.debug("renderedImageToTextureBytes.getRenderedImageData after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+                rgbImage = indexColorModel.convertToIntDiscrete(renderedImageData, false);
             } else {
                 rgbImage = renderedImage;
             }

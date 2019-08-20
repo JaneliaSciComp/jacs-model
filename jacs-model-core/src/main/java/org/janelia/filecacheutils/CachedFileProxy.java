@@ -140,6 +140,23 @@ public class CachedFileProxy implements FileProxy {
                         }
                     }
 
+                    @Override
+                    protected void handleIOException(IOException e) {
+                        super.handleIOException(e);
+                        // in case of any exception while streaming the file
+                        // remove the local cache image
+                        try {
+                            Files.deleteIfExists(downloadingLocalFilePath);
+                        } catch (Exception deleteExc) {
+                            LOG.debug("Error deleting {}", downloadingLocalFilePath, deleteExc);
+                        }
+                        try {
+                            Files.deleteIfExists(localFilePath);
+                        } catch (Exception deleteExc) {
+                            LOG.debug("Error deleting {}", localFilePath, deleteExc);
+                        }
+                        DOWNLOADING_FILES.remove(localFilePath.toString());
+                    }
                 };
             } catch (IOException e) {
                 throw new IllegalStateException(e);
@@ -168,7 +185,7 @@ public class CachedFileProxy implements FileProxy {
                 // was downloading this file at the time of this was requested
                 DOWNLOADING_FILES.remove(localFilePath.toString());
                 // update the cache size
-                localFileCacheStorage.updateCachedFiles(LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
+                localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
             }
         }
     }
@@ -206,7 +223,7 @@ public class CachedFileProxy implements FileProxy {
                 }
                 try {
                     Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-                    localFileCacheStorage.updateCachedFiles(LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
+                    localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
                 } catch (IOException e) {
                     LOG.error("Error moving downloaded file {} to {}", downloadingLocalFilePath, localFilePath, e);
                     throw new IllegalStateException(e);
@@ -238,7 +255,7 @@ public class CachedFileProxy implements FileProxy {
                 // and I don't think this should be an error
                 Path localCanonicalPath = localFilePath.toRealPath();
                 Path cacheDirCanonicalPath = localFileCacheStorage.getLocalFileCacheDir().toRealPath();
-                if (cacheDirCanonicalPath == null || !localCanonicalPath.toString().startsWith(cacheDirCanonicalPath.toString())) {
+                if (!localCanonicalPath.toString().startsWith(cacheDirCanonicalPath.toString())) {
                     LOG.info("Local file name {}({}) does not appeared to be located inside the cache dir {}({})",
                             localFilePath, localCanonicalPath, localFileCacheStorage.getLocalFileCacheDir(), cacheDirCanonicalPath);
                     return false;
@@ -247,21 +264,18 @@ public class CachedFileProxy implements FileProxy {
         } catch (IOException e) {
             LOG.error("Error getting canonical path(s) for {} and/or {}", localFilePath, localFileCacheStorage.getLocalFileCacheDir(), e);
         }
-        boolean bresult;
-        try {
-            bresult = Files.deleteIfExists(localFilePath);
-        } catch (IOException e) {
-            LOG.warn("Error deleting locally cached file {}", localFilePath, e);
-            bresult = false;
-        }
         Path downloadingLocalFilePath = getDownloadingLocalFilePath();
         try {
-            Files.deleteIfExists(downloadingLocalFilePath);
+            // only really remove it from the cache if the downloading file is still present, because in that case
+            // it is very likely something went wrong during the loading process
+            if (Files.deleteIfExists(downloadingLocalFilePath)) {
+                localFileCacheStorage.updateCachedFiles(localFilePath, -LocalFileCacheStorage.BYTES_TO_KB.apply(sizeInBytes));
+                return true;
+            }
         } catch (IOException e) {
             LOG.warn("Error deleting temp cached file {}", downloadingLocalFilePath, e);
         }
-        localFileCacheStorage.updateCachedFiles(-LocalFileCacheStorage.BYTES_TO_KB.apply(sizeInBytes));
-        return bresult;
+        return false;
     }
 
     private Path getDownloadingLocalDir() {

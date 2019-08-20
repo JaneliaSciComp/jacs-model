@@ -52,7 +52,13 @@ class TeeInputStream extends FilterInputStream {
     }
 
     private int readBytes(byte[] buf, int off, int len) throws IOException {
-        int n = super.read(buf, off, len);
+        int n;
+        try {
+            n = super.read(buf, off, len);
+        } catch (IOException e) {
+            handleIOException(e);
+            throw e;
+        }
         if (n > 0) {
             writeBuffer(buf, off, n);
         }
@@ -66,6 +72,9 @@ class TeeInputStream extends FilterInputStream {
         } else {
             writeOp = writeOp.thenAccept((Void) -> afterRead(n));
         }
+    }
+
+    protected void handleIOException(IOException e) {
     }
 
     protected void afterRead(int n) {
@@ -96,6 +105,7 @@ class TeeInputStream extends FilterInputStream {
                 readyToReadFromBuffer.clear();
             } catch (IOException e) {
                 LOG.error("Error writing {} bytes to output", length, e);
+                handleIOException(e);
             }
         });
         writingInProgress = false;

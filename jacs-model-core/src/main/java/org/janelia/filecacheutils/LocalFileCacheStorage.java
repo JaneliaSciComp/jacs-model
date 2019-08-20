@@ -5,10 +5,16 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.NavigableSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.base.Preconditions;
@@ -20,6 +26,8 @@ import org.slf4j.LoggerFactory;
  * This class represents the storage used for local file caching.
  */
 public class LocalFileCacheStorage {
+    private static final int LOW_WATERMARK = 75;
+    private static final int HIGH_WATERMARK = 90;
     private static final Logger LOG = LoggerFactory.getLogger(LocalFileCacheStorage.class);
 
     static Function<Long, Long> BYTES_TO_KB = (b) -> {
@@ -35,6 +43,7 @@ public class LocalFileCacheStorage {
     };
 
     private final Path localFileCacheDir;
+    private final NavigableSet<Path> cachedFiles;
     private long capacityInKB;
     private long maxCachedFileSizeInKB;
     private AtomicLong currentSizeInKB;
@@ -50,6 +59,33 @@ public class LocalFileCacheStorage {
         this.capacityInKB = capacityInKB;
         this.maxCachedFileSizeInKB = maxCachedFileSizeInKB;
         this.currentSizeInKB = new AtomicLong(0);
+        this.cachedFiles = new ConcurrentSkipListSet<>((p1, p2) -> {
+            try {
+                long t1;
+                long t2;
+                if (Files.exists(p1)) {
+                    t1 = Files.getLastModifiedTime(p1).toMillis();
+                } else {
+                    t1 = 0;
+                }
+                if (Files.exists(p2)) {
+                    t2 = Files.getLastModifiedTime(p2).toMillis();
+                } else {
+                    t2 = 0;
+                }
+                // older file before newer one
+                if (t1 < t2) {
+                    return -1;
+                } else if (t1 > t2) {
+                    return 1;
+                } else {
+                    return p1.compareTo(p2);
+                }
+            } catch (IOException e) {
+                LOG.error("Error comparing {} and {}", p1, p2, e);
+                throw new IllegalStateException(e);
+            }
+        });
     }
 
     public Path getLocalFileCacheDir() {
@@ -113,11 +149,83 @@ public class LocalFileCacheStorage {
         }
     }
 
-    void updateCachedFiles(long size) {
-        currentSizeInKB.accumulateAndGet(size, (v1, v2) -> {
-            long v = v1 + v2;
-            return v < 0 ? 0 : v;
-        });
+    void updateCachedFiles(Path file, long sizeInKB) {
+        Consumer<Path> handler;
+        if (sizeInKB > 0) {
+            // a file is added
+            handler = p -> {
+                // first check if space is available
+                removeUntilSpaceIsAvalable();
+                cacheFile(file, sizeInKB);
+            };
+        } else if (sizeInKB < 0) {
+            // a file is removed
+            handler = p -> {
+                if (deleteCachedFile(p)) {
+                    cachedFiles.remove(p);
+                }
+            };
+        } else {
+            handler = p -> {};
+        }
+        handler.accept(file);
+    }
+
+    void cacheFile(Path file, long sizeInKB) {
+        LOG.trace("Caching {} ({} KB) ({} entries)", file, sizeInKB, size());
+        if (cachedFiles.add(file)) {
+            LOG.debug("Cached {} ({} KB) ({} entries) - usage {}%", file, sizeInKB, size(), getUsageAsPercentage());
+            currentSizeInKB.accumulateAndGet(sizeInKB, (v1, v2) -> {
+                long v = v1 + v2;
+                return v < 0 ? 0 : v;
+            });
+        }
+    }
+
+    private void removeUntilSpaceIsAvalable() {
+        int usage = getUsageAsPercentage();
+        if (usage > HIGH_WATERMARK) {
+            LOG.info("Local cache usage reached the high water mark -> {}", usage);
+            Collection<Path> deletedFiles = new LinkedList<>();
+            for (Path cachedFile : cachedFiles) {
+                if (deleteCachedFile(cachedFile)) {
+                    deletedFiles.add(cachedFile);
+                    int usageAfterRemoval = getUsageAsPercentage();
+                    if (usageAfterRemoval <= LOW_WATERMARK) {
+                        break;
+                    }
+                }
+            }
+            cachedFiles.removeAll(deletedFiles);
+            LOG.info("Local cache storage has {} entries and it is {}% full ({}KB / {}KB)",
+                    size(),
+                    getUsageAsPercentage(),
+                    getCurrentSizeInKB(),
+                    getCapacityInKB());
+        }
+    }
+
+    private boolean deleteCachedFile(Path f) {
+        try {
+            if (Files.exists(f)) {
+                long fSize = Files.size(f);
+                if (Files.deleteIfExists(f)) {
+                    LOG.info("Removed {} from local storage cache", f);
+                    currentSizeInKB.accumulateAndGet(-BYTES_TO_KB.apply(fSize), (v1, v2) -> {
+                        long v = v1 + v2;
+                        return v < 0 ? 0 : v;
+                    });
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            LOG.warn("Error trying to remove {} from local cache", f, e);
+        }
+        return false;
+    }
+
+    int size() {
+        return cachedFiles.size();
     }
 
     public void clear() {

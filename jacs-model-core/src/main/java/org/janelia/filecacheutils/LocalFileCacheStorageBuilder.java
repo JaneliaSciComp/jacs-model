@@ -2,8 +2,11 @@ package org.janelia.filecacheutils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -84,40 +87,40 @@ public class LocalFileCacheStorageBuilder {
         // it performs some clean up for files that have not been touched in the last 24h.
         initializeExecutor.submit(() -> {
             try {
-                Files.walk(localFileCacheStorage.getLocalFileCacheDir())
-                        .sorted(Comparator.reverseOrder())
-                        .filter(p -> !p.equals(localFileCacheStorage.getLocalFileCacheDir()))
-                        .forEach(p -> {
-                            try {
-                                if (Files.isDirectory(p)) {
-                                    File d = p.toFile();
-                                    File[] dirList = d.listFiles();
-                                    if (dirList.length == 0) {
-                                        if (!d.delete()) {
-                                            LOG.debug("Could not delete dir {}", p);
-                                        }
-                                    }
-                                } else if (Files.isRegularFile(p)) {
-                                    // since the cache eviction only applies to files that are present in the in-memory cache
-                                    // and does not do anything about the files that are only on the file system,
-                                    // for now we look at files that have not been touched in the last 24h or
-                                    // at the files that exceed the new max acceptable size for caching
-                                    // and we remove them.
-                                    File f = p.toFile();
-                                    if (f.lastModified() < System.currentTimeMillis() - 24 * 3600 * 1000L || !localFileCacheStorage.isBytesSizeAcceptable(f.length())) {
-                                        if (!f.delete()) {
-                                            LOG.debug("Could not delete file {}", f);
-                                        }
-                                    } else {
-                                        localFileCacheStorage.updateCachedFiles(localFileCacheStorage.getFileSizeInKB(p));
-                                    }
-                                }
-                            } catch (Exception e) {
-                                LOG.error("Error handling {} while calculating cache storage size", p, e);
+                LOG.info("Initialize cache storage at {}", localFileCacheStorage.getLocalFileCacheDir());
+                Files.walkFileTree(localFileCacheStorage.getLocalFileCacheDir(), new FileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        localFileCacheStorage.cacheFile(file, localFileCacheStorage.getFileSizeInKB(file));
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        if (!dir.equals(localFileCacheStorage.getLocalFileCacheDir())) {
+                            File[] dirList = dir.toFile().listFiles();
+                            if (dirList.length == 0) {
+                                Files.delete(dir);
                             }
-                        });
-                LOG.info("Finished initializing current cache storage which currently is {}% full ({}KB / {}KB)",
-                        localFileCacheStorage.getUsageAsPercentage(), localFileCacheStorage.getCurrentSizeInKB(), localFileCacheStorage.getCapacityInKB());
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+                LOG.info("Finished initializing current cache storage with {} entries - it currently is {}% full ({}KB / {}KB)",
+                        localFileCacheStorage.size(),
+                        localFileCacheStorage.getUsageAsPercentage(),
+                        localFileCacheStorage.getCurrentSizeInKB(),
+                        localFileCacheStorage.getCapacityInKB());
             } catch (Exception e) {
                 // log this but don't rethrow it
                 LOG.warn("Error while trying to calculate current cache storage size", e);
