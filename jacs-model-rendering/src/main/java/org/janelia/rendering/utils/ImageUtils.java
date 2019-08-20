@@ -522,18 +522,20 @@ public class ImageUtils {
         Stopwatch stopwatch = Stopwatch.createStarted();
         try {
             RenderedImage rgbImage;
+            ColorModel colorModel;
             // If input image uses indexed color table, convert to RGB first.
             if (renderedImage.getColorModel() instanceof IndexColorModel) {
                 IndexColorModel indexColorModel = (IndexColorModel) renderedImage.getColorModel();
                 Raster renderedImageData = renderedImage.getData();
                 LOG.debug("renderedImageToTextureBytes.getRenderedImageData after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
                 rgbImage = indexColorModel.convertToIntDiscrete(renderedImageData, false);
+                colorModel = rgbImage.getColorModel();
+                LOG.debug("renderedImageToTextureBytes.getColorModel from indexColorModel after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
             } else {
                 rgbImage = renderedImage;
+                colorModel = rgbImage.getColorModel();
+                LOG.debug("renderedImageToTextureBytes.getColorModel from renderedImage after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
             }
-            ColorModel colorModel = rgbImage.getColorModel();
-            LOG.debug("renderedImageToTextureBytes.getColorModel after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
-
             int mipmapLevel = 0;
             int usedWidth = rgbImage.getWidth();
             // pad image to a multiple of 8
@@ -624,16 +626,20 @@ public class ImageUtils {
     private static long sizeOfRenderedImageAsTextureBytes(RenderedImage renderedImage) {
         RenderedImage rgbImage;
         Stopwatch stopwatch = Stopwatch.createStarted();
+        ColorModel colorModel;
         // If input image uses indexed color table, convert to RGB first.
         if (renderedImage.getColorModel() instanceof IndexColorModel) {
             IndexColorModel indexColorModel = (IndexColorModel) renderedImage.getColorModel();
-            rgbImage = indexColorModel.convertToIntDiscrete(renderedImage.getData(), false);
+            Raster renderedImageData = renderedImage.getData();
+            LOG.debug("sizeOfRenderedImageAsTextureBytes.getRenderedImageData after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            rgbImage = indexColorModel.convertToIntDiscrete(renderedImageData, false);
+            colorModel = rgbImage.getColorModel();
+            LOG.debug("sizeOfRenderedImageAsTextureBytes.getColorModel from indexColorModel after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
         } else {
             rgbImage = renderedImage;
+            colorModel = rgbImage.getColorModel();
+            LOG.debug("sizeOfRenderedImageAsTextureBytes.getColorModel from renderedImage after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
-        ColorModel colorModel = rgbImage.getColorModel();
-        LOG.debug("sizeOfRenderedImageAsTextureBytes.getColorModel after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
-
         int usedWidth = rgbImage.getWidth();
         // pad image to a multiple of 8
         int width;
