@@ -1,5 +1,6 @@
 package org.janelia.rendering;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -117,10 +118,9 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                 .orElse(null);
     }
 
-    @Nullable
     @Override
-    public byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
-        return ImageUtils.bandMergedTextureBytesFromImageStreams(
+    public Optional<StreamableContent> readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
+        byte[] imageTextureBytes = ImageUtils.bandMergedTextureBytesFromImageStreams(
                 channelImageNames.stream()
                         .map(channelImageName -> volumeBasePath.resolve(tileRelativePath).resolve(channelImageName))
                         .filter(channelImagePath -> Files.exists(channelImagePath))
@@ -138,13 +138,17 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                         ),
                 pageNumber
         );
+        if (imageTextureBytes == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new StreamableContent(imageTextureBytes.length, new ByteArrayInputStream(imageTextureBytes)));
+        }
     }
 
-    @Nullable
     @Override
-    public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
+    public Optional<StreamableContent> readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
         Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel)));
-        return openContentStream(volumeBasePath.resolve(rawImagePath), ImageUtils.getImagePathHandler())
+        byte[] pixelBytes = openContentStream(volumeBasePath.resolve(rawImagePath), ImageUtils.getImagePathHandler())
                 .map(streamableRawImage -> {
                     try {
                         return ImageUtils.loadImagePixelBytesFromTiffStream(streamableRawImage.getStream(), xCenter, yCenter, zCenter, dimx, dimy, dimz);
@@ -153,6 +157,11 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                     }
                 })
                 .orElse(null);
+        if (pixelBytes == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new StreamableContent(pixelBytes.length, new ByteArrayInputStream(pixelBytes)));
+        }
     }
 
     @Override

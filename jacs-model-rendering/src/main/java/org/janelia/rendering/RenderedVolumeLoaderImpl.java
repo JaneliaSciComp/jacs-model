@@ -62,7 +62,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     @Override
-    public Optional<byte[]> loadSlice(RenderedVolumeLocation rvl, RenderedVolumeMetadata renderedVolumeMetada, TileKey tileKey) {
+    public Optional<StreamableContent> loadSlice(RenderedVolumeLocation rvl, RenderedVolumeMetadata renderedVolumeMetada, TileKey tileKey) {
         return renderedVolumeMetada.getTileInfo(tileKey.getSliceAxis())
                 .flatMap(tileInfo -> renderedVolumeMetada.getRelativeTilePath(tileKey)
                         .flatMap(tileRelativePath -> {
@@ -70,8 +70,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                     .mapToObj(channel -> TileInfo.getImageNameForChannel(tileKey.getSliceAxis(), channel))
                                     .collect(Collectors.toList());
                             LOG.trace("Retrieve imagefiles {} for tile {} from {} and {}", chanelImageNames, tileKey, rvl.getVolumeLocation(), tileRelativePath);
-                            byte[] content = rvl.readTileImagePageAsTexturedBytes(tileRelativePath, chanelImageNames, tileKey.getSliceIndex());
-                            return content != null && content.length > 0 ? Optional.of(content) : Optional.empty();
+                            return rvl.readTileImagePageAsTexturedBytes(tileRelativePath, chanelImageNames, tileKey.getSliceIndex());
                         }))
                 ;
     }
@@ -224,12 +223,11 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     @Override
-    public Optional<byte[]> loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
-                                                              RawImage rawImage,
-                                                              int channel, int xCenter, int yCenter, int zCenter,
-                                                              int dimx, int dimy, int dimz) {
-        byte[] rawImageBytes = rvl.readRawTileROIPixels(rawImage, channel, xCenter, yCenter, zCenter, dimx, dimy, dimz);
-        return rawImageBytes != null && rawImageBytes.length > 0 ? Optional.of(rawImageBytes) : Optional.empty();
+    public Optional<StreamableContent> loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
+                                                                         RawImage rawImage,
+                                                                         int channel, int xCenter, int yCenter, int zCenter,
+                                                                         int dimx, int dimy, int dimz) {
+        return rvl.readRawTileROIPixels(rawImage, channel, xCenter, yCenter, zCenter, dimx, dimy, dimz);
     }
 
     @Override

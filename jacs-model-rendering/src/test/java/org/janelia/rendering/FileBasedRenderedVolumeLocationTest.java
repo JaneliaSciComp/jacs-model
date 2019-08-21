@@ -1,11 +1,5 @@
 package org.janelia.rendering;
 
-import org.janelia.testutils.TestUtils;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -13,6 +7,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+
+import com.google.common.io.ByteStreams;
+
+import org.janelia.testutils.TestUtils;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
@@ -56,7 +58,15 @@ public class FileBasedRenderedVolumeLocationTest {
                 new TestData(Arrays.asList("default.0.tif", "default.1.tif", "default.2.tif"))
         };
         for (TestData td : testData) {
-            byte[] imageBytes = testVolumeLocation.readTileImagePageAsTexturedBytes("", td.imageNames, 10);
+            byte[] imageBytes = testVolumeLocation.readTileImagePageAsTexturedBytes("", td.imageNames, 10)
+                    .map(sc -> {
+                        try {
+                            return ByteStreams.toByteArray(sc.getStream());
+                        } catch (IOException e) {
+                            throw new IllegalStateException(e);
+                        }
+                    })
+                    .orElse(null);
             ByteBuffer byteBuffer = ByteBuffer.wrap(imageBytes);
             int mipmapLevel = byteBuffer.getInt();
             int width = byteBuffer.getInt();

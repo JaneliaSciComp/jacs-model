@@ -61,13 +61,13 @@ public interface RenderedVolumeLocation {
     /**
      * Read tile image as texture bytes.
      */
-    @Nullable byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber);
+    Optional<StreamableContent> readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber);
 
     /**
      * Read ROI from the raw image.
      * @return
      */
-    @Nullable byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz);
+    Optional<StreamableContent> readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz);
 
     /**
      * Read transform.txt

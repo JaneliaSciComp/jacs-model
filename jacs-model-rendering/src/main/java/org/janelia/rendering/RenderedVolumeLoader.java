@@ -8,15 +8,15 @@ import org.janelia.rendering.ymlrepr.RawVolData;
 public interface RenderedVolumeLoader {
     Optional<RenderedVolumeMetadata> loadVolume(RenderedVolumeLocation rvl);
 
-    Optional<byte[]> loadSlice(RenderedVolumeLocation rvl, RenderedVolumeMetadata renderedVolumeMetadata, TileKey tileKey);
+    Optional<StreamableContent> loadSlice(RenderedVolumeLocation rvl, RenderedVolumeMetadata renderedVolumeMetadata, TileKey tileKey);
 
     Optional<RawImage> findClosestRawImageFromVoxelCoord(RenderedVolumeLocation rvl, int xVoxel, int yVoxel, int zVoxel);
 
-    Optional<byte[]> loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
-                                                       RawImage rawImage,
-                                                       int channel,
-                                                       int xVoxel, int yVoxel, int zVoxel,
-                                                       int dimx, int dimy, int dimz);
+    Optional<StreamableContent> loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
+                                                                  RawImage rawImage,
+                                                                  int channel,
+                                                                  int xVoxel, int yVoxel, int zVoxel,
+                                                                  int dimx, int dimy, int dimz);
 
     List<RawImage> loadVolumeRawImageTiles(RenderedVolumeLocation rvl);
 

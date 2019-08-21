@@ -166,41 +166,31 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         }
     }
 
-    @Nullable
     @Override
-    public byte[] readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
+    public Optional<StreamableContent> readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
         long startTime = System.currentTimeMillis();
-        Optional<StreamableContent> tileImageContent = openContentStreamFromRelativePathToVolumeRoot(tileRelativePath,
+        try {
+            return openContentStreamFromRelativePathToVolumeRoot(tileRelativePath,
                 ImmutableMultimap.<String, String>builder()
                         .put("filterType", "TIFF_MERGE_BANDS")
                         .put("z", String.valueOf(pageNumber))
                         .putAll("selectedEntries", channelImageNames.stream().map(Paths::get).map(p -> p.getFileName()).map(p -> p.toString()).collect(Collectors.toList()))
                         .put("entryPattern", "")
                         .put("maxDepth", String.valueOf(1))
-                        .build()
-        );
-        return tileImageContent.map(streamableTileImage -> {
-            try {
-                return ByteStreams.toByteArray(streamableTileImage.getStream());
-            } catch (Exception e) {
-                LOG.error("Error reading {} from {}", channelImageNames, tileRelativePath, e);
-                throw new IllegalStateException(e);
-            } finally {
-                closeContentStream(streamableTileImage);
-                LOG.info("Read texture bytes for {}[{}]:{} in {} ms",
-                        Paths.get(renderedVolumePath, tileRelativePath),
-                        channelImageNames.stream().reduce((c1, c2) -> c1 + "," + c2).orElse(""),
-                        pageNumber,
-                        System.currentTimeMillis() - startTime);
-            }
-        }).orElse(null);
+                        .build());
+        } finally {
+            LOG.info("Opened content for reading texture bytes for {}[{}]:{} in {} ms",
+                    Paths.get(renderedVolumePath, tileRelativePath),
+                    channelImageNames.stream().reduce((c1, c2) -> c1 + "," + c2).orElse(""),
+                    pageNumber,
+                    System.currentTimeMillis() - startTime);
+        }
     }
 
-    @Nullable
     @Override
-    public byte[] readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
+    public Optional<StreamableContent> readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
         String rawImagePath = rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel));
-        Optional<StreamableContent> rawImageContent = openContentStreamFromAbsolutePath(rawImagePath,
+        return openContentStreamFromAbsolutePath(rawImagePath,
                 ImmutableMultimap.<String, String>builder()
                         .put("filterType", "TIFF_ROI_PIXELS")
                         .put("xCenter", String.valueOf(xCenter))
@@ -211,16 +201,6 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                         .put("dimZ", String.valueOf(dimz))
                         .build()
         );
-        return rawImageContent.map(streamableRawImage -> {
-            try {
-                return ByteStreams.toByteArray(streamableRawImage.getStream());
-            } catch (Exception e) {
-                LOG.error("Error reading {} from {}", rawImagePath, rawImage, e);
-                throw new IllegalStateException(e);
-            } finally {
-                closeContentStream(streamableRawImage);
-            }
-        }).orElse(null);
     }
 
     @Override
