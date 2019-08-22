@@ -1,5 +1,6 @@
 package org.janelia.filecacheutils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -182,7 +183,7 @@ public class LocalFileCacheStorage {
         }
     }
 
-    private void removeUntilSpaceIsAvalable() {
+    private synchronized void removeUntilSpaceIsAvalable() {
         int usage = getUsageAsPercentage();
         if (usage > HIGH_WATERMARK) {
             LOG.info("Local cache usage reached the high water mark -> {}", usage);
@@ -205,11 +206,12 @@ public class LocalFileCacheStorage {
         }
     }
 
-    private boolean deleteCachedFile(Path f) {
+    private synchronized boolean deleteCachedFile(Path p) {
         try {
-            if (Files.exists(f)) {
-                long fSize = Files.size(f);
-                if (Files.deleteIfExists(f)) {
+            File f = p.toFile();
+            if (f.exists()) {
+                long fSize = f.length();
+                if (f.delete()) {
                     LOG.info("Removed {} from local storage cache", f);
                     currentSizeInKB.accumulateAndGet(-BYTES_TO_KB.apply(fSize), (v1, v2) -> {
                         long v = v1 + v2;
@@ -218,8 +220,8 @@ public class LocalFileCacheStorage {
                     return true;
                 }
             }
-        } catch (IOException e) {
-            LOG.warn("Error trying to remove {} from local cache", f, e);
+        } catch (Exception e) {
+            LOG.warn("Error trying to remove {} from local cache", p, e);
         }
         return false;
     }
