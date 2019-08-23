@@ -1,5 +1,6 @@
 package org.janelia.rendering;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
@@ -61,25 +62,25 @@ public interface RenderedVolumeLocation {
     /**
      * Read tile image as texture bytes.
      */
-    Optional<StreamableContent> readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber);
+    Streamable<byte[]> readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber);
 
     /**
      * Read ROI from the raw image.
      * @return
      */
-    Optional<StreamableContent> readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz);
+    Streamable<byte[]> readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz);
 
     /**
      * Read transform.txt
 \     */
-    default Optional<StreamableContent> getTransformData() {
+    default Streamable<InputStream> getTransformData() {
         return getContentFromRelativePath(DEFAULT_TRANSFORM_FILE_NAME);
     }
 
     /**
      * Read tilebase.cache.yml
      */
-    default Optional<StreamableContent> getTileBaseData() {
+    default Streamable<InputStream> getTileBaseData() {
         return getContentFromRelativePath(DEFAULT_TILED_VOL_BASE_FILE_NAME);
     }
 
@@ -89,7 +90,7 @@ public interface RenderedVolumeLocation {
      * @param channel
      * @return
      */
-    default Optional<StreamableContent> getRawTileContent(RawImage rawImage, int channel) {
+    default Streamable<InputStream> getRawTileContent(RawImage rawImage, int channel) {
         String rawImagePath = rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel));
         return getContentFromAbsolutePath(rawImagePath);
     }
@@ -99,12 +100,12 @@ public interface RenderedVolumeLocation {
      * @param relativePath
      * @return
      */
-    Optional<StreamableContent> getContentFromRelativePath(String relativePath);
+    Streamable<InputStream> getContentFromRelativePath(String relativePath);
 
     /**
      * Stream content from absolute path.
      * @param absolutePath
      * @return
      */
-    Optional<StreamableContent> getContentFromAbsolutePath(String absolutePath);
+    Streamable<InputStream> getContentFromAbsolutePath(String absolutePath);
 }

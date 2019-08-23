@@ -30,6 +30,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 
 public class CachedFileProxyTest {
@@ -178,8 +179,7 @@ public class CachedFileProxyTest {
         byte[] testContent = new byte[100];
         random.nextBytes(testContent);
 
-        LocalFileCacheStorage testLocalFileCacheStorage = Mockito.mock(LocalFileCacheStorage.class);
-        Mockito.when(testLocalFileCacheStorage.isBytesSizeAcceptable(anyLong())).thenReturn(true);
+        LocalFileCacheStorage testLocalFileCacheStorage = new LocalFileCacheStorage(testCacheRootDir, 100, 50);
 
         cacheContent(testContent, testLocalFileCacheStorage);
         assertTrue(Files.exists(testFilePath));
@@ -198,7 +198,6 @@ public class CachedFileProxyTest {
     }
 
     private void cacheContent(byte[] content, LocalFileCacheStorage localFileCacheStorage) throws IOException {
-        Mockito.when(localFileCacheStorage.isBytesSizeAcceptable(anyLong())).thenReturn(true);
         ExecutorService testExecutorService = null;
         CachedFileProxy cachedFileProxy = new CachedFileProxy(testFilePath, prepareFileProxy(content), localFileCacheStorage, testExecutorService);
         InputStream contentStream = cachedFileProxy.openContentStream();

@@ -83,7 +83,7 @@ public class CachedFileProxy implements FileProxy {
     public InputStream openContentStream() {
         if (Files.exists(localFilePath)) {
             try {
-                Files.setLastModifiedTime(localFilePath, FileTime.fromMillis(System.currentTimeMillis()));
+                localFileCacheStorage.touch(localFilePath);
                 return Files.newInputStream(localFilePath);
             } catch (IOException e) {
                 LOG.error("Error reading {}", localFilePath, e);

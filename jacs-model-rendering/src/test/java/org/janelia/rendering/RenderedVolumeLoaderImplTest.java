@@ -18,6 +18,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -107,7 +108,7 @@ public class RenderedVolumeLoaderImplTest {
     @Test
     public void loadXYSlice() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif", "default.1.tif");
-        Optional<StreamableContent> sliceContent = renderedVolumeLoader.loadVolume(testVolumeLocation)
+        Streamable<byte[]> sliceContent = renderedVolumeLoader.loadVolume(testVolumeLocation)
                 .flatMap(rv -> rv.getTileInfo(Coordinate.Z)
                         .map(tileInfo -> TileKey.fromTileCoord(
                                 0,
@@ -116,14 +117,16 @@ public class RenderedVolumeLoaderImplTest {
                                 rv.getNumZoomLevels() - 1,
                                 Coordinate.Z,
                                 0))
-                        .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(testVolumeLocation, rv, tileIndex)));
-        assertTrue(sliceContent.isPresent());
+                        .map(tileIndex -> renderedVolumeLoader.loadSlice(testVolumeLocation, rv, tileIndex)))
+                .orElse(Streamable.empty());
+        assertNotNull(sliceContent.getContent());
+        assertEquals(sliceContent.getSize(), (long) sliceContent.getContent().length);
     }
 
     @Test
     public void loadSingleChannelXYSlice() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif");
-        Optional<StreamableContent> sliceContent = renderedVolumeLoader.loadVolume(testVolumeLocation)
+        Streamable<byte[]> sliceContent = renderedVolumeLoader.loadVolume(testVolumeLocation)
                 .flatMap(rv -> rv.getTileInfo(Coordinate.Z)
                         .map(tileInfo -> TileKey.fromTileCoord(
                                 0,
@@ -132,14 +135,16 @@ public class RenderedVolumeLoaderImplTest {
                                 rv.getNumZoomLevels() - 1,
                                 Coordinate.Z,
                                 1))
-                        .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(testVolumeLocation, rv, tileIndex)));
-        assertTrue(sliceContent.isPresent());
+                        .map(tileIndex -> renderedVolumeLoader.loadSlice(testVolumeLocation, rv, tileIndex)))
+                .orElse(Streamable.empty());
+        assertNotNull(sliceContent.getContent());
+        assertEquals(sliceContent.getSize(), (long) sliceContent.getContent().length);
     }
 
     @Test
     public void loadMissingXYSlice() {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "transform.txt", "default.0.tif", "default.1.tif");
-        Optional<StreamableContent> sliceContent = renderedVolumeLoader.loadVolume(testVolumeLocation)
+        Streamable<byte[]> sliceContent = renderedVolumeLoader.loadVolume(testVolumeLocation)
                 .flatMap(rvm -> rvm.getTileInfo(Coordinate.Z)
                         .map(tileInfo -> TileKey.fromTileCoord(
                                 1,
@@ -148,8 +153,9 @@ public class RenderedVolumeLoaderImplTest {
                                 0,
                                 Coordinate.Z,
                                 0))
-                        .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(testVolumeLocation, rvm, tileIndex)));
-        assertFalse(sliceContent.isPresent());
+                        .map(tileIndex -> renderedVolumeLoader.loadSlice(testVolumeLocation, rvm, tileIndex)))
+                .orElse(Streamable.empty());
+        assertNull(sliceContent.getContent());
     }
 
     @Test
@@ -204,9 +210,8 @@ public class RenderedVolumeLoaderImplTest {
                 new TestData(10, 11, 9, -1, -1, -1, 0, imageBytes -> assertNotNull("Test 5", imageBytes)),
         };
         for (TestData td : testData) {
-            renderedVolumeLoader.loadRawImageContentFromVoxelCoord(testVolumeLocation, rawImage, td.channel, td.xVoxel, td.yVoxel, td.zVoxel, td.dimx, td.dimy, td.dimz)
-                    .map(sc -> sc.getBytes())
-                    .ifPresent(td.resultAssertion);
+            Streamable<byte[]> rawImageContent = renderedVolumeLoader.loadRawImageContentFromVoxelCoord(testVolumeLocation, rawImage, td.channel, td.xVoxel, td.yVoxel, td.zVoxel, td.dimx, td.dimy, td.dimz);
+            td.resultAssertion.accept(rawImageContent.getContent());
         }
     }
 

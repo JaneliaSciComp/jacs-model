@@ -1,5 +1,6 @@
 package org.janelia.rendering;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Paths;
@@ -26,10 +27,11 @@ import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.rendering.utils.ClientProxy;
 import org.janelia.rendering.utils.HttpClientProvider;
+import org.janelia.rendering.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocation {
+public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
 
     private static final Logger LOG = LoggerFactory.getLogger(JADEBasedRenderedVolumeLocation.class);
 
@@ -167,17 +169,45 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     }
 
     @Override
-    public Optional<StreamableContent> readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
+    public Streamable<byte[]> readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
         long startTime = System.currentTimeMillis();
         try {
-            return openContentStreamFromRelativePathToVolumeRoot(tileRelativePath,
-                ImmutableMultimap.<String, String>builder()
+            return openContentStreamFromRelativePathToVolumeRoot(
+                    tileRelativePath,
+                    ImmutableMultimap.<String, String>builder()
                         .put("filterType", "TIFF_MERGE_BANDS")
                         .put("z", String.valueOf(pageNumber))
                         .putAll("selectedEntries", channelImageNames.stream().map(Paths::get).map(p -> p.getFileName()).map(p -> p.toString()).collect(Collectors.toList()))
                         .put("entryPattern", "")
                         .put("maxDepth", String.valueOf(1))
-                        .build());
+                        .build())
+                    .consume(textureStream -> {
+                        try {
+                            return ByteStreams.toByteArray(textureStream);
+                        } catch (IOException e) {
+                            LOG.error("Error reading texture bytes for {}[{}]:{}.",
+                                    Paths.get(renderedVolumePath, tileRelativePath),
+                                    channelImageNames.stream().reduce((c1, c2) -> c1 + "," + c2).orElse(""),
+                                    pageNumber,
+                                    e);
+                            throw new IllegalStateException(e);
+                        } finally {
+                            try {
+                                textureStream.close();
+                            } catch (IOException ignore) {
+                            }
+                        }
+                    }, (bytes, l) -> {
+                        if (bytes.length != l) {
+                            LOG.error("Error reading texture bytes for {}[{}]:{}. Number of bytes read from the stream ({}) must match the size ({})",
+                                    Paths.get(renderedVolumePath, tileRelativePath),
+                                    channelImageNames.stream().reduce((c1, c2) -> c1 + "," + c2).orElse(""),
+                                    pageNumber,
+                                    bytes.length, l);
+                            throw new IllegalStateException("Expected to read " + l + " bytes, but only read " + bytes.length);
+                        }
+                        return l;
+                    });
         } finally {
             LOG.info("Opened content for reading texture bytes for {}[{}]:{} in {} ms",
                     Paths.get(renderedVolumePath, tileRelativePath),
@@ -188,9 +218,10 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     }
 
     @Override
-    public Optional<StreamableContent> readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
+    public Streamable<byte[]> readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
         String rawImagePath = rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel));
-        return openContentStreamFromAbsolutePath(rawImagePath,
+        return openContentStreamFromAbsolutePath(
+                rawImagePath,
                 ImmutableMultimap.<String, String>builder()
                         .put("filterType", "TIFF_ROI_PIXELS")
                         .put("xCenter", String.valueOf(xCenter))
@@ -199,17 +230,32 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                         .put("dimX", String.valueOf(dimx))
                         .put("dimY", String.valueOf(dimy))
                         .put("dimZ", String.valueOf(dimz))
-                        .build()
-        );
+                        .build())
+                .consume(imageStream -> {
+                    try {
+                        return ImageUtils.loadImagePixelBytesFromTiffStream(imageStream, xCenter, yCenter, zCenter, dimx, dimy, dimz);
+                    } finally {
+                        try {
+                            imageStream.close();
+                        } catch (Exception ignore) {
+                        }
+                    }
+                }, (bytes, l) -> {
+                    if (bytes.length != l) {
+                        LOG.error("Number of bytes read from the stream ({}) must match the size ({})", bytes.length, l);
+                        throw new IllegalStateException("Expected to read " + l + " bytes, but only read " + bytes.length);
+                    }
+                    return l;
+                });
     }
 
     @Override
-    public Optional<StreamableContent> getContentFromRelativePath(String relativePath) {
+    public Streamable<InputStream> getContentFromRelativePath(String relativePath) {
         return openContentStreamFromRelativePathToVolumeRoot(relativePath, ImmutableMultimap.of());
     }
 
     @Override
-    public Optional<StreamableContent> getContentFromAbsolutePath(String absolutePath) {
+    public Streamable<InputStream> getContentFromAbsolutePath(String absolutePath) {
         long startTime = System.currentTimeMillis();
         try {
             Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
@@ -219,7 +265,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         }
     }
 
-    private Optional<StreamableContent> openContentStreamFromRelativePathToVolumeRoot(String contentRelativePath, Multimap<String, String> queryParams) {
+    private Streamable<InputStream> openContentStreamFromRelativePathToVolumeRoot(String contentRelativePath, Multimap<String, String> queryParams) {
         ClientProxy httpClient = getHttpClient();
         try {
             WebTarget target = httpClient.target(jadeBaseDataStorageURI)
@@ -237,7 +283,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         }
     }
 
-    private Optional<StreamableContent> openContentStreamFromAbsolutePath(String contentAbsolutePath, Multimap<String, String> queryParams) {
+    private Streamable<InputStream> openContentStreamFromAbsolutePath(String contentAbsolutePath, Multimap<String, String> queryParams) {
         ClientProxy httpClient = getHttpClient();
         try {
             WebTarget target = httpClient.target(jadeConnectionURI)
@@ -254,7 +300,7 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
         }
     }
 
-    private Optional<StreamableContent> openContentStream(WebTarget endpoint, Multimap<String, String> queryParams) {
+    private Streamable<InputStream> openContentStream(WebTarget endpoint, Multimap<String, String> queryParams) {
         try {
             for (Map.Entry<String, String> qe : queryParams.entries()) {
                 endpoint = endpoint.queryParam(qe.getKey(), qe.getValue());
@@ -264,10 +310,10 @@ public class JADEBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
             response = createRequestWithCredentials(endpoint, MediaType.APPLICATION_OCTET_STREAM).get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
-                return Optional.of(new StreamableContent(response.getLength(), response.readEntity(InputStream.class)));
+                return Streamable.of(response.readEntity(InputStream.class), response.getLength());
             } else {
                 LOG.debug("Open stream from {} returned status {}", endpoint.getUri(), responseStatus);
-                return Optional.empty();
+                return Streamable.empty();
             }
         } catch (Exception e) {
             LOG.debug("Error opening the stream {}", endpoint, e);

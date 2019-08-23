@@ -58,15 +58,7 @@ public class FileBasedRenderedVolumeLocationTest {
                 new TestData(Arrays.asList("default.0.tif", "default.1.tif", "default.2.tif"))
         };
         for (TestData td : testData) {
-            byte[] imageBytes = testVolumeLocation.readTileImagePageAsTexturedBytes("", td.imageNames, 10)
-                    .map(sc -> {
-                        try {
-                            return ByteStreams.toByteArray(sc.getStream());
-                        } catch (IOException e) {
-                            throw new IllegalStateException(e);
-                        }
-                    })
-                    .orElse(null);
+            byte[] imageBytes = testVolumeLocation.readTileImagePageAsTexturedBytes("", td.imageNames, 10).getContent();
             ByteBuffer byteBuffer = ByteBuffer.wrap(imageBytes);
             int mipmapLevel = byteBuffer.getInt();
             int width = byteBuffer.getInt();

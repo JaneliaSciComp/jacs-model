@@ -28,7 +28,7 @@ import org.janelia.rendering.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocation {
+public class FileBasedRenderedVolumeLocation implements RenderedVolumeLocation {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileBasedRenderedVolumeLocation.class);
 
@@ -108,18 +108,21 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
     @Override
     public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
         return openContentStream(volumeBasePath.resolve(tileRelativePath), ImageUtils.getImagePathHandler())
-                .map(streamableTiffImage -> {
+                .consume(tiffStream -> {
                     try {
-                        return ImageUtils.loadImageInfoFromTiffStream(streamableTiffImage.getStream());
+                        return ImageUtils.loadImageInfoFromTiffStream(tiffStream);
                     } finally {
-                        closeContentStream(streamableTiffImage);
+                        try {
+                            tiffStream.close();
+                        } catch (Exception ignore) {
+                        }
                     }
-                })
-                .orElse(null);
+                }, (i, l) -> l)
+                .getContent();
     }
 
     @Override
-    public Optional<StreamableContent> readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
+    public Streamable<byte[]> readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
         byte[] imageTextureBytes = ImageUtils.bandMergedTextureBytesFromImageStreams(
                 channelImageNames.stream()
                         .map(channelImageName -> volumeBasePath.resolve(tileRelativePath).resolve(channelImageName))
@@ -138,58 +141,51 @@ public class FileBasedRenderedVolumeLocation extends AbstractRenderedVolumeLocat
                         ),
                 pageNumber
         );
-        if (imageTextureBytes == null) {
-            return Optional.empty();
-        } else {
-            return Optional.of(new StreamableContent(imageTextureBytes.length, new ByteArrayInputStream(imageTextureBytes)));
-        }
+        return imageTextureBytes == null ? Streamable.empty() : Streamable.of(imageTextureBytes, imageTextureBytes.length);
     }
 
     @Override
-    public Optional<StreamableContent> readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
+    public Streamable<byte[]> readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
         Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel)));
-        byte[] pixelBytes = openContentStream(volumeBasePath.resolve(rawImagePath), ImageUtils.getImagePathHandler())
-                .map(streamableRawImage -> {
+        return openContentStream(volumeBasePath.resolve(rawImagePath), ImageUtils.getImagePathHandler())
+                .consume(imageStream -> {
                     try {
-                        return ImageUtils.loadImagePixelBytesFromTiffStream(streamableRawImage.getStream(), xCenter, yCenter, zCenter, dimx, dimy, dimz);
+                        return ImageUtils.loadImagePixelBytesFromTiffStream(imageStream, xCenter, yCenter, zCenter, dimx, dimy, dimz);
                     } finally {
-                        closeContentStream(streamableRawImage);
+                        try {
+                            imageStream.close();
+                        } catch (Exception ignore) {
+                        }
                     }
-                })
-                .orElse(null);
-        if (pixelBytes == null) {
-            return Optional.empty();
-        } else {
-            return Optional.of(new StreamableContent(pixelBytes.length, new ByteArrayInputStream(pixelBytes)));
-        }
+                }, (bytes, l) -> (long) bytes.length);
     }
 
     @Override
-    public Optional<StreamableContent> getRawTileContent(RawImage rawImage, int channel) {
+    public Streamable<InputStream> getRawTileContent(RawImage rawImage, int channel) {
         Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel)));
         return openContentStream(rawImagePath, ImageUtils.getImagePathHandler());
     }
 
     @Override
-    public Optional<StreamableContent> getContentFromRelativePath(String relativePath) {
+    public Streamable<InputStream> getContentFromRelativePath(String relativePath) {
         return openContentStream(volumeBasePath.resolve(relativePath), ImageUtils.getImagePathHandler());
     }
 
     @Override
-    public Optional<StreamableContent> getContentFromAbsolutePath(String absolutePath) {
+    public Streamable<InputStream> getContentFromAbsolutePath(String absolutePath) {
         Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
         return openContentStream(Paths.get(absolutePath), ImageUtils.getImagePathHandler());
     }
 
-    private Optional<StreamableContent> openContentStream(Path fp, Function<Path, InputStream> contentStreamSupplier) {
+    private Streamable<InputStream> openContentStream(Path fp, Function<Path, InputStream> contentStreamSupplier) {
         if (Files.exists(fp)) {
             try {
-                return Optional.of(new StreamableContent(Files.size(fp), contentStreamSupplier.apply(fp)));
+                return Streamable.of(contentStreamSupplier.apply(fp), Files.size(fp));
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
         } else {
-            return Optional.empty();
+            return Streamable.empty();
         }
     }
 
