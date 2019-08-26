@@ -26,24 +26,28 @@ public class LocalFileCache<K extends FileKey> {
      * LocalFileCache constructor.
      *
      * @param localFileCacheStorage local file cache
+     * @param cacheConcurrency cache concurrency parameter - if the value is <= 0 it is ignored
      * @param keyToProxySupplier is used by the remotecache loader for loading the file proxy from the corresponding cache entry key
      * @param asyncRemovalExecutor thread executor that runs the cache eviction process
      * @param localFileWriterExecutor thread executor in which the local file writer should run
      */
     public LocalFileCache(LocalFileCacheStorage localFileCacheStorage,
+                          int cacheConcurrency,
                           FileKeyToProxySupplier<K> keyToProxySupplier,
                           Executor asyncRemovalExecutor,
                           ExecutorService localFileWriterExecutor) {
-        this.localCache =
-                CacheBuilder.newBuilder()
-                        .concurrencyLevel(2)
-                        .maximumWeight(localFileCacheStorage.getCapacityInKB()) // the in memory cache uses the cache entry weigh and maximum weight for the eviction policy
-                        .weigher((FileKey key, Optional<FileProxy> value) -> {
-                            long sizeInKB = LocalFileCacheStorage.BYTES_TO_KB.apply(value.flatMap(fp -> fp.estimateSizeInBytes()).orElse(1L));
-                            return sizeInKB > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) sizeInKB;
-                        })
-                        .removalListener(RemovalListeners.asynchronous(new CachedFileRemovalListener(), asyncRemovalExecutor))
-                        .build(new RemoteFileLoader<>(localFileCacheStorage, keyToProxySupplier, localFileWriterExecutor));
+        CacheBuilder<K, Optional<FileProxy>> cacheBuilder = CacheBuilder.newBuilder()
+                .maximumWeight(localFileCacheStorage.getCapacityInKB()) // the in memory cache uses the cache entry weigh and maximum weight for the eviction policy
+                .weigher((FileKey key, Optional<FileProxy> value) -> {
+                    long sizeInKB = LocalFileCacheStorage.BYTES_TO_KB.apply(value.flatMap(fp -> fp.estimateSizeInBytes()).orElse(1L));
+                    return sizeInKB > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) sizeInKB;
+                })
+                .removalListener(RemovalListeners.asynchronous(new CachedFileRemovalListener(), asyncRemovalExecutor));
+        if (cacheConcurrency > 0) {
+            cacheBuilder.concurrencyLevel(cacheConcurrency);
+        }
+        this.localCache = cacheBuilder.build(new RemoteFileLoader<>(localFileCacheStorage, keyToProxySupplier, localFileWriterExecutor));
+
     }
 
     @Nullable

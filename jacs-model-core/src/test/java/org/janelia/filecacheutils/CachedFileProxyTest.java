@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 
 import com.google.common.io.ByteStreams;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -30,7 +31,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 
 public class CachedFileProxyTest {
@@ -64,7 +64,15 @@ public class CachedFileProxyTest {
 
     @Before
     public void setUp() {
-        testFilePath = testCacheRootDir.resolve("readAndCacheContent" + random.nextInt(100) + ".tst");
+        testFilePath = testCacheRootDir.resolve("readAndCacheContent" + random.nextLong() + ".tst");
+    }
+
+    @After
+    public void cleanUp() {
+        try {
+            Files.deleteIfExists(testFilePath);
+        } catch (IOException ignore) {
+        }
     }
 
     @Test
@@ -138,8 +146,7 @@ public class CachedFileProxyTest {
         byte[] testContent = new byte[100];
         random.nextBytes(testContent);
 
-        LocalFileCacheStorage testLocalFileCacheStorage = Mockito.mock(LocalFileCacheStorage.class);
-        Mockito.when(testLocalFileCacheStorage.isBytesSizeAcceptable(anyLong())).thenReturn(true);
+        LocalFileCacheStorage testLocalFileCacheStorage = new LocalFileCacheStorage(testCacheRootDir, 100, 50);
 
         ExecutorService testExecutorService = Executors.newWorkStealingPool(2);
         CachedFileProxy cachedFileProxy1 = new CachedFileProxy(testFilePath, prepareFileProxy(testContent), testLocalFileCacheStorage, testExecutorService);
@@ -185,7 +192,7 @@ public class CachedFileProxyTest {
         assertTrue(Files.exists(testFilePath));
         try {
             Thread.sleep(1000);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignore) {
         }
         FileTime cachedFileTouchTime = Files.getLastModifiedTime(testFilePath);
 

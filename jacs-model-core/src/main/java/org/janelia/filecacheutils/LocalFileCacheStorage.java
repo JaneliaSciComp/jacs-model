@@ -52,10 +52,6 @@ public class LocalFileCacheStorage {
             this.lastUpdatedTimestamp = lastUpdatedTimestamp;
         }
 
-        void setLastUpdatedTimestamp(long lastUpdatedTimestamp) {
-            this.lastUpdatedTimestamp = lastUpdatedTimestamp;
-        }
-
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
