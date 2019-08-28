@@ -189,4 +189,14 @@ public class FileBasedRenderedVolumeLocation implements RenderedVolumeLocation {
         }
     }
 
+    @Override
+    public boolean checkContentAtRelativePath(String relativePath) {
+        return Files.exists(volumeBasePath.resolve(relativePath));
+    }
+
+    @Override
+    public boolean checkContentAtAbsolutePath(String absolutePath) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
+        return Files.exists(Paths.get(absolutePath));
+    }
 }

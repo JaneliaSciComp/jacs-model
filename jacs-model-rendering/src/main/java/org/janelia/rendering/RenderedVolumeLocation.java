@@ -108,4 +108,18 @@ public interface RenderedVolumeLocation {
      * @return
      */
     Streamable<InputStream> getContentFromAbsolutePath(String absolutePath);
+
+    /**
+     * Check if content exists at relative path.
+     * @param relativePath
+     * @return
+     */
+    boolean checkContentAtRelativePath(String relativePath);
+
+    /**
+     * Check if content exists at absolute path.
+     * @param absolutePath
+     * @return
+     */
+    boolean checkContentAtAbsolutePath(String absolutePath);
 }

@@ -3,6 +3,7 @@ package org.janelia.rendering;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
@@ -273,10 +274,10 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
                     .path(renderedVolumePath)
                     .path(contentRelativePath.replace('\\', '/'))
                     ;
-            LOG.debug("Open stream from URI {}, volume path {}, tile path {} using {}", jadeBaseDataStorageURI, renderedVolumePath, contentRelativePath, target.getUri());
+            LOG.debug("Open stream from URI {}, volume path {}, relative path {} using {}", jadeBaseDataStorageURI, renderedVolumePath, contentRelativePath, target.getUri());
             return openContentStream(target, queryParams);
         } catch (Exception e) {
-            LOG.debug("Error opening the stream from URI {}, volume path {}, tile path {}", jadeBaseDataStorageURI, renderedVolumePath, contentRelativePath, e);
+            LOG.debug("Error opening the stream from URI {}, volume path {}, relative path {}", jadeBaseDataStorageURI, renderedVolumePath, contentRelativePath, e);
             throw new IllegalStateException(e);
         } finally {
             httpClient.close();
@@ -314,6 +315,66 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
             } else {
                 LOG.debug("Open stream from {} returned status {}", endpoint.getUri(), responseStatus);
                 return Streamable.empty();
+            }
+        } catch (Exception e) {
+            LOG.debug("Error opening the stream {}", endpoint, e);
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @Override
+    public boolean checkContentAtRelativePath(String relativePath) {
+        return checkContentAtRelativePathToVolumeRoot(relativePath);
+    }
+
+    @Override
+    public boolean checkContentAtAbsolutePath(String absolutePath) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
+        ClientProxy httpClient = getHttpClient();
+        try {
+            WebTarget target = httpClient.target(jadeConnectionURI)
+                    .path("agent_storage/storage_path/data_content")
+                    .path(absolutePath.replace('\\', '/'))
+                    ;
+            LOG.debug("Open stream from URI {}, path {}, tile path {} using {}", jadeConnectionURI, renderedVolumePath, absolutePath, target.getUri());
+            return checkContent(target);
+        } catch (Exception e) {
+            LOG.debug("Error opening the stream from URI {}, path {}, tile path {}", jadeConnectionURI, renderedVolumePath, absolutePath, e);
+            throw new IllegalStateException(e);
+        } finally {
+            httpClient.close();
+        }
+    }
+
+    private boolean checkContentAtRelativePathToVolumeRoot(String contentRelativePath) {
+        ClientProxy httpClient = getHttpClient();
+        try {
+            WebTarget target = httpClient.target(jadeBaseDataStorageURI)
+                    .path("data_content")
+                    .path(renderedVolumePath)
+                    .path(contentRelativePath.replace('\\', '/'))
+                    ;
+            LOG.debug("Check content from URI {}, volume path {}, relative path {} using {}", jadeBaseDataStorageURI, renderedVolumePath, contentRelativePath, target.getUri());
+            return checkContent(target);
+        } catch (Exception e) {
+            LOG.debug("Error checking content from URI {}, volume path {}, relative path {}", jadeBaseDataStorageURI, renderedVolumePath, contentRelativePath, e);
+            throw new IllegalStateException(e);
+        } finally {
+            httpClient.close();
+        }
+    }
+
+    private boolean checkContent(WebTarget endpoint) {
+        try {
+            LOG.debug("Check content from {}", endpoint.getUri());
+            Response response;
+            response = createRequestWithCredentials(endpoint, MediaType.APPLICATION_OCTET_STREAM).head();
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return true;
+            } else {
+                LOG.debug("Check content from {} returned status {}", endpoint.getUri(), responseStatus);
+                return false;
             }
         } catch (Exception e) {
             LOG.debug("Error opening the stream {}", endpoint, e);
