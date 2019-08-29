@@ -1,15 +1,5 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import com.mongodb.DBCursor;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.model.access.domain.dao.DomainObjectDao;
-import org.janelia.model.domain.DomainObject;
-
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +10,16 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import javax.annotation.Nullable;
+
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.access.domain.dao.DomainObjectDao;
+import org.janelia.model.domain.DomainObject;
 
 /**
  * Abstract Domain DAO that can handle entity access.

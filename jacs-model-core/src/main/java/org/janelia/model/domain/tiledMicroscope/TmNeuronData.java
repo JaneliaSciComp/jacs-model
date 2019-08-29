@@ -84,7 +84,7 @@ public class TmNeuronData implements Serializable {
         return textAnnotationMap;
     }
 
-    public String getDebugString() {
+    String getDebugString() {
         StringBuilder sb = new StringBuilder();
         sb.append("rootAnnotationIds:\n");
         for(Long rootAnnotationId : new ArrayList<>(rootAnnotationIds)) {

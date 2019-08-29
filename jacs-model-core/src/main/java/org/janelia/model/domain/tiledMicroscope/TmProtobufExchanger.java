@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
  */
 public class TmProtobufExchanger {
 
-    private static final Logger log = LoggerFactory.getLogger(TmProtobufExchanger.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TmProtobufExchanger.class);
 
     private Schema<TmNeuronData> schema = null;
 
@@ -28,9 +28,7 @@ public class TmProtobufExchanger {
         try {
             schema = RuntimeSchema.getSchema(TmNeuronData.class);
         } catch (Exception ex) {
-            if (schema == null) {
-                throw new RuntimeException("Failed to get schema for " + TmNeuronData.class.getCanonicalName(), ex);
-            }
+            throw new IllegalStateException("Failed to get schema for " + TmNeuronData.class.getCanonicalName(), ex);
         }
     }
 
@@ -40,8 +38,7 @@ public class TmProtobufExchanger {
             TmNeuronData neuronData = new TmNeuronData();
             ProtobufIOUtil.mergeFrom(protobufData, neuronData, schema);
             tmNeuronMetadata.setNeuronData(neuronData);
-            log.debug("Deserialized neuron data for TmNeuronMetadata#{}\nDeserializing: {}",
-                    tmNeuronMetadata.getId(), tmNeuronMetadata.getDebugString());
+            LOG.trace("Deserialized neuron data for TmNeuronMetadata#{}\nDeserializing: {}", tmNeuronMetadata.getId(), tmNeuronMetadata.getDebugString());
             tmNeuronMetadata.initNeuronData();
         } finally {
             buffer.clear();
@@ -49,8 +46,7 @@ public class TmProtobufExchanger {
     }
 
     public byte[] serializeNeuron(TmNeuronMetadata tmNeuronMetadata) throws Exception {
-        log.debug("Serializing neuron data for TmNeuronMetadata#{}\nSerializing: {}",
-                tmNeuronMetadata.getId(), tmNeuronMetadata.getDebugString());
+        LOG.trace("Serializing neuron data for TmNeuronMetadata#{}\nSerializing: {}", tmNeuronMetadata.getId(), tmNeuronMetadata.getDebugString());
         return serializeNeuron(tmNeuronMetadata.getNeuronData());
     }
 
@@ -61,7 +57,7 @@ public class TmProtobufExchanger {
      * @return array of bytes, suitable for
      * @throws Exception from any called methods.
      */
-    public byte[] serializeNeuron(TmNeuronData neuronData) throws Exception {
+    private byte[] serializeNeuron(TmNeuronData neuronData) throws Exception {
         if (neuronData == null) throw new IllegalArgumentException("Neuron data is null");
 
         // Populate a byte array from serialized data.
@@ -80,7 +76,7 @@ public class TmProtobufExchanger {
                 protobuf = null;
                 final LinkedBuffer buffer = LinkedBuffer.allocate();
                 if (retries < 5) {
-                    log.info("serializeNeuron - starting with retries=" + retries);
+                    LOG.info("Retry {} serializeNeuron - starting with {} retries left", 5 - retries, retries);
                 }
                 try {
                     protobuf = ProtobufIOUtil.toByteArray(neuronData, schema, buffer);
@@ -91,7 +87,7 @@ public class TmProtobufExchanger {
                     break;
                 }
             } catch (Throwable t) {
-                log.warn("serializeNeuron failed: " + t.getMessage() + ", retries left=" + retries);
+                LOG.warn("serializeNeuron failed: {}, retries left={}", t.getMessage(), retries);
             }
             Thread.sleep(5);
         }
