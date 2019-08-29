@@ -41,7 +41,7 @@ public class TmNeuronBufferJdbcDao implements TmNeuronBufferDao {
             pstmt.setLong(2, workspaceId);
             pstmt.setBinaryStream(3, neuronPoints);
 
-            LOG.debug("Insert Neuron buffers: {}, {}, {}", insertStmt, neuronId, workspaceId);
+            LOG.trace("Insert Neuron buffers: {}, {}, {}", insertStmt, neuronId, workspaceId);
 
             int rows = pstmt.executeUpdate();
             if (rows < 1) {
@@ -70,7 +70,7 @@ public class TmNeuronBufferJdbcDao implements TmNeuronBufferDao {
 
             pstmt.setLong(1, neuronId);
 
-            LOG.debug("Delete Neuron buffers: {}, {}", deleteSql, neuronId);
+            LOG.trace("Delete Neuron buffers: {}, {}", deleteSql, neuronId);
 
             int rows = pstmt.executeUpdate();
             if (rows < 1) {
@@ -109,7 +109,7 @@ public class TmNeuronBufferJdbcDao implements TmNeuronBufferDao {
                 for (Long neuronId : neuronIds) pstmt.setLong(fieldIndex++, neuronId);
             }
 
-            LOG.debug("Neuron buffers query: {}, {}, {}", selectSql, workspaceId, neuronIds);
+            LOG.trace("Neuron buffers query: {}, {}, {}", selectSql, workspaceId, neuronIds);
 
             rs = pstmt.executeQuery();
 
@@ -149,7 +149,7 @@ public class TmNeuronBufferJdbcDao implements TmNeuronBufferDao {
             pstmt.setBinaryStream(2, neuronPoints);
             pstmt.setLong(3, neuronId);
 
-            LOG.debug("Insert Neuron buffers: {}, {}, {}", updateSql, neuronId, workspaceId);
+            LOG.trace("Insert Neuron buffers: {}, {}, {}", updateSql, neuronId, workspaceId);
 
             int rows = pstmt.executeUpdate();
             if (rows < 1) {
