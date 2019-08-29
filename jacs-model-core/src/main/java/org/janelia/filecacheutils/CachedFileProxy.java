@@ -65,18 +65,12 @@ public class CachedFileProxy implements FileProxy {
     }
 
     private long getFileSize(Path fp) {
-        long fSize;
-        if (Files.exists(fp)) {
-            try {
-                fSize = Files.size(fp);
-            } catch (IOException e) {
-                LOG.error("Error reading file size for {}", fp, e);
-                fSize = 0L;
-            }
-        } else {
-            fSize = 0L;
+        try {
+            return fp.toFile().length();
+        } catch (Exception e) {
+            LOG.error("Error reading file size for {}", fp, e);
+            return 0L;
         }
-        return fSize;
     }
 
     @Override
