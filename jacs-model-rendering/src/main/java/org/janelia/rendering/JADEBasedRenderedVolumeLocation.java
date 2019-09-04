@@ -368,7 +368,7 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
         try {
             LOG.debug("Check content from {}", endpoint.getUri());
             Response response;
-            response = createRequestWithCredentials(endpoint, MediaType.APPLICATION_OCTET_STREAM).head();
+            response = createRequestWithCredentials(endpoint, null).head();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return true;
@@ -385,15 +385,31 @@ public class JADEBasedRenderedVolumeLocation implements RenderedVolumeLocation {
     private Invocation.Builder createRequestWithCredentials(WebTarget webTarget, String mediaType) {
         Invocation.Builder requestInvocationBuilder;
         if (StringUtils.isNotBlank(authToken)) {
-            requestInvocationBuilder = webTarget.request(mediaType).header(
-                    "Authorization",
-                    "Bearer " + authToken);
+            if (StringUtils.isNotBlank(mediaType)) {
+                requestInvocationBuilder = webTarget.request(mediaType).header(
+                        "Authorization",
+                        "Bearer " + authToken);
+            } else {
+                requestInvocationBuilder = webTarget.request().header(
+                        "Authorization",
+                        "Bearer " + authToken);
+            }
         } else if (StringUtils.isNotBlank(storageServiceApiKey)) {
-            requestInvocationBuilder = webTarget.request(mediaType).header(
-                    "Authorization",
-                    "APIKEY " + storageServiceApiKey);
+            if (StringUtils.isNotBlank(mediaType)) {
+                requestInvocationBuilder = webTarget.request(mediaType).header(
+                        "Authorization",
+                        "APIKEY " + storageServiceApiKey);
+            } else {
+                requestInvocationBuilder = webTarget.request().header(
+                        "Authorization",
+                        "APIKEY " + storageServiceApiKey);
+            }
         } else {
-            requestInvocationBuilder = webTarget.request(mediaType);
+            if (StringUtils.isNotBlank(mediaType)) {
+                requestInvocationBuilder = webTarget.request(mediaType);
+            } else {
+                requestInvocationBuilder = webTarget.request();
+            }
         }
         return requestInvocationBuilder;
     }
