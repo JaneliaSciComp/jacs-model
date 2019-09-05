@@ -137,6 +137,12 @@ public class CachedFileProxy implements FileProxy {
                     @Override
                     protected void handleIOException(IOException e) {
                         super.handleIOException(e);
+                        // close the stream in case of an error
+                        try {
+                            downloadingLocalFileStream.close();
+                        } catch (IOException ignore) {
+                            // ignore
+                        }
                         // in case of any exception while streaming the file
                         // remove the local cache image
                         try {
@@ -223,6 +229,10 @@ public class CachedFileProxy implements FileProxy {
                     throw new IllegalStateException(e);
                 }
             } finally {
+                try {
+                    contentStream.close();
+                } catch (IOException ignore) {
+                }
                 DOWNLOADING_FILES.remove(localFilePath.toString());
             }
         }
