@@ -272,9 +272,12 @@ public class CachedFileProxy implements FileProxy {
         try {
             // only really remove it from the cache if the downloading file is still present, because in that case
             // it is very likely something went wrong during the loading process
-            if (Files.deleteIfExists(downloadingLocalFilePath)) {
-                localFileCacheStorage.updateCachedFiles(localFilePath, -LocalFileCacheStorage.BYTES_TO_KB.apply(sizeInBytes));
-                return true;
+            if (!DOWNLOADING_FILES.contains(localFilePath.toString())) {
+                // only do this if the downloading is done
+                if (Files.deleteIfExists(downloadingLocalFilePath)) {
+                    localFileCacheStorage.updateCachedFiles(localFilePath, -LocalFileCacheStorage.BYTES_TO_KB.apply(sizeInBytes));
+                    return true;
+                }
             }
         } catch (IOException e) {
             LOG.warn("Error deleting temp cached file {}", downloadingLocalFilePath, e);

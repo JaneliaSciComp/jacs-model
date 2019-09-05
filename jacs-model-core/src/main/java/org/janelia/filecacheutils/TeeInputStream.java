@@ -55,15 +55,15 @@ class TeeInputStream extends FilterInputStream {
         int n;
         try {
             n = super.read(buf, off, len);
+            if (n > 0) {
+                writeBuffer(buf, off, n);
+            }
+            executeAfterRead(n);
+            return n;
         } catch (IOException e) {
             handleIOException(e);
             throw e;
         }
-        if (n > 0) {
-            writeBuffer(buf, off, n);
-        }
-        executeAfterRead(n);
-        return n;
     }
 
     private void executeAfterRead(int n) {
@@ -121,7 +121,12 @@ class TeeInputStream extends FilterInputStream {
 
     @Override
     public void close() throws IOException {
-        super.close();
+        try {
+            super.close();
+        } catch (IOException e) {
+            handleIOException(e);
+            throw e;
+        }
         if (onCloseHandler != null) {
             if (outputExecutor != null) {
                 writeOp.thenAcceptAsync(onCloseHandler, outputExecutor);
