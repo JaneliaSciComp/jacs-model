@@ -1,6 +1,7 @@
 package org.janelia.rendering;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -30,6 +31,14 @@ public class Streamable<T> {
 
     public T getContent() {
         return content;
+    }
+
+    public Optional<T> asOptional() {
+        if (content == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(content);
+        }
     }
 
     /**

@@ -128,7 +128,7 @@ public class RawImage {
     }
 
     @JsonIgnore
-    String getRawImagePath(String suffix) {
+    public String getRawImagePath(String suffix) {
         Path imagePath;
         if (StringUtils.isBlank(relativePath)) {
             imagePath = Paths.get(acquisitionPath);
