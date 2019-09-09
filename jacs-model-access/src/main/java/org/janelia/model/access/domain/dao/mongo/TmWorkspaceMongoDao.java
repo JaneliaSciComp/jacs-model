@@ -5,6 +5,10 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
@@ -26,11 +30,14 @@ import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.util.SortCriteria;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link TmWorkspace} Mongo DAO.
  */
 public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspace> implements TmWorkspaceDao {
+    private static final Logger LOG = LoggerFactory.getLogger(TmWorkspaceMongoDao.class);
 
     private final DomainDAO domainDao;
     private final TmNeuronMetadataDao tmNeuronMetadataDao;
@@ -80,32 +87,71 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
         // Create a copy of the workspace object with the new name
         TmWorkspace workspaceCopy = createTmWorkspace(subjectKey, TmWorkspace.copy(existingWorkspace).rename(newName));
         try {
+            Spliterator<Stream<Pair<TmNeuronMetadata, InputStream>>> neuronsSupplier = new Spliterator<Stream<Pair<TmNeuronMetadata, InputStream>>>() {
+                volatile long offset = 0L;
+                int defaultLength = 100000;
+
+                @Override
+                public boolean tryAdvance(Consumer<? super Stream<Pair<TmNeuronMetadata, InputStream>>> action) {
+                    List<Pair<TmNeuronMetadata, InputStream>> tmNeuronsPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey, existingWorkspace, offset, defaultLength);
+                    long lastEntryOffset = offset + tmNeuronsPairs.size();
+                    LOG.info("Retrieved {} neurons ({} - {})", tmNeuronsPairs.size(), offset, lastEntryOffset);
+                    if (tmNeuronsPairs.isEmpty()) {
+                        return false;
+                    } else {
+                        offset = lastEntryOffset;
+                        action.accept(tmNeuronsPairs.stream());
+                        return true;
+                    }
+                }
+
+                @Override
+                public Spliterator<Stream<Pair<TmNeuronMetadata, InputStream>>> trySplit() {
+                    return null;
+                }
+
+                @Override
+                public long estimateSize() {
+                    return Long.MAX_VALUE;
+                }
+
+                @Override
+                public int characteristics() {
+                    return ORDERED;
+                }
+            };
+
             // Copy the neurons
-            List<Pair<TmNeuronMetadata, InputStream>> tmNeuronsPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey, existingWorkspace);
 
-            // Pre-generate the neuron ids, because we need them as parent ids inside the TmNeuronData
-            IdSource neuronIdSource = new IdSource(tmNeuronsPairs.size());
+            // Create the source for neuron IDs
+            IdSource neuronIdSource = new IdSource(1000);
 
-            for (Pair<TmNeuronMetadata, InputStream> pair : tmNeuronsPairs) {
-                TmNeuronMetadata neuronCopy = TmNeuronMetadata.copy(pair.getKey());
-                neuronCopy.setId(neuronIdSource.next());
-                neuronCopy.setWorkspaceRef(Reference.createFor(workspaceCopy));
-                if (assignOwner != null) {
-                    neuronCopy.setOwnerKey(assignOwner);
-                }
-                InputStream oldNeuronStream = pair.getValue();
+            StreamSupport.stream(neuronsSupplier, true)
+                    .flatMap(neuronStream -> neuronStream)
+                    .forEach(pair -> {
+                        TmNeuronMetadata neuronCopy = TmNeuronMetadata.copy(pair.getKey());
+                        neuronCopy.setId(neuronIdSource.next());
+                        neuronCopy.setWorkspaceRef(Reference.createFor(workspaceCopy));
+                        if (assignOwner != null) {
+                            neuronCopy.setOwnerKey(assignOwner);
+                        }
+                        try {
+                            InputStream oldNeuronStream = pair.getValue();
+                            TmProtobufExchanger protobufExchanger = new TmProtobufExchanger();
+                            protobufExchanger.deserializeNeuron(oldNeuronStream, neuronCopy);
 
-                TmProtobufExchanger protobufExchanger = new TmProtobufExchanger();
-                protobufExchanger.deserializeNeuron(oldNeuronStream, neuronCopy);
+                            // Change the parent of the roots to be the neuron id
+                            for (TmGeoAnnotation annotation : neuronCopy.getRootAnnotations()) {
+                                annotation.setParentId(neuronCopy.getId());
+                            }
 
-                // Change the parent of the roots to be the neuron id
-                for (TmGeoAnnotation annotation : neuronCopy.getRootAnnotations()) {
-                    annotation.setParentId(neuronCopy.getId());
-                }
-
-                InputStream newNeuronStream = new ByteArrayInputStream(protobufExchanger.serializeNeuron(neuronCopy));
-                tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuronCopy, workspaceCopy, newNeuronStream);
-            }
+                            InputStream newNeuronStream = new ByteArrayInputStream(protobufExchanger.serializeNeuron(neuronCopy));
+                            tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuronCopy, workspaceCopy, newNeuronStream);
+                        } catch (Exception e) {
+                            LOG.error("Error copying neuron points from {} to {}", pair.getKey(), neuronCopy);
+                            throw new IllegalStateException(e);
+                        }
+                    });
         } catch (Exception e) {
             deleteByIdAndSubjectKey(workspaceCopy.getId(), subjectKey);
             throw new IllegalStateException(e);

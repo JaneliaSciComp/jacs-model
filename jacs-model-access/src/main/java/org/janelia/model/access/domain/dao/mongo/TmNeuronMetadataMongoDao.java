@@ -1,5 +1,14 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -7,31 +16,24 @@ import com.google.common.collect.Sets;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.model.access.domain.DomainDAO;
-import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
+import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 /**
  * {@link TmNeuronMetadata} Mongo DAO.
@@ -97,21 +99,21 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     }
 
     @Override
-    public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(String subjectKey, Long workspaceId) {
+    public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(String subjectKey, Long workspaceId, long offset, int length) {
         String workspaceRef = "TmWorkspace#" + workspaceId;
         return find(
                 MongoDaoHelper.createFilterCriteria(
                         Filters.eq("workspaceRef", workspaceRef),
                         permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
                 null,
-                0,
-                -1,
+                offset,
+                length,
                 getEntityType());
     }
 
     @Override
-    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace) {
-        Map<Long, TmNeuronMetadata> workspaceNeurons = DomainUtils.getMapById(getTmNeuronMetadataByWorkspaceId(subjectKey, workspace.getId()));
+    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace, long offset, int length) {
+        Map<Long, TmNeuronMetadata> workspaceNeurons = DomainUtils.getMapById(getTmNeuronMetadataByWorkspaceId(subjectKey, workspace.getId(), offset, length));
 
         Map<Long, InputStream> neuronsPointStreams = tmNeuronBufferDao.streamNeuronPointsByWorkspaceId(Collections.emptySet(), workspace.getId());
 
