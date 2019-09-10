@@ -115,7 +115,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace, long offset, int length) {
         Map<Long, TmNeuronMetadata> workspaceNeurons = DomainUtils.getMapById(getTmNeuronMetadataByWorkspaceId(subjectKey, workspace.getId(), offset, length));
 
-        Map<Long, InputStream> neuronsPointStreams = tmNeuronBufferDao.streamNeuronPointsByWorkspaceId(Collections.emptySet(), workspace.getId());
+        Map<Long, InputStream> neuronsPointStreams = tmNeuronBufferDao.streamNeuronPointsByWorkspaceId(workspaceNeurons.keySet(), workspace.getId());
 
         List<Pair<TmNeuronMetadata, InputStream>> neuronList = new ArrayList<>();
 
