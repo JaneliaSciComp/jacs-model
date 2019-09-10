@@ -101,7 +101,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                     } else {
                         offset = lastEntryOffset;
                         action.accept(tmNeuronsPairs.stream());
-                        return true;
+                        return tmNeuronsPairs.size() == defaultLength; // if the number of retrieved neurons is less than requested - it reached the end
                     }
                 }
 
