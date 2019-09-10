@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -113,21 +114,16 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     @Override
     public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace, long offset, int length) {
-        Map<Long, TmNeuronMetadata> workspaceNeurons = DomainUtils.getMapById(getTmNeuronMetadataByWorkspaceId(subjectKey, workspace.getId(), offset, length));
+        List<TmNeuronMetadata> workspaceNeurons = getTmNeuronMetadataByWorkspaceId(subjectKey, workspace.getId(), offset, length);
+        if (workspaceNeurons.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Map<Long, TmNeuronMetadata> indexedWorkspaceNeurons = DomainUtils.getMapById(workspaceNeurons);
+        Map<Long, InputStream> neuronsPointStreams = tmNeuronBufferDao.streamNeuronPointsByWorkspaceId(indexedWorkspaceNeurons.keySet(), workspace.getId());
 
-        Map<Long, InputStream> neuronsPointStreams = tmNeuronBufferDao.streamNeuronPointsByWorkspaceId(workspaceNeurons.keySet(), workspace.getId());
-
-        List<Pair<TmNeuronMetadata, InputStream>> neuronList = new ArrayList<>();
-
-        neuronsPointStreams.forEach((neuronId, neuronPointStream) -> {
-            TmNeuronMetadata neuron = workspaceNeurons.get(neuronId);
-            if (neuron == null) {
-                neuron = createNeuronOrUpdateNeuronWorkspace(neuronId, workspace);
-            }
-            neuronList.add(ImmutablePair.of(neuron, neuronPointStream));
-        });
-
-        return neuronList;
+        return workspaceNeurons.stream()
+                .map(neuron -> ImmutablePair.of(neuron, neuronsPointStreams.get(neuron.getId())))
+                .collect(Collectors.toList());
     }
 
     private TmNeuronMetadata createNeuronOrUpdateNeuronWorkspace(Long neuronId, TmWorkspace workspace) {
