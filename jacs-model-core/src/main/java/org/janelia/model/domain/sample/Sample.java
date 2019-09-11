@@ -171,7 +171,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     private String animalId;
 
     @SAGEAttribute(cvName="light_imagery", termName="heat_shock_minutes")
-    @SearchAttribute(key="heat_shock_minutes_txt",label="Head Shock Age Minutes")
+    @SearchAttribute(key="heat_shock_minutes_txt",label="Heat Shock Age Minutes")
     private String heatShockMinutes;
 
     @JsonProperty

@@ -134,15 +134,15 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private String mountingProtocol;
 
     @SAGEAttribute(cvName="light_imagery", termName="heat_shock_hour")
-    @SearchAttribute(key="heat_shock_hour_txt",label="Head Shock Age Hour")
+    @SearchAttribute(key="heat_shock_hour_txt",label="Heat Shock Age Hour")
     private String heatShockHour;
 
     @SAGEAttribute(cvName="light_imagery", termName="heat_shock_interval")
-    @SearchAttribute(key="heat_shock_interval_txt",label="Head Shock Age Interval")
+    @SearchAttribute(key="heat_shock_interval_txt",label="Heat Shock Age Interval")
     private String heatShockInterval;
 
     @SAGEAttribute(cvName="light_imagery", termName="heat_shock_minutes")
-    @SearchAttribute(key="heat_shock_minutes_txt",label="Head Shock Age Minutes")
+    @SearchAttribute(key="heat_shock_minutes_txt",label="Heat Shock Age Minutes")
     private String heatShockMinutes;
     
     @SAGEAttribute(cvName="light_imagery", termName="lsm_illumination_channel_1_name")
