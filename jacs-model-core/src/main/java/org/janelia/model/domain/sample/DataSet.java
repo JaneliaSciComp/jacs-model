@@ -14,6 +14,7 @@ import org.janelia.model.domain.gui.search.criteria.Criteria;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
+import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.support.SearchType;
 
 /**
@@ -58,6 +59,7 @@ public class DataSet extends AbstractDomainObject implements Filtering {
      * @deprecated Moved to ColorDepthLibrary
      */
     @Deprecated
+    @SearchTraversal({})
     private Map<String,Integer> colorDepthCounts = new HashMap<>();
 
     @JsonIgnore
