@@ -47,7 +47,6 @@ public interface DomainObjectReadDao<T extends DomainObject> extends ReadDao<T, 
     /**
      * Stream all records.
      *
-     * @param <T>
      * @return
      */
     Stream<T> streamAll();

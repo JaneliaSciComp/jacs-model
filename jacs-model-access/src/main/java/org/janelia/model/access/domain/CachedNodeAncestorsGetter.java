@@ -33,7 +33,7 @@ public class CachedNodeAncestorsGetter implements NodeAncestorsGetter {
     public CachedNodeAncestorsGetter(TreeNodeDao treeNodeDao) {
         this.treeNodeDao = treeNodeDao;
         nodeAncestorsMapCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(10, TimeUnit.HOURS)
+                .expireAfterWrite(5, TimeUnit.MINUTES)
                 .build();
     }
 
