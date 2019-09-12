@@ -34,6 +34,7 @@ import org.janelia.model.domain.ontology.SimpleDomainAnnotation;
 import org.janelia.model.domain.searchable.SearchableDocType;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
+import org.janelia.model.domain.workspace.AllNodeAncestorsGetter;
 import org.janelia.model.domain.workspace.NodeAncestorsGetter;
 import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.util.ReflectionHelper;

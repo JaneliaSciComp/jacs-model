@@ -19,34 +19,20 @@ import org.janelia.model.domain.ontology.SimpleDomainAnnotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CachedDomainAnnotationGetter implements DomainAnnotationGetter {
+public class DomainAnnotationGetterImpl implements DomainAnnotationGetter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CachedDomainAnnotationGetter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DomainAnnotationGetterImpl.class);
 
     private final AnnotationDao annotationDao;
-    private final LoadingCache<Reference, Set<SimpleDomainAnnotation>> referenceAnnotationsCache;
 
     @Inject
-    public CachedDomainAnnotationGetter(AnnotationDao annotationDao) {
+    public DomainAnnotationGetterImpl(AnnotationDao annotationDao) {
         this.annotationDao = annotationDao;
-        referenceAnnotationsCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(2, TimeUnit.MINUTES)
-                .build(new CacheLoader<Reference, Set<SimpleDomainAnnotation>>() {
-                    @Override
-                    public Set<SimpleDomainAnnotation> load(Reference reference) {
-                        return loadAnnotationsByReference(reference);
-                    }
-                });
     }
 
     @Override
     public Set<SimpleDomainAnnotation> getAnnotations(Reference ref) {
-        try {
-            return referenceAnnotationsCache.get(ref);
-        } catch (ExecutionException e) {
-            LOG.error("Error retrieving annotations for {}", ref, e);
-            throw new IllegalStateException(e);
-        }
+        return loadAnnotationsByReference(ref);
     }
 
     private Set<SimpleDomainAnnotation> loadAnnotationsByReference(Reference ref) {

@@ -104,7 +104,8 @@ public class TreeNodeMongoDaoTest extends AbstractMongoDaoTest {
                         List<TreeNode> nodeAncestors = treeNodeMongoDao.getNodeDirectAncestors(nodeReference);
                         return nodeAncestors.stream().map(n -> Reference.createFor(n)).collect(Collectors.toSet());
                     },
-                    n -> foundAncestors.add(n));
+                    n -> foundAncestors.add(n),
+                    -1);
             assertEquals(td.expectedResult, foundAncestors);
         }
     }

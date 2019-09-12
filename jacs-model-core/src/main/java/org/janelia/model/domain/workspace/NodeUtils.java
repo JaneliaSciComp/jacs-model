@@ -6,7 +6,11 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.base.Preconditions;
+
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.model.domain.Reference;
 
 /**
@@ -16,30 +20,31 @@ import org.janelia.model.domain.Reference;
  */
 public class NodeUtils {
 
-    public static void traverseAllAncestors(Reference nodeReference, NodeAncestorsGetter directNodeAncestorsMap, Consumer<Reference> ancestorAction) {
-        Set<Reference> directNodeAncestors = directNodeAncestorsMap.getNodeAncestors(nodeReference);
+    public static void traverseAllAncestors(Reference nodeReference, DirectNodeAncestorsGetter directNodeAncestorsMap, Consumer<Reference> ancestorAction, int howManyLevels) {
+        Set<Reference> directNodeAncestors = directNodeAncestorsMap.getDirectAncestors(nodeReference);
         if (CollectionUtils.isNotEmpty(directNodeAncestors)) {
             Set<Reference> allAncestors = new LinkedHashSet<>();
             allAncestors.add(nodeReference);
-            traverseAllAncestors(directNodeAncestorsMap, allAncestors, directNodeAncestors, ancestorAction);
+            traverseAllAncestors(directNodeAncestorsMap, allAncestors, directNodeAncestors.stream().map(nodeAncestor -> ImmutablePair.of(nodeAncestor, howManyLevels > 0 ? howManyLevels : -1)).collect(Collectors.toSet()), ancestorAction);
         }
     }
 
-    private static void traverseAllAncestors(NodeAncestorsGetter directNodeAncestorsMap, Set<Reference> visitedNodes, Set<Reference> remainingNodes, Consumer<Reference> ancestorAction) {
-        for (Set<Reference> uninspectedAncestorNodes = remainingNodes; !uninspectedAncestorNodes.isEmpty();) {
+    private static void traverseAllAncestors(DirectNodeAncestorsGetter directNodeAncestorsMap, Set<Reference> visitedNodes, Set<Pair<Reference, Integer>> remainingNodes, Consumer<Reference> ancestorAction) {
+        for (Set<Pair<Reference, Integer>> uninspectedAncestorNodes = remainingNodes; !uninspectedAncestorNodes.isEmpty();) {
             uninspectedAncestorNodes = uninspectedAncestorNodes.stream()
-                    .flatMap(nodeReference -> {
+                    .filter(nodeRefWithLevel -> nodeRefWithLevel.getRight() != 0)
+                    .flatMap(nodeRefWithLevel -> {
                         ancestorAction
-                                .andThen(nr -> visitedNodes.add(nr))
-                                .accept(nodeReference);
-                        Set<Reference> directNodeAncestors = directNodeAncestorsMap.getNodeAncestors(nodeReference);
+                                .andThen(nodeRef -> visitedNodes.add(nodeRef))
+                                .accept(nodeRefWithLevel.getLeft());
+                        Set<Reference> directNodeAncestors = directNodeAncestorsMap.getDirectAncestors(nodeRefWithLevel.getLeft());
                         if (CollectionUtils.isNotEmpty(directNodeAncestors)) {
-                            return directNodeAncestors.stream();
+                            return directNodeAncestors.stream().map(nr -> ImmutablePair.of(nr, nodeRefWithLevel.getRight() > 0 ? nodeRefWithLevel.getRight() - 1 : -1));
                         } else {
                             return Stream.of();
                         }
                     })
-                    .filter(node -> !visitedNodes.contains(node))
+                    .filter(nodeReRefWithLevel -> !visitedNodes.contains(nodeReRefWithLevel.getLeft()))
                     .collect(Collectors.toSet());
         }
     }
