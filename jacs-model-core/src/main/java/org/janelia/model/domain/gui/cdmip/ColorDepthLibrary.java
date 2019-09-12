@@ -4,12 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.gui.search.Filtering;
-import org.janelia.model.domain.gui.search.criteria.AttributeValueCriteria;
 import org.janelia.model.domain.gui.search.criteria.Criteria;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.support.MongoMapped;
@@ -47,7 +45,6 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
         return colorDepthCounts;
     }
 
-    @Deprecated
     public void setColorDepthCounts(Map<String, Integer> colorDepthCounts) {
         if (colorDepthCounts==null) throw new IllegalArgumentException("Property cannot be null");
         this.colorDepthCounts = colorDepthCounts;
