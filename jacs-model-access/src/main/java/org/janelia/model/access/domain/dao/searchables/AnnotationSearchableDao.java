@@ -21,6 +21,7 @@ import javax.inject.Inject;
 @AsyncIndex
 public class AnnotationSearchableDao extends AbstractDomainSearchablDao<Annotation> implements AnnotationDao {
 
+    private final AnnotationDao annotationDao;
     private final ReferenceDomainObjectReadDao referenceDomainObjectReadDao;
 
     @Inject
@@ -28,7 +29,13 @@ public class AnnotationSearchableDao extends AbstractDomainSearchablDao<Annotati
                             ReferenceDomainObjectReadDao referenceDomainObjectReadDao,
                             @AsyncIndex DomainObjectIndexer objectIndexer) {
         super(annotationDao, objectIndexer);
+        this.annotationDao = annotationDao;
         this.referenceDomainObjectReadDao = referenceDomainObjectReadDao;
+    }
+
+    @Override
+    public List<Annotation> findAnnotationsByTargetsAccessibleBySubjectKey(Collection<Reference> references, String subjectKey) {
+        return annotationDao.findAnnotationsByTargetsAccessibleBySubjectKey(references, subjectKey);
     }
 
     @Override
