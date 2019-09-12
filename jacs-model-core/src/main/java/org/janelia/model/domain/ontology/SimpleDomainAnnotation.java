@@ -2,6 +2,8 @@ package org.janelia.model.domain.ontology;
 
 import java.util.Set;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
  * Simplified annotation representation for the purposes of SOLR indexing.
  *
@@ -22,5 +24,13 @@ public class SimpleDomainAnnotation {
 
     public Set<String> getSubjects() {
         return subjects;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("tag", tag)
+                .append("subjects", subjects)
+                .toString();
     }
 }
