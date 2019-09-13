@@ -32,7 +32,7 @@ public class DirectNodeAncestorsGetterImpl implements DirectNodeAncestorsGetter 
         try {
             return treeNodeDao.getNodeDirectAncestors(reference).stream().map(tn -> Reference.createFor(tn)).collect(Collectors.toSet());
         } finally {
-            LOG.info("Finished loading direct node ancestors for {}", reference);
+            LOG.debug("Finished loading direct node ancestors for {}", reference);
         }
     }
 

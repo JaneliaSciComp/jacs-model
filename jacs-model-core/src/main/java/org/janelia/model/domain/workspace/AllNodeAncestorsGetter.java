@@ -17,13 +17,13 @@ public class AllNodeAncestorsGetter implements NodeAncestorsGetter {
     }
 
     public Set<Reference> getNodeAncestors(Reference nodeReference) {
-        LOG.info("Start loading all node ancestors for {}", nodeReference);
+        LOG.debug("Start loading all node ancestors for {}", nodeReference);
         try {
             Set<Reference> nodeAncestors = new HashSet<>();
             NodeUtils.traverseAllAncestors(nodeReference, directNodeAncestorsGetter, ref -> nodeAncestors.add(ref), -1);
             return nodeAncestors;
         } finally {
-            LOG.info("Finished loading all node ancestors for {}", nodeReference);
+            LOG.debug("Finished loading all node ancestors for {}", nodeReference);
         }
     }
 }
