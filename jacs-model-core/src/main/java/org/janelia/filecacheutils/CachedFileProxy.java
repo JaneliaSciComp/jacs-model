@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.FileTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -75,14 +74,9 @@ public class CachedFileProxy implements FileProxy {
 
     @Override
     public InputStream openContentStream() {
-        if (Files.exists(localFilePath)) {
-            try {
-                localFileCacheStorage.touch(localFilePath);
-                return Files.newInputStream(localFilePath);
-            } catch (IOException e) {
-                LOG.error("Error reading {}", localFilePath, e);
-                throw new IllegalStateException(e);
-            }
+        InputStream localFileStream = localFileCacheStorage.openLocalCachedFile(localFilePath);
+        if (localFileStream != null) {
+            return localFileStream;
         } else {
             if (fileProxy == null) {
                 fileProxy = fileProxySupplier.get();

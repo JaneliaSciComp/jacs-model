@@ -10,5 +10,6 @@ import org.janelia.model.domain.ontology.Annotation;
  * {@link Annotation} DAO.
  */
 public interface AnnotationDao extends DomainObjectDao<Annotation> {
+    List<Annotation> findAnnotationsByTargets(Collection<Reference> references);
     List<Annotation> findAnnotationsByTargetsAccessibleBySubjectKey(Collection<Reference> references, String subjectKey);
 }

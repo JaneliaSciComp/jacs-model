@@ -34,6 +34,11 @@ public class AnnotationSearchableDao extends AbstractDomainSearchablDao<Annotati
     }
 
     @Override
+    public List<Annotation> findAnnotationsByTargets(Collection<Reference> references) {
+        return annotationDao.findAnnotationsByTargets(references);
+    }
+
+    @Override
     public List<Annotation> findAnnotationsByTargetsAccessibleBySubjectKey(Collection<Reference> references, String subjectKey) {
         return annotationDao.findAnnotationsByTargetsAccessibleBySubjectKey(references, subjectKey);
     }

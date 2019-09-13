@@ -1,7 +1,7 @@
 package org.janelia.filecacheutils;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -10,16 +10,10 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
+import java.util.Date;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Set;
-import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -260,7 +254,7 @@ public class LocalFileCacheStorage {
         try {
             Path p = Paths.get(cachedFileEntry.fileName);
             if (Files.deleteIfExists(p)) {
-                LOG.info("Removed {} ({} KB) from local storage cache", cachedFileEntry.fileName, cachedFileEntry.fileSizeInKB);
+                LOG.info("Removed {} ({} KB last used on {}) from local storage cache", cachedFileEntry.fileName, new Date(cachedFileEntry.lastUpdatedTimestamp), cachedFileEntry.fileSizeInKB);
                 currentSize.decrementAndGet();
                 currentSizeInKB.accumulateAndGet(-cachedFileEntry.fileSizeInKB, (v1, v2) -> {
                     long v = v1 + v2;
@@ -307,7 +301,7 @@ public class LocalFileCacheStorage {
         }
     }
 
-    synchronized void touch(Path localFilePath) {
+    synchronized InputStream openLocalCachedFile(Path localFilePath) {
         long currentTime = System.currentTimeMillis();
         CachedFileEntry lookupEntry = new CachedFileEntry(localFilePath.toString(), 0, 0);
         // to touch the cache entry we remove it and reinsert it so that the timestamp gets updated
@@ -316,10 +310,13 @@ public class LocalFileCacheStorage {
             cachedFileEntry.lastUpdatedTimestamp = currentTime;
             try {
                 Files.setLastModifiedTime(localFilePath, FileTime.fromMillis(currentTime));
+                InputStream contentStream = Files.newInputStream(localFilePath);
+                cachedFiles.put(cachedFileEntry, cachedFileEntry);
+                return contentStream;
             } catch (IOException e) {
-                LOG.debug("Error updating timestamp for {}", localFilePath, e);
+                LOG.debug("Error getting the content of the locally cached file {}", localFilePath, e);
             }
-            cachedFiles.put(cachedFileEntry, cachedFileEntry);
         }
+        return null;
     }
 }

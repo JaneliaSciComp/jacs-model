@@ -38,7 +38,7 @@ public class DomainAnnotationGetterImpl implements DomainAnnotationGetter {
     private Set<SimpleDomainAnnotation> loadAnnotationsByReference(Reference ref) {
         LOG.info("Load annotations for {}", ref);
         try {
-            Set<SimpleDomainAnnotation> annotations = annotationDao.findAnnotationsByTargetsAccessibleBySubjectKey(ImmutableSet.of(ref), null).stream()
+            Set<SimpleDomainAnnotation> annotations = annotationDao.findAnnotationsByTargets(ImmutableSet.of(ref)).stream()
                     .map(a -> new SimpleDomainAnnotation(a.getName(), a.getReaders()))
                     .collect(Collectors.toSet());
             LOG.debug("Found annotations {} for {}", annotations, ref);

@@ -3,12 +3,11 @@ package org.janelia.model.domain.workspace;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.janelia.model.domain.DataSupplier;
 import org.janelia.model.domain.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AllNodeAncestorsGetter implements NodeAncestorsGetter, DataSupplier<Reference, Set<Reference>> {
+public class AllNodeAncestorsGetter implements NodeAncestorsGetter {
     private static final Logger LOG = LoggerFactory.getLogger(AllNodeAncestorsGetter.class);
 
     private final DirectNodeAncestorsGetter directNodeAncestorsGetter;
@@ -27,6 +26,4 @@ public class AllNodeAncestorsGetter implements NodeAncestorsGetter, DataSupplier
             LOG.info("Finished loading all node ancestors for {}", nodeReference);
         }
     }
-
-
 }
