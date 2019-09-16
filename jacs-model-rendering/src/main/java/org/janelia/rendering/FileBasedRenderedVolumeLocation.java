@@ -1,6 +1,5 @@
 package org.janelia.rendering;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -14,21 +13,18 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import com.google.common.base.Preconditions;
 import com.sun.media.jai.codec.FileSeekableStream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.rendering.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FileBasedRenderedVolumeLocation implements RenderedVolumeLocation {
+public class FileBasedRenderedVolumeLocation extends FileBasedDataLocation implements RenderedVolumeLocation {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileBasedRenderedVolumeLocation.class);
 
@@ -71,30 +67,17 @@ public class FileBasedRenderedVolumeLocation implements RenderedVolumeLocation {
 
     }
 
-    private final Path volumeBasePath;
-
     public FileBasedRenderedVolumeLocation(Path volumeBasePath) {
-        this.volumeBasePath = volumeBasePath;
+        super(volumeBasePath);
     }
 
-    @Override
-    public URI getConnectionURI() {
-        // for local file based location the connection URI and the base data storage URI are the same.
-        return volumeBasePath.toUri();
-    }
-
-    @Override
-    public URI getDataStorageURI() {
-        return volumeBasePath.toUri();
-    }
-
-    @Override
-    public String getRenderedVolumePath() {
-        return StringUtils.replace(volumeBasePath.toString(), "\\", "/");
+    public FileBasedRenderedVolumeLocation(FileBasedDataLocation fileBasedDataLocation) {
+        super(fileBasedDataLocation.baseDataStoragePath);
     }
 
     @Override
     public List<URI> listImageUris(int level) {
+        Path volumeBasePath = Paths.get(getBaseDataStoragePath());
         TiffOctreeImageVisitor imageVisitor = new TiffOctreeImageVisitor(volumeBasePath, level);
         try {
             Files.walkFileTree(volumeBasePath, EnumSet.noneOf(FileVisitOption.class), level + 1, imageVisitor);
@@ -107,7 +90,7 @@ public class FileBasedRenderedVolumeLocation implements RenderedVolumeLocation {
     @Nullable
     @Override
     public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
-        return openContentStream(volumeBasePath.resolve(tileRelativePath), ImageUtils.getImagePathHandler())
+        return getContentFromRelativePath(tileRelativePath)
                 .consume(tiffStream -> {
                     try {
                         return ImageUtils.loadImageInfoFromTiffStream(tiffStream);
@@ -122,10 +105,10 @@ public class FileBasedRenderedVolumeLocation implements RenderedVolumeLocation {
     }
 
     @Override
-    public Streamable<byte[]> readTileImagePageAsTexturedBytes(String tileRelativePath, List<String> channelImageNames, int pageNumber) {
+    public Streamable<byte[]> readTiffPageAsTexturedBytes(String imageRelativePath, List<String> channelImageNames, int pageNumber) {
         byte[] imageTextureBytes = ImageUtils.bandMergedTextureBytesFromImageStreams(
                 channelImageNames.stream()
-                        .map(channelImageName -> volumeBasePath.resolve(tileRelativePath).resolve(channelImageName))
+                        .map(channelImageName -> Paths.get(getBaseDataStoragePath(), imageRelativePath, channelImageName))
                         .filter(channelImagePath -> Files.exists(channelImagePath))
                         .map(channelImagePath -> NamedSupplier.namedSupplier(
                                 channelImagePath.toString(),
@@ -145,9 +128,8 @@ public class FileBasedRenderedVolumeLocation implements RenderedVolumeLocation {
     }
 
     @Override
-    public Streamable<byte[]> readRawTileROIPixels(RawImage rawImage, int channel, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
-        Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel)));
-        return openContentStream(volumeBasePath.resolve(rawImagePath), ImageUtils.getImagePathHandler())
+    public Streamable<byte[]> readTiffImageROIPixels(String imagePath, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
+        return getContentFromAbsolutePath(imagePath)
                 .consume(imageStream -> {
                     try {
                         return ImageUtils.loadImagePixelBytesFromTiffStream(imageStream, xCenter, yCenter, zCenter, dimx, dimy, dimz);
@@ -161,42 +143,7 @@ public class FileBasedRenderedVolumeLocation implements RenderedVolumeLocation {
     }
 
     @Override
-    public Streamable<InputStream> getRawTileContent(RawImage rawImage, int channel) {
-        Path rawImagePath = Paths.get(rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel)));
-        return openContentStream(rawImagePath, ImageUtils.getImagePathHandler());
-    }
-
-    @Override
-    public Streamable<InputStream> getContentFromRelativePath(String relativePath) {
-        return openContentStream(volumeBasePath.resolve(relativePath), ImageUtils.getImagePathHandler());
-    }
-
-    @Override
-    public Streamable<InputStream> getContentFromAbsolutePath(String absolutePath) {
-        Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
-        return openContentStream(Paths.get(absolutePath), ImageUtils.getImagePathHandler());
-    }
-
-    private Streamable<InputStream> openContentStream(Path fp, Function<Path, InputStream> contentStreamSupplier) {
-        if (Files.exists(fp)) {
-            try {
-                return Streamable.of(contentStreamSupplier.apply(fp), Files.size(fp));
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-        } else {
-            return Streamable.empty();
-        }
-    }
-
-    @Override
-    public boolean checkContentAtRelativePath(String relativePath) {
-        return Files.exists(volumeBasePath.resolve(relativePath));
-    }
-
-    @Override
-    public boolean checkContentAtAbsolutePath(String absolutePath) {
-        Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
-        return Files.exists(Paths.get(absolutePath));
+    Function<Path, InputStream> defaultPathHandler() {
+        return ImageUtils.getImagePathHandler();
     }
 }
