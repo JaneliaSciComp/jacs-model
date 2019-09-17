@@ -87,26 +87,27 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
         // Create a copy of the workspace object with the new name
         TmWorkspace workspaceCopy = createTmWorkspace(subjectKey, TmWorkspace.copy(existingWorkspace).rename(newName));
         try {
-            Spliterator<Stream<Pair<TmNeuronMetadata, InputStream>>> neuronsSupplier = new Spliterator<Stream<Pair<TmNeuronMetadata, InputStream>>>() {
+            Spliterator<Stream<TmNeuronMetadata>> neuronsSupplier = new Spliterator<Stream<TmNeuronMetadata>>() {
                 volatile long offset = 0L;
                 int defaultLength = 100000;
 
                 @Override
-                public boolean tryAdvance(Consumer<? super Stream<Pair<TmNeuronMetadata, InputStream>>> action) {
-                    List<Pair<TmNeuronMetadata, InputStream>> tmNeuronsPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey, existingWorkspace, offset, defaultLength);
-                    long lastEntryOffset = offset + tmNeuronsPairs.size();
-                    LOG.info("Retrieved {} neurons ({} - {})", tmNeuronsPairs.size(), offset, lastEntryOffset);
-                    if (tmNeuronsPairs.isEmpty()) {
+                public boolean tryAdvance(Consumer<? super Stream<TmNeuronMetadata>> action) {
+                    List<TmNeuronMetadata> tmNeurons = tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(subjectKey,
+                            existingWorkspace.getId(), offset, defaultLength);
+                    long lastEntryOffset = offset + tmNeurons.size();
+                    LOG.info("Retrieved {} neurons ({} - {})", tmNeurons.size(), offset, lastEntryOffset);
+                    if (tmNeurons.isEmpty()) {
                         return false;
                     } else {
                         offset = lastEntryOffset;
-                        action.accept(tmNeuronsPairs.stream());
-                        return tmNeuronsPairs.size() == defaultLength; // if the number of retrieved neurons is less than requested - it reached the end
+                        action.accept(tmNeurons.stream());
+                        return tmNeurons.size() == defaultLength; // if the number of retrieved neurons is less than requested - it reached the end
                     }
                 }
 
                 @Override
-                public Spliterator<Stream<Pair<TmNeuronMetadata, InputStream>>> trySplit() {
+                public Spliterator<Stream<TmNeuronMetadata>> trySplit() {
                     return null;
                 }
 
@@ -128,27 +129,21 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
 
             StreamSupport.stream(neuronsSupplier, true)
                     .flatMap(neuronStream -> neuronStream)
-                    .forEach(pair -> {
-                        TmNeuronMetadata neuronCopy = TmNeuronMetadata.copy(pair.getKey());
+                    .forEach(target -> {
+                        TmNeuronMetadata neuronCopy = TmNeuronMetadata.copy(target);
                         neuronCopy.setId(neuronIdSource.next());
                         neuronCopy.setWorkspaceRef(Reference.createFor(workspaceCopy));
                         if (assignOwner != null) {
                             neuronCopy.setOwnerKey(assignOwner);
                         }
                         try {
-                            InputStream oldNeuronStream = pair.getValue();
-                            TmProtobufExchanger protobufExchanger = new TmProtobufExchanger();
-                            protobufExchanger.deserializeNeuron(oldNeuronStream, neuronCopy);
-
                             // Change the parent of the roots to be the neuron id
                             for (TmGeoAnnotation annotation : neuronCopy.getRootAnnotations()) {
                                 annotation.setParentId(neuronCopy.getId());
                             }
-
-                            InputStream newNeuronStream = new ByteArrayInputStream(protobufExchanger.serializeNeuron(neuronCopy));
-                            tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuronCopy, workspaceCopy, newNeuronStream);
+                            tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuronCopy, workspaceCopy);
                         } catch (Exception e) {
-                            LOG.error("Error copying neuron points from {} to {}", pair.getKey(), neuronCopy);
+                            LOG.error("Error copying neuron from {} to {}", target, neuronCopy);
                             throw new IllegalStateException(e);
                         }
                     });

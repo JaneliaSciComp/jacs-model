@@ -16,15 +16,12 @@ import io.protostuff.Tag;
  */
 public class TmStructuredTextAnnotation implements Serializable {
 
-	@Tag(1)
     private Long id;
 
     /** The id of a geometric annotation */
-    @Tag(2)
     private Long parentId;
 
     /** An annotation in JSON format */
-	@Tag(3)
     private String dataString;
     
 	/** No-args c'tor required for use with Protostuff/protobuf */

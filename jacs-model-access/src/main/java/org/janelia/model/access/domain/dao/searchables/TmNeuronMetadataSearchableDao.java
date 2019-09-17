@@ -29,8 +29,8 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
     }
 
     @Override
-    public TmNeuronMetadata createTmNeuronInWorkspace(String subjectKey, TmNeuronMetadata neuronMetadata, TmWorkspace workspace, InputStream neuronPoints) {
-        TmNeuronMetadata persistedNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuronMetadata, workspace, neuronPoints);
+    public TmNeuronMetadata createTmNeuronInWorkspace(String subjectKey, TmNeuronMetadata neuronMetadata, TmWorkspace workspace) {
+        TmNeuronMetadata persistedNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuronMetadata, workspace);
         domainObjectIndexer.indexDocument(persistedNeuron);
         return persistedNeuron;
     }
@@ -41,22 +41,12 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
     }
 
     @Override
-    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace, long offset, int length) {
-        return tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey, workspace, offset, length);
-    }
-
-    @Override
     public boolean removeTmNeuron(Long neuronId, String subjectKey) {
         boolean removed = tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey);
         if (removed) {
             domainObjectIndexer.removeDocument(neuronId);
         }
         return removed;
-    }
-
-    @Override
-    public void updateNeuronPoints(TmNeuronMetadata neuron, InputStream neuronPoints) {
-        tmNeuronMetadataDao.updateNeuronPoints(neuron, neuronPoints);
     }
 
     @Override

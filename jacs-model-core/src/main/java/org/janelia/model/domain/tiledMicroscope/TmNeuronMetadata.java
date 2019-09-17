@@ -33,7 +33,6 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     private Set<String> tags = new HashSet<>();
 
     // A reference that is used to keep things associated in memory, but persisted separately
-    @JsonIgnore
     transient private TmNeuronData neuronData;
 
     @JsonIgnore

@@ -16,17 +16,14 @@ import io.protostuff.Tag;
  * Date: 10/17/13
  * Time: 10:14 AM
  */
-public class TmAnchoredPath implements Serializable {
-    @Tag(1)
+public class TmAnchoredPath {
     Long id;
 
     // two IDs of the annotations between which the path runs
-    @Tag(2)
     TmAnchoredPathEndpoints endpoints;
 
     // VoxelIndex and Vec3 not available to model, so wing it; these
     //  will be 3-vectors (x, y, z):
-    @Tag(3)
     List<List<Integer>> pointList;
 
     // needed by protobuf:

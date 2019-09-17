@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.protostuff.Tag;
 
 /**
@@ -13,21 +14,16 @@ import io.protostuff.Tag;
  * Date: 5/1/13
  * Time: 1:23 PM
  */
-public class TmGeoAnnotation implements Serializable {
-    @Tag(1)
+public class TmGeoAnnotation {
+
     private Long id;
     // parentId is the neuron (if root annotation) or another TmGeoAnn
-    @Tag(2)
+
     private Long parentId;
-    @Tag(3)
     private Double x;
-    @Tag(4)
     private Double y;
-    @Tag(5)
     private Double z;
-    @Tag(6)
     private Double radius;
-    @Tag(7)
     private Date creationDate;
     // child and neuron ID fields only filled in when the annotation is in a neuron!
     //  they are null otherwise
@@ -39,12 +35,11 @@ public class TmGeoAnnotation implements Serializable {
     //  also comment and index, which are unused; also, outside routines may
     //  update it (eg, change to attached note); connectivity changes do
     //  not trigger (change in parent or children)
-    @Tag(8)
     private Date modificationDate;
-    @Tag(9)
     private List<Long> childIds = new ArrayList<>();
 
     // Populated after deserialization
+    @JsonIgnore
     transient private Long neuronId = null;
 
     // implementation note: at one point we stored the parent and child objects,

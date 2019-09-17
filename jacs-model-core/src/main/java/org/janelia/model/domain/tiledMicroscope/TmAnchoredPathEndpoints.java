@@ -13,10 +13,8 @@ import io.protostuff.Tag;
  * Date: 10/23/13
  * Time: 12:52 PM
  */
-public class TmAnchoredPathEndpoints implements Serializable {
-    @Tag(1)
+public class TmAnchoredPathEndpoints {
     private Long annotationID1;
-    @Tag(2)
     private Long annotationID2;
 
     // needed by protobuf

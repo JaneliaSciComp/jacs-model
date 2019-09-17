@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.protostuff.Tag;
 import org.janelia.model.util.MapFacade;
 
@@ -19,13 +20,9 @@ import org.janelia.model.util.MapFacade;
  */
 public class TmNeuronData implements Serializable {
 
-    @Tag(1)
     private final List<TmGeoAnnotation> geoAnnotations = new ArrayList<>();
-    @Tag(2)
     private final List<Long> rootAnnotationIds = new ArrayList<>();
-    @Tag(3)
     private final List<TmAnchoredPath> anchoredPaths = new ArrayList<>();
-    @Tag(4)
     private final List<TmStructuredTextAnnotation> textAnnotations = new ArrayList<>();
 
     /*
@@ -34,8 +31,11 @@ public class TmNeuronData implements Serializable {
     and not serialized to protobuf. They need to be instantiated lazily, because protobuf surreptitiously replaces the list instances 
     above when deserializing. The instances above are only used when creating a new instance.
      */
+    @JsonIgnore
     transient private Map<Long, TmGeoAnnotation> geoAnnotationMap;
+    @JsonIgnore
     transient private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap;
+    @JsonIgnore
     transient private Map<Long, TmStructuredTextAnnotation> textAnnotationMap;
 
     public TmNeuronData() {

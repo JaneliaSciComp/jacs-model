@@ -43,21 +43,18 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     private static final Logger LOG = LoggerFactory.getLogger(TmNeuronMetadataMongoDao.class);
 
     private final DomainDAO domainDao;
-    private final TmNeuronBufferDao tmNeuronBufferDao;
 
     @Inject
     TmNeuronMetadataMongoDao(MongoDatabase mongoDatabase,
                              DomainPermissionsMongoHelper permissionsHelper,
                              DomainUpdateMongoHelper updateHelper,
-                             DomainDAO domainDao,
-                             TmNeuronBufferDao tmNeuronBufferDao) {
+                             DomainDAO domainDao) {
         super(mongoDatabase, permissionsHelper, updateHelper);
         this.domainDao = domainDao;
-        this.tmNeuronBufferDao = tmNeuronBufferDao;
     }
 
     @Override
-    public TmNeuronMetadata createTmNeuronInWorkspace(String subjectKey, TmNeuronMetadata neuronMetadata, TmWorkspace workspace, InputStream neuronPoints) {
+    public TmNeuronMetadata createTmNeuronInWorkspace(String subjectKey, TmNeuronMetadata neuronMetadata, TmWorkspace workspace) {
         String neuronOwnerKey;
         // Inherit from parent only if not existing already
         if (!subjectKey.equals(neuronMetadata.getOwnerKey())) {
@@ -75,27 +72,9 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
             } else {
                 persistedNeuronMetadata = domainDao.createWithPrepopulatedId(neuronOwnerKey, neuronMetadata);
             }
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-        try {
-            if (neuronPoints != null) {
-                attachNeuronPoints(persistedNeuronMetadata, neuronPoints);
-            }
             return persistedNeuronMetadata;
         } catch (Exception e) {
-            try {
-                domainDao.remove(persistedNeuronMetadata.getOwnerKey(), persistedNeuronMetadata);
-            } catch (Exception ignore) {
-                LOG.warn("Error removing {} after failing to attach neuron points", persistedNeuronMetadata, ignore);
-            }
             throw new IllegalStateException(e);
-        }
-    }
-
-    private void attachNeuronPoints(TmNeuronMetadata neuron, InputStream neuronPoints) {
-        if (neuronPoints != null) {
-            tmNeuronBufferDao.createNeuronWorkspacePoints(neuron.getId(), neuron.getWorkspaceId(), neuronPoints);
         }
     }
 
@@ -110,20 +89,6 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 offset,
                 length,
                 getEntityType());
-    }
-
-    @Override
-    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace, long offset, int length) {
-        List<TmNeuronMetadata> workspaceNeurons = getTmNeuronMetadataByWorkspaceId(subjectKey, workspace.getId(), offset, length);
-        if (workspaceNeurons.isEmpty()) {
-            return Collections.emptyList();
-        }
-        Map<Long, TmNeuronMetadata> indexedWorkspaceNeurons = DomainUtils.getMapById(workspaceNeurons);
-        Map<Long, InputStream> neuronsPointStreams = tmNeuronBufferDao.streamNeuronPointsByWorkspaceId(indexedWorkspaceNeurons.keySet(), workspace.getId());
-
-        return workspaceNeurons.stream()
-                .map(neuron -> ImmutablePair.of(neuron, neuronsPointStreams.get(neuron.getId())))
-                .collect(Collectors.toList());
     }
 
     private TmNeuronMetadata createNeuronOrUpdateNeuronWorkspace(Long neuronId, TmWorkspace workspace) {
@@ -153,17 +118,9 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     public boolean removeTmNeuron(Long neuronId, String subjectKey) {
         long nDeleted = deleteByIdAndSubjectKey(neuronId, subjectKey);
         if (nDeleted > 0) {
-            tmNeuronBufferDao.deleteNeuronPoints(neuronId);
             return true;
         } else {
             return false;
-        }
-    }
-
-    @Override
-    public void updateNeuronPoints(TmNeuronMetadata neuron, InputStream neuronPoints) {
-        if (neuronPoints != null) {
-            tmNeuronBufferDao.updateNeuronWorkspacePoints(neuron.getId(), neuron.getWorkspaceId(), neuronPoints);
         }
     }
 
