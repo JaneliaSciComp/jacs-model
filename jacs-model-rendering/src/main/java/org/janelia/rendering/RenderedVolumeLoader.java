@@ -7,10 +7,6 @@ import org.janelia.rendering.ymlrepr.RawVolData;
 
 public interface RenderedVolumeLoader {
     /**
-     * Default raw tile channel suffix pattern
-     */
-    String DEFAULT_RAW_CH_SUFFIX_PATTERN = "-ngc.%s.tif";
-    /**
      * Default transform file name.
      */
     String DEFAULT_TRANSFORM_FILE_NAME = "transform.txt";

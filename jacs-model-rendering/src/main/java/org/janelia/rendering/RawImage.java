@@ -17,6 +17,10 @@ import java.util.Optional;
  * RawImage contains octant data extracted from the YML file.
  */
 public class RawImage {
+    /**
+     * Default raw tile channel suffix pattern
+     */
+    private String DEFAULT_RAW_CH_SUFFIX_PATTERN = "-ngc.%s.tif";
 
     private String renderedVolumePath;
     private String acquisitionPath;
@@ -128,14 +132,15 @@ public class RawImage {
     }
 
     @JsonIgnore
-    public String getRawImagePath(String suffix) {
+    public String getRawImagePath(int channel) {
         Path imagePath;
         if (StringUtils.isBlank(relativePath)) {
             imagePath = Paths.get(acquisitionPath);
         } else {
             imagePath = Paths.get(acquisitionPath, StringUtils.stripStart(relativePath, "/"));
         }
-        Path fullImagePath = imagePath.resolve(imagePath.getFileName().toString() + suffix);
+        String channelSuffix = String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel);
+        Path fullImagePath = imagePath.resolve(imagePath.getFileName().toString() + channelSuffix);
         return fullImagePath.toString().replace('\\', '/');
     }
 

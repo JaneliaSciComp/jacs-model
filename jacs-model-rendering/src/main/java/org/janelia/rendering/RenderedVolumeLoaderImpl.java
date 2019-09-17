@@ -230,7 +230,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                                                 RawImage rawImage,
                                                                 int channel, int xCenter, int yCenter, int zCenter,
                                                                 int dimx, int dimy, int dimz) {
-        String rawImagePath = rawImage.getRawImagePath(String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel));
+        String rawImagePath = rawImage.getRawImagePath(channel);
         return rvl.readTiffImageROIPixels(rawImagePath, xCenter, yCenter, zCenter, dimx, dimy, dimz);
     }
 
