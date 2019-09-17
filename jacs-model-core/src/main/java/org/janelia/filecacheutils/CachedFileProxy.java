@@ -186,10 +186,9 @@ public class CachedFileProxy implements FileProxy {
 
     @Override
     public File getLocalFile() {
-        if (Files.exists(localFilePath)) {
-            File localFile = localFilePath.toFile();
-            localFile.setLastModified(System.currentTimeMillis());
-            return localFile;
+        Path localCachedFilePath = localFileCacheStorage.getLocalCachedFile(localFilePath);
+        if (localCachedFilePath != null) {
+            return localCachedFilePath.toFile();
         } else {
             if (fileProxy == null) {
                 fileProxy = fileProxySupplier.get();
@@ -221,6 +220,12 @@ public class CachedFileProxy implements FileProxy {
                 } catch (IOException e) {
                     LOG.error("Error moving downloaded file {} to {}", downloadingLocalFilePath, localFilePath, e);
                     throw new IllegalStateException(e);
+                } finally {
+                    try {
+                        Files.deleteIfExists(downloadingLocalFilePath);
+                    } catch (Exception deleteExc) {
+                        LOG.debug("Error deleting {}", downloadingLocalFilePath, deleteExc);
+                    }
                 }
             } finally {
                 try {
@@ -229,8 +234,8 @@ public class CachedFileProxy implements FileProxy {
                 }
                 DOWNLOADING_FILES.remove(localFilePath.toString());
             }
+            return localFilePath.toFile();
         }
-        return null;
     }
 
     private void makeDownloadDir() {

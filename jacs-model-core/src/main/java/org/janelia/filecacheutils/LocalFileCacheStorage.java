@@ -302,19 +302,30 @@ public class LocalFileCacheStorage {
     }
 
     synchronized InputStream openLocalCachedFile(Path localFilePath) {
+        try {
+            Path cachedFilePath = getLocalCachedFile(localFilePath);
+            if (cachedFilePath != null) {
+                return Files.newInputStream(cachedFilePath);
+            }
+        } catch (IOException e) {
+            LOG.debug("Error getting the content of the locally cached file {}", localFilePath, e);
+        }
+        return null;
+    }
+
+    synchronized Path getLocalCachedFile(Path filePath) {
         long currentTime = System.currentTimeMillis();
-        CachedFileEntry lookupEntry = new CachedFileEntry(localFilePath.toString(), 0, 0);
+        CachedFileEntry lookupEntry = new CachedFileEntry(filePath.toString(), 0, 0);
         // to touch the cache entry we remove it and reinsert it so that the timestamp gets updated
         CachedFileEntry cachedFileEntry = cachedFiles.remove(lookupEntry);
-        if (cachedFileEntry != null) {
+        if (cachedFileEntry != null && Files.exists(filePath)) {
             cachedFileEntry.lastUpdatedTimestamp = currentTime;
             try {
-                Files.setLastModifiedTime(localFilePath, FileTime.fromMillis(currentTime));
-                InputStream contentStream = Files.newInputStream(localFilePath);
+                Files.setLastModifiedTime(filePath, FileTime.fromMillis(currentTime));
                 cachedFiles.put(cachedFileEntry, cachedFileEntry);
-                return contentStream;
+                return filePath;
             } catch (IOException e) {
-                LOG.debug("Error getting the content of the locally cached file {}", localFilePath, e);
+                LOG.debug("Error touching locally cached file {}", filePath, e);
             }
         }
         return null;
