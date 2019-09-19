@@ -408,17 +408,20 @@ public class DomainDAO {
      */
     public List<Preference> getPreferences(String subjectKey) {
         log.debug("getPreferences({})", subjectKey);
-        return toList(preferenceCollection.find("{subjectKey:#}", subjectKey).as(Preference.class));
+        Set<String> subjects = getReaderSet(subjectKey);
+        return toList(preferenceCollection.find("{subjectKey:{$in:#}}", subjects).as(Preference.class));
     }
 
     public List<Preference> getPreferences(String subjectKey, String category) throws Exception {
         log.debug("getPreferences({}, category={})", subjectKey, category);
-        return toList(preferenceCollection.find("{subjectKey:#,category:#}", subjectKey, category).as(Preference.class));
+        Set<String> subjects = getReaderSet(subjectKey);
+        return toList(preferenceCollection.find("{subjectKey:{$in:#},category:#}", subjects, category).as(Preference.class));
     }
 
     public Preference getPreference(String subjectKey, String category, String key) {
         log.debug("getPreference({}, category={}, key={})", subjectKey, category, key);
-        return preferenceCollection.findOne("{subjectKey:#,category:#,key:#}", subjectKey, category, key).as(Preference.class);
+        Set<String> subjects = getReaderSet(subjectKey);
+        return preferenceCollection.findOne("{subjectKey:{$in:#},category:#,key:#}", subjects, category, key).as(Preference.class);
     }
 
     public Object getPreferenceValue(String subjectKey, String category, String key) {
@@ -430,7 +433,7 @@ public class DomainDAO {
         }
     }
 
-    public void setPreferenceValue(String subjectKey, String category, String key, Object value) throws Exception {
+    public Preference setPreferenceValue(String subjectKey, String category, String key, Object value) throws Exception {
         Preference preference = getPreference(subjectKey, category, key);
         if (value == null) {
             if (preference == null) {
@@ -439,7 +442,7 @@ public class DomainDAO {
                 // Null value means that the preference should be deleted
                 preferenceCollection.remove("{_id:#,subjectKey:#}", preference.getId(), subjectKey);
             }
-            return;
+            return null;
         } else {
             if (preference == null) {
                 // Create a new preference
@@ -449,6 +452,7 @@ public class DomainDAO {
                 preference.setValue(value);
             }
             save(subjectKey, preference);
+            return preference;
         }
     }
 
@@ -467,15 +471,23 @@ public class DomainDAO {
         if (preference.getId() == null) {
             preference.setId(getNewId());
             preferenceCollection.insert(preference);
-        } else {
-            // The placeholder is important here. Without it, nulls would not be set (see https://github.com/bguerout/jongo/issues/231)
-            WriteResult result = preferenceCollection.update("{_id:#,subjectKey:#}", preference.getId(), subjectKey).with("#", preference);
-            if (result.getN() != 1) {
-                throw new IllegalStateException("Updated " + result.getN() + " records instead of one: preference#" + preference.getId());
+        }
+        else {
+            if (preference.getValue()==null) {
+                // Null value means that the preference should be deleted
+                preferenceCollection.remove("{_id:#,subjectKey:#}", preference.getId(), subjectKey);
+                log.trace("Removed " + preference.getClass().getName() + "#" + preference.getId());
+            }
+            else {
+                // The placeholder is important here. Without it, nulls would not be set (see https://github.com/bguerout/jongo/issues/231)
+                WriteResult result = preferenceCollection.update("{_id:#,subjectKey:#}", preference.getId(), subjectKey).with("#", preference);
+                if (result.getN() != 1) {
+                    throw new IllegalStateException("Updated " + result.getN() + " records instead of one: preference#" + preference.getId());
+                }
+                log.trace("Saved " + preference.getClass().getName() + "#" + preference.getId());
             }
         }
 
-        log.trace("Saved " + preference.getClass().getName() + "#" + preference.getId());
         return preference;
     }
 
