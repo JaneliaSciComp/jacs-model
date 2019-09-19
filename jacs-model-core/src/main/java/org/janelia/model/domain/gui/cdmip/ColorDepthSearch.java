@@ -77,8 +77,7 @@ public class ColorDepthSearch extends AbstractDomainObject implements IsParent {
     public Double getPixColorFluctuation() {
         return parameters.getPixColorFluctuation();
     }
-
-
+    
     @JsonIgnore
     @SearchAttribute(key="xyshift_d",label="XY Shift")
     public Integer getXyShift() {
