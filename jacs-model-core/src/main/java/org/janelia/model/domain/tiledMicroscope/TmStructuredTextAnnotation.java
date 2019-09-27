@@ -3,6 +3,7 @@ package org.janelia.model.domain.tiledMicroscope;
 import java.io.IOException;
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +38,7 @@ public class TmStructuredTextAnnotation implements Serializable {
     /**
      * retrieve data, parsed; if we can't parse the stored string, return an empty object node instead
      */
+    @JsonIgnore
     public JsonNode getData() {
         ObjectMapper mapper = new ObjectMapper();
         try {
@@ -52,6 +54,7 @@ public class TmStructuredTextAnnotation implements Serializable {
      * update the data string in the annotation with data from a new JSON object; doesn't update
      * value on error
      */
+    @JsonIgnore
     public void setData(JsonNode node) {
         ObjectMapper mapper = new ObjectMapper();
         try {

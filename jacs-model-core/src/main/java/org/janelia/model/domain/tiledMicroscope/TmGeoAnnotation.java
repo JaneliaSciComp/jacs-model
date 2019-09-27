@@ -1,12 +1,10 @@
 package org.janelia.model.domain.tiledMicroscope;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.protostuff.Tag;
 
 /**
  * Created with IntelliJ IDEA.
@@ -53,7 +51,7 @@ public class TmGeoAnnotation {
     public TmGeoAnnotation(Long id, Long parentId, Long neuronId, Double x, Double y, Double z, Double radius, Date creationDate, Date modificationDate) {
         this.id = id;
         this.parentId = parentId;
-        this.neuronId = neuronId;
+        this.setNeuronId(neuronId);
         this.x = x;
         this.y = y;
         this.z = z;
@@ -141,22 +139,27 @@ public class TmGeoAnnotation {
         this.modificationDate = modificationDate;
     }
 
+    @JsonIgnore
     public void updateModificationDate() {
         this.modificationDate = new Date();
     }
 
+    @JsonIgnore
     public boolean isRoot() {
-        return neuronId != null && parentId.equals(neuronId);
+        return getNeuronId() != null && parentId.equals(getNeuronId());
     }
 
+    @JsonIgnore
     public boolean isBranch() {
         return getChildIds().size() > 1;
     }
 
+    @JsonIgnore
     public boolean isEnd() {
         return getChildIds().size() == 0;
     }
 
+    @JsonIgnore
     public boolean isLink() {
         return !isRoot() && getChildIds().size() == 1;
     }
@@ -170,10 +173,12 @@ public class TmGeoAnnotation {
         updateModificationDate();
     }
 
+    @JsonIgnore
     public Long getNeuronId() {
         return neuronId;
     }
 
+    @JsonIgnore
     public void setNeuronId(Long neuronId) {
         this.neuronId = neuronId;
     }

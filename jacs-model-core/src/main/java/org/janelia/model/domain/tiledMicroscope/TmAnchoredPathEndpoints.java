@@ -2,6 +2,7 @@ package org.janelia.model.domain.tiledMicroscope;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.protostuff.Tag;
 
 /**
@@ -48,6 +49,7 @@ public class TmAnchoredPathEndpoints {
     /**
      * returns annotation ID with lesser ID number
      */
+    @JsonIgnore
     public Long getFirstAnnotationID() {
         return Math.min(annotationID1, annotationID2);
     }
@@ -55,10 +57,12 @@ public class TmAnchoredPathEndpoints {
     /**
      * return annotation ID with greater ID number
      */
+    @JsonIgnore
     public Long getSecondAnnotationID() {
         return Math.max(annotationID1, annotationID2);
     }
 
+    @JsonIgnore
     public void setAnnotations(Long annotationID1, Long annotationID2) {
         this.annotationID1 = annotationID1;
         this.annotationID2 = annotationID2;

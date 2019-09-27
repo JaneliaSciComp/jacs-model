@@ -33,7 +33,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     private Set<String> tags = new HashSet<>();
 
     // A reference that is used to keep things associated in memory, but persisted separately
-    transient private TmNeuronData neuronData;
+    private TmNeuronData neuronData = new TmNeuronData();
 
     @JsonIgnore
     transient private boolean synced;
@@ -175,8 +175,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
      * This method offers access to the underlying neuron data. It is intentionally package protected
      * so that it can only be accessed by the serializer.
      */
-    @JsonIgnore
-    TmNeuronData getNeuronData() {
+    public TmNeuronData getNeuronData() {
         return neuronData;
     }
 
@@ -184,7 +183,6 @@ public class TmNeuronMetadata extends AbstractDomainObject {
      * This method offers access to the underlying neuron data. It is intentionally package protected
      * so that it can only be accessed by the deserializer.
      */
-    @JsonIgnore
     void setNeuronData(TmNeuronData neuronData) {
         this.neuronData = neuronData;
     }
@@ -204,29 +202,12 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         getGeoAnnotationMap().put(tmGeoAnnotation.getId(), tmGeoAnnotation);
     }
 
-    @Override
-    public String toString() {
-        String data = neuronData == null ? "null" : neuronData.getRootAnnotationIds().size() + " roots";
-        return "TmNeuronMetadata[id=" + getId() + ", name=" + getName() + ", neuronData=" + data + "]";
-    }
-
-    // ****************************************************************************************************************
-    // Business logic that deals with the neuron data
-    // ****************************************************************************************************************
-
-    @JsonIgnore
-    private void checkNeuronDataLoaded() {
-        if (neuronData == null) {
-            throw new IllegalStateException("Neuron data has not been loaded");
-        }
-    }
 
     /**
      * Pass-through method to TmNeuronData
      */
     @JsonIgnore
     public Map<Long, TmGeoAnnotation> getGeoAnnotationMap() {
-        checkNeuronDataLoaded();
         return neuronData.getGeoAnnotationMap();
     }
 
@@ -235,7 +216,6 @@ public class TmNeuronMetadata extends AbstractDomainObject {
      */
     @JsonIgnore
     public Map<TmAnchoredPathEndpoints, TmAnchoredPath> getAnchoredPathMap() {
-        checkNeuronDataLoaded();
         return neuronData.getAnchoredPathMap();
     }
 
@@ -244,7 +224,6 @@ public class TmNeuronMetadata extends AbstractDomainObject {
      */
     @JsonIgnore
     public Map<Long, TmStructuredTextAnnotation> getStructuredTextAnnotationMap() {
-        checkNeuronDataLoaded();
         return neuronData.getStructuredTextAnnotationMap();
     }
 
@@ -266,7 +245,6 @@ public class TmNeuronMetadata extends AbstractDomainObject {
      */
     @JsonIgnore
     public List<TmGeoAnnotation> getRootAnnotations() {
-        checkNeuronDataLoaded();
         List<Long> rootAnnotationIds = neuronData.getRootAnnotationIds();
         TmGeoAnnotation[] tempList = new TmGeoAnnotation[rootAnnotationIds.size()];
         int i = 0;
@@ -278,7 +256,6 @@ public class TmNeuronMetadata extends AbstractDomainObject {
 
     @JsonIgnore
     public TmGeoAnnotation getFirstRoot() {
-        checkNeuronDataLoaded();
         List<Long> rootAnnotationIds = neuronData.getRootAnnotationIds();
         if (rootAnnotationIds.size() > 0) {
             return neuronData.getGeoAnnotationMap().get(rootAnnotationIds.get(0));
@@ -292,7 +269,6 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     }
 
     public void removeRootAnnotation(Long rootId) {
-        checkNeuronDataLoaded();
         neuronData.getRootAnnotationIds().remove(rootId);
     }
 
@@ -301,7 +277,6 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     }
 
     public void addRootAnnotation(Long rootId) {
-        checkNeuronDataLoaded();
         neuronData.getRootAnnotationIds().add(rootId);
     }
 
@@ -310,24 +285,20 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     }
 
     public boolean containsRootAnnotation(Long rootId) {
-        checkNeuronDataLoaded();
         return neuronData.getRootAnnotationIds().contains(rootId);
     }
 
     @JsonIgnore
     public int getRootAnnotationCount() {
-        checkNeuronDataLoaded();
         return neuronData.getRootAnnotationIds().size();
     }
 
     public void clearRootAnnotations() {
-        checkNeuronDataLoaded();
         neuronData.getRootAnnotationIds().clear();
     }
 
     @JsonIgnore
     public TmGeoAnnotation getParentOf(TmGeoAnnotation annotation) {
-        checkNeuronDataLoaded();
         if (annotation == null) {
             return null;
         }
@@ -340,7 +311,6 @@ public class TmNeuronMetadata extends AbstractDomainObject {
 
     @JsonIgnore
     public List<TmGeoAnnotation> getChildrenOf(TmGeoAnnotation annotation) {
-        checkNeuronDataLoaded();
         if (annotation == null) {
             return null;
         }
@@ -364,7 +334,6 @@ public class TmNeuronMetadata extends AbstractDomainObject {
      */
     @JsonIgnore
     public List<TmGeoAnnotation> getChildrenOfOrdered(TmGeoAnnotation annotation) {
-        checkNeuronDataLoaded();
         List<TmGeoAnnotation> unorderedList = getChildrenOf(annotation);
         if (unorderedList.size() < 2) {
             return unorderedList;
@@ -391,7 +360,6 @@ public class TmNeuronMetadata extends AbstractDomainObject {
      */
     @JsonIgnore
     public List<TmGeoAnnotation> getSubTreeList(TmGeoAnnotation annotation) {
-        checkNeuronDataLoaded();
         // this method needs to be nonrecursive, because input can get
         //  large enough to cause a stack overflow
         ArrayList<TmGeoAnnotation> subtreeList = new ArrayList<>();
@@ -400,7 +368,8 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         while (stack.size() > 0) {
             TmGeoAnnotation ann = stack.removeFirst();
             subtreeList.add(ann);
-            for (TmGeoAnnotation child : getChildrenOf(ann)) {
+            List<TmGeoAnnotation> childList = getChildrenOf(ann);
+            for (TmGeoAnnotation child : childList) {
                 stack.addFirst(child);
             }
         }
@@ -408,12 +377,10 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     }
 
     public List<String> checkRepairNeuron() {
-        checkNeuronDataLoaded();
         return neuronData.checkRepairNeuron(getId(), true);
     }
 
     public List<String> checkNeuron() {
-        checkNeuronDataLoaded();
         return neuronData.checkRepairNeuron(getId(), false);
     }
 

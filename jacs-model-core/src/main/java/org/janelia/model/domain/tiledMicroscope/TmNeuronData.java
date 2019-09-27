@@ -1,14 +1,9 @@
 package org.janelia.model.domain.tiledMicroscope;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.protostuff.Tag;
 import org.janelia.model.util.MapFacade;
 
 /**
@@ -32,23 +27,50 @@ public class TmNeuronData implements Serializable {
     above when deserializing. The instances above are only used when creating a new instance.
      */
     @JsonIgnore
-    transient private Map<Long, TmGeoAnnotation> geoAnnotationMap;
+    transient private Map<Long, TmGeoAnnotation> geoAnnotationMap = new HashMap<>();
     @JsonIgnore
-    transient private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap;
+    transient private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<>();
     @JsonIgnore
-    transient private Map<Long, TmStructuredTextAnnotation> textAnnotationMap;
+    transient private Map<Long, TmStructuredTextAnnotation> textAnnotationMap = new HashMap<>();
 
     public TmNeuronData() {
     }
-    
+
+    @JsonIgnore
+    public void initAnnotations(Long neuronId) {
+        for (TmGeoAnnotation geoAnnotation: geoAnnotations) {
+            geoAnnotation.setNeuronId(neuronId);
+        }
+    }
+
+    @JsonIgnore
+    public void initMaps() {
+        // annotations
+        for (TmGeoAnnotation geoAnnotation: geoAnnotations) {
+            geoAnnotationMap.put(geoAnnotation.getId(), geoAnnotation);
+        }
+
+        // anchored paths
+        for (TmAnchoredPath anchoredPath: anchoredPaths) {
+            anchoredPathMap.put(anchoredPath.getEndpoints(), anchoredPath);
+        }
+
+        // textAnnotations
+        for (TmStructuredTextAnnotation textAnnotation: textAnnotations) {
+            textAnnotationMap.put(textAnnotation.getId(), textAnnotation);
+        }
+
+    }
+
     public List<Long> getRootAnnotationIds() {
         return rootAnnotationIds;
     }
 
     // maps geo ann ID to geo ann object
+    @JsonIgnore
     public Map<Long, TmGeoAnnotation> getGeoAnnotationMap() {
         if (geoAnnotationMap==null) {
-                geoAnnotationMap = new MapFacade<Long, TmGeoAnnotation>(geoAnnotations) {
+                geoAnnotationMap = new MapFacade<Long, TmGeoAnnotation>(getGeoAnnotations()) {
                 @Override
                 public Long getKey(TmGeoAnnotation object) {
                     return object.getId();
@@ -59,9 +81,10 @@ public class TmNeuronData implements Serializable {
     }
 
     // maps endpoints of path to path object
+    @JsonIgnore
     public Map<TmAnchoredPathEndpoints, TmAnchoredPath> getAnchoredPathMap() {
         if (anchoredPathMap==null) {
-            anchoredPathMap = new MapFacade<TmAnchoredPathEndpoints, TmAnchoredPath>(anchoredPaths) {
+            anchoredPathMap = new MapFacade<TmAnchoredPathEndpoints, TmAnchoredPath>(getAnchoredPaths()) {
                 @Override
                 public TmAnchoredPathEndpoints getKey(TmAnchoredPath object) {
                     return object.getEndpoints();
@@ -72,9 +95,10 @@ public class TmNeuronData implements Serializable {
     }
 
     // maps ID of parent to text annotation
+    @JsonIgnore
     public Map<Long, TmStructuredTextAnnotation> getStructuredTextAnnotationMap() {
         if (textAnnotationMap==null) {
-            textAnnotationMap = new MapFacade<Long, TmStructuredTextAnnotation>(textAnnotations) {
+            textAnnotationMap = new MapFacade<Long, TmStructuredTextAnnotation>(getTextAnnotations()) {
                 @Override
                 public Long getKey(TmStructuredTextAnnotation object) {
                     return object.getParentId();
@@ -84,6 +108,7 @@ public class TmNeuronData implements Serializable {
         return textAnnotationMap;
     }
 
+    @JsonIgnore
     String getDebugString() {
         StringBuilder sb = new StringBuilder();
         sb.append("rootAnnotationIds:\n");
@@ -91,18 +116,18 @@ public class TmNeuronData implements Serializable {
             sb.append("    ").append(rootAnnotationId).append("\n");
         }
         sb.append("geoAnnotations:\n");
-        for(TmGeoAnnotation geoAnnotation : new ArrayList<>(geoAnnotations)) {
+        for(TmGeoAnnotation geoAnnotation : new ArrayList<>(getGeoAnnotations())) {
             sb.append("    ").append(geoAnnotation.getId()).append(" at (").append(geoAnnotation).append(")\n");
             for(Long childId : geoAnnotation.getChildIds()) {
             	sb.append("      child ").append(childId).append("\n");
             }
         }
         sb.append("anchoredPaths:\n");
-        for(TmAnchoredPath anchoredPath : new ArrayList<>(anchoredPaths)) {
+        for(TmAnchoredPath anchoredPath : new ArrayList<>(getAnchoredPaths())) {
             sb.append("    ").append(anchoredPath).append("\n");
         }
         sb.append("textAnnotations:\n");
-        for(TmStructuredTextAnnotation textAnnotation : new ArrayList<>(textAnnotations)) {
+        for(TmStructuredTextAnnotation textAnnotation : new ArrayList<>(getTextAnnotations())) {
             sb.append("    ").append(textAnnotation.getDataString()).append("\n");
         }
         return sb.toString();
@@ -119,6 +144,7 @@ public class TmNeuronData implements Serializable {
      * returns list of problems found and/or fixed; empty
      * list = no problems
      */
+    @JsonIgnore
     public List<String> checkRepairNeuron(Long neuronId, boolean repair) {
 
         List<Long> rootAnnotationIds = getRootAnnotationIds();
@@ -148,7 +174,7 @@ public class TmNeuronData implements Serializable {
         }
         if (repair) {
         	if (noRoot) {
-        		TmGeoAnnotation ann = geoAnnotations.get(0);
+        		TmGeoAnnotation ann = getGeoAnnotations().get(0);
                 ann.setParentId(neuronId);
                 rootAnnotationIds.add(ann.getId());
                 results.add("promoted ann ID " + ann.getId() + " to root annotation");
@@ -216,4 +242,15 @@ public class TmNeuronData implements Serializable {
         return results;
     }
 
+    public List<TmGeoAnnotation> getGeoAnnotations() {
+        return geoAnnotations;
+    }
+
+    public List<TmAnchoredPath> getAnchoredPaths() {
+        return anchoredPaths;
+    }
+
+    public List<TmStructuredTextAnnotation> getTextAnnotations() {
+        return textAnnotations;
+    }
 }
