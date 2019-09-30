@@ -36,13 +36,6 @@ public class TmNeuronData implements Serializable {
     public TmNeuronData() {
     }
 
-    @JsonIgnore
-    public void initAnnotations(Long neuronId) {
-        for (TmGeoAnnotation geoAnnotation: geoAnnotations) {
-            geoAnnotation.setNeuronId(neuronId);
-        }
-    }
-
     public List<Long> getRootAnnotationIds() {
         return rootAnnotationIds;
     }
