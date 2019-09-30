@@ -27,11 +27,11 @@ public class TmNeuronData implements Serializable {
     above when deserializing. The instances above are only used when creating a new instance.
      */
     @JsonIgnore
-    transient private Map<Long, TmGeoAnnotation> geoAnnotationMap = new HashMap<>();
+    transient private Map<Long, TmGeoAnnotation> geoAnnotationMap;
     @JsonIgnore
-    transient private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<>();
+    transient private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap;
     @JsonIgnore
-    transient private Map<Long, TmStructuredTextAnnotation> textAnnotationMap = new HashMap<>();
+    transient private Map<Long, TmStructuredTextAnnotation> textAnnotationMap;
 
     public TmNeuronData() {
     }
@@ -41,25 +41,6 @@ public class TmNeuronData implements Serializable {
         for (TmGeoAnnotation geoAnnotation: geoAnnotations) {
             geoAnnotation.setNeuronId(neuronId);
         }
-    }
-
-    @JsonIgnore
-    public void initMaps() {
-        // annotations
-        for (TmGeoAnnotation geoAnnotation: geoAnnotations) {
-            geoAnnotationMap.put(geoAnnotation.getId(), geoAnnotation);
-        }
-
-        // anchored paths
-        for (TmAnchoredPath anchoredPath: anchoredPaths) {
-            anchoredPathMap.put(anchoredPath.getEndpoints(), anchoredPath);
-        }
-
-        // textAnnotations
-        for (TmStructuredTextAnnotation textAnnotation: textAnnotations) {
-            textAnnotationMap.put(textAnnotation.getId(), textAnnotation);
-        }
-
     }
 
     public List<Long> getRootAnnotationIds() {
