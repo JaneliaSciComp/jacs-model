@@ -1,34 +1,36 @@
 package org.janelia.filecacheutils;
 
+import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 import com.google.common.cache.CacheLoader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Local file cache loader.
  *
  * @param <K> cache entry key
  */
-public class RemoteFileLoader<K extends FileKey> extends CacheLoader<K, Optional<FileProxy>> {
+public class RemoteFileLoader<K extends FileKey> extends CacheLoader<K, FileProxy> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(RemoteFileLoader.class);
 
     private final LocalFileCacheStorage localFileCacheStorage;
-    private final FileKeyToProxySupplier<K> fileKeyToProxySupplier;
+    private final FileKeyToProxyMapper<K> fileKeyToProxyMapper;
     private final ExecutorService localFileWriterExecutor;
 
-    RemoteFileLoader(LocalFileCacheStorage localFileCacheStorage, FileKeyToProxySupplier<K> fileKeyToProxySupplier, ExecutorService localFileWriterExecutor) {
+    RemoteFileLoader(LocalFileCacheStorage localFileCacheStorage, FileKeyToProxyMapper<K> fileKeyToProxyMapper, ExecutorService localFileWriterExecutor) {
         this.localFileCacheStorage = localFileCacheStorage;
-        this.fileKeyToProxySupplier = fileKeyToProxySupplier;
+        this.fileKeyToProxyMapper = fileKeyToProxyMapper;
         this.localFileWriterExecutor = localFileWriterExecutor;
     }
 
     @Override
-    public Optional<FileProxy> load(K cachedFileKey) {
-        Path localPath = cachedFileKey.getLocalPath(localFileCacheStorage);
-        if (localPath == null) {
-            throw new IllegalArgumentException("Local path cannot be retrieved from cachedFileKey " + cachedFileKey);
-        }
-        return Optional.of(new CachedFileProxy(localPath, fileKeyToProxySupplier.getProxyFromKey(cachedFileKey), localFileCacheStorage, localFileWriterExecutor));
+    public FileProxy load(K fileKey) {
+        return new CachedFileProxy<>(fileKey, fileKeyToProxyMapper, localFileCacheStorage, localFileWriterExecutor);
     }
 }
