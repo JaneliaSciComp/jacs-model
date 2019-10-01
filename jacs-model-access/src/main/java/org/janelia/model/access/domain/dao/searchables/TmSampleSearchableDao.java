@@ -1,11 +1,11 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import javax.inject.Inject;
+
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
-
-import javax.inject.Inject;
 
 /**
  * {@link TmSample} DAO.

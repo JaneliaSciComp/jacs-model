@@ -1,5 +1,12 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import javax.annotation.Nullable;
+
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
@@ -7,12 +14,6 @@ import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.DomainObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
 
 /**
  * Abstract Searchable DAO.
