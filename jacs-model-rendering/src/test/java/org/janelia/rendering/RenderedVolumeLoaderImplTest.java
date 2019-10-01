@@ -1,15 +1,12 @@
 package org.janelia.rendering;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
 
 import org.janelia.testutils.TestUtils;
 import org.junit.AfterClass;
@@ -72,7 +69,7 @@ public class RenderedVolumeLoaderImplTest {
         assertFalse(rvm.hasXSlices());
         assertFalse(rvm.hasYSlices());
         assertTrue(rvm.hasZSlices());
-        assertArrayEquals(new int[] {234764, 50122, 27931}, rvm.getOriginVoxel());
+        assertArrayEquals(new int[]{234764, 50122, 27931}, rvm.getOriginVoxel());
     }
 
     @Test
@@ -190,6 +187,7 @@ public class RenderedVolumeLoaderImplTest {
             private final int dimz;
             private final int channel;
             private final Consumer<byte[]> resultAssertion;
+
             private TestData(int xVoxel, int yVoxel, int zVoxel, int dimx, int dimy, int dimz, int channel, Consumer<byte[]> resultAssertion) {
                 this.xVoxel = xVoxel;
                 this.yVoxel = yVoxel;
@@ -201,7 +199,7 @@ public class RenderedVolumeLoaderImplTest {
                 this.resultAssertion = resultAssertion;
             }
         }
-        TestData[] testData = new TestData[] {
+        TestData[] testData = new TestData[]{
                 new TestData(0, 0, 0, -1, -1, -1, 0, imageBytes -> assertNotNull("Test 0", imageBytes)),
                 new TestData(0, 0, 0, -1, -1, -1, 1, imageBytes -> assertNotNull("Test 1", imageBytes)),
                 new TestData(0, 0, 0, -1, -1, -1, 2, imageBytes -> assertNull("Test 2", imageBytes)),

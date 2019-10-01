@@ -8,8 +8,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
-import com.google.common.io.ByteStreams;
-
 import org.janelia.testutils.TestUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -46,19 +44,20 @@ public class FileBasedRenderedVolumeLocationTest {
     public void loadSlice() {
         class TestData {
             private final List<String> imageNames;
+
             private TestData(List<String> imageNames) {
                 this.imageNames = imageNames;
             }
         }
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "default.0.tif", "default.1.tif", "default.2.tif");
         RenderedImageInfo originalImageInfo = testVolumeLocation.readTileImageInfo("default.0.tif");
-        TestData[] testData = new TestData[] {
+        TestData[] testData = new TestData[]{
                 new TestData(Arrays.asList("default.0.tif")),
                 new TestData(Arrays.asList("default.0.tif", "default.1.tif")),
                 new TestData(Arrays.asList("default.0.tif", "default.1.tif", "default.2.tif"))
         };
         for (TestData td : testData) {
-            byte[] imageBytes = testVolumeLocation.readTileImagePageAsTexturedBytes("", td.imageNames, 10).getContent();
+            byte[] imageBytes = testVolumeLocation.readTiffPageAsTexturedBytes("", td.imageNames, 10).getContent();
             ByteBuffer byteBuffer = ByteBuffer.wrap(imageBytes);
             int mipmapLevel = byteBuffer.getInt();
             int width = byteBuffer.getInt();
@@ -71,7 +70,7 @@ public class FileBasedRenderedVolumeLocationTest {
             float textureCoordX = byteBuffer.getFloat();
             float expectedTextureCoordX;
             if ((usedWidth % 8) != 0) {
-                expectedTextureCoordX = usedWidth / (float)width;
+                expectedTextureCoordX = usedWidth / (float) width;
             } else {
                 width = usedWidth;
                 expectedTextureCoordX = 1.0f;
