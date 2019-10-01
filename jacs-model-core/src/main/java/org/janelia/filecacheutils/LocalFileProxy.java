@@ -1,6 +1,8 @@
 package org.janelia.filecacheutils;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -26,12 +28,12 @@ public class LocalFileProxy implements FileProxy {
     }
 
     @Override
-    public Optional<Long> estimateSizeInBytes() {
+    public Long estimateSizeInBytes() {
         try {
             if (Files.exists(localFilePath)) {
-                return Optional.of(Files.size(localFilePath));
+                return Files.size(localFilePath);
             } else {
-                return Optional.of(0L);
+                return 0L;
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -39,17 +41,17 @@ public class LocalFileProxy implements FileProxy {
     }
 
     @Override
-    public InputStream openContentStream() {
-        try {
-            return Files.newInputStream(localFilePath);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    public InputStream openContentStream() throws FileNotFoundException {
+        return new FileInputStream(localFilePath.toFile());
     }
 
     @Override
-    public File getLocalFile() {
-        return localFilePath.toFile();
+    public File getLocalFile() throws FileNotFoundException{
+        if (Files.exists(localFilePath)) {
+            return localFilePath.toFile();
+        } else {
+            throw new FileNotFoundException("Path " + localFilePath + " does not exist");
+        }
     }
 
     @Override

@@ -1,13 +1,14 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.sample.DataSet;
-
-import javax.inject.Inject;
-import java.util.List;
-import java.util.Map;
 
 /**
  * {@link DataSet} DAO.

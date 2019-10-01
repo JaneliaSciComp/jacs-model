@@ -1,12 +1,13 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import java.util.List;
+
+import javax.inject.Inject;
+
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
-
-import javax.inject.Inject;
-import java.util.List;
 
 /**
  * {@link TmWorkspace} DAO.

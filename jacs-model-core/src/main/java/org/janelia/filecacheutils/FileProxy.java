@@ -1,9 +1,11 @@
 package org.janelia.filecacheutils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Optional;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 
 /**
@@ -12,11 +14,11 @@ import javax.annotation.Nullable;
 public interface FileProxy {
     String getFileId();
 
-    Optional<Long> estimateSizeInBytes();
+    Long estimateSizeInBytes();
 
-    @Nullable InputStream openContentStream();
+    InputStream openContentStream() throws FileNotFoundException;
 
-    File getLocalFile();
+    File getLocalFile() throws FileNotFoundException;
 
     boolean deleteProxy();
 }

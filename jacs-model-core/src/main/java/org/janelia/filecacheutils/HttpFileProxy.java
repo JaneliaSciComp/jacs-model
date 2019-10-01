@@ -35,24 +35,20 @@ public class HttpFileProxy implements FileProxy {
     }
 
     @Override
-    public Optional<Long> estimateSizeInBytes() {
+    public Long estimateSizeInBytes() {
         if (contentStream == null) {
-            return Optional.empty();
+            return 0L;
         } else {
-            return Optional.of(contentStream.getCount());
+            return contentStream.getCount();
         }
     }
 
     @Override
-    public InputStream openContentStream() {
+    public InputStream openContentStream() throws FileNotFoundException {
         if (url.startsWith("http://") || url.startsWith("https://")) {
             contentStream = new CountingInputStream(httpToContentStreamProvider.apply(url));
         } else if (url.startsWith("file://")) {
-            try {
-                contentStream = new CountingInputStream(new FileInputStream(url));
-            } catch (FileNotFoundException e) {
-                throw new IllegalStateException(e);
-            }
+            contentStream = new CountingInputStream(new FileInputStream(url));
         } else {
             throw new IllegalArgumentException("URL scheme is not supported " + url);
         }

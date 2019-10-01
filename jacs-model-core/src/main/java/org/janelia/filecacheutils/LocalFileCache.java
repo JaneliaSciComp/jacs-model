@@ -1,5 +1,6 @@
 package org.janelia.filecacheutils;
 
+import java.io.FileNotFoundException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -20,26 +21,26 @@ public class LocalFileCache<K extends FileKey> {
     /**
      * In memory cache - the value is an optional so that it won't perform extra searches for keys that actually don't exist, such as missing files.
      */
-    private final LoadingCache<K, Optional<FileProxy>> localCache;
+    private final LoadingCache<K, FileProxy> localCache;
 
     /**
      * LocalFileCache constructor.
      *
-     * @param localFileCacheStorage local file cache
-     * @param cacheConcurrency cache concurrency parameter - if the value is <= 0 it is ignored
-     * @param keyToProxySupplier is used by the remotecache loader for loading the file proxy from the corresponding cache entry key
-     * @param asyncRemovalExecutor thread executor that runs the cache eviction process
+     * @param localFileCacheStorage   local file cache
+     * @param cacheConcurrency        cache concurrency parameter - if the value is <= 0 it is ignored
+     * @param keyToProxySupplier      is used by the remotecache loader for loading the file proxy from the corresponding cache entry key
+     * @param asyncRemovalExecutor    thread executor that runs the cache eviction process
      * @param localFileWriterExecutor thread executor in which the local file writer should run
      */
     public LocalFileCache(LocalFileCacheStorage localFileCacheStorage,
                           int cacheConcurrency,
-                          FileKeyToProxySupplier<K> keyToProxySupplier,
+                          FileKeyToProxyMapper<K> keyToProxySupplier,
                           Executor asyncRemovalExecutor,
                           ExecutorService localFileWriterExecutor) {
-        CacheBuilder<K, Optional<FileProxy>> cacheBuilder = CacheBuilder.newBuilder()
+        CacheBuilder<K, FileProxy> cacheBuilder = CacheBuilder.newBuilder()
                 .maximumWeight(localFileCacheStorage.getCapacityInKB()) // the in memory cache uses the cache entry weigh and maximum weight for the eviction policy
-                .weigher((FileKey key, Optional<FileProxy> value) -> {
-                    long sizeInKB = LocalFileCacheStorage.BYTES_TO_KB.apply(value.flatMap(fp -> fp.estimateSizeInBytes()).orElse(1L));
+                .weigher((FileKey key, FileProxy fp) -> {
+                    long sizeInKB = LocalFileCacheStorage.BYTES_TO_KB.apply(fp.estimateSizeInBytes());
                     return sizeInKB > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) sizeInKB;
                 })
                 .removalListener(RemovalListeners.asynchronous(new CachedFileRemovalListener(), asyncRemovalExecutor));
@@ -50,15 +51,24 @@ public class LocalFileCache<K extends FileKey> {
 
     }
 
-    @Nullable
-    public FileProxy getCachedFileEntry(K cachedFileKey, boolean forceRefresh) {
+    public FileProxy getCachedFileEntry(K cachedFileKey, boolean forceRefresh) throws FileNotFoundException {
         if (forceRefresh) {
             localCache.invalidate(cachedFileKey);
         }
         try {
-            return localCache.get(cachedFileKey).orElse(null);
+            return localCache.get(cachedFileKey);
         } catch (ExecutionException e) {
-            throw new IllegalStateException(e);
+            throw new FileNotFoundException(e.getMessage());
         }
     }
+
+    public Optional<FileProxy> getOptionalCachedFileEntry(K cachedFileKey, boolean forceRefresh) {
+        try {
+            return Optional.of(getCachedFileEntry(cachedFileKey, forceRefresh));
+        } catch (FileNotFoundException e) {
+            return Optional.empty();
+        }
+    }
+
 }
+

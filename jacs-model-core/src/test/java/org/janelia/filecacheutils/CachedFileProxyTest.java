@@ -1,6 +1,7 @@
 package org.janelia.filecacheutils;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileVisitResult;
@@ -37,6 +38,19 @@ public class CachedFileProxyTest {
 
     private static Path testCacheRootDir;
     private static Random random = new Random(System.currentTimeMillis());
+
+    private static class TestFileKey implements FileKey {
+        private final Path keyPath;
+
+        TestFileKey(Path keyPath) {
+            this.keyPath = keyPath;
+        }
+
+        @Override
+        public Path getLocalPath(LocalFileCacheStorage localFileCacheStorage) {
+            return keyPath;
+        }
+    }
 
     @BeforeClass
     public static void createTestDir() throws IOException {
@@ -80,13 +94,15 @@ public class CachedFileProxyTest {
         byte[] testContent = new byte[100];
         random.nextBytes(testContent);
 
-        Supplier<FileProxy> testFileProxySupplier = prepareFileProxy(testContent);
+        TestFileKey testFileKey = new TestFileKey(testFilePath);
+        FileKeyToProxyMapper<TestFileKey> testFileProxyMapper = prepareFileProxy(testContent);
 
         LocalFileCacheStorage testLocalFileCacheStorage = Mockito.mock(LocalFileCacheStorage.class);
         Mockito.when(testLocalFileCacheStorage.isBytesSizeAcceptable(anyLong())).thenReturn(true);
 
         ExecutorService testExecutorService = Executors.newWorkStealingPool();
-        CachedFileProxy cachedFileProxy = new CachedFileProxy(testFilePath, testFileProxySupplier, testLocalFileCacheStorage, testExecutorService);
+
+        CachedFileProxy<TestFileKey> cachedFileProxy = new CachedFileProxy<>(testFileKey, testFileProxyMapper, testLocalFileCacheStorage, testExecutorService);
         InputStream contentStream = cachedFileProxy.openContentStream();
         assertFalse(Files.exists(testFilePath));
         byte[] readBuffer = new byte[32];
@@ -118,13 +134,14 @@ public class CachedFileProxyTest {
         byte[] testContent = new byte[100];
         random.nextBytes(testContent);
 
-        Supplier<FileProxy> testFileProxySupplier = prepareFileProxy(testContent);
+        TestFileKey testFileKey = new TestFileKey(testFilePath);
+        FileKeyToProxyMapper<TestFileKey> testFileProxyMapper = prepareFileProxy(testContent);
 
         LocalFileCacheStorage testLocalFileCacheStorage = Mockito.mock(LocalFileCacheStorage.class);
         Mockito.when(testLocalFileCacheStorage.isBytesSizeAcceptable(anyLong())).thenReturn(false);
 
         ExecutorService testExecutorService = null;
-        CachedFileProxy cachedFileProxy = new CachedFileProxy(testFilePath, testFileProxySupplier, testLocalFileCacheStorage, testExecutorService);
+        CachedFileProxy<TestFileKey> cachedFileProxy = new CachedFileProxy<>(testFileKey, testFileProxyMapper, testLocalFileCacheStorage, testExecutorService);
         InputStream contentStream = cachedFileProxy.openContentStream();
         assertFalse(Files.exists(testFilePath));
         byte[] readBuffer = new byte[32];
@@ -148,9 +165,11 @@ public class CachedFileProxyTest {
 
         LocalFileCacheStorage testLocalFileCacheStorage = new LocalFileCacheStorage(testCacheRootDir, 100, 50);
 
+        TestFileKey testFileKey = new TestFileKey(testFilePath);
+
         ExecutorService testExecutorService = Executors.newWorkStealingPool(2);
-        CachedFileProxy cachedFileProxy1 = new CachedFileProxy(testFilePath, prepareFileProxy(testContent), testLocalFileCacheStorage, testExecutorService);
-        CachedFileProxy cachedFileProxy2 = new CachedFileProxy(testFilePath, prepareFileProxy(testContent), testLocalFileCacheStorage, testExecutorService);
+        CachedFileProxy<TestFileKey> cachedFileProxy1 = new CachedFileProxy<>(testFileKey, prepareFileProxy(testContent), testLocalFileCacheStorage, testExecutorService);
+        CachedFileProxy<TestFileKey> cachedFileProxy2 = new CachedFileProxy<>(testFileKey, prepareFileProxy(testContent), testLocalFileCacheStorage, testExecutorService);
         InputStream contentStream1 = cachedFileProxy1.openContentStream();
         InputStream contentStream2 = cachedFileProxy2.openContentStream();
         assertFalse(Files.exists(testFilePath));
@@ -196,7 +215,9 @@ public class CachedFileProxyTest {
         }
         FileTime cachedFileTouchTime = Files.getLastModifiedTime(testFilePath);
 
-        CachedFileProxy cachedFileProxy = new CachedFileProxy(testFilePath, prepareFileProxy(testContent), testLocalFileCacheStorage, null);
+        TestFileKey testFileKey = new TestFileKey(testFilePath);
+
+        CachedFileProxy<TestFileKey> cachedFileProxy = new CachedFileProxy<>(testFileKey, prepareFileProxy(testContent), testLocalFileCacheStorage, null);
         InputStream contentStream = cachedFileProxy.openContentStream();
         byte[] readContent = ByteStreams.toByteArray(contentStream);
         contentStream.close();
@@ -206,7 +227,8 @@ public class CachedFileProxyTest {
 
     private void cacheContent(byte[] content, LocalFileCacheStorage localFileCacheStorage) throws IOException {
         ExecutorService testExecutorService = null;
-        CachedFileProxy cachedFileProxy = new CachedFileProxy(testFilePath, prepareFileProxy(content), localFileCacheStorage, testExecutorService);
+        TestFileKey testFileKey = new TestFileKey(testFilePath);
+        CachedFileProxy<TestFileKey> cachedFileProxy = new CachedFileProxy<>(testFileKey, prepareFileProxy(content), localFileCacheStorage, testExecutorService);
         InputStream contentStream = cachedFileProxy.openContentStream();
         assertFalse(Files.exists(testFilePath));
         ByteStreams.toByteArray(contentStream);
@@ -222,10 +244,10 @@ public class CachedFileProxyTest {
         return n;
     }
 
-    private Supplier<FileProxy> prepareFileProxy(byte[] testContent) {
+    private FileKeyToProxyMapper<TestFileKey> prepareFileProxy(byte[] testContent) throws FileNotFoundException {
         FileProxy fileProxy = Mockito.mock(FileProxy.class);
         Mockito.when(fileProxy.openContentStream()).thenReturn(new ByteArrayInputStream(testContent));
-        Mockito.when(fileProxy.estimateSizeInBytes()).thenReturn(Optional.of((long) testContent.length));
-        return () -> fileProxy;
+        Mockito.when(fileProxy.estimateSizeInBytes()).thenReturn((long) testContent.length);
+        return (fileKey) -> fileProxy;
     }
 }

@@ -1,6 +1,7 @@
 package org.janelia.filecacheutils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,48 +16,55 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
+import com.google.common.base.Preconditions;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Cached file representation - implements a proxy for accessing content from a locally cached file.
+ * @param <K> delegate key type
  */
-public class CachedFileProxy implements FileProxy {
+public class CachedFileProxy<K extends FileKey> implements FileProxy {
     private static final Logger LOG = LoggerFactory.getLogger(CachedFileProxy.class);
     private static final Set<String> DOWNLOADING_FILES = new ConcurrentSkipListSet<>();
 
     private final Path localFilePath;
-    private final Supplier<FileProxy> fileProxySupplier;
+    private final K delegateFileKey;
+    private final FileKeyToProxyMapper<K> delegateFileKeyToProxyMapper;
     private final LocalFileCacheStorage localFileCacheStorage;
     private final ExecutorService localFileWriterExecutor;
-    private FileProxy fileProxy;
+    private FileProxy delegateFileProxy;
 
-    CachedFileProxy(Path localFilePath, Supplier<FileProxy> fileProxySupplier, LocalFileCacheStorage localFileCacheStorage, ExecutorService localFileWriterExecutor) {
+    CachedFileProxy(K delegateFileKey, FileKeyToProxyMapper<K> delegateFileKeyToProxyMapper, LocalFileCacheStorage localFileCacheStorage, ExecutorService localFileWriterExecutor) {
+        this.delegateFileKey = delegateFileKey;
         this.localFileCacheStorage = localFileCacheStorage;
-        this.localFilePath = localFilePath;
-        this.fileProxySupplier = fileProxySupplier;
+        this.localFilePath = delegateFileKey.getLocalPath(localFileCacheStorage);
+        Preconditions.checkArgument(localFilePath != null, "Local path cannot be retrieved from fileKey " + delegateFileKey);
+        this.delegateFileKeyToProxyMapper = delegateFileKeyToProxyMapper;
         this.localFileWriterExecutor = localFileWriterExecutor;
-        this.fileProxy = null;
+        this.delegateFileProxy = null;
     }
 
     @Override
     public String getFileId() {
-        if (localFilePath != null) {
-            return localFilePath.toString();
-        } else {
-            return fileProxySupplier.get().getFileId();
-        }
+        return localFilePath.toString();
     }
 
     @Override
-    public Optional<Long> estimateSizeInBytes() {
+    public Long estimateSizeInBytes() {
         long currentSize = getCurrentSizeInBytes();
         if (currentSize > 0) {
-            return Optional.of(currentSize);
-        } else if (fileProxy == null) {
-            fileProxy = fileProxySupplier.get();
+            return currentSize;
+        } else if (delegateFileProxy == null) {
+            try {
+                delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
+            } catch (FileNotFoundException e) {
+                LOG.warn("No file found for {}", delegateFileKey);
+                return 0L;
+            }
         }
-        return fileProxy.estimateSizeInBytes();
+        return delegateFileProxy.estimateSizeInBytes();
     }
 
     private long getCurrentSizeInBytes() {
@@ -73,19 +81,19 @@ public class CachedFileProxy implements FileProxy {
     }
 
     @Override
-    public InputStream openContentStream() {
+    public InputStream openContentStream() throws FileNotFoundException {
         InputStream localFileStream = localFileCacheStorage.openLocalCachedFile(localFilePath);
         if (localFileStream != null) {
             return localFileStream;
         } else {
-            if (fileProxy == null) {
-                fileProxy = fileProxySupplier.get();
+            if (delegateFileProxy == null) {
+                delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
             }
-            InputStream contentStream = fileProxy.openContentStream();
+            InputStream contentStream = delegateFileProxy.openContentStream();
             if (contentStream == null) {
                 return null;
             }
-            long estimatedSize = fileProxy.estimateSizeInBytes().orElse(0L);
+            long estimatedSize = delegateFileProxy.estimateSizeInBytes();
             if (!localFileCacheStorage.isBytesSizeAcceptable(estimatedSize) || !DOWNLOADING_FILES.add(localFilePath.toString())) {
                 // if this file cannot be cached because it's either to large or caching it will exceed the cache capacity
                 // or some other thread is already downloading this file
@@ -185,16 +193,15 @@ public class CachedFileProxy implements FileProxy {
     }
 
     @Override
-    public File getLocalFile() {
-        if (Files.exists(localFilePath)) {
-            File localFile = localFilePath.toFile();
-            localFile.setLastModified(System.currentTimeMillis());
-            return localFile;
+    public File getLocalFile() throws FileNotFoundException {
+        Path localCachedFilePath = localFileCacheStorage.getLocalCachedFile(localFilePath);
+        if (localCachedFilePath != null) {
+            return localCachedFilePath.toFile();
         } else {
-            if (fileProxy == null) {
-                fileProxy = fileProxySupplier.get();
+            if (delegateFileProxy == null) {
+                delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
             }
-            InputStream contentStream = fileProxy.openContentStream();
+            InputStream contentStream = delegateFileProxy.openContentStream();
             if (contentStream == null) {
                 return null;
             }
@@ -221,6 +228,12 @@ public class CachedFileProxy implements FileProxy {
                 } catch (IOException e) {
                     LOG.error("Error moving downloaded file {} to {}", downloadingLocalFilePath, localFilePath, e);
                     throw new IllegalStateException(e);
+                } finally {
+                    try {
+                        Files.deleteIfExists(downloadingLocalFilePath);
+                    } catch (Exception deleteExc) {
+                        LOG.debug("Error deleting {}", downloadingLocalFilePath, deleteExc);
+                    }
                 }
             } finally {
                 try {
@@ -229,8 +242,8 @@ public class CachedFileProxy implements FileProxy {
                 }
                 DOWNLOADING_FILES.remove(localFilePath.toString());
             }
+            return localFilePath.toFile();
         }
-        return null;
     }
 
     private void makeDownloadDir() {

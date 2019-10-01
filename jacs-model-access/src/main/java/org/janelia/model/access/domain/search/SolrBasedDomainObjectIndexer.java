@@ -65,17 +65,17 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
     }
 
     @Override
+    public boolean removeDocument(Long docId) {
+        return solrConnector.removeDocIdFromIndex(docId);
+    }
+
+    @Override
     public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
         return solrConnector.addDocsToIndex(
                 domainObjectStream.map(domainObject2SolrDocConverter::domainObjectToSolrDocument),
                 solrBatchSize,
                 solrCommitSize
         );
-    }
-
-    @Override
-    public boolean removeDocument(Long docId) {
-        return solrConnector.removeDocIdFromIndex(docId);
     }
 
     @Override

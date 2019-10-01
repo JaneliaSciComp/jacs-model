@@ -43,14 +43,17 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     private static final Logger LOG = LoggerFactory.getLogger(TmNeuronMetadataMongoDao.class);
 
     private final DomainDAO domainDao;
+    private final TmNeuronBufferDao tmNeuronBufferDao;
 
     @Inject
     TmNeuronMetadataMongoDao(MongoDatabase mongoDatabase,
                              DomainPermissionsMongoHelper permissionsHelper,
                              DomainUpdateMongoHelper updateHelper,
-                             DomainDAO domainDao) {
+                             DomainDAO domainDao,
+                             TmNeuronBufferDao tmNeuronBufferDao) {
         super(mongoDatabase, permissionsHelper, updateHelper);
         this.domainDao = domainDao;
+        this.tmNeuronBufferDao = tmNeuronBufferDao;
     }
 
     @Override
@@ -146,6 +149,20 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 ),
                 updates,
                 updateOptions);
+    }
+
+    @Override
+    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace, long offset, int length) {
+        List<TmNeuronMetadata> workspaceNeurons = getTmNeuronMetadataByWorkspaceId(subjectKey, workspace.getId(), offset, length);
+        if (workspaceNeurons.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Map<Long, TmNeuronMetadata> indexedWorkspaceNeurons = DomainUtils.getMapById(workspaceNeurons);
+        Map<Long, InputStream> neuronsPointStreams = tmNeuronBufferDao.streamNeuronPointsByWorkspaceId(indexedWorkspaceNeurons.keySet(), workspace.getId());
+
+        return workspaceNeurons.stream()
+                .map(neuron -> ImmutablePair.of(neuron, neuronsPointStreams.get(neuron.getId())))
+                .collect(Collectors.toList());
     }
 
     @Override

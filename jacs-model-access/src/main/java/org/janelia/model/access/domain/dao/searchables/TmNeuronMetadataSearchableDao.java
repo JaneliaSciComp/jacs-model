@@ -41,6 +41,11 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
     }
 
     @Override
+    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace, long offset, int length) {
+        return null;
+    }
+
+    @Override
     public boolean removeTmNeuron(Long neuronId, String subjectKey) {
         boolean removed = tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey);
         if (removed) {
