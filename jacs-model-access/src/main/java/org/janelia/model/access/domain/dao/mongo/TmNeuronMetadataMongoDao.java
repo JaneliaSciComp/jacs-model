@@ -1,11 +1,7 @@
 package org.janelia.model.access.domain.dao.mongo;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -152,14 +148,34 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     }
 
     @Override
+    public void removeEmptyNeuronsInWorkspace(Long workspaceId, String subjectKey) {
+        MongoDaoHelper.deleteMatchingRecords(
+                mongoCollection,
+                MongoDaoHelper.createFilterCriteria(
+                        ImmutableList.of(
+                                Filters.eq("workspaceRef", "TmWorkspace#" + workspaceId),
+                                Filters.exists("neuronData", false),
+                                permissionsHelper.createWritePermissionFilterForSubjectKey(subjectKey))
+                ));
+    }
+
+    @Override
+    public void insertTmNeurons(Collection<TmNeuronMetadata> neurons) {
+        this.saveAll(neurons);
+    }
+
+    @Override
     public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace, long offset, int length) {
         List<TmNeuronMetadata> workspaceNeurons = getTmNeuronMetadataByWorkspaceId(subjectKey, workspace.getId(), offset, length);
+        LOG.info ("trace1 {}",workspaceNeurons);
         if (workspaceNeurons.isEmpty()) {
             return Collections.emptyList();
         }
+        LOG.info ("trace2");
         Map<Long, TmNeuronMetadata> indexedWorkspaceNeurons = DomainUtils.getMapById(workspaceNeurons);
         Map<Long, InputStream> neuronsPointStreams = tmNeuronBufferDao.streamNeuronPointsByWorkspaceId(indexedWorkspaceNeurons.keySet(), workspace.getId());
 
+        LOG.info ("trace3");
         return workspaceNeurons.stream()
                 .map(neuron -> ImmutablePair.of(neuron, neuronsPointStreams.get(neuron.getId())))
                 .collect(Collectors.toList());

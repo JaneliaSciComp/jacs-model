@@ -1,6 +1,7 @@
 package org.janelia.model.access.domain.dao.searchables;
 
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -42,7 +43,7 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
 
     @Override
     public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace, long offset, int length) {
-        return null;
+        return tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey,workspace,offset,length);
     }
 
     @Override
@@ -57,6 +58,16 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
     @Override
     public void updateNeuronStyles(BulkNeuronStyleUpdate bulkNeuronStyleUpdate, String subjectKey) {
         tmNeuronMetadataDao.updateNeuronStyles(bulkNeuronStyleUpdate, subjectKey);
+    }
+
+    @Override
+    public void removeEmptyNeuronsInWorkspace(Long workspaceId, String subjectKey) {
+        tmNeuronMetadataDao.removeEmptyNeuronsInWorkspace(workspaceId,subjectKey);
+    }
+
+    @Override
+    public void insertTmNeurons(Collection<TmNeuronMetadata> neurons) {
+        tmNeuronMetadataDao.insertTmNeurons(neurons);
     }
 
     @Override
