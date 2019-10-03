@@ -279,8 +279,7 @@ class DomainObject2SolrDoc {
                             traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue);
                         }
                     } else if (memberClass.getName().startsWith(JANELIA_MODEL_PACKAGE)) {
-                        DomainObject memberAsDomainObject = (DomainObject) member;
-                        traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, memberAsDomainObject, false, visited, fullTextIndexableValue);
+                        traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, member, false, visited, fullTextIndexableValue);
                     }
                 });
     }
