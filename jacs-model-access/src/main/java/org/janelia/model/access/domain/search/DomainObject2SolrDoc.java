@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 class DomainObject2SolrDoc {
 
     private static final Logger LOG = LoggerFactory.getLogger(DomainObject2SolrDoc.class);
+    private static final String JANELIA_MODEL_PACKAGE = "org.janelia.model.domain";
 
     private final NodeAncestorsGetter nodeAncestorsGetter;
     private final DomainAnnotationGetter nodeAnnotationGetter;
@@ -213,7 +214,7 @@ class DomainObject2SolrDoc {
             ReverseReference reverseRef = (ReverseReference) fieldValue;
             List<? extends DomainObject> refObjs = objectGetter.getDomainObjectsReferencedBy(reverseRef);
             refObjs.forEach(refObj -> traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue));
-        } else if (DomainObject.class.isAssignableFrom(fieldValueClass)) {
+        } else if (fieldValueClass.getName().startsWith(JANELIA_MODEL_PACKAGE)) {
             DomainObject fieldValueAsDomainObject = (DomainObject) fieldValue;
             traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, fieldValueAsDomainObject, false, visited, fullTextIndexableValue);
         }
@@ -274,7 +275,7 @@ class DomainObject2SolrDoc {
                         } else {
                             traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue);
                         }
-                    } else if (DomainObject.class.isAssignableFrom(memberClass)) {
+                    } else if (memberClass.getName().startsWith(JANELIA_MODEL_PACKAGE)) {
                         DomainObject memberAsDomainObject = (DomainObject) member;
                         traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, memberAsDomainObject, false, visited, fullTextIndexableValue);
                     }
