@@ -157,10 +157,13 @@ class DomainObject2SolrDoc {
         return fullTextIndexableValues;
     }
 
-    private void traverseDomainObjectFieldsForFullTextIndexedValues(DomainObject rootObject, DomainObject currentObject, boolean ignoreSearchableFields, Set<Reference> visited, FullTextIndexableValues fullTextIndexableValue) {
-        Reference currentObjectReference = Reference.createFor(currentObject);
-        visited.add(currentObjectReference);
-        fullTextIndexableValue.addReferenceAnnotations(currentObjectReference, nodeAnnotationGetter.getAnnotations(currentObjectReference));
+    private void traverseDomainObjectFieldsForFullTextIndexedValues(DomainObject rootObject, Object currentObject, boolean ignoreSearchableFields, Set<Reference> visited, FullTextIndexableValues fullTextIndexableValue) {
+        if (currentObject instanceof DomainObject) {
+            DomainObject currentDomainObject = (DomainObject) currentObject;
+            Reference currentObjectReference = Reference.createFor(currentDomainObject);
+            visited.add(currentObjectReference);
+            fullTextIndexableValue.addReferenceAnnotations(currentObjectReference, nodeAnnotationGetter.getAnnotations(currentObjectReference));
+        }
         @SuppressWarnings("unchecked")
         Set<Field> currentObjectFields = ReflectionUtils.getAllFields(currentObject.getClass());
         currentObjectFields.stream()
