@@ -218,8 +218,7 @@ class DomainObject2SolrDoc {
             List<? extends DomainObject> refObjs = objectGetter.getDomainObjectsReferencedBy(reverseRef);
             refObjs.forEach(refObj -> traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue));
         } else if (fieldValueClass.getName().startsWith(JANELIA_MODEL_PACKAGE)) {
-            DomainObject fieldValueAsDomainObject = (DomainObject) fieldValue;
-            traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, fieldValueAsDomainObject, false, visited, fullTextIndexableValue);
+            traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, fieldValue, false, visited, fullTextIndexableValue);
         }
         // Ignore everything else
     }
