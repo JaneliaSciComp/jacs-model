@@ -1,8 +1,5 @@
 package org.janelia.model.util;
 
-import com.google.common.collect.ImmutableList;
-import org.reflections.ReflectionUtils;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -10,6 +7,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
+import com.google.common.collect.ImmutableList;
+
+import org.reflections.ReflectionUtils;
 
 /**
  * Utility methods to help with common reflection tasks.

@@ -2,6 +2,13 @@ package org.janelia.model.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 /**
  * Helper methods for dealing with reflection.
@@ -10,8 +17,46 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class ReflectionUtils {
 
+    private static final int MAX_CACHE_SIZE = 1000;
+
     private static final Class[] EMPTY_ARGS_TYPES = {};
     private static final Object[] EMPTY_ARGS_VALUES = {};
+
+    @SuppressWarnings("unchecked")
+    private static final LoadingCache<Class<?>, Set<Field>> CLASS_FIELDS_CACHE = CacheBuilder.newBuilder()
+            .maximumSize(MAX_CACHE_SIZE)
+            .build(new CacheLoader<Class<?>, Set<Field>>() {
+                @Override
+                public Set<Field> load(Class<?> key) throws Exception {
+                    return org.reflections.ReflectionUtils.getAllFields(key);
+                }
+            });
+
+    @SuppressWarnings("unchecked")
+    private static final LoadingCache<Class<?>, Set<Method>> CLASS_METHODS_CACHE = CacheBuilder.newBuilder()
+            .maximumSize(MAX_CACHE_SIZE)
+            .build(new CacheLoader<Class<?>, Set<Method>>() {
+                @Override
+                public Set<Method> load(Class<?> key) throws Exception {
+                    return org.reflections.ReflectionUtils.getAllMethods(key);
+                }
+            });
+
+    public static Set<Field> getAllClassFields(Class<?> clazz) {
+        try {
+            return CLASS_FIELDS_CACHE.get(clazz);
+        } catch (ExecutionException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static Set<Method> getAllClassMethods(Class<?> clazz) {
+        try {
+            return CLASS_METHODS_CACHE.get(clazz);
+        } catch (ExecutionException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     /**
      * Get the given field value from the specified object. If the field is

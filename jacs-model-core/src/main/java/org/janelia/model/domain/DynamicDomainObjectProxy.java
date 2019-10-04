@@ -1,18 +1,19 @@
 package org.janelia.model.domain;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import org.janelia.model.domain.enums.AlignmentScoreType;
-import org.janelia.model.domain.sample.Sample;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+
+import org.janelia.model.domain.enums.AlignmentScoreType;
+import org.janelia.model.domain.sample.Sample;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A wrapper around a DomainObject which provides a facade with dynamic access to its properties by UI label. This is
@@ -22,28 +23,28 @@ import java.util.concurrent.ExecutionException;
  */
 public class DynamicDomainObjectProxy implements Map<String,Object> {
 
-    private static final Logger log = LoggerFactory.getLogger(DynamicDomainObjectProxy.class);
-    
+    private static final Logger LOG = LoggerFactory.getLogger(DynamicDomainObjectProxy.class);
+
+    private static final LoadingCache<Class<? extends DomainObject>,Map<String,DomainObjectAttribute>> CLASS_ATTR_MAPS =
+            CacheBuilder.newBuilder().build(new CacheLoader<Class<? extends DomainObject>, Map<String, DomainObjectAttribute>>() {
+                public Map<String, DomainObjectAttribute> load(Class<? extends DomainObject> clazz) {
+                    Map<String, DomainObjectAttribute> attrs = new LinkedHashMap<>();
+                    LOG.trace("Getting attrs for {}", clazz.getSimpleName());
+                    for (DomainObjectAttribute attr : DomainUtils.getDisplayAttributes(clazz)) {
+                        LOG.trace("  {} -> {}.{}", attr.getLabel(), clazz.getSimpleName(), attr.getName());
+                        attrs.put(attr.getLabel(), attr);
+                    }
+                    return attrs;
+                }
+            });
+
     private final DomainObject domainObject;
     private final Map<String, DomainObjectAttribute> attrs;
-
-    private static final LoadingCache<Class<? extends DomainObject>,Map<String,DomainObjectAttribute>> classAttrMaps =
-            CacheBuilder.newBuilder().build(new CacheLoader<Class<? extends DomainObject>,Map<String,DomainObjectAttribute>>() {
-        public Map<String,DomainObjectAttribute> load(Class<? extends DomainObject> clazz) {
-            Map<String,DomainObjectAttribute> attrs = new LinkedHashMap<>();
-            log.trace("Getting attrs for {}",clazz.getSimpleName());
-            for (DomainObjectAttribute attr : DomainUtils.getDisplayAttributes(clazz)) {
-                log.trace("  {} -> {}.{}",attr.getLabel(), clazz.getSimpleName(), attr.getName());
-                attrs.put(attr.getLabel(), attr);
-            }
-            return attrs;
-        }
-    });
 
     public DynamicDomainObjectProxy(DomainObject domainObject) {
         try {
             this.domainObject = domainObject;
-            this.attrs = classAttrMaps.get(domainObject.getClass());
+            this.attrs = CLASS_ATTR_MAPS.get(domainObject.getClass());
         }
         catch (ExecutionException e) {
             throw new RuntimeException(e);
@@ -74,7 +75,7 @@ public class DynamicDomainObjectProxy implements Map<String,Object> {
     public Object get(Object key) {
         DomainObjectAttribute attr = attrs.get(key);
         if (attr==null) {
-            log.trace("{} has no attribute {}", domainObject, key);
+            LOG.trace("{} has no attribute {}", domainObject, key);
         }
         else if (attr.getGetter()==null) {
 
@@ -91,14 +92,14 @@ public class DynamicDomainObjectProxy implements Map<String,Object> {
                 }
             }
             
-            log.trace("Attribute has no getter: "+key);
+            LOG.trace("Attribute has no getter: "+key);
         }
         else {
             try {
                 return attr.getGetter().invoke(domainObject);
             }
             catch (Exception e) {
-                log.error("Error getting attribute value for '"+key+"' using getter "+attr.getGetter().getName(), e);
+                LOG.error("Error getting attribute value for '"+key+"' using getter "+attr.getGetter().getName(), e);
             }
         }
         return null;
@@ -108,17 +109,17 @@ public class DynamicDomainObjectProxy implements Map<String,Object> {
     public Object put(String key, Object value) {
         DomainObjectAttribute attr = attrs.get(key);
         if (attr==null) {
-            log.trace("No such attribute: "+key);
+            LOG.trace("No such attribute: "+key);
         }
         else if (attr.getSetter()==null) {
-            log.trace("Attribute has no setter: "+key);
+            LOG.trace("Attribute has no setter: "+key);
         }
         else {
             try {
                 return attr.getSetter().invoke(domainObject, value);
             }
             catch (Exception e) {
-                log.error("Error setting attribute value for '"+key+"' using setter "+attr.getSetter().getName(), e);
+                LOG.error("Error setting attribute value for '"+key+"' using setter "+attr.getSetter().getName(), e);
             }
         }
         return null;
