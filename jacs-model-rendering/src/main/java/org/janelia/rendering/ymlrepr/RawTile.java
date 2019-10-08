@@ -1,5 +1,8 @@
 package org.janelia.rendering.ymlrepr;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RawTile {
     private String path;
     private Aabb aabb;
@@ -47,7 +50,7 @@ public class RawTile {
         return transform;
     }
 
-    public void setHomography(Double[] transform) {
-        this.transform = transform;
+    public void setHomography(Double[] homography) {
+        this.transform = homography;
     }
 }
