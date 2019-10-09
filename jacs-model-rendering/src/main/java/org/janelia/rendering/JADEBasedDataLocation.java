@@ -69,7 +69,7 @@ public class JADEBasedDataLocation implements DataLocation {
     @Override
     public String getContentURIFromRelativePath(String relativePath) {
         Preconditions.checkArgument(relativePath != null);
-        return getNormalizedURI(relativePath)
+        return getNormalizedURI(jadeBaseDataStorageURI)
                 .resolve("data_content/")
                 .resolve(getNormalizedURI(relativizePathToRoot(baseDataStoragePath)))
                 .resolve(relativePath.replace('\\', '/'))
