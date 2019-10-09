@@ -18,37 +18,61 @@ public class FileBasedDataLocation implements DataLocation {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileBasedDataLocation.class);
 
-    final Path baseDataStoragePath;
+    private final Path baseDataStoragePath;
+    final Function<Path, Path> pathMapper;
 
-    public FileBasedDataLocation(Path baseDataStoragePath) {
+    public FileBasedDataLocation(Path baseDataStoragePath, Function<Path, Path> pathMapper) {
         this.baseDataStoragePath = baseDataStoragePath;
+        this.pathMapper = pathMapper == null ? Function.identity() : pathMapper;
+    }
+
+    FileBasedDataLocation(FileBasedDataLocation fileBasedDataLocation) {
+        this(fileBasedDataLocation.baseDataStoragePath, fileBasedDataLocation.pathMapper);
     }
 
     @Override
     public URI getConnectionURI() {
         // for local file based location the connection URI and the base data storage URI are the same.
-        return baseDataStoragePath.toUri();
+        return pathMapper.apply(baseDataStoragePath).toUri();
     }
 
     @Override
     public URI getDataStorageURI() {
-        return baseDataStoragePath.toUri();
+        return pathMapper.apply(baseDataStoragePath).toUri();
     }
 
     @Override
     public String getBaseDataStoragePath() {
-        return StringUtils.replace(baseDataStoragePath.toString(), "\\", "/");
+        return StringUtils.replace(pathMapper.apply(baseDataStoragePath).toString(), "\\", "/");
+    }
+
+    @Override
+    public String getContentURIFromRelativePath(String relativePath) {
+        return getLocationPathFromRelativePath(relativePath).toString();
+   }
+
+    private Path getLocationPathFromRelativePath(String relativePath) {
+        return pathMapper.apply(baseDataStoragePath).resolve(relativePath);
+    }
+
+    @Override
+    public String getContentURIFromAbsolutePath(String absolutePath) {
+        return getLocationPathFromAbsolutePath(absolutePath).toString();
+    }
+
+    private Path getLocationPathFromAbsolutePath(String absolutePath) {
+        return pathMapper.apply(Paths.get(absolutePath));
     }
 
     @Override
     public Streamable<InputStream> getContentFromRelativePath(String relativePath) {
-        return openContentStream(baseDataStoragePath.resolve(relativePath), defaultPathHandler());
+        return openContentStream(getLocationPathFromRelativePath(relativePath), defaultPathHandler());
     }
 
     @Override
     public Streamable<InputStream> getContentFromAbsolutePath(String absolutePath) {
         Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
-        return openContentStream(Paths.get(absolutePath), defaultPathHandler());
+        return openContentStream(getLocationPathFromAbsolutePath(absolutePath), defaultPathHandler());
     }
 
     Function<Path, InputStream> defaultPathHandler() {
@@ -76,12 +100,12 @@ public class FileBasedDataLocation implements DataLocation {
 
     @Override
     public boolean checkContentAtRelativePath(String relativePath) {
-        return Files.exists(baseDataStoragePath.resolve(relativePath));
+        return Files.exists(getLocationPathFromRelativePath(relativePath));
     }
 
     @Override
     public boolean checkContentAtAbsolutePath(String absolutePath) {
         Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
-        return Files.exists(Paths.get(absolutePath));
+        return Files.exists(getLocationPathFromAbsolutePath(absolutePath));
     }
 }

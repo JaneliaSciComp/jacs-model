@@ -31,6 +31,22 @@ public interface DataLocation {
     }
 
     /**
+     * Get URI based on the relative path.
+     *
+     * @param relativePath
+     * @return
+     */
+    String getContentURIFromRelativePath(String relativePath);
+
+    /**
+     * Get URI based on the absolute path.
+     *
+     * @param absolutePath
+     * @return
+     */
+    String getContentURIFromAbsolutePath(String absolutePath);
+
+    /**
      * Stream content from relative path.
      * @param relativePath
      * @return

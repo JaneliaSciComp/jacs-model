@@ -66,6 +66,27 @@ public class JADEBasedDataLocation implements DataLocation {
     }
 
     @Override
+    public String getContentURIFromRelativePath(String relativePath) {
+        Preconditions.checkArgument(relativePath != null);
+        return getNormalizedURI(relativePath)
+                .resolve("data_content/")
+                .resolve(getNormalizedURI(baseDataStoragePath))
+                .resolve(relativePath.replace('\\', '/'))
+                .toString()
+                ;
+    }
+
+    @Override
+    public String getContentURIFromAbsolutePath(String absolutePath) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
+        return getNormalizedURI(jadeConnectionURI)
+                .resolve("agent_storage/storage_path/data_content/")
+                .resolve(absolutePath.replace('\\', '/'))
+                .toString()
+                ;
+    }
+
+    @Override
     public Streamable<InputStream> getContentFromRelativePath(String relativePath) {
         return openContentStreamFromRelativePathToVolumeRoot(relativePath, ImmutableMultimap.of());
     }

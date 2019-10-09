@@ -67,12 +67,12 @@ public class FileBasedRenderedVolumeLocation extends FileBasedDataLocation imple
 
     }
 
-    public FileBasedRenderedVolumeLocation(Path volumeBasePath) {
-        super(volumeBasePath);
+    public FileBasedRenderedVolumeLocation(Path volumeBasePath, Function<Path, Path> pathMapper) {
+        super(volumeBasePath, pathMapper);
     }
 
     public FileBasedRenderedVolumeLocation(FileBasedDataLocation fileBasedDataLocation) {
-        super(fileBasedDataLocation.baseDataStoragePath);
+        super(fileBasedDataLocation);
     }
 
     @Override
