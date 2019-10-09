@@ -13,6 +13,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
+import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.rendering.utils.ClientProxy;
 import org.janelia.rendering.utils.HttpClientProvider;
@@ -70,7 +71,7 @@ public class JADEBasedDataLocation implements DataLocation {
         Preconditions.checkArgument(relativePath != null);
         return getNormalizedURI(relativePath)
                 .resolve("data_content/")
-                .resolve(getNormalizedURI(baseDataStoragePath))
+                .resolve(getNormalizedURI(relativizePathToRoot(baseDataStoragePath)))
                 .resolve(relativePath.replace('\\', '/'))
                 .toString()
                 ;
@@ -81,9 +82,14 @@ public class JADEBasedDataLocation implements DataLocation {
         Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
         return getNormalizedURI(jadeConnectionURI)
                 .resolve("agent_storage/storage_path/data_content/")
-                .resolve(absolutePath.replace('\\', '/'))
+                .resolve(relativizePathToRoot(absolutePath))
                 .toString()
                 ;
+    }
+
+    private String relativizePathToRoot(String p) {
+        // replace patterns like C://, file:///D:/, // with ""
+        return RegExUtils.removeFirst(StringUtils.replaceChars(p, '\\', '/'), "^((.+:)?/+)+");
     }
 
     @Override
