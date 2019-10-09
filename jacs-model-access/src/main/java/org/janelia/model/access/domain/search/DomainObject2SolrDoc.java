@@ -187,11 +187,11 @@ class DomainObject2SolrDoc {
         if (currentObject == null) {
             return;
         }
-        if (!isTraversable(field, rootObject)) {
-            return; // the field is not traversable - rootObject's type is not in the allowed values specified in the SearchTraversal annotation
-        }
         if (Modifier.isTransient(field.getModifiers())) {
             return; // skip transient fields
+        }
+        if (!isTraversable(field, rootObject)) {
+            return; // the field is not traversable - rootObject's type is not in the allowed values specified in the SearchTraversal annotation
         }
         if (currentObject instanceof String) {
             fullTextIndexableValue.addFullTextIndexedField(field.getName(), (String) currentObject);
