@@ -262,8 +262,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
         long sizeInBytes = getCurrentSizeInBytes();
         try {
             if (Files.exists(localFilePath)) {
-                // This can happen if user deleted the cache directory manually
-                // and I don't think this should be an error
+                // For safety I do not delete any file that somehow is outside the cache storage directory
                 Path localCanonicalPath = localFilePath.toRealPath();
                 Path cacheDirCanonicalPath = localFileCacheStorage.getLocalFileCacheDir().toRealPath();
                 if (!localCanonicalPath.toString().startsWith(cacheDirCanonicalPath.toString())) {
