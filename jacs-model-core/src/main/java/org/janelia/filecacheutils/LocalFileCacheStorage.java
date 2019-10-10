@@ -315,7 +315,7 @@ public class LocalFileCacheStorage {
 
     synchronized Path getLocalCachedFile(Path filePath) {
         long currentTime = System.currentTimeMillis();
-        CachedFileEntry lookupEntry = new CachedFileEntry(filePath.toString(), 0, 0);
+        CachedFileEntry lookupEntry = new CachedFileEntry(filePath.toString(), 0, System.currentTimeMillis());
         // to touch the cache entry we remove it and reinsert it so that the timestamp gets updated
         CachedFileEntry cachedFileEntry = cachedFiles.remove(lookupEntry);
         if (cachedFileEntry != null && Files.exists(filePath)) {
