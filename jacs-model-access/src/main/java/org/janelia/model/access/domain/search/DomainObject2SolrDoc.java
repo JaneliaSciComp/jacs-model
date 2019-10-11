@@ -153,7 +153,7 @@ class DomainObject2SolrDoc {
     }
 
     private FullTextIndexableValues getFullTextIndexedValues(DomainObject domainObject) {
-        Set<String> visited = new HashSet<>();
+        Set<Reference> visited = new HashSet<>();
         FullTextIndexableValues fullTextIndexableValues = new FullTextIndexableValues();
         traverseDomainObjectFieldsForFullTextIndexedValues(
                 domainObject,
@@ -164,16 +164,18 @@ class DomainObject2SolrDoc {
         return fullTextIndexableValues;
     }
 
-    private void traverseDomainObjectFieldsForFullTextIndexedValues(DomainObject rootObject, Object currentObject, boolean ignoreSearchableFields, Set<String> visited, FullTextIndexableValues fullTextIndexableValue) {
-        if (currentObject == null || visited.contains(currentObject.toString())) {
+    private void traverseDomainObjectFieldsForFullTextIndexedValues(DomainObject rootObject, Object currentObject, boolean ignoreSearchableFields, Set<Reference> visited, FullTextIndexableValues fullTextIndexableValue) {
+        if (currentObject == null) {
             return;
-        } else {
-            visited.add(currentObject.toString());
         }
 
         if (currentObject instanceof DomainObject) {
             DomainObject currentDomainObject = (DomainObject) currentObject;
             Reference currentObjectReference = Reference.createFor(currentDomainObject);
+            if (visited.contains(currentObjectReference)) {
+                return;
+            }
+            visited.add(currentObjectReference);
             fullTextIndexableValue.addReferenceAnnotations(currentObjectReference, nodeAnnotationGetter.getAnnotations(currentObjectReference));
         }
 
@@ -183,7 +185,7 @@ class DomainObject2SolrDoc {
                 .forEach(field -> traverseObjectFieldForFullTextIndexedValues(rootObject, currentObject, field, visited, fullTextIndexableValue));
     }
 
-    private void traverseObjectFieldForFullTextIndexedValues(DomainObject rootObject, Object currentObject, Field field, Set<String> visited, FullTextIndexableValues fullTextIndexableValue) {
+    private void traverseObjectFieldForFullTextIndexedValues(DomainObject rootObject, Object currentObject, Field field, Set<Reference> visited, FullTextIndexableValues fullTextIndexableValue) {
         if (currentObject == null) {
             return;
         }
@@ -215,7 +217,7 @@ class DomainObject2SolrDoc {
         } else if (fieldValue instanceof Reference) {
             Reference ref = (Reference) fieldValue;
             // Don't fetch objects which we've already visited
-            if (visited.contains(ref.toString())) {
+            if (visited.contains(ref)) {
                 return;
             }
             DomainObject refObj = objectGetter.getDomainObjectByReference(ref);
@@ -267,7 +269,7 @@ class DomainObject2SolrDoc {
     private void traverseCollectionFieldForFullTextIndexedValues(DomainObject rootObject,
                                                                  Collection<?> currentCollection,
                                                                  Field field,
-                                                                 Set<String> visited,
+                                                                 Set<Reference> visited,
                                                                  FullTextIndexableValues fullTextIndexableValue) {
         currentCollection.stream()
                 .filter(Objects::nonNull)
@@ -280,7 +282,7 @@ class DomainObject2SolrDoc {
                         if (member instanceof Reference) {
                             Reference ref = (Reference) member;
                             // Don't fetch objects which we've already visited
-                            if (visited.contains(ref.toString())) {
+                            if (visited.contains(ref)) {
                                 return;
                             }
                             DomainObject refObj = objectGetter.getDomainObjectByReference(ref);
