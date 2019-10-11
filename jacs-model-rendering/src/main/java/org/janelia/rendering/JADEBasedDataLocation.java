@@ -1,5 +1,7 @@
 package org.janelia.rendering;
 
+import java.io.FilterInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
@@ -153,7 +155,21 @@ public class JADEBasedDataLocation implements DataLocation {
             response = createRequestWithCredentials(endpoint, MediaType.APPLICATION_OCTET_STREAM).get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
-                return Streamable.of(response.readEntity(InputStream.class), response.getLength());
+                InputStream is = response.readEntity(InputStream.class);
+                int length = response.getLength();
+                return Streamable.of(
+                        new FilterInputStream(is) {
+                            @Override
+                            public void close() throws IOException {
+                                try {
+                                    super.close();
+                                } finally {
+                                    // when closing the stream make sure this "connection" gets closed
+                                    response.close();
+                                }
+                            }
+                        },
+                        length);
             } else {
                 LOG.debug("Open stream from {} returned status {}", endpoint.getUri(), responseStatus);
                 return Streamable.empty();
