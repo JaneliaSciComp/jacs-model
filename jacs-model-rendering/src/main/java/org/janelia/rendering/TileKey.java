@@ -1,8 +1,8 @@
 package org.janelia.rendering;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 import java.util.Arrays;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * An efficiently hashable key that uniquely identifies a particular

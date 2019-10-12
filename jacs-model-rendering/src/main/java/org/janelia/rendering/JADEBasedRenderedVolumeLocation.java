@@ -1,18 +1,13 @@
 package org.janelia.rendering;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
@@ -20,9 +15,7 @@ import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
 
 import org.apache.commons.lang3.StringUtils;
@@ -81,12 +74,12 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                     .queryParam("depth", detailLevel)
                     ;
             LOG.debug("List images from URI {}, volume path {}, level {} using {}", getDataStorageURI(), getBaseDataStoragePath(), level, target.getUri());
-            Response response;
-            response = createRequestWithCredentials(target, MediaType.APPLICATION_JSON).get();
+            Response response = createRequestWithCredentials(target, MediaType.APPLICATION_JSON).get();
             int responseStatus = response.getStatus();
+            List<URI> result;
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 List<ContentEntry> storageCotent = response.readEntity(new GenericType<List<ContentEntry>>(){});
-                return storageCotent.stream()
+                result = storageCotent.stream()
                         .filter(ce -> StringUtils.isNotBlank(ce.nodeRelativePath))
                         .filter(ce -> Paths.get(ce.nodeRelativePath).getNameCount() == detailLevel)
                         .filter(ce -> !ce.collectionFlag)
@@ -95,8 +88,10 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                         .collect(Collectors.toList());
             } else {
                 LOG.warn("List images from URI {}, volume path {}, level {} ({}) returned status {}", getDataStorageURI(), getBaseDataStoragePath(), level, target.getUri(), responseStatus);
-                return null;
+                result = null;
             }
+            response.close();
+            return result;
         } catch (Exception e) {
             LOG.error("Error listing images from URI {}, volume path {}, level {} returned status {}", getDataStorageURI(), getBaseDataStoragePath(), level, e);
             throw new IllegalStateException(e);
@@ -117,15 +112,17 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                     .path(tileRelativePath.replace('\\', '/'))
                     ;
             LOG.debug("Read tile imageInfo from URI {}, volume path {}, tile path {} using {}", getDataStorageURI(), getBaseDataStoragePath(), tileRelativePath, target.getUri());
-            Response response;
-            response = createRequestWithCredentials(target, MediaType.APPLICATION_JSON).get();
+            Response response = createRequestWithCredentials(target, MediaType.APPLICATION_JSON).get();
             int responseStatus = response.getStatus();
+            RenderedImageInfo renderedImageInfo;
             if (responseStatus == Response.Status.OK.getStatusCode()) {
-                return response.readEntity(RenderedImageInfo.class);
+                renderedImageInfo = response.readEntity(RenderedImageInfo.class);
             } else {
                 LOG.warn("Retrieve content info from URI {}, volume path {}, tile path {} ({}) returned status {}", getDataStorageURI(), getBaseDataStoragePath(), tileRelativePath, target.getUri(), responseStatus);
-                return null;
+                renderedImageInfo = null;
             }
+            response.close();
+            return renderedImageInfo;
         } catch (Exception e) {
             LOG.warn("Error retrieving content info from URI {}, volume path {}, tile path {} returned status {}", getDataStorageURI(), getBaseDataStoragePath(), tileRelativePath, e);
             throw new IllegalStateException(e);
@@ -214,8 +211,5 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                     return l;
                 });
     }
-
-
-
 
 }

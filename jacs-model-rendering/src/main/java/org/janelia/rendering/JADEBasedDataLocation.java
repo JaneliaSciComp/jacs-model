@@ -1,7 +1,5 @@
 package org.janelia.rendering;
 
-import java.io.FilterInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
@@ -151,25 +149,12 @@ public class JADEBasedDataLocation implements DataLocation {
                 endpoint = endpoint.queryParam(qe.getKey(), qe.getValue());
             }
             LOG.debug("Open stream from {}", endpoint.getUri());
-            Response response;
-            response = createRequestWithCredentials(endpoint, MediaType.APPLICATION_OCTET_STREAM).get();
+            Response response = createRequestWithCredentials(endpoint, MediaType.APPLICATION_OCTET_STREAM).get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 InputStream is = response.readEntity(InputStream.class);
                 int length = response.getLength();
-                return Streamable.of(
-                        new FilterInputStream(is) {
-                            @Override
-                            public void close() throws IOException {
-                                try {
-                                    super.close();
-                                } finally {
-                                    // when closing the stream make sure this "connection" gets closed
-                                    response.close();
-                                }
-                            }
-                        },
-                        length);
+                return Streamable.of(is, length);
             } else {
                 LOG.debug("Open stream from {} returned status {}", endpoint.getUri(), responseStatus);
                 return Streamable.empty();
@@ -225,9 +210,9 @@ public class JADEBasedDataLocation implements DataLocation {
     private boolean checkContent(WebTarget endpoint) {
         try {
             LOG.debug("Check content from {}", endpoint.getUri());
-            Response response;
-            response = createRequestWithCredentials(endpoint, null).head();
+            Response response = createRequestWithCredentials(endpoint, null).head();
             int responseStatus = response.getStatus();
+            response.close();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return true;
             } else {
