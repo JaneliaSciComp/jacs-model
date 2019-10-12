@@ -296,6 +296,7 @@ public class LocalFileCacheStorage {
         try {
             Path cachedFilePath = getLocalCachedFile(localFilePath);
             if (cachedFilePath != null) {
+                LOG.debug("Streaming from local cache {}", cachedFilePath);
                 return Files.newInputStream(cachedFilePath);
             }
         } catch (IOException e) {
