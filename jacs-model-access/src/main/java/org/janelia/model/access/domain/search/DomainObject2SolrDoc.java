@@ -140,7 +140,7 @@ class DomainObject2SolrDoc {
         });
 
         FullTextIndexableValues fullTextIndexableValues = getFullTextIndexedValues(domainObject);
-        solrDoc.setField("fulltext_mt", ImmutableSet.copyOf(fullTextIndexableValues.fulltextIndexedFields.values()), 0.8f);
+        solrDoc.setField("fulltext_mt", new HashSet<>(fullTextIndexableValues.fulltextIndexedFields.values()), 0.8f);
 
         fullTextIndexableValues.refAnnotationsMap.values().stream()
                 .flatMap(refAnnotations -> refAnnotations.stream())

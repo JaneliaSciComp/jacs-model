@@ -1,7 +1,5 @@
 package org.janelia.model.domain.sample;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
