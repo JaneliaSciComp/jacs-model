@@ -71,6 +71,20 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     }
 
     @Override
+    public List<TmWorkspace> getAllTmWorkspaces(String subjectKey) {
+        if (StringUtils.isBlank(subjectKey))
+            return Collections.emptyList();
+        return MongoDaoHelper.find(
+                MongoDaoHelper.createFilterCriteria(
+                        permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
+                MongoDaoHelper.createBsonSortCriteria(new SortCriteria("_id")),
+                0,
+                -1,
+                mongoCollection,
+                TmWorkspace.class);
+    }
+
+    @Override
     public TmWorkspace createTmWorkspace(String subjectKey, TmWorkspace tmWorkspace) {
         try {
             TmWorkspace workspace = domainDao.save(subjectKey, tmWorkspace);

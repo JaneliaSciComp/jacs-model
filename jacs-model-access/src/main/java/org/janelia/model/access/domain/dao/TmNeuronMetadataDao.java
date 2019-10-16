@@ -14,11 +14,13 @@ import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
  */
 public interface TmNeuronMetadataDao extends DomainObjectDao<TmNeuronMetadata> {
     TmNeuronMetadata createTmNeuronInWorkspace(String subjectKey, TmNeuronMetadata neuronMetadata, TmWorkspace workspace);
+    TmNeuronMetadata getTmNeuronMetadata (String subjectKey, Long neuronId);
     List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(String subjectKey, Long workspaceId, long offset, int length);
     List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace, long offset, int length);
-    boolean removeTmNeuron(Long neuronId, String subjectKey);
+    boolean removeTmNeuron(Long neuronId, boolean isLarge, String subjectKey);
     void updateNeuronStyles(BulkNeuronStyleUpdate bulkNeuronStyleUpdate, String subjectKey);
     void removeEmptyNeuronsInWorkspace(Long workspaceId, String subjectKey);
+    void bulkReplaceNeuronsInWorkspace(Long workspaceId, Collection<TmNeuronMetadata> neurons, String subjectKey);
     void insertTmNeurons(Collection<TmNeuronMetadata> neurons);
     void updateNeuronTagsTagsForNeurons(List<Long> neuronIds, List<String> tags, boolean tagState, String subjectKey);
 }

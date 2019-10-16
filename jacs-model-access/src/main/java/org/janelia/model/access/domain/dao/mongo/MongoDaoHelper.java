@@ -9,6 +9,8 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.client.gridfs.*;
+import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +22,8 @@ import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.RemoveFieldValueHandler;
 import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
 import org.janelia.model.util.SortCriteria;
+import java.io.*;
+import java.nio.file.Files;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -240,5 +244,4 @@ class MongoDaoHelper {
             return Updates.set(fieldName, valueHandler.getFieldValue());
         }
     }
-
 }

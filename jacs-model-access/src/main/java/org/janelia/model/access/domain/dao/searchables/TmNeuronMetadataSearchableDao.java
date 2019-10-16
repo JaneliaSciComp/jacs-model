@@ -37,6 +37,11 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
     }
 
     @Override
+    public TmNeuronMetadata getTmNeuronMetadata(String subjectKey, Long neuronId) {
+        return tmNeuronMetadataDao.getTmNeuronMetadata(subjectKey, neuronId);
+    }
+
+    @Override
     public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(String subjectKey, Long workspaceId, long offset, int length) {
         return tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(subjectKey, workspaceId, offset, length);
     }
@@ -47,8 +52,8 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
     }
 
     @Override
-    public boolean removeTmNeuron(Long neuronId, String subjectKey) {
-        boolean removed = tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey);
+    public boolean removeTmNeuron(Long neuronId, boolean isLarge, String subjectKey) {
+        boolean removed = tmNeuronMetadataDao.removeTmNeuron(neuronId, isLarge, subjectKey);
         if (removed) {
             domainObjectIndexer.removeDocument(neuronId);
         }
@@ -61,8 +66,18 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
     }
 
     @Override
+    public TmNeuronMetadata saveBySubjectKey(TmNeuronMetadata neuron, String subjectKey) {
+        return tmNeuronMetadataDao.saveBySubjectKey(neuron,subjectKey);
+    }
+
+    @Override
     public void removeEmptyNeuronsInWorkspace(Long workspaceId, String subjectKey) {
         tmNeuronMetadataDao.removeEmptyNeuronsInWorkspace(workspaceId,subjectKey);
+    }
+
+    @Override
+    public void bulkReplaceNeuronsInWorkspace(Long workspaceId, Collection<TmNeuronMetadata> neurons, String subjectKey) {
+        tmNeuronMetadataDao.bulkReplaceNeuronsInWorkspace(workspaceId, neurons, subjectKey);
     }
 
     @Override

@@ -143,6 +143,27 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
         return StreamSupport.stream(iterator, false);
     }
 
+    public T updateOne(T entity, String subjectKey) {
+        Date now = new Date();
+        if (entity.getId() == null) {
+            entity.setId(createNewId());
+            entity.setOwnerKey(subjectKey);
+            entity.getReaders().add(subjectKey);
+            entity.getWriters().add(subjectKey);
+            entity.setCreationDate(now);
+            entity.setUpdatedDate(now);
+            mongoCollection.insertOne(entity);
+        } else {
+            entity.setUpdatedDate(now);
+            mongoCollection.updateOne(
+                    Filters.and(MongoDaoHelper.createFilterById(entity.getId()),
+                            permissionsHelper.createWritePermissionFilterForSubjectKey(subjectKey)),
+                    updateHelper.getEntityUpdates(entity)
+            );
+        }
+        return entity;
+    }
+
     @Override
     public T saveBySubjectKey(T entity, String subjectKey) {
         Date now = new Date();

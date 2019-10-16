@@ -26,7 +26,12 @@ public class TmWorkspaceSearchableDao extends AbstractDomainSearchablDao<TmWorks
 
     @Override
     public List<TmWorkspace> getTmWorkspacesForSample(String subjectKey, Long sampleId) {
-        return tmWorkspaceDao.getTmWorkspacesForSample(subjectKey, sampleId);
+       return tmWorkspaceDao.getTmWorkspacesForSample(subjectKey, sampleId);
+    }
+
+    @Override
+    public List<TmWorkspace> getAllTmWorkspaces(String subjectKey) {
+        return tmWorkspaceDao.getAllTmWorkspaces(subjectKey);
     }
 
     @Override

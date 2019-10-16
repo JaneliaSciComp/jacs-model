@@ -24,7 +24,7 @@ import com.google.common.base.Joiner;
 public class TmNeuronMetadata extends AbstractDomainObject {
 
     private Reference workspaceRef;
-
+    private Boolean largeNeuron;
     private Boolean visible;
 
     @SearchAttribute(key = "color_s", label = "Color")
@@ -41,6 +41,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     transient private int syncLevel = 0;
 
     public TmNeuronMetadata() {
+        setLargeNeuron(false);
     }
 
     public TmNeuronMetadata(TmWorkspace workspace, String name) {
@@ -171,26 +172,18 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         this.tags = tags;
     }
 
-    /**
-     * This method offers access to the underlying neuron data. It is intentionally package protected
-     * so that it can only be accessed by the serializer.
-     */
     public TmNeuronData getNeuronData() {
         return neuronData;
     }
 
-    /**
-     * This method offers access to the underlying neuron data. It is intentionally package protected
-     * so that it can only be accessed by the deserializer.
-     */
-    void setNeuronData(TmNeuronData neuronData) {
+    public void setNeuronData(TmNeuronData neuronData) {
         this.neuronData = neuronData;
     }
 
     /**
      * This method can be used to complete NeuronData construction after deserialization.
      */
-    void initNeuronData() {
+    public void initNeuronData() {
         for (Long geoId : neuronData.getGeoAnnotationMap().keySet()) {
             TmGeoAnnotation geoAnnotation = neuronData.getGeoAnnotationMap().get(geoId);
             geoAnnotation.setNeuronId(getId());
@@ -387,5 +380,13 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     @JsonIgnore
     String getDebugString() {
         return neuronData == null ? "No neuron data" : neuronData.getDebugString();
+    }
+
+    public Boolean isLargeNeuron() {
+        return largeNeuron;
+    }
+
+    public void setLargeNeuron(Boolean largeNeuron) {
+        this.largeNeuron = largeNeuron;
     }
 }

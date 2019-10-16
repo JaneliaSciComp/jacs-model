@@ -9,7 +9,9 @@ import java.util.List;
  */
 public interface TmWorkspaceDao extends DomainObjectDao<TmWorkspace> {
     List<TmWorkspace> getTmWorkspacesForSample(String subjectKey, Long sampleId);
+    List<TmWorkspace> getAllTmWorkspaces(String subjectKey);
     TmWorkspace createTmWorkspace(String subjectKey, TmWorkspace tmWorkspace);
     TmWorkspace copyTmWorkspace(String subjectKey, TmWorkspace existingWorkspace, String newName, String assignOwner);
     TmWorkspace updateTmWorkspace(String subjectKey, TmWorkspace tmWorkspace);
+
 }
