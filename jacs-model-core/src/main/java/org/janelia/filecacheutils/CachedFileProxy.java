@@ -10,11 +10,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
 
 import com.google.common.base.Preconditions;
 
@@ -166,14 +164,19 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
         }
     }
 
-    private void persistToLocalCache(Path downloadedFilePath) {
+    /**
+     * atomically rename downloaded file.
+     * @param downloadedFilePath
+     */
+    private synchronized void persistToLocalCache(Path downloadedFilePath) {
         try {
+            LOG.debug("Move {} -> {}", downloadedFilePath, localFilePath);
             Path localDir = localFilePath.getParent();
             if (localDir != null && Files.notExists(localDir)) {
                 Files.createDirectories(localDir);
             }
             if (Files.notExists(localFilePath) && Files.exists(downloadedFilePath)) {
-                Files.move(downloadedFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                Files.move(downloadedFilePath, localFilePath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException e) {
             LOG.error("Error moving downloaded file {} to local cache file {}", downloadedFilePath, localFilePath, e);
@@ -262,8 +265,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
         long sizeInBytes = getCurrentSizeInBytes();
         try {
             if (Files.exists(localFilePath)) {
-                // This can happen if user deleted the cache directory manually
-                // and I don't think this should be an error
+                // For safety I do not delete any file that somehow is outside the cache storage directory
                 Path localCanonicalPath = localFilePath.toRealPath();
                 Path cacheDirCanonicalPath = localFileCacheStorage.getLocalFileCacheDir().toRealPath();
                 if (!localCanonicalPath.toString().startsWith(cacheDirCanonicalPath.toString())) {

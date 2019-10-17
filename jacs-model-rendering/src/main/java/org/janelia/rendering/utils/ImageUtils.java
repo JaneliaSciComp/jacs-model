@@ -164,7 +164,7 @@ public class ImageUtils {
                                     NullOpImage.OP_IO_BOUND),
                                     0, 0, -1, -1);
                             transferPixels(sliceImage, tiffROI.startX, tiffROI.startY, tiffROI.endX, tiffROI.endY, rgbBuffer,
-                                    sliceIndex * sliceSize, pixelDataHandlers);
+                                    sliceIndex * sliceSize * tiffROI.bytesPerPixel, pixelDataHandlers);
                         } catch (IOException e) {
                             LOG.error("Error reading slice {}", sliceIndex, e);
                             throw new IllegalStateException(e);

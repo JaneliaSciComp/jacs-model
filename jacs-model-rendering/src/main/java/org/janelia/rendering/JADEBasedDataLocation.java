@@ -13,6 +13,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
+import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.rendering.utils.ClientProxy;
 import org.janelia.rendering.utils.HttpClientProvider;
@@ -63,6 +64,32 @@ public class JADEBasedDataLocation implements DataLocation {
     @Override
     public String getBaseDataStoragePath() {
         return baseDataStoragePath;
+    }
+
+    @Override
+    public String getContentURIFromRelativePath(String relativePath) {
+        Preconditions.checkArgument(relativePath != null);
+        return getNormalizedURI(jadeBaseDataStorageURI)
+                .resolve("data_content/")
+                .resolve(getNormalizedURI(relativizePathToRoot(baseDataStoragePath)))
+                .resolve(relativePath.replace('\\', '/'))
+                .toString()
+                ;
+    }
+
+    @Override
+    public String getContentURIFromAbsolutePath(String absolutePath) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
+        return getNormalizedURI(jadeConnectionURI)
+                .resolve("agent_storage/storage_path/data_content/")
+                .resolve(relativizePathToRoot(absolutePath))
+                .toString()
+                ;
+    }
+
+    private String relativizePathToRoot(String p) {
+        // replace patterns like C://, file:///D:/, // with ""
+        return RegExUtils.removeFirst(StringUtils.replaceChars(p, '\\', '/'), "^((.+:)?/+)+");
     }
 
     @Override
@@ -122,11 +149,12 @@ public class JADEBasedDataLocation implements DataLocation {
                 endpoint = endpoint.queryParam(qe.getKey(), qe.getValue());
             }
             LOG.debug("Open stream from {}", endpoint.getUri());
-            Response response;
-            response = createRequestWithCredentials(endpoint, MediaType.APPLICATION_OCTET_STREAM).get();
+            Response response = createRequestWithCredentials(endpoint, MediaType.APPLICATION_OCTET_STREAM).get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
-                return Streamable.of(response.readEntity(InputStream.class), response.getLength());
+                InputStream is = response.readEntity(InputStream.class);
+                int length = response.getLength();
+                return Streamable.of(is, length);
             } else {
                 LOG.debug("Open stream from {} returned status {}", endpoint.getUri(), responseStatus);
                 return Streamable.empty();
@@ -182,9 +210,9 @@ public class JADEBasedDataLocation implements DataLocation {
     private boolean checkContent(WebTarget endpoint) {
         try {
             LOG.debug("Check content from {}", endpoint.getUri());
-            Response response;
-            response = createRequestWithCredentials(endpoint, null).head();
+            Response response = createRequestWithCredentials(endpoint, null).head();
             int responseStatus = response.getStatus();
+            response.close();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return true;
             } else {

@@ -6,12 +6,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -81,6 +83,7 @@ class SolrConnector {
             LOG.debug("SOLR is not configured");
             return 0;
         }
+        Stopwatch stopwatch = Stopwatch.createStarted();
         List<SolrInputDocument> solrDocsBatch = new ArrayList<>();
         AtomicInteger result = new AtomicInteger(0);
         AtomicInteger itemsToCommit = new AtomicInteger(0);
@@ -93,7 +96,7 @@ class SolrConnector {
                         int nDocs = solrDocsBatch.size();
                         if (nDocs >= batchSize) {
                             try {
-                                LOG.info("    Adding {} docs", solrDocsBatch.size());
+                                LOG.info("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get() + itemsToCommit.get(), stopwatch.elapsed(TimeUnit.SECONDS));
                                 solrServer.add(solrDocsBatch);
                                 nAdded = nDocs;
                             } catch (Exception e) {
@@ -127,7 +130,7 @@ class SolrConnector {
                 ;
         if (solrDocsBatch.size() > 0) {
             try {
-                LOG.info("    Adding {} docs", solrDocsBatch.size());
+                LOG.info("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get(), stopwatch.elapsed(TimeUnit.SECONDS));
                 solrServer.add(solrDocsBatch);
                 result.addAndGet(solrDocsBatch.size());
                 itemsToCommit.addAndGet(solrDocsBatch.size());

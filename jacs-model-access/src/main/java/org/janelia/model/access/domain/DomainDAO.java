@@ -42,6 +42,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.janelia.model.domain.DomainUtils.abbr;
 
@@ -1961,36 +1963,34 @@ public class DomainDAO {
         return domainObject;
     }
 
-    public <T extends DomainObject> Collection<? extends DomainObject> deleteProperty(String ownerKey, Class<T> clazz, String propName) {
+    public <T extends DomainObject> Stream<? extends DomainObject> deleteProperty(String ownerKey, Class<T> clazz, String propName) {
         String collectionName = DomainUtils.getCollectionName(clazz);
         log.debug("deleteProperty({}, collection={}, name={})", ownerKey, collectionName, propName);
 
-        List<DomainObject> updatedDomainObjects = new ArrayList<>();
         MongoCollection collection = getCollectionByName(collectionName);
         WriteResult wr = collection.update("{ownerKey:#}", ownerKey).with("{$unset: {" + propName + ":\"\"}}");
         if (wr.getN() != 1) {
             log.warn("Could not delete property " + collectionName + "." + propName);
+            return Stream.of();
         } else {
-            collection.find("{ownerKey:#}", ownerKey).as(DomainObject.class)
-                    .forEach(updatedDomainObjects::add);
+            return streamFindResult(collection, DomainObject.class, "{ownerKey:#}", ownerKey);
         }
-        return updatedDomainObjects;
     }
 
-    public Collection<? extends DomainObject> addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean forceChildUpdates) throws Exception {
+    public Stream<? extends DomainObject> addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean forceChildUpdates) throws Exception {
         return addPermissions(ownerKey, className, id, permissionTemplate, true, forceChildUpdates);
     }
 
-    public Collection<? extends DomainObject> addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean allowWriters, boolean forceChildUpdates) throws Exception {
+    public Stream<? extends DomainObject> addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean allowWriters, boolean forceChildUpdates) throws Exception {
         log.debug("addPermissions({}, className={}, id={}, permissionTemplate={}, forceChildUpdates={})", ownerKey, className, id, permissionTemplate, forceChildUpdates);
         return changePermissions(ownerKey, className, Arrays.asList(id), permissionTemplate.getReaders(), permissionTemplate.getWriters(), true, allowWriters, forceChildUpdates, false);
     }
 
-    public Collection<? extends DomainObject> setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception {
+    public Stream<? extends DomainObject> setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception {
         return setPermissions(ownerKey, className, id, grantee, read, write, true, forceChildUpdates);
     }
 
-    public Collection<? extends DomainObject> setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean allowWriters, boolean forceChildUpdates) throws Exception {
+    public Stream<? extends DomainObject> setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean allowWriters, boolean forceChildUpdates) throws Exception {
         DomainObject targetObject = getDomainObject(ownerKey, className, id);
 
         Set<String> readAdd = new HashSet<>();
@@ -2026,15 +2026,19 @@ public class DomainDAO {
             }
         }
 
-        Collection<DomainObject> updatedDomainObjects = new LinkedHashSet<>();
+        Stream<? extends DomainObject> addedPermissions;
         if (!readAdd.isEmpty() || !writeAdd.isEmpty()) {
-            updatedDomainObjects.addAll(changePermissions(ownerKey, className, Arrays.asList(id), readAdd, writeAdd, true, allowWriters, forceChildUpdates, true));
+            addedPermissions = changePermissions(ownerKey, className, Arrays.asList(id), readAdd, writeAdd, true, allowWriters, forceChildUpdates, true);
+        } else {
+            addedPermissions = Stream.of();
         }
+        Stream<? extends DomainObject> removedPermissions;
         if (!readRemove.isEmpty() || !writeRemove.isEmpty()) {
-            updatedDomainObjects.addAll(changePermissions(ownerKey, className, Arrays.asList(id), readRemove, writeRemove, false, allowWriters, forceChildUpdates, true));
+            removedPermissions = changePermissions(ownerKey, className, Arrays.asList(id), readRemove, writeRemove, false, allowWriters, forceChildUpdates, true);
+        } else {
+            removedPermissions = Stream.of();
         }
-
-        return updatedDomainObjects;
+        return Stream.concat(addedPermissions, removedPermissions);
     }
 
 
@@ -2052,181 +2056,45 @@ public class DomainDAO {
      * @param createSharedDataLinks Create links to the parent objects in the readers' Shared Data directory
      * @throws Exception
      */
-    private Collection<? extends DomainObject> changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers,
-                                                                 boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks) throws Exception {
-        return changePermissions(subjectKey, className, ids, readers, writers, grant, allowWriters, forceChildUpdates, createSharedDataLinks, new HashSet<>());
+    private Stream<? extends DomainObject> changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers,
+                                                             boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks) throws Exception {
+
+        int nUpdatedEntities = updatePermissions(subjectKey, className, ids, readers, writers, grant, allowWriters, forceChildUpdates, createSharedDataLinks, new HashSet<>());
+
+        log.info("Updated permissions for {} entities", nUpdatedEntities);
+
+        if (nUpdatedEntities == 0) {
+            return Stream.of();
+        } else {
+            return collectPermissionChanges(subjectKey, className, ids, readers, writers, allowWriters, new HashSet<>());
+        }
     }
 
-    private Collection<? extends DomainObject> changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers,
-                                                                 boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks, Set<Long> visited) throws Exception {
+    private int updatePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers,
+                                  boolean grant, boolean allowWriters, boolean forceChildUpdates, boolean createSharedDataLinks, Set<Reference> visited) throws Exception {
 
-        String logIds = DomainUtils.abbr(ids);
         String updateQueryClause = allowWriters ? "writers:{$in:#}" : "ownerKey:#";
         String collectionName = DomainUtils.getCollectionName(className);
         String op = grant ? "$addToSet" : "$pull";
         String iter = grant ? "$each" : "$in";
         String withClause = "{" + op + ":{readers:{" + iter + ":#},writers:{" + iter + ":#}}}";
+        String loggedIdsParam = DomainUtils.abbr(ids);
 
         Object updateQueryParam = allowWriters ? getWriterSet(subjectKey) : subjectKey;
-
-        Collection<DomainObject> updatedDomainObjects = new LinkedHashSet<>();
 
         Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(className);
         List<Reference> objectRefs = ids.stream().map(id -> Reference.createFor(clazz, id)).collect(Collectors.toList());
 
-        log.debug("{}({}, {}, ids={}, readers={}, writers={})", grant ? "grantPermissions" : "revokePermissions", subjectKey, collectionName, logIds, readers, writers);
+        log.debug("{}({}, {}, ids={}, readers={}, writers={})", grant ? "grantPermissions" : "revokePermissions", subjectKey, collectionName, loggedIdsParam, readers, writers);
 
-        if (readers.isEmpty() && writers.isEmpty()) return updatedDomainObjects;
+        if (readers.isEmpty() && writers.isEmpty()) {
+            return 0;
+        }
 
+        int nUpdates;
         MongoCollection collection = getCollectionByName(collectionName);
         WriteResult wr = collection.update("{_id:{$in:#}," + updateQueryClause + "}", ids, updateQueryParam).multi().with(withClause, readers, writers);
-        collection.find("{_id:{$in:#}," + updateQueryClause + "}", ids, updateQueryParam).as(DomainObject.class)
-                .forEach(updatedDomainObjects::add);
-
-        log.debug("Changing permissions on {} documents", wr.getN());
-
-        if (forceChildUpdates || (wr.getN() > 0)) {
-            // Update related objects
-            // TODO: this class shouldn't know about these domain object classes, it should delegate somewhere else.
-
-            if (Node.class.isAssignableFrom(clazz)) {
-                log.trace("Changing permissions on all members of the nodes: {}", logIds);
-                for (Long nodeId : ids) {
-                    if (visited.contains(nodeId)) {
-                        log.trace("Already visited folder with id=" + nodeId);
-                        continue;
-                    }
-                    visited.add(nodeId);
-
-                    Node node = (Node) collection.findOne("{_id:#," + updateQueryClause + "}", nodeId, updateQueryParam).as(clazz);
-                    if (node == null) {
-                        log.warn("Could not find node with id=" + nodeId);
-                    } else if (node.hasChildren()) {
-                        Multimap<String, Long> groupedIds = HashMultimap.create();
-                        for (Reference ref : node.getChildren()) {
-                            groupedIds.put(ref.getTargetClassName(), ref.getTargetId());
-                        }
-
-                        for (String refClassName : groupedIds.keySet()) {
-                            Collection<Long> refIds = groupedIds.get(refClassName);
-                            updatedDomainObjects.addAll(changePermissions(subjectKey, refClassName, refIds, readers, writers, grant, forceChildUpdates, allowWriters, false, visited));
-                        }
-                    }
-                }
-            }
-            if (ColorDepthSearch.class.isAssignableFrom(clazz)) {
-                for (ColorDepthSearch search : getDomainObjectsAs(objectRefs, ColorDepthSearch.class)) {
-                    log.trace("Changing permissions on all masks and results associated with {}", search);
-
-                    WriteResult wr1 = colorDepthMaskCollection.update("{_id:{$in:#}," + updateQueryClause + "}", search.getMasks(), updateQueryParam).multi().with(withClause, readers, writers);
-                    log.trace("Updated permissions on {} masks", wr1.getN());
-                    // add updated masks to the updates list
-                    colorDepthMaskCollection.find("{_id:{$in:#}," + updateQueryClause + "}", search.getMasks(), updateQueryParam).as(ColorDepthMask.class)
-                            .forEach(updatedDomainObjects::add);
-
-                    WriteResult wr2 = colorDepthResultCollection.update("{_id:{$in:#}," + updateQueryClause + "}", search.getResults(), updateQueryParam).multi().with(withClause, readers, writers);
-                    log.trace("Updated permissions on {} results", wr2.getN());
-                    // add updated color depth results to the updates list
-                    colorDepthResultCollection.find("{_id:{$in:#}," + updateQueryClause + "}", search.getResults(), updateQueryParam).as(ColorDepthResult.class)
-                            .forEach(updatedDomainObjects::add);
-                }
-            }
-            if (ColorDepthLibrary.class.isAssignableFrom(clazz)) {
-                for (ColorDepthLibrary library : getDomainObjectsAs(objectRefs, ColorDepthLibrary.class)) {
-                    log.trace("Changing permissions on all images associated with {}", library);
-
-                    WriteResult wr1 = colorDepthImageCollection.update("{libraries:#," + updateQueryClause + "}", library.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
-                    log.trace("Updated permissions on {} masks", wr1.getN());
-                    // add updated color depth images to the updates list
-                    colorDepthImageCollection.find("{libraries:#," + updateQueryClause + "}", library.getIdentifier(), updateQueryParam).as(ColorDepthImage.class)
-                            .forEach(updatedDomainObjects::add);
-                }
-            } else if ("sample".equals(collectionName)) {
-                log.trace("Changing permissions on all fragments and lsms associated with samples: {}", logIds);
-
-                List<String> sampleRefs = DomainUtils.getRefStrings(objectRefs);
-
-                WriteResult wr1 = fragmentCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
-                log.trace("Updated permissions on {} fragments", wr1.getN());
-                fragmentCollection.find("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).as(NeuronFragment.class)
-                        .forEach(updatedDomainObjects::add);
-
-                WriteResult wr2 = imageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
-                log.trace("Updated permissions on {} lsms", wr2.getN());
-                imageCollection.find("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).as(Image.class)
-                        .forEach(updatedDomainObjects::add);
-            } else if ("fragment".equals(collectionName)) {
-                Set<Long> sampleIds = new HashSet<>();
-                for (NeuronFragment fragment : getDomainObjectsAs(subjectKey, objectRefs, NeuronFragment.class)) {
-                    sampleIds.add(fragment.getSample().getTargetId());
-                }
-                log.trace("Changing permissions on {} samples associated with fragments: {}", sampleIds.size(), logIds);
-                updatedDomainObjects.addAll(changePermissions(subjectKey, Sample.class.getName(), sampleIds, readers, writers, grant, allowWriters, forceChildUpdates, false));
-            } else if ("dataSet".equals(collectionName)) {
-                log.trace("Changing permissions on all objects in data sets: {}", logIds);
-                for (Long id : ids) {
-                    // Retrieve the data set in order to find its identifier
-                    DataSet dataSet = collection.findOne("{_id:#," + updateQueryClause + "}", id, updateQueryParam).as(DataSet.class);
-                    if (dataSet == null) {
-                        throw new IllegalArgumentException("Could not find an writeable data set with id=" + id);
-                    }
-                    // Get all sample ids for a given data set
-                    List<String> sampleRefs = new ArrayList<>();
-                    for (Sample sample : sampleCollection.find("{dataSet:#}", dataSet.getIdentifier()).projection("{class:1,_id:1}").as(Sample.class)) {
-                        sampleRefs.add("Sample#" + sample.getId());
-                    }
-                    // This could just call changePermissions recursively, but batching is far more efficient.
-                    WriteResult wr1 = sampleCollection.update("{dataSet:#," + updateQueryClause + "}", dataSet.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
-                    log.debug("Changed permissions on {} samples", wr1.getN());
-                    sampleCollection.find("{dataSet:#," + updateQueryClause + "}", dataSet.getIdentifier(), updateQueryParam).as(Sample.class)
-                            .forEach(updatedDomainObjects::add);
-
-                    WriteResult wr2 = fragmentCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
-                    log.debug("Updated permissions on {} fragments", wr2.getN());
-                    fragmentCollection.find("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).as(NeuronFragment.class)
-                            .forEach(updatedDomainObjects::add);
-
-                    WriteResult wr3 = imageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
-                    log.debug("Updated permissions on {} lsms", wr3.getN());
-                    imageCollection.find("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).as(Image.class)
-                            .forEach(updatedDomainObjects::add);
-
-                    // Recurse to change corresponding color depth library, if any
-                    ColorDepthLibrary colorDepthLibrary = getColorDepthLibraryByIdentifier(dataSet.getOwnerKey(), dataSet.getIdentifier());
-                    if (colorDepthLibrary != null) {
-                        log.info("Sharing associated color depth library: {}", colorDepthLibrary);
-                        updatedDomainObjects.addAll(
-                                changePermissions(subjectKey,
-                                        ColorDepthLibrary.class.getName(), Collections.singletonList(colorDepthLibrary.getId()),
-                                        readers, writers, grant, forceChildUpdates, allowWriters, false));
-                    }
-                }
-            } else if ("tmWorkspace".equals(collectionName)) {
-                log.trace("Changing permissions on the TmSamples associated with the TmWorkspaces: {}", logIds);
-
-                List<Long> sampleIds = new ArrayList<>();
-                for (TmWorkspace workspace : tmWorkspaceCollection.find("{_id:{$in:#}}", ids).projection("{class:1,sampleRef:1}").as(TmWorkspace.class)) {
-                    sampleIds.add(workspace.getSampleId());
-                }
-
-                WriteResult wr1 = tmSampleCollection.update("{_id:{$in:#}," + updateQueryClause + "}", sampleIds, updateQueryParam).multi().with(withClause, readers, writers);
-                log.trace("Updated permissions on {} TmSamples", wr1.getN());
-                tmSampleCollection.find("{_id:{$in:#}," + updateQueryClause + "}", sampleIds, updateQueryParam).as(TmSample.class)
-                        .forEach(updatedDomainObjects::add);
-
-                List<String> workspaceRefs = DomainUtils.getRefStrings(objectRefs);
-                log.trace("Changing permissions on the TmNeurons associated with the TmWorkspaces: {}", workspaceRefs);
-                WriteResult wr2 = tmNeuronCollection.update("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
-                log.trace("Updated permissions on {} TmNeurons", wr2.getN());
-                tmNeuronCollection.find("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).as(TmNeuronMetadata.class)
-                        .forEach(updatedDomainObjects::add);
-
-                WriteResult wr3 = tmReviewTaskCollection.update("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
-                log.trace("Updated permissions on {} TmReviewTask", wr3.getN());
-                tmReviewTaskCollection.find("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).as(TmReviewTask.class)
-                        .forEach(updatedDomainObjects::add);
-            }
-        }
+        nUpdates = wr.getN();
 
         if (createSharedDataLinks) {
             // Ensure shared items are in the grantee's Shared Data folder
@@ -2254,7 +2122,278 @@ public class DomainDAO {
                 }
             }
         }
-        return updatedDomainObjects;
+
+        log.debug("Changing permissions on {} documents", nUpdates);
+
+        if (forceChildUpdates || nUpdates > 0) {
+            // Update related objects
+            // TODO: this class shouldn't know about these domain object classes, it should delegate somewhere else.
+
+            if (Node.class.isAssignableFrom(clazz)) {
+                log.trace("Changing permissions on all members of the nodes: {}", loggedIdsParam);
+                for (Long nodeId : ids) {
+                    Reference nodeReference = Reference.createFor(clazz, nodeId);
+                    if (visited.contains(nodeReference)) {
+                        log.trace("Already visited folder {}", nodeReference);
+                        continue;
+                    }
+                    visited.add(nodeReference);
+
+                    Node node = (Node) collection.findOne("{_id:#," + updateQueryClause + "}", nodeId, updateQueryParam).as(clazz);
+                    if (node == null) {
+                        log.warn("Could not find node with id=" + nodeId);
+                    } else if (node.hasChildren()) {
+                        Multimap<String, Long> groupedIds = HashMultimap.create();
+                        for (Reference ref : node.getChildren()) {
+                            groupedIds.put(ref.getTargetClassName(), ref.getTargetId());
+                        }
+
+                        for (String refClassName : groupedIds.keySet()) {
+                            Collection<Long> refIds = groupedIds.get(refClassName);
+                            nUpdates += updatePermissions(subjectKey, refClassName, refIds, readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
+                        }
+                    }
+                }
+            }
+            if (ColorDepthSearch.class.isAssignableFrom(clazz)) {
+                for (ColorDepthSearch search : getDomainObjectsAs(objectRefs, ColorDepthSearch.class)) {
+                    log.trace("Changing permissions on all masks and results associated with {}", search);
+
+                    WriteResult wr1 = colorDepthMaskCollection.update("{_id:{$in:#}," + updateQueryClause + "}", search.getMasks(), updateQueryParam).multi().with(withClause, readers, writers);
+                    log.trace("Updated permissions on {} masks", wr1.getN());
+                    nUpdates += wr1.getN();
+
+                    WriteResult wr2 = colorDepthResultCollection.update("{_id:{$in:#}," + updateQueryClause + "}", search.getResults(), updateQueryParam).multi().with(withClause, readers, writers);
+                    log.trace("Updated permissions on {} results", wr2.getN());
+                    nUpdates += wr2.getN();
+                }
+            } else if (ColorDepthLibrary.class.isAssignableFrom(clazz)) {
+                for (ColorDepthLibrary library : getDomainObjectsAs(objectRefs, ColorDepthLibrary.class)) {
+                    log.trace("Changing permissions on all images associated with {}", library);
+
+                    WriteResult wr1 = colorDepthImageCollection.update("{libraries:#," + updateQueryClause + "}", library.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
+                    log.trace("Updated permissions on {} masks", wr1.getN());
+                    nUpdates += wr1.getN();
+                }
+            } else if ("sample".equals(collectionName)) {
+                log.trace("Changing permissions on all fragments and lsms associated with samples: {}", loggedIdsParam);
+
+                List<String> sampleRefs = DomainUtils.getRefStrings(objectRefs);
+
+                WriteResult wr1 = fragmentCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
+                log.trace("Updated permissions on {} fragments", wr1.getN());
+                nUpdates += wr1.getN();
+
+                WriteResult wr2 = imageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
+                log.trace("Updated permissions on {} lsms", wr2.getN());
+                nUpdates += wr1.getN();
+            } else if ("fragment".equals(collectionName)) {
+                Set<Long> sampleIds = new HashSet<>();
+                for (NeuronFragment fragment : getDomainObjectsAs(subjectKey, objectRefs, NeuronFragment.class)) {
+                    sampleIds.add(fragment.getSample().getTargetId());
+                }
+                log.trace("Changing permissions on {} samples associated with fragments: {}", sampleIds.size(), loggedIdsParam);
+                nUpdates += updatePermissions(subjectKey, Sample.class.getName(), sampleIds, readers, writers, grant, allowWriters, forceChildUpdates, false, visited);
+            } else if ("dataSet".equals(collectionName)) {
+                log.trace("Changing permissions on all objects in data sets: {}", loggedIdsParam);
+                for (Long id : ids) {
+                    // Retrieve the data set in order to find its identifier
+                    DataSet dataSet = collection.findOne("{_id:#," + updateQueryClause + "}", id, updateQueryParam).as(DataSet.class);
+                    if (dataSet == null) {
+                        throw new IllegalArgumentException("Could not find an writeable data set with id=" + id);
+                    }
+                    // Get all sample ids for a given data set
+                    List<String> sampleRefs = new ArrayList<>();
+                    for (Sample sample : sampleCollection.find("{dataSet:#}", dataSet.getIdentifier()).projection("{class:1,_id:1}").as(Sample.class)) {
+                        sampleRefs.add("Sample#" + sample.getId());
+                    }
+                    // This could just call changePermissions recursively, but batching is far more efficient.
+                    WriteResult wr1 = sampleCollection.update("{dataSet:#," + updateQueryClause + "}", dataSet.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
+                    log.debug("Changed permissions on {} samples", wr1.getN());
+                    nUpdates += wr1.getN();
+
+                    WriteResult wr2 = fragmentCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
+                    log.debug("Updated permissions on {} fragments", wr2.getN());
+                    nUpdates += wr2.getN();
+
+                    WriteResult wr3 = imageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
+                    log.debug("Updated permissions on {} lsms", wr3.getN());
+                    nUpdates += wr3.getN();
+
+                    // Recurse to change corresponding color depth library, if any
+                    ColorDepthLibrary colorDepthLibrary = getColorDepthLibraryByIdentifier(dataSet.getOwnerKey(), dataSet.getIdentifier());
+                    if (colorDepthLibrary != null) {
+                        log.info("Sharing associated color depth library: {}", colorDepthLibrary);
+                        nUpdates += updatePermissions(subjectKey,
+                                ColorDepthLibrary.class.getName(), Collections.singletonList(colorDepthLibrary.getId()),
+                                readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
+                    }
+                }
+            } else if ("tmWorkspace".equals(collectionName)) {
+                log.trace("Changing permissions on the TmSamples associated with the TmWorkspaces: {}", loggedIdsParam);
+
+                List<Long> sampleIds = new ArrayList<>();
+                for (TmWorkspace workspace : tmWorkspaceCollection.find("{_id:{$in:#}}", ids).projection("{class:1,sampleRef:1}").as(TmWorkspace.class)) {
+                    sampleIds.add(workspace.getSampleId());
+                }
+
+                WriteResult wr1 = tmSampleCollection.update("{_id:{$in:#}," + updateQueryClause + "}", sampleIds, updateQueryParam).multi().with(withClause, readers, writers);
+                log.trace("Updated permissions on {} TmSamples", wr1.getN());
+                nUpdates += wr1.getN();
+
+                List<String> workspaceRefs = DomainUtils.getRefStrings(objectRefs);
+                log.trace("Changing permissions on the TmNeurons associated with the TmWorkspaces: {}", workspaceRefs);
+                WriteResult wr2 = tmNeuronCollection.update("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
+                log.trace("Updated permissions on {} TmNeurons", wr2.getN());
+                nUpdates += wr1.getN();
+
+                WriteResult wr3 = tmReviewTaskCollection.update("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
+                log.trace("Updated permissions on {} TmReviewTask", wr3.getN());
+                nUpdates += wr1.getN();
+            }
+        }
+
+        return nUpdates;
+    }
+
+
+    private Stream<? extends DomainObject> collectPermissionChanges(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers, boolean allowWriters, Set<Reference> visited) {
+        String collectionName = DomainUtils.getCollectionName(className);
+        String queryClause = allowWriters ? "writers:{$in:#}" : "ownerKey:#";
+        Object queryParam = allowWriters ? getWriterSet(subjectKey) : subjectKey;
+
+        MongoCollection collection = getCollectionByName(collectionName);
+
+        Stream<? extends DomainObject> updatedDomainObjectsStream = streamFindResult(collection, DomainObject.class,"{_id:{$in:#}," + queryClause + "}", ids, queryParam);
+
+        Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(className);
+        List<Reference> objectRefs = ids.stream().map(id -> Reference.createFor(clazz, id)).collect(Collectors.toList());
+
+        if (Node.class.isAssignableFrom(clazz)) {
+            for (Long nodeId : ids) {
+                Reference nodeReference = Reference.createFor(clazz, nodeId);
+                if (visited.contains(nodeReference)) {
+                    log.trace("Already visited folder {}", nodeReference);
+                    continue;
+                }
+                visited.add(nodeReference);
+                Node node = (Node) collection.findOne("{_id:#," + queryClause + "}", nodeId, queryParam).as(clazz);
+                if (node == null) {
+                    log.warn("Could not find node with id=" + nodeId);
+                } else if (node.hasChildren()) {
+                    Multimap<String, Long> groupedIds = HashMultimap.create();
+                    for (Reference ref : node.getChildren()) {
+                        groupedIds.put(ref.getTargetClassName(), ref.getTargetId());
+                    }
+
+                    for (String refClassName : groupedIds.keySet()) {
+                        Collection<Long> refIds = groupedIds.get(refClassName);
+                        updatedDomainObjectsStream = Stream.concat(
+                                updatedDomainObjectsStream,
+                                collectPermissionChanges(subjectKey, refClassName, refIds, readers, writers, allowWriters, visited)
+                        );
+                    }
+                }
+            }
+        }
+        if (ColorDepthSearch.class.isAssignableFrom(clazz)) {
+            for (ColorDepthSearch search : getDomainObjectsAs(objectRefs, ColorDepthSearch.class)) {
+                updatedDomainObjectsStream = Stream.concat(
+                        updatedDomainObjectsStream,
+                        streamFindResult(colorDepthMaskCollection, ColorDepthMask.class, "{_id:{$in:#}," + queryClause + "}", search.getMasks(), queryParam)
+                );
+                updatedDomainObjectsStream = Stream.concat(
+                        updatedDomainObjectsStream,
+                        streamFindResult(colorDepthResultCollection, ColorDepthResult.class, "{_id:{$in:#}," + queryClause + "}", search.getResults(), queryParam)
+                );
+            }
+        } else if (ColorDepthLibrary.class.isAssignableFrom(clazz)) {
+            for (ColorDepthLibrary library : getDomainObjectsAs(objectRefs, ColorDepthLibrary.class)) {
+                // add updated color depth images to the updates list
+                updatedDomainObjectsStream = Stream.concat(
+                        updatedDomainObjectsStream,
+                        streamFindResult(colorDepthImageCollection, ColorDepthImage.class, "{libraries:#," + queryClause + "}", library.getIdentifier(), queryParam)
+                );
+            }
+        } else if ("sample".equals(collectionName)) {
+            List<String> sampleRefs = DomainUtils.getRefStrings(objectRefs);
+
+            updatedDomainObjectsStream = Stream.concat(
+                    updatedDomainObjectsStream,
+                    streamFindResult(fragmentCollection, NeuronFragment.class, "{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam)
+            );
+            updatedDomainObjectsStream = Stream.concat(
+                    updatedDomainObjectsStream,
+                    streamFindResult(imageCollection, Image.class, "{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam)
+            );
+        } else if ("fragment".equals(collectionName)) {
+            Set<Long> sampleIds = new HashSet<>();
+            for (NeuronFragment fragment : getDomainObjectsAs(subjectKey, objectRefs, NeuronFragment.class)) {
+                sampleIds.add(fragment.getSample().getTargetId());
+            }
+            updatedDomainObjectsStream = Stream.concat(
+                    updatedDomainObjectsStream,
+                    collectPermissionChanges(subjectKey, Sample.class.getName(), sampleIds, readers, writers, allowWriters, visited)
+            );
+        } else if ("dataSet".equals(collectionName)) {
+            List<DataSet> dataSets = streamFindResult(collection, DataSet.class, "{_id:{$in:#}," + queryClause + "}", ids, queryParam).collect(Collectors.toList());
+            List<Long> sampleIds = dataSets.stream()
+                    .flatMap(ds -> streamFindResult(sampleCollection.find("{dataSet:#}", ds.getIdentifier()).projection("{class:1,_id:1}"), Sample.class))
+                    .map(s -> s.getId())
+                    .collect(Collectors.toList())
+                    ;
+            List<String> sampleRefs = sampleIds.stream().map(id -> "Sample#" + id).collect(Collectors.toList());
+
+            updatedDomainObjectsStream = Stream.of(
+                    updatedDomainObjectsStream,
+                    streamFindResult(sampleCollection.find("{_id:{$in:#}," + queryClause + "}", sampleIds, queryParam), Sample.class),
+                    streamFindResult(fragmentCollection.find("{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam), NeuronFragment.class),
+                    streamFindResult(imageCollection.find("{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam), Image.class),
+                    dataSets.stream()
+                            .map(ds -> getColorDepthLibraryByIdentifier(ds.getOwnerKey(), ds.getIdentifier()))
+                            .filter(cdl -> cdl != null)
+                            .flatMap(cdl -> collectPermissionChanges(subjectKey, ColorDepthLibrary.class.getName(), Collections.singletonList(cdl.getId()), readers, writers, allowWriters, visited)))
+                    .flatMap(s -> s)
+                    ;
+        } else if ("tmWorkspace".equals(collectionName)) {
+            List<Long> sampleIds = new ArrayList<>();
+            for (TmWorkspace workspace : tmWorkspaceCollection.find("{_id:{$in:#}}", ids).projection("{class:1,sampleRef:1}").as(TmWorkspace.class)) {
+                sampleIds.add(workspace.getSampleId());
+            }
+
+            updatedDomainObjectsStream = Stream.concat(
+                    updatedDomainObjectsStream,
+                    streamFindResult(tmSampleCollection, TmSample.class, "{_id:{$in:#}," + queryClause + "}", sampleIds, queryParam)
+            );
+
+            List<String> workspaceRefs = DomainUtils.getRefStrings(objectRefs);
+
+            updatedDomainObjectsStream = Stream.concat(
+                    updatedDomainObjectsStream,
+                    streamFindResult(tmNeuronCollection, TmNeuronMetadata.class, "{workspaceRef:{$in:#}," + queryClause + "}", workspaceRefs, queryParam)
+            );
+
+            updatedDomainObjectsStream = Stream.concat(
+                    updatedDomainObjectsStream,
+                    streamFindResult(tmReviewTaskCollection, TmReviewTask.class, "{workspaceRef:{$in:#}," + queryClause + "}", workspaceRefs, queryParam)
+            );
+        }
+
+        return updatedDomainObjectsStream;
+    }
+
+    private <T> Stream<T> streamFindResult(MongoCollection mongoCollection, Class<T> resultType, String query, Object... parameters) {
+        return streamFindResult(mongoCollection.find(query, parameters), resultType);
+    }
+
+    private <T> Stream<T> streamFindResult(Find findResult, Class<T> resultType) {
+        return StreamSupport.stream(
+                findResult
+                        .with((DBCursor cursor) -> cursor.noCursorTimeout(true))
+                        .as(resultType)
+                        .spliterator(),
+                false
+        );
     }
 
     private Filter createDataSetFilter(String subjectKey, DataSet dataSet, String filterName) throws Exception {

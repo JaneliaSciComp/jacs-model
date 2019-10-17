@@ -2,7 +2,6 @@ package org.janelia.model.access.domain.search;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,17 +33,17 @@ import org.janelia.model.domain.ontology.SimpleDomainAnnotation;
 import org.janelia.model.domain.searchable.SearchableDocType;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
-import org.janelia.model.domain.workspace.AllNodeAncestorsGetter;
 import org.janelia.model.domain.workspace.NodeAncestorsGetter;
 import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.util.ReflectionHelper;
-import org.reflections.ReflectionUtils;
+import org.janelia.model.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class DomainObject2SolrDoc {
 
     private static final Logger LOG = LoggerFactory.getLogger(DomainObject2SolrDoc.class);
+    private static final String JANELIA_MODEL_PACKAGE = "org.janelia.model.domain";
 
     private final NodeAncestorsGetter nodeAncestorsGetter;
     private final DomainAnnotationGetter nodeAnnotationGetter;
@@ -55,8 +54,17 @@ class DomainObject2SolrDoc {
         Multimap<String, String> fulltextIndexedFields = HashMultimap.create();
 
         void addFullTextIndexedField(String fieldName, String fieldValue) {
-            if (StringUtils.isNotBlank(fieldValue))
+            if (!ignore(fieldName, fieldValue)) {
                 fulltextIndexedFields.put(fieldName, fieldValue);
+            }
+        }
+
+        private boolean ignore(String fieldName, String fieldValue) {
+            return StringUtils.isBlank(fieldValue) ||
+                    // Don't index Neuron Fragment files
+                    "files".equals(fieldName) && (fieldValue.startsWith("neuronSeparatorPipeline")|| fieldValue.contains("maskChan")) ||
+                    // Don't index Neuron Fragment names
+                    "name".equals(fieldName) && fieldValue.startsWith("Neuron Fragment ");
         }
 
         void addReferenceAnnotations(Reference ref, Set<SimpleDomainAnnotation> refAnnotations) {
@@ -103,36 +111,36 @@ class DomainObject2SolrDoc {
             }
         };
 
-        Set<Field> searchableFields = ReflectionUtils.getAllFields(domainObject.getClass(), ReflectionUtils.withAnnotation(SearchAttribute.class));
-        for (Field field : searchableFields) {
-            try {
-                SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
-                Object value = ReflectionHelper.getFieldValue(domainObject, field.getName());
-                searchFieldHandler.accept(searchAttributeAnnot, value);
-            } catch (NoSuchFieldException e) {
-                throw new IllegalArgumentException("No such field " + field.getName() + " on object " + domainObject, e);
-            }
-        }
+        ReflectionUtils.getAllClassFields(domainObject.getClass()).stream()
+                .filter(org.reflections.ReflectionUtils.withAnnotation(SearchAttribute.class))
+                .forEach(field -> {
+                    try {
+                        SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
+                        Object value = ReflectionHelper.getFieldValue(domainObject, field.getName());
+                        searchFieldHandler.accept(searchAttributeAnnot, value);
+                    } catch (NoSuchFieldException e) {
+                        throw new IllegalArgumentException("No such field " + field.getName() + " on object " + domainObject, e);
+                    }
+                });
 
-        Set<Method> searchableProperties = ReflectionUtils.getAllMethods(domainObject.getClass(), ReflectionUtils.withAnnotation(SearchAttribute.class));
-        for (Method propertyMethod : searchableProperties) {
-            try {
-                SearchAttribute searchAttributeAnnot = propertyMethod.getAnnotation(SearchAttribute.class);
-                Object value = propertyMethod.invoke(domainObject);
-                searchFieldHandler.accept(searchAttributeAnnot, value);
-            } catch (InvocationTargetException | IllegalAccessException e) {
-                throw new IllegalArgumentException("Problem executing " + propertyMethod.getName() + " on object " + domainObject, e);
-            }
-        }
+        ReflectionUtils.getAllClassMethods(domainObject.getClass()).stream()
+                .filter(org.reflections.ReflectionUtils.withAnnotation(SearchAttribute.class))
+                .forEach(propertyMethod -> {
+                    try {
+                        SearchAttribute searchAttributeAnnot = propertyMethod.getAnnotation(SearchAttribute.class);
+                        Object value = propertyMethod.invoke(domainObject);
+                        searchFieldHandler.accept(searchAttributeAnnot, value);
+                    } catch (InvocationTargetException | IllegalAccessException e) {
+                        throw new IllegalArgumentException("Problem executing " + propertyMethod.getName() + " on object " + domainObject, e);
+                    }
+                });
 
         attrs.forEach((k, v) -> {
-            if (v != null) {
-                solrDoc.addField(k, v, 1.0f);
-            }
+            solrDoc.addField(k, v, 1.0f);
         });
 
         FullTextIndexableValues fullTextIndexableValues = getFullTextIndexedValues(domainObject);
-        solrDoc.setField("fulltext_mt", ImmutableSet.copyOf(fullTextIndexableValues.fulltextIndexedFields.values()), 0.8f);
+        solrDoc.setField("fulltext_mt", new HashSet<>(fullTextIndexableValues.fulltextIndexedFields.values()), 0.8f);
 
         fullTextIndexableValues.refAnnotationsMap.values().stream()
                 .flatMap(refAnnotations -> refAnnotations.stream())
@@ -156,17 +164,26 @@ class DomainObject2SolrDoc {
         return fullTextIndexableValues;
     }
 
-    private void traverseDomainObjectFieldsForFullTextIndexedValues(DomainObject rootObject, DomainObject currentObject, boolean ignoreSearchableFields, Set<Reference> visited, FullTextIndexableValues fullTextIndexableValue) {
-        Reference currentObjectReference = Reference.createFor(currentObject);
-        visited.add(currentObjectReference);
-        fullTextIndexableValue.addReferenceAnnotations(currentObjectReference, nodeAnnotationGetter.getAnnotations(currentObjectReference));
-        @SuppressWarnings("unchecked")
-        Set<Field> currentObjectFields = ReflectionUtils.getAllFields(currentObject.getClass());
+    private void traverseDomainObjectFieldsForFullTextIndexedValues(DomainObject rootObject, Object currentObject, boolean ignoreSearchableFields, Set<Reference> visited, FullTextIndexableValues fullTextIndexableValue) {
+        if (currentObject == null) {
+            return;
+        }
+
+        if (currentObject instanceof DomainObject) {
+            DomainObject currentDomainObject = (DomainObject) currentObject;
+            Reference currentObjectReference = Reference.createFor(currentDomainObject);
+            if (visited.contains(currentObjectReference)) {
+                return;
+            }
+            visited.add(currentObjectReference);
+            fullTextIndexableValue.addReferenceAnnotations(currentObjectReference, nodeAnnotationGetter.getAnnotations(currentObjectReference));
+        }
+
+        Set<Field> currentObjectFields = ReflectionUtils.getAllClassFields(currentObject.getClass());
         currentObjectFields.stream()
                 .filter(f -> !ignoreSearchableFields || f.getAnnotation(SearchAttribute.class) == null)
                 .forEach(field -> traverseObjectFieldForFullTextIndexedValues(rootObject, currentObject, field, visited, fullTextIndexableValue));
     }
-
 
     private void traverseObjectFieldForFullTextIndexedValues(DomainObject rootObject, Object currentObject, Field field, Set<Reference> visited, FullTextIndexableValues fullTextIndexableValue) {
         if (currentObject == null) {
@@ -206,16 +223,14 @@ class DomainObject2SolrDoc {
             DomainObject refObj = objectGetter.getDomainObjectByReference(ref);
             if (refObj == null) {
                 LOG.warn("No domain object found for field {} of {} with value {}", field, currentObject, ref);
-            } else {
-                traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue);
             }
+            traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue);
         } else if (fieldValue instanceof ReverseReference) {
             ReverseReference reverseRef = (ReverseReference) fieldValue;
             List<? extends DomainObject> refObjs = objectGetter.getDomainObjectsReferencedBy(reverseRef);
             refObjs.forEach(refObj -> traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue));
-        } else if (DomainObject.class.isAssignableFrom(fieldValueClass)) {
-            DomainObject fieldValueAsDomainObject = (DomainObject) fieldValue;
-            traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, fieldValueAsDomainObject, false, visited, fullTextIndexableValue);
+        } else if (fieldValueClass.getName().startsWith(JANELIA_MODEL_PACKAGE)) {
+            traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, fieldValue, false, visited, fullTextIndexableValue);
         }
         // Ignore everything else
     }
@@ -258,25 +273,26 @@ class DomainObject2SolrDoc {
                                                                  FullTextIndexableValues fullTextIndexableValue) {
         currentCollection.stream()
                 .filter(Objects::nonNull)
+                .filter(member -> !(member instanceof Number))
                 .forEach(member -> {
                     Class<?> memberClass = member.getClass();
                     if (member instanceof String) {
                         fullTextIndexableValue.addFullTextIndexedField(field.getName(), (String) member);
-                    } else if (member instanceof Reference) {
-                        Reference ref = (Reference) member;
-                        // Don't fetch objects which we've already visited
-                        if (visited.contains(ref)) {
-                            return;
-                        }
-                        DomainObject refObj = objectGetter.getDomainObjectByReference(ref);
-                        if (refObj == null) {
-                            LOG.warn("No domain object found for collection member of field {} value {}", field, ref);
-                        } else {
+                    } else if (memberClass.getName().startsWith(JANELIA_MODEL_PACKAGE)) {
+                        if (member instanceof Reference) {
+                            Reference ref = (Reference) member;
+                            // Don't fetch objects which we've already visited
+                            if (visited.contains(ref)) {
+                                return;
+                            }
+                            DomainObject refObj = objectGetter.getDomainObjectByReference(ref);
+                            if (refObj == null) {
+                                LOG.warn("No domain object found for collection member of field {} value {}", field, ref);
+                            }
                             traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue);
+                        } else {
+                            traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, member, false, visited, fullTextIndexableValue);
                         }
-                    } else if (DomainObject.class.isAssignableFrom(memberClass)) {
-                        DomainObject memberAsDomainObject = (DomainObject) member;
-                        traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, memberAsDomainObject, false, visited, fullTextIndexableValue);
                     }
                 });
     }

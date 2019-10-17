@@ -7,7 +7,7 @@ allprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'idea'
     group = 'org.janelia.jacs-model'
-    version = '2.11.2'
+    version = '2.15.0'
 }
 
 subprojects {
@@ -141,4 +141,8 @@ downloadLicenses {
 
 task updateWrapper(type: Wrapper) {
     gradleVersion = "5.5.1"
+}
+
+task version {
+    println project.version
 }

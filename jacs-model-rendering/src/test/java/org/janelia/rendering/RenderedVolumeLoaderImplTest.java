@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -44,7 +45,7 @@ public class RenderedVolumeLoaderImplTest {
     public void setUp() throws IOException {
         renderedVolumeLoader = new RenderedVolumeLoaderImpl();
         testDirectory = Files.createTempDirectory(testSuiteDirectory, null);
-        testVolumeLocation = new FileBasedRenderedVolumeLocation(testDirectory);
+        testVolumeLocation = new FileBasedRenderedVolumeLocation(testDirectory, Function.identity());
     }
 
     @Test

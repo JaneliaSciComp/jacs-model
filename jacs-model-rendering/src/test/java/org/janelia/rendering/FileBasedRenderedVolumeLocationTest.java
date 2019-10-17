@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 import org.janelia.testutils.TestUtils;
 import org.junit.AfterClass;
@@ -37,7 +38,7 @@ public class FileBasedRenderedVolumeLocationTest {
     @Before
     public void setUp() throws IOException {
         testDirectory = Files.createTempDirectory(testSuiteDirectory, null);
-        testVolumeLocation = new FileBasedRenderedVolumeLocation(testDirectory);
+        testVolumeLocation = new FileBasedRenderedVolumeLocation(testDirectory, Function.identity());
     }
 
     @Test

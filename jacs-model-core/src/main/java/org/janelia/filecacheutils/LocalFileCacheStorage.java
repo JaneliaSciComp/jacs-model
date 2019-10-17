@@ -10,16 +10,18 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.NavigableMap;
-import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.AtomicDouble;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -65,6 +67,11 @@ public class LocalFileCacheStorage {
                     .append(fileName)
                     .toHashCode();
         }
+
+        long touch() {
+            this.lastUpdatedTimestamp = System.currentTimeMillis();
+            return this.lastUpdatedTimestamp;
+        }
     }
 
     static Function<Long, Long> BYTES_TO_KB = (b) -> {
@@ -80,7 +87,8 @@ public class LocalFileCacheStorage {
     };
 
     private final Path localFileCacheDir;
-    private final NavigableMap<CachedFileEntry, CachedFileEntry> cachedFiles;
+    private final Map<String, CachedFileEntry> cachedFiles;
+    private final Comparator<Map.Entry<String, CachedFileEntry>> entryComparatorByUpdatedTimestamp;
     private long capacityInKB;
     private long maxCachedFileSizeInKB;
     private final AtomicLong currentSizeInKB; // cache size in KB
@@ -98,28 +106,8 @@ public class LocalFileCacheStorage {
         this.maxCachedFileSizeInKB = maxCachedFileSizeInKB;
         this.currentSizeInKB = new AtomicLong(0);
         this.currentSize = new AtomicInteger(0);
-        this.cachedFiles = new ConcurrentSkipListMap<>((e1, e2) -> {
-            long t1 = e1.lastUpdatedTimestamp;
-            long t2 = e2.lastUpdatedTimestamp;
-            // we want the key to be actually the name only but
-            // since we want to use some sort of LRU for eviction we have to use the timestamp as well
-            // to guarantee that the same name always give you the same entry if the names are equal
-            // the result of the comparison shows equality
-            int nameComparison = e1.fileName.compareTo(e2.fileName);
-            if (nameComparison == 0) {
-                return 0;
-            } else {
-                // then if the names are different compare the timestamps
-                // older file before newer one
-                if (t1 < t2) {
-                    return -1;
-                } else if (t1 > t2) {
-                    return 1;
-                } else {
-                    return nameComparison;
-                }
-            }
-        });
+        this.cachedFiles = new LinkedHashMap<>();
+        this.entryComparatorByUpdatedTimestamp = Comparator.comparingLong(ce -> ce.getValue().lastUpdatedTimestamp);
     }
 
     public Path getLocalFileCacheDir() {
@@ -195,8 +183,7 @@ public class LocalFileCacheStorage {
         } else if (sizeInKB < 0) {
             // a file is removed
             handler = p -> {
-                CachedFileEntry lookupEntry = new CachedFileEntry(p.toString(), sizeInKB, p.toFile().lastModified());
-                CachedFileEntry removedEntry = cachedFiles.remove(lookupEntry);
+                CachedFileEntry removedEntry = cachedFiles.remove(p.toString());
                 if (removedEntry != null) {
                     deleteCachedFile(removedEntry);
                 }
@@ -209,8 +196,9 @@ public class LocalFileCacheStorage {
 
     void cacheFile(Path file, long sizeInKB) {
         LOG.trace("Caching {} ({} KB) ({} entries)", file, sizeInKB, size());
-        CachedFileEntry newCacheEntry = new CachedFileEntry(file.toString(), sizeInKB, file.toFile().lastModified());
-        if (cachedFiles.put(newCacheEntry, newCacheEntry) == null) {
+        String cachedFileEntryName = file.toString();
+        CachedFileEntry newCacheEntry = new CachedFileEntry(cachedFileEntryName, sizeInKB, file.toFile().lastModified());
+        if (cachedFiles.put(cachedFileEntryName, newCacheEntry) == null) {
             currentSize.incrementAndGet();
             currentSizeInKB.accumulateAndGet(sizeInKB, (v1, v2) -> {
                 long v = v1 + v2;
@@ -223,21 +211,24 @@ public class LocalFileCacheStorage {
     private synchronized void removeUntilSpaceIsAvalable() {
         int usage = getUsageAsPercentage();
         if (usage > HIGH_WATERMARK) {
-            double updatedSizeInKB = currentSizeInKB.doubleValue();
             LOG.info("Local cache usage reached the high water mark -> {}", usage);
+            AtomicDouble updatedSizeInKB = new AtomicDouble(currentSizeInKB.doubleValue());
+            AtomicInteger usageAfterRemoval = new AtomicInteger(usage);
             Collection<CachedFileEntry> cacheEntriesToBeDeleted = new LinkedList<>();
             // this loop simply iterates and collect entries to be deleted until the low watermark is reached
-            for (CachedFileEntry cachedFileEntry : cachedFiles.navigableKeySet()) {
-                cacheEntriesToBeDeleted.add(cachedFileEntry);
-                updatedSizeInKB -= cachedFileEntry.fileSizeInKB;
-                int usageAfterRemoval  = (int) (updatedSizeInKB / capacityInKB * 100.);
-                if (usageAfterRemoval <= LOW_WATERMARK) {
-                    break;
-                }
-            }
+            cachedFiles.entrySet().stream()
+                    .sorted(entryComparatorByUpdatedTimestamp)
+                    .peek(cachedFileEntry -> {
+                        cacheEntriesToBeDeleted.add(cachedFileEntry.getValue());
+                        double updatedValue = updatedSizeInKB.addAndGet(-cachedFileEntry.getValue().fileSizeInKB);
+                        int updatedUsage  = (int) (updatedValue / capacityInKB * 100.);
+                        usageAfterRemoval.set(updatedUsage);
+                    })
+                    .anyMatch(cachedFileEntry -> usageAfterRemoval.get() <= LOW_WATERMARK)
+                    ;
             // now we are actually deleting
             cacheEntriesToBeDeleted.forEach(cachedFileEntry -> {
-                CachedFileEntry removedEntry = cachedFiles.remove(cachedFileEntry);
+                CachedFileEntry removedEntry = cachedFiles.remove(cachedFileEntry.fileName);
                 if (removedEntry != null) {
                     deleteCachedFile(removedEntry);
                 }
@@ -305,6 +296,7 @@ public class LocalFileCacheStorage {
         try {
             Path cachedFilePath = getLocalCachedFile(localFilePath);
             if (cachedFilePath != null) {
+                LOG.debug("Streaming from local cache {}", cachedFilePath);
                 return Files.newInputStream(cachedFilePath);
             }
         } catch (IOException e) {
@@ -314,15 +306,12 @@ public class LocalFileCacheStorage {
     }
 
     synchronized Path getLocalCachedFile(Path filePath) {
-        long currentTime = System.currentTimeMillis();
-        CachedFileEntry lookupEntry = new CachedFileEntry(filePath.toString(), 0, 0);
+        String cachedFileEntryKey = filePath.toString();
         // to touch the cache entry we remove it and reinsert it so that the timestamp gets updated
-        CachedFileEntry cachedFileEntry = cachedFiles.remove(lookupEntry);
+        CachedFileEntry cachedFileEntry = cachedFiles.get(cachedFileEntryKey);
         if (cachedFileEntry != null && Files.exists(filePath)) {
-            cachedFileEntry.lastUpdatedTimestamp = currentTime;
             try {
-                Files.setLastModifiedTime(filePath, FileTime.fromMillis(currentTime));
-                cachedFiles.put(cachedFileEntry, cachedFileEntry);
+                Files.setLastModifiedTime(filePath, FileTime.fromMillis(cachedFileEntry.touch()));
                 return filePath;
             } catch (IOException e) {
                 LOG.debug("Error touching locally cached file {}", filePath, e);
