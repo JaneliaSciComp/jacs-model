@@ -30,4 +30,8 @@ public class TreeNodeSearchableDao extends AbstractDomainSearchablDao<TreeNode> 
         return treeNodeDao.getNodeDirectAncestors(nodeReference);
     }
 
+    @Override
+    public List<TreeNode> getNodesByParentNameAndOwnerKey(Long parentNodeId, String name, String ownerKey) {
+        return treeNodeDao.getNodesByParentNameAndOwnerKey(parentNodeId, name, ownerKey);
+    }
 }

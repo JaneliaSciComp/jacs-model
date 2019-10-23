@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -20,15 +21,28 @@ import static org.junit.Assert.assertEquals;
 
 public class TreeNodeMongoDaoTest extends AbstractMongoDaoTest {
 
-    private TreeTreeNodeMongoDao treeNodeMongoDao;
+    private static final String TEST_OWNER = "testOwner";
+
+    private BaseTreeNodeMongoDao treeNodeMongoDao;
 
     @Before
     public void setUp() {
         SubjectMongoDao subjectMongoDao = new SubjectMongoDao(testMongoDatabase);
-        treeNodeMongoDao = new TreeTreeNodeMongoDao(
+        treeNodeMongoDao = new BaseTreeNodeMongoDao(
                 testMongoDatabase,
                 new DomainPermissionsMongoHelper(subjectMongoDao),
                 new DomainUpdateMongoHelper(testObjectMapper));
+    }
+
+    @Test
+    public void getNodesByParentNameAndOwner() {
+        TreeNode[] testNodes = new TreeNode[] {
+                persistData(createTestNode("n1", TEST_OWNER)),
+                persistData(createTestNode("n2", TEST_OWNER))
+        };
+        updateNodeChildren(testNodes[0], ImmutableSet.of(Reference.createFor(testNodes[1])));
+        List<TreeNode> result = treeNodeMongoDao.getNodesByParentNameAndOwnerKey(testNodes[0].getId(), "n2", TEST_OWNER);
+        assertEquals(ImmutableList.of(testNodes[1]), result);
     }
 
     @Test
@@ -116,8 +130,13 @@ public class TreeNodeMongoDaoTest extends AbstractMongoDaoTest {
     }
 
     private TreeNode createTestNode(String name) {
+        return createTestNode(name, TEST_OWNER);
+    }
+
+    private TreeNode createTestNode(String name, String owner) {
         TreeNode n = new TreeNode();
         n.setName(name);
+        n.setOwnerKey(owner);
         return n;
     }
 

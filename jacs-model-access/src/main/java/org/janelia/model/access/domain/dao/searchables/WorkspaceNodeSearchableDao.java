@@ -40,4 +40,8 @@ public class WorkspaceNodeSearchableDao extends AbstractDomainSearchablDao<Works
         return workspaceNodeDao.getNodeDirectAncestors(nodeReference);
     }
 
+    @Override
+    public List<Workspace> getNodesByParentNameAndOwnerKey(Long parentNodeId, String name, String ownerKey) {
+        return workspaceNodeDao.getNodesByParentNameAndOwnerKey(parentNodeId, name, ownerKey);
+    }
 }

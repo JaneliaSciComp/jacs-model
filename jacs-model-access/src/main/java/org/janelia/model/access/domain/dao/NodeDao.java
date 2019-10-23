@@ -10,4 +10,5 @@ import java.util.List;
  */
 public interface NodeDao<T extends TreeNode> extends DomainObjectDao<T> {
     List<T> getNodeDirectAncestors(Reference nodeReference);
+    List<T> getNodesByParentNameAndOwnerKey(Long parentNodeId, String name, String ownerKey);
 }
