@@ -94,6 +94,10 @@ class MongoDaoHelper {
         }
     }
 
+    static <T, R> R findFirst(Bson queryFilter, MongoCollection<T> mongoCollection, Class<R> resultType) {
+        return findFirst(queryFilter, null, mongoCollection, resultType);
+    }
+
     static <T, R> R findFirst(Bson queryFilter, Bson sortCriteria, MongoCollection<T> mongoCollection, Class<R> resultType) {
         return find(queryFilter, sortCriteria, 0, 2, mongoCollection, resultType).stream().findFirst().orElse(null);
     }

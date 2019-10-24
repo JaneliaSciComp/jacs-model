@@ -9,11 +9,11 @@ import javax.inject.Inject;
 /**
  * {@link TreeNode} Mongo DAO.
  */
-public class BaseTreeNodeMongoDao extends AbstractTreeNodeMongoDao<TreeNode> implements TreeNodeDao {
+public class TreeNodeMongoDao extends AbstractNodeMongoDao<TreeNode> implements TreeNodeDao {
     @Inject
-    BaseTreeNodeMongoDao(MongoDatabase mongoDatabase,
-                         DomainPermissionsMongoHelper permissionsHelper,
-                         DomainUpdateMongoHelper updateHelper) {
+    TreeNodeMongoDao(MongoDatabase mongoDatabase,
+                     DomainPermissionsMongoHelper permissionsHelper,
+                     DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, permissionsHelper, updateHelper);
     }
 }

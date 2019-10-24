@@ -1,30 +1,26 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import com.google.common.collect.ImmutableList;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.Field;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Projections;
-import com.mongodb.client.model.Variable;
-
-import org.janelia.model.access.domain.dao.NodeDao;
-import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.workspace.TreeNode;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.ImmutableList;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Filters;
+
+import org.janelia.model.access.domain.dao.NodeDao;
+import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.workspace.Node;
+
 /**
- * {@link TreeNode} Mongo DAO.
+ * {@link Node} Mongo DAO.
  */
-public abstract class AbstractTreeNodeMongoDao<T extends TreeNode> extends AbstractDomainObjectMongoDao<T> implements NodeDao<T> {
-    AbstractTreeNodeMongoDao(MongoDatabase mongoDatabase,
-                             DomainPermissionsMongoHelper permissionsHelper,
-                             DomainUpdateMongoHelper updateHelper) {
+public abstract class AbstractNodeMongoDao<T extends Node> extends AbstractDomainObjectMongoDao<T> implements NodeDao<T> {
+    AbstractNodeMongoDao(MongoDatabase mongoDatabase,
+                         DomainPermissionsMongoHelper permissionsHelper,
+                         DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, permissionsHelper, updateHelper);
     }
 
@@ -63,4 +59,5 @@ public abstract class AbstractTreeNodeMongoDao<T extends TreeNode> extends Abstr
             );
         }
     }
+
 }

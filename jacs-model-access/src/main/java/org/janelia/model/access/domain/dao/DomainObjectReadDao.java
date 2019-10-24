@@ -18,7 +18,7 @@ public interface DomainObjectReadDao<T extends DomainObject> extends ReadDao<T, 
      * @param subjectKey
      * @return
      */
-    T findEntityByIdAccessibleBySubjectKey(Long id, String subjectKey);
+    T findEntityByIdReadableBySubjectKey(Long id, String subjectKey);
 
     /**
      * Finds entities by ids accessible by subjectKey.
@@ -26,7 +26,7 @@ public interface DomainObjectReadDao<T extends DomainObject> extends ReadDao<T, 
      * @param subjectKey
      * @return
      */
-    List<T> findEntitiesByIdsAccessibleBySubjectKey(List<Long> ids, String subjectKey);
+    List<T> findEntitiesByIdsReadableBySubjectKey(List<Long> ids, String subjectKey);
 
     /**
      * Find domain entities owned by the provided subjectKey.

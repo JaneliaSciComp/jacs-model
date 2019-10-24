@@ -23,12 +23,12 @@ public class TreeNodeMongoDaoTest extends AbstractMongoDaoTest {
 
     private static final String TEST_OWNER = "testOwner";
 
-    private BaseTreeNodeMongoDao treeNodeMongoDao;
+    private TreeNodeMongoDao treeNodeMongoDao;
 
     @Before
     public void setUp() {
         SubjectMongoDao subjectMongoDao = new SubjectMongoDao(testMongoDatabase);
-        treeNodeMongoDao = new BaseTreeNodeMongoDao(
+        treeNodeMongoDao = new TreeNodeMongoDao(
                 testMongoDatabase,
                 new DomainPermissionsMongoHelper(subjectMongoDao),
                 new DomainUpdateMongoHelper(testObjectMapper));

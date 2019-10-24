@@ -50,13 +50,13 @@ public abstract class AbstractDomainSearchablDao<T extends DomainObject>
     }
 
     @Override
-    public T findEntityByIdAccessibleBySubjectKey(Long id, String subjectKey) {
-        return domainObjectDao.findEntityByIdAccessibleBySubjectKey(id, subjectKey);
+    public T findEntityByIdReadableBySubjectKey(Long id, String subjectKey) {
+        return domainObjectDao.findEntityByIdReadableBySubjectKey(id, subjectKey);
     }
 
     @Override
-    public List<T> findEntitiesByIdsAccessibleBySubjectKey(List<Long> ids, String subjectKey) {
-        return domainObjectDao.findEntitiesByIdsAccessibleBySubjectKey(ids, subjectKey);
+    public List<T> findEntitiesByIdsReadableBySubjectKey(List<Long> ids, String subjectKey) {
+        return domainObjectDao.findEntitiesByIdsReadableBySubjectKey(ids, subjectKey);
     }
 
     @Override

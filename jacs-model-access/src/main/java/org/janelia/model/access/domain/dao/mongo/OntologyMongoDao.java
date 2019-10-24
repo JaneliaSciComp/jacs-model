@@ -53,7 +53,7 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
 
     @Override
     public Ontology addTerms(String subjectKey, Long ontologyId, Long parentTermId, List<OntologyTerm> terms, Integer pos) {
-        Ontology ontology = findEntityByIdAccessibleBySubjectKey(ontologyId, subjectKey);
+        Ontology ontology = findEntityByIdReadableBySubjectKey(ontologyId, subjectKey);
         if (ontology == null) {
             // bad ID or subject does not have access to the ontology
             return null;
@@ -105,7 +105,7 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
 
     @Override
     public Ontology reorderTerms(String subjectKey, Long ontologyId, Long parentTermId, int[] order) {
-        Ontology ontology = findEntityByIdAccessibleBySubjectKey(ontologyId, subjectKey);
+        Ontology ontology = findEntityByIdReadableBySubjectKey(ontologyId, subjectKey);
         if (ontology == null) {
             // bad ID or subject does not have access to the ontology
             return null;
@@ -177,7 +177,7 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
     public Ontology removeTerm(String subjectKey, Long ontologyId, Long parentTermId, Long termId) {
         Preconditions.checkArgument(termId != null,
                 "The ID of the term to be removed cannot be null");
-        Ontology ontology = findEntityByIdAccessibleBySubjectKey(ontologyId, subjectKey);
+        Ontology ontology = findEntityByIdReadableBySubjectKey(ontologyId, subjectKey);
         if (ontology == null) {
             // bad ID or subject does not have access to the ontology
             return null;

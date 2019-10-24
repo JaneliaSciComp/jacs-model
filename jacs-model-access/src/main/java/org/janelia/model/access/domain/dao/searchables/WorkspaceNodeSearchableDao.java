@@ -14,7 +14,7 @@ import org.janelia.model.domain.workspace.Workspace;
  * {@link Workspace} DAO.
  */
 @AsyncIndex
-public class WorkspaceNodeSearchableDao extends AbstractDomainSearchablDao<Workspace> implements WorkspaceNodeDao {
+public class WorkspaceNodeSearchableDao extends AbstractNodeSearchableDao<Workspace> implements WorkspaceNodeDao {
 
     private final WorkspaceNodeDao workspaceNodeDao;
 
@@ -26,6 +26,13 @@ public class WorkspaceNodeSearchableDao extends AbstractDomainSearchablDao<Works
     }
 
     @Override
+    public Workspace createDefaultWorkspace(String subjectKey) {
+        Workspace persistedWorkspace = workspaceNodeDao.createDefaultWorkspace(subjectKey);
+        domainObjectIndexer.indexDocument(persistedWorkspace);
+        return persistedWorkspace;
+    }
+
+    @Override
     public List<Workspace> getWorkspaceNodesAccessibleBySubjectGroups(String subjectKey, long offset, int length) {
         return workspaceNodeDao.getWorkspaceNodesAccessibleBySubjectGroups(subjectKey, offset, length);
     }
@@ -33,6 +40,11 @@ public class WorkspaceNodeSearchableDao extends AbstractDomainSearchablDao<Works
     @Override
     public List<Workspace> getWorkspaceNodesOwnedBySubjectKey(String subjectKey) {
         return workspaceNodeDao.getWorkspaceNodesOwnedBySubjectKey(subjectKey);
+    }
+
+    @Override
+    public Workspace getDefaultWorkspace(String subjectKey) {
+        return workspaceNodeDao.getDefaultWorkspace(subjectKey);
     }
 
     @Override

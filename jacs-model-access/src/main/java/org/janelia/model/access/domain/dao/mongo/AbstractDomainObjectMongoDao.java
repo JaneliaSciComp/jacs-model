@@ -66,7 +66,7 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
     }
 
     @Override
-    public T findEntityByIdAccessibleBySubjectKey(Long id, String subjectKey) {
+    public T findEntityByIdReadableBySubjectKey(Long id, String subjectKey) {
         if (id == null) {
             return null;
         } else {
@@ -87,7 +87,7 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
     }
 
     @Override
-    public List<T> findEntitiesByIdsAccessibleBySubjectKey(List<Long> ids, String subjectKey) {
+    public List<T> findEntitiesByIdsReadableBySubjectKey(List<Long> ids, String subjectKey) {
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.emptyList();
         } else {
