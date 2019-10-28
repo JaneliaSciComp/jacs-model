@@ -20,5 +20,7 @@ public interface FileProxy {
 
     File getLocalFile() throws FileNotFoundException;
 
+    boolean exists();
+
     boolean deleteProxy();
 }

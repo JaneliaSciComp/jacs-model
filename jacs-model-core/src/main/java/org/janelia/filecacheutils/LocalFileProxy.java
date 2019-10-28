@@ -55,6 +55,11 @@ public class LocalFileProxy implements FileProxy {
     }
 
     @Override
+    public boolean exists() {
+        return Files.exists(localFilePath);
+    }
+
+    @Override
     public boolean deleteProxy() {
         return false;
     }

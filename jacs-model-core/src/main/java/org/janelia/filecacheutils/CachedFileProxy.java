@@ -261,6 +261,22 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
     }
 
     @Override
+    public boolean exists() {
+        if (Files.exists(localFilePath)) {
+            return true;
+        } else {
+            if (delegateFileProxy == null) {
+                try {
+                    delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
+                } catch (FileNotFoundException e) {
+                    return false;
+                }
+            }
+            return delegateFileProxy.exists();
+        }
+    }
+
+    @Override
     public boolean deleteProxy() {
         long sizeInBytes = getCurrentSizeInBytes();
         try {
