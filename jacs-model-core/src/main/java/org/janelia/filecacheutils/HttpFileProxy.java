@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.net.URL;
-import java.util.Optional;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.function.Function;
 
 import com.google.common.io.CountingInputStream;
@@ -16,17 +16,17 @@ import com.google.common.io.CountingInputStream;
 public class HttpFileProxy implements FileProxy {
 
     private final String url;
-    private final Function<String, InputStream> httpToContentStreamProvider;
+    private final Function<String, InputStream> httpContentStreamProvider;
+    private final Function<String, Boolean> httpCheckContentProvider;
     private CountingInputStream contentStream;
 
-    public HttpFileProxy(String url, Function<String, InputStream> httpToContentStreamProvider) {
+    public HttpFileProxy(String url,
+                         Function<String, InputStream> httpContentStreamProvider,
+                         Function<String, Boolean> httpCheckContentProvider) {
         this.url = url;
-        this.httpToContentStreamProvider = httpToContentStreamProvider;
+        this.httpContentStreamProvider = httpContentStreamProvider;
+        this.httpCheckContentProvider = httpCheckContentProvider;
         this.contentStream = null;
-    }
-
-    public HttpFileProxy(URL url, Function<String, InputStream> httpToContentStreamProvider) {
-        this(url.toString(), httpToContentStreamProvider);
     }
 
     @Override
@@ -46,7 +46,7 @@ public class HttpFileProxy implements FileProxy {
     @Override
     public InputStream openContentStream() throws FileNotFoundException {
         if (url.startsWith("http://") || url.startsWith("https://")) {
-            contentStream = new CountingInputStream(httpToContentStreamProvider.apply(url));
+            contentStream = new CountingInputStream(httpContentStreamProvider.apply(url));
         } else if (url.startsWith("file://")) {
             contentStream = new CountingInputStream(new FileInputStream(url));
         } else {
@@ -58,6 +58,17 @@ public class HttpFileProxy implements FileProxy {
     @Override
     public File getLocalFile() {
         return null;
+    }
+
+    @Override
+    public boolean exists() {
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            return httpCheckContentProvider.apply(url);
+        } else if (url.startsWith("file://")) {
+            return Files.exists(Paths.get(url));
+        } else {
+            throw new IllegalArgumentException("URL scheme is not supported " + url);
+        }
     }
 
     @Override
