@@ -75,7 +75,7 @@ public class LocalFileCacheStorage {
     }
 
     static Function<Long, Long> BYTES_TO_KB = (b) -> {
-        if (b > 0L) {
+        if (b != null && b > 0L) {
             if ((b % 1024) > 0) {
                 return b / 1024 + 1;
             } else {
