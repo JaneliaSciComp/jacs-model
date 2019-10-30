@@ -2131,28 +2131,42 @@ public class DomainDAO {
 
             if (Node.class.isAssignableFrom(clazz)) {
                 log.trace("Changing permissions on all members of the nodes: {}", loggedIdsParam);
-                for (Long nodeId : ids) {
-                    Reference nodeReference = Reference.createFor(clazz, nodeId);
-                    if (visited.contains(nodeReference)) {
-                        log.trace("Already visited folder {}", nodeReference);
-                        continue;
-                    }
-                    visited.add(nodeReference);
-
-                    Node node = (Node) collection.findOne("{_id:#," + updateQueryClause + "}", nodeId, updateQueryParam).as(clazz);
-                    if (node == null) {
-                        log.warn("Could not find node with id=" + nodeId);
-                    } else if (node.hasChildren()) {
-                        Multimap<String, Long> groupedIds = HashMultimap.create();
-                        for (Reference ref : node.getChildren()) {
-                            groupedIds.put(ref.getTargetClassName(), ref.getTargetId());
-                        }
-
-                        for (String refClassName : groupedIds.keySet()) {
-                            Collection<Long> refIds = groupedIds.get(refClassName);
-                            nUpdates += updatePermissions(subjectKey, refClassName, refIds, readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
+                Set<Reference> argReferences = ids.stream().map(nodeId -> Reference.createFor(clazz, nodeId)).collect(Collectors.toSet());
+                Set<Reference> candidatesToVisit = new HashSet<>(argReferences);
+                Set<Reference> toBeUpdated = new HashSet<>(); // this starts empty because the current ids have already been updated
+                while (!candidatesToVisit.isEmpty()) {
+                    // group the candidates to visit by class and if they have not been visited yet mark them as visited
+                    Multimap<Class<? extends Node>, Long> groupedIds = HashMultimap.create();
+                    for (Reference ref : candidatesToVisit) {
+                        if (!visited.contains(ref)) {
+                            Class<? extends DomainObject> refClass = DomainUtils.getObjectClassByName(ref.getTargetClassName());
+                            if (Node.class.isAssignableFrom(refClass)) {
+                                groupedIds.put(refClass.asSubclass(Node.class), ref.getTargetId());
+                                visited.add(ref);
+                            }
                         }
                     }
+                    // clear the candidates to visit for now - later it will be populated with the children of the current candidates
+                    candidatesToVisit.clear();
+                    // collect all children references
+                    for (Class<? extends Node> refClass : groupedIds.keySet()) {
+                        MongoCollection refMongoCollection = getCollectionByClass(refClass);
+                        Collection<Long> refIds = groupedIds.get(refClass);
+                        streamFindResult(refMongoCollection.find("{_id:{$in:#},children:{$exists:true,$ne:[]}," + updateQueryClause + "}", refIds, updateQueryParam), Node.class)
+                                .flatMap(n -> n.getChildren().stream())
+                                .forEach(childRef -> {
+                                    candidatesToVisit.add(childRef);
+                                    toBeUpdated.add(childRef);
+                                });
+                    }
+                }
+                Multimap<String, Long> groupedIdsToBeUpdated = HashMultimap.create();
+                for (Reference ref : toBeUpdated) {
+                    groupedIdsToBeUpdated.put(ref.getTargetClassName(), ref.getTargetId());
+                }
+                for (String refClassName : groupedIdsToBeUpdated.keySet()) {
+                    Collection<Long> refIds = groupedIdsToBeUpdated.get(refClassName);
+                    nUpdates += updatePermissions(subjectKey, refClassName, refIds, readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
                 }
             }
             if (ColorDepthSearch.class.isAssignableFrom(clazz)) {
@@ -2270,30 +2284,45 @@ public class DomainDAO {
         List<Reference> objectRefs = ids.stream().map(id -> Reference.createFor(clazz, id)).collect(Collectors.toList());
 
         if (Node.class.isAssignableFrom(clazz)) {
-            for (Long nodeId : ids) {
-                Reference nodeReference = Reference.createFor(clazz, nodeId);
-                if (visited.contains(nodeReference)) {
-                    log.trace("Already visited folder {}", nodeReference);
-                    continue;
-                }
-                visited.add(nodeReference);
-                Node node = (Node) collection.findOne("{_id:#," + queryClause + "}", nodeId, queryParam).as(clazz);
-                if (node == null) {
-                    log.warn("Could not find node with id=" + nodeId);
-                } else if (node.hasChildren()) {
-                    Multimap<String, Long> groupedIds = HashMultimap.create();
-                    for (Reference ref : node.getChildren()) {
-                        groupedIds.put(ref.getTargetClassName(), ref.getTargetId());
-                    }
-
-                    for (String refClassName : groupedIds.keySet()) {
-                        Collection<Long> refIds = groupedIds.get(refClassName);
-                        updatedDomainObjectsStream = Stream.concat(
-                                updatedDomainObjectsStream,
-                                collectPermissionChanges(subjectKey, refClassName, refIds, readers, writers, allowWriters, visited)
-                        );
+            Set<Reference> argReferences = ids.stream().map(nodeId -> Reference.createFor(clazz, nodeId)).collect(Collectors.toSet());
+            Set<Reference> candidatesToVisit = new HashSet<>(argReferences);
+            Set<Reference> toBeCollected = new HashSet<>(); // this starts empty because the current ids have already been updated
+            while (!candidatesToVisit.isEmpty()) {
+                // group the candidates to visit by class and if they have not been visited yet mark them as visited
+                Multimap<Class<? extends Node>, Long> groupedIds = HashMultimap.create();
+                for (Reference ref : candidatesToVisit) {
+                    if (!visited.contains(ref)) {
+                        Class<? extends DomainObject> refClass = DomainUtils.getObjectClassByName(ref.getTargetClassName());
+                        if (Node.class.isAssignableFrom(refClass)) {
+                            groupedIds.put(refClass.asSubclass(Node.class), ref.getTargetId());
+                            visited.add(ref);
+                        }
                     }
                 }
+                // clear the candidates to visit for now - later it will be populated with the children of the current candidates
+                candidatesToVisit.clear();
+                // collect all children references
+                for (Class<? extends Node> refClass : groupedIds.keySet()) {
+                    MongoCollection refMongoCollection = getCollectionByClass(refClass);
+                    Collection<Long> refIds = groupedIds.get(refClass);
+                    streamFindResult(refMongoCollection.find("{_id:{$in:#},children:{$exists:true,$ne:[]}," + queryClause + "}", refIds, queryParam), Node.class)
+                            .flatMap(n -> n.getChildren().stream())
+                            .forEach(childRef -> {
+                                candidatesToVisit.add(childRef);
+                                toBeCollected.add(childRef);
+                            });
+                }
+            }
+            Multimap<String, Long> groupedIdsToBeUpdated = HashMultimap.create();
+            for (Reference ref : toBeCollected) {
+                groupedIdsToBeUpdated.put(ref.getTargetClassName(), ref.getTargetId());
+            }
+            for (String refClassName : groupedIdsToBeUpdated.keySet()) {
+                Collection<Long> refIds = groupedIdsToBeUpdated.get(refClassName);
+                updatedDomainObjectsStream = Stream.concat(
+                        updatedDomainObjectsStream,
+                        collectPermissionChanges(subjectKey, refClassName, refIds, readers, writers, allowWriters, visited)
+                );
             }
         }
         if (ColorDepthSearch.class.isAssignableFrom(clazz)) {
