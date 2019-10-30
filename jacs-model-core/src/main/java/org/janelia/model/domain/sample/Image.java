@@ -3,6 +3,7 @@ package org.janelia.model.domain.sample;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasRelativeFiles;
@@ -93,6 +94,7 @@ public class Image extends AbstractDomainObject implements HasRelativeFiles {
      * Was this image uploaded by a user, which can be deleted at the user's whim?
      * @return
      */
+    @JsonIgnore
     public boolean isUserData() {
         return userDataFlag != null && userDataFlag;
     }
