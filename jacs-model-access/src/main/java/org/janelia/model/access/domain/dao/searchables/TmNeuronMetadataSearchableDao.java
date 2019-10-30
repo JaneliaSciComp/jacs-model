@@ -37,23 +37,30 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
     }
 
     @Override
-    public TmNeuronMetadata getTmNeuronMetadata(String subjectKey, Long neuronId) {
-        return tmNeuronMetadataDao.getTmNeuronMetadata(subjectKey, neuronId);
+    public TmNeuronMetadata getTmNeuronMetadata(String subjectKey, TmWorkspace workspace, Long neuronId) {
+        return tmNeuronMetadataDao.getTmNeuronMetadata(subjectKey, workspace, neuronId);
     }
 
     @Override
-    public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(String subjectKey, Long workspaceId, long offset, int length) {
-        return tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(subjectKey, workspaceId, offset, length);
+    public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(TmWorkspace workspace, String subjectKey, long offset, int length) {
+        return tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(workspace, subjectKey, offset, length);
     }
 
     @Override
-    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace, long offset, int length) {
-        return tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey,workspace,offset,length);
+    public List<TmNeuronMetadata> getTmNeuronMetadataByNeuronIds(TmWorkspace workspace, List<Long> neuronIdList) {
+        return tmNeuronMetadataDao.getTmNeuronMetadataByNeuronIds(workspace, neuronIdList);
     }
 
     @Override
-    public boolean removeTmNeuron(Long neuronId, boolean isLarge, String subjectKey) {
-        boolean removed = tmNeuronMetadataDao.removeTmNeuron(neuronId, isLarge, subjectKey);
+    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(TmWorkspace workspace,
+                                                                                                       String subjectKey,
+                                                                                                       long offset, int length) {
+        return tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(workspace, subjectKey,offset,length);
+    }
+
+    @Override
+    public boolean removeTmNeuron(Long neuronId, boolean isLarge, TmWorkspace workspace, String subjectKey) {
+        boolean removed = tmNeuronMetadataDao.removeTmNeuron(neuronId, isLarge, workspace, subjectKey);
         if (removed) {
             domainObjectIndexer.removeDocument(neuronId);
         }
@@ -61,33 +68,30 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
     }
 
     @Override
-    public void updateNeuronStyles(BulkNeuronStyleUpdate bulkNeuronStyleUpdate, String subjectKey) {
-        tmNeuronMetadataDao.updateNeuronStyles(bulkNeuronStyleUpdate, subjectKey);
+    public void updateNeuronStyles(BulkNeuronStyleUpdate bulkNeuronStyleUpdate, TmWorkspace workspace, String subjectKey) {
+        tmNeuronMetadataDao.updateNeuronStyles(bulkNeuronStyleUpdate, workspace, subjectKey);
     }
 
     @Override
-    public TmNeuronMetadata saveBySubjectKey(TmNeuronMetadata neuron, String subjectKey) {
-        return tmNeuronMetadataDao.saveBySubjectKey(neuron,subjectKey);
+    public void removeEmptyNeuronsInWorkspace(TmWorkspace workspace, String subjectKey) {
+        tmNeuronMetadataDao.removeEmptyNeuronsInWorkspace(workspace, subjectKey);
     }
 
     @Override
-    public void removeEmptyNeuronsInWorkspace(Long workspaceId, String subjectKey) {
-        tmNeuronMetadataDao.removeEmptyNeuronsInWorkspace(workspaceId,subjectKey);
+    public void bulkMigrateNeuronsInWorkspace(TmWorkspace workspace, Collection<TmNeuronMetadata> neurons,
+                                              String subjectKey) {
+        tmNeuronMetadataDao.bulkMigrateNeuronsInWorkspace(workspace, neurons, subjectKey);
     }
 
     @Override
-    public void bulkReplaceNeuronsInWorkspace(Long workspaceId, Collection<TmNeuronMetadata> neurons, String subjectKey) {
-        tmNeuronMetadataDao.bulkReplaceNeuronsInWorkspace(workspaceId, neurons, subjectKey);
+    public void updateNeuronTagsForNeurons(TmWorkspace workspace, List<Long> neuronIds, List<String> tags, boolean tagState,
+                                           String subjectKey) {
+        tmNeuronMetadataDao.updateNeuronTagsForNeurons(workspace, neuronIds, tags, tagState, subjectKey);
     }
 
     @Override
-    public void insertTmNeurons(Collection<TmNeuronMetadata> neurons) {
-        tmNeuronMetadataDao.insertTmNeurons(neurons);
-    }
-
-    @Override
-    public void updateNeuronTagsTagsForNeurons(List<Long> neuronIds, List<String> tags, boolean tagState, String subjectKey) {
-        tmNeuronMetadataDao.updateNeuronTagsTagsForNeurons(neuronIds, tags, tagState, subjectKey);
+    public TmNeuronMetadata saveNeuronMetadata(TmWorkspace workspace, TmNeuronMetadata neuron, String subjectKey) {
+        return tmNeuronMetadataDao.saveNeuronMetadata(workspace, neuron, subjectKey);
     }
 
 }

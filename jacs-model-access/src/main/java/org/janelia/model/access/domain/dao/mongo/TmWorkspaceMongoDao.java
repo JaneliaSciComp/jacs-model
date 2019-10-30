@@ -107,8 +107,8 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
 
                 @Override
                 public boolean tryAdvance(Consumer<? super Stream<TmNeuronMetadata>> action) {
-                    List<TmNeuronMetadata> tmNeurons = tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(subjectKey,
-                            existingWorkspace.getId(), offset, defaultLength);
+                    List<TmNeuronMetadata> tmNeurons = tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(existingWorkspace,
+                            subjectKey, offset, defaultLength);
                     long lastEntryOffset = offset + tmNeurons.size();
                     LOG.info("Retrieved {} neurons ({} - {})", tmNeurons.size(), offset, lastEntryOffset);
                     if (tmNeurons.isEmpty()) {

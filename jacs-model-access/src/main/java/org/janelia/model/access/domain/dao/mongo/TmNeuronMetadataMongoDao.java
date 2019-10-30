@@ -20,8 +20,10 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
@@ -46,6 +48,8 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     private final DomainDAO domainDao;
     private final TmNeuronBufferDao tmNeuronBufferDao;
+    private final MongoDatabase mongoDatabase;
+    private final DomainUpdateMongoHelper updateHelper;
 
     @Inject
     private GridFSMongoDao gridFSMongoDao;
@@ -58,12 +62,15 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                              TmNeuronBufferDao tmNeuronBufferDao) {
         super(mongoDatabase, permissionsHelper, updateHelper);
         this.domainDao = domainDao;
+        this.updateHelper = updateHelper;
+        this.mongoDatabase = mongoDatabase;
         this.tmNeuronBufferDao = tmNeuronBufferDao;
     }
 
     @Override
     public TmNeuronMetadata createTmNeuronInWorkspace(String subjectKey, TmNeuronMetadata neuronMetadata, TmWorkspace workspace) {
         String neuronOwnerKey;
+        String collection = workspace.getNeuronCollection();
         // Inherit from parent only if not existing already
         if (!subjectKey.equals(neuronMetadata.getOwnerKey())) {
             neuronOwnerKey = neuronMetadata.getOwnerKey();
@@ -81,11 +88,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 neuronMetadata.setNeuronData(null);
                 neuronMetadata.setLargeNeuron(true);
             }
-            if (neuronMetadata.getId() == null) {
-                persistedNeuronMetadata = domainDao.save(neuronOwnerKey, neuronMetadata);
-            } else {
-                persistedNeuronMetadata = domainDao.createWithPrepopulatedId(neuronOwnerKey, neuronMetadata);
-            }
+            persistedNeuronMetadata = saveNeuron(neuronMetadata,collection, neuronOwnerKey);
             if (isLarge) {
                 saveLargeNeuronPointData(persistedNeuronMetadata.getId(), pointData);
             }
@@ -96,13 +99,21 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     }
 
     @Override
-    public TmNeuronMetadata getTmNeuronMetadata(String subjectKey, Long neuronId) {
-        return findById (neuronId);
+    public TmNeuronMetadata getTmNeuronMetadata(String subjectKey, TmWorkspace workspace, Long neuronId) {
+        return MongoDaoHelper.findById(neuronId, getNeuronCollection(workspace.getNeuronCollection()), TmNeuronMetadata.class);
+    }
+
+    <R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType,
+                     MongoCollection<TmNeuronMetadata> neuronCollection) {
+        return MongoDaoHelper.find(queryFilter, sortCriteria, offset, length, neuronCollection, resultType);
     }
 
     @Override
-    public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(String subjectKey, Long workspaceId, long offset, int length) {
-        String workspaceRef = "TmWorkspace#" + workspaceId;
+    public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(TmWorkspace workspace, String subjectKey,
+                                                                   long offset, int length) {
+        String workspaceRef = "TmWorkspace#" + workspace.getId();
+        StopWatch stopWatch = new StopWatch();
+stopWatch.start();
         List<TmNeuronMetadata> neuronList = find(
                 MongoDaoHelper.createFilterCriteria(
                         Filters.eq("workspaceRef", workspaceRef),
@@ -110,9 +121,18 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 null,
                 offset,
                 length,
-                getEntityType());
+                getEntityType(),
+                getNeuronCollection(workspace.getNeuronCollection()));
          hydrateLargeNeurons(neuronList);
+
+        LOG.info("BATCH TIME {} ms", stopWatch.getTime());
+        stopWatch.stop();
          return neuronList;
+    }
+
+    @Override
+    public List<TmNeuronMetadata> getTmNeuronMetadataByNeuronIds(TmWorkspace workspace, List<Long> neuronIdList) {
+        return MongoDaoHelper.findByIds(neuronIdList, getNeuronCollection(workspace.getNeuronCollection()), TmNeuronMetadata.class);
     }
 
     private void saveLargeNeuronPointData (Long neuronId, TmNeuronData pointData) {
@@ -172,35 +192,14 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         }
     }
 
-    private TmNeuronMetadata createNeuronOrUpdateNeuronWorkspace(Long neuronId, TmWorkspace workspace) {
-        TmNeuronMetadata neuron = findById(neuronId);
-        if (neuron != null) {
-            // the neuron exist but it's not associated with the specified workspace
-            neuron.setWorkspaceRef(Reference.createFor(workspace));
-        } else {
-            Date now = new Date();
-            neuron = new TmNeuronMetadata();
-            neuron.setId(neuronId);
-            neuron.setWorkspaceRef(Reference.createFor(workspace));
-            neuron.setCreationDate(now);
-            neuron.setUpdatedDate(now);
-            neuron.setOwnerKey(workspace.getOwnerKey());
-            neuron.setReaders(Sets.newHashSet(neuron.getOwnerKey()));
-            neuron.setWriters(Sets.newHashSet(neuron.getOwnerKey()));
-        }
-        try {
-            return saveBySubjectKey(neuron, neuron.getOwnerKey());
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
     @Override
-    public boolean removeTmNeuron(Long neuronId, boolean isLarge, String subjectKey) {
+    public boolean removeTmNeuron(Long neuronId, boolean isLarge, TmWorkspace workspace, String subjectKey) {
         if (isLarge) {
             gridFSMongoDao.deleteDataBlock(neuronId.toString());
         }
-        long nDeleted = deleteByIdAndSubjectKey(neuronId, subjectKey);
+        long nDeleted = MongoDaoHelper.deleteMatchingRecords(getNeuronCollection(workspace.getNeuronCollection()),
+                Filters.and(MongoDaoHelper.createFilterById(neuronId),
+                        permissionsHelper.createWritePermissionFilterForSubjectKey(subjectKey)));
         if (nDeleted > 0) {
             return true;
         } else {
@@ -209,29 +208,53 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     }
 
     @Override
-    public TmNeuronMetadata saveBySubjectKey(TmNeuronMetadata neuron, String subjectKey) {
+    public TmNeuronMetadata saveNeuronMetadata(TmWorkspace workspace, TmNeuronMetadata neuron, String subjectKey) {
         boolean isLarge = checkLargeNeuron(neuron);
         TmNeuronData pointData = neuron.getNeuronData();
         if (isLarge) {
             neuron.setNeuronData(null);
             saveLargeNeuronPointData(neuron.getId(), pointData);
             if (!neuron.isLargeNeuron())
-                super.delete(neuron);
-            neuron.setLargeNeuron(isLarge);
-            super.insertNewEntity(neuron);
+               removeTmNeuron(neuron.getId(),isLarge, workspace, subjectKey);
         } else {
             if (neuron.isLargeNeuron())
                 removeLargeNeuronPointData(neuron.getId());
-            neuron.setLargeNeuron(isLarge);
-            super.saveBySubjectKey(neuron, subjectKey);
         }
+        neuron.setLargeNeuron(isLarge);
+        saveNeuron(neuron, workspace.getNeuronCollection(), subjectKey);
         if (isLarge)
             neuron.setNeuronData(pointData);
         return neuron;
     }
 
+    private TmNeuronMetadata saveNeuron(TmNeuronMetadata entity,
+                                       String collectionName, String subjectKey) {
+        MongoCollection<TmNeuronMetadata> mongoCollection =  getNeuronCollection(collectionName);
+
+        Date now = new Date();
+        if (entity.getId() == null) {
+            entity.setId(createNewId());
+            entity.setOwnerKey(subjectKey);
+            entity.getReaders().add(subjectKey);
+            entity.getWriters().add(subjectKey);
+            entity.setCreationDate(now);
+            entity.setUpdatedDate(now);
+            mongoCollection.insertOne(entity);
+        } else {
+            entity.setUpdatedDate(now);
+            mongoCollection.updateOne(
+                    Filters.and(MongoDaoHelper.createFilterById(entity.getId()),
+                            permissionsHelper.createWritePermissionFilterForSubjectKey(subjectKey)),
+                    updateHelper.getEntityUpdates(entity)
+            );
+        }
+        return entity;
+    }
+
+
     @Override
-    public void updateNeuronStyles(BulkNeuronStyleUpdate bulkNeuronStyleUpdate, String subjectKey) {
+    public void updateNeuronStyles(BulkNeuronStyleUpdate bulkNeuronStyleUpdate, TmWorkspace workspace, String subjectKey) {
+        MongoCollection<TmNeuronMetadata> mongoCollection =  getNeuronCollection(workspace.getNeuronCollection());
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatesBuilder = ImmutableMap.builder();
         if (bulkNeuronStyleUpdate.getVisible() != null) {
             updatesBuilder.put("visible", new SetFieldValueHandler<>(bulkNeuronStyleUpdate.getVisible()));
@@ -255,22 +278,24 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     }
 
     @Override
-    public void removeEmptyNeuronsInWorkspace(Long workspaceId, String subjectKey) {
+    public void removeEmptyNeuronsInWorkspace(TmWorkspace workspace, String subjectKey) {
+        MongoCollection<TmNeuronMetadata> mongoCollection = getNeuronCollection(workspace.getNeuronCollection());
+
         MongoDaoHelper.deleteMatchingRecords(
                 mongoCollection,
                 MongoDaoHelper.createFilterCriteria(
                         ImmutableList.of(
-                                Filters.eq("workspaceRef", "TmWorkspace#" + workspaceId),
+                                Filters.eq("workspaceRef", "TmWorkspace#" + workspace.getId()),
                                 Filters.exists("neuronData", false),
                                 permissionsHelper.createWritePermissionFilterForSubjectKey(subjectKey))
                 ));
     }
 
     @Override
-    public void bulkReplaceNeuronsInWorkspace(Long workspaceId, Collection<TmNeuronMetadata> neurons, String subjectKey) {
+    public void bulkMigrateNeuronsInWorkspace(TmWorkspace workspace, Collection<TmNeuronMetadata> neurons, String subjectKey) {
+        MongoCollection<TmNeuronMetadata> copyLoc = getNeuronCollection(workspace.getNeuronCollection());
         if (neurons==null || neurons.isEmpty())
             return;
-        MongoCollection<TmNeuronMetadata> copyLoc = mongoDatabase.getCollection("TmNeuronMerged", TmNeuronMetadata.class);
         List<TmNeuronMetadata> neuronList = new ArrayList<>(neurons);
         try {
             copyLoc.insertMany(neuronList);
@@ -304,19 +329,16 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                     copyLoc.insertMany(truncatedList);
             } catch (org.bson.BsonMaximumSizeExceededException ee) {
                 ee.printStackTrace();
-                LOG.info("ERROR PROCESSING {} - Issue with Large Neurons", workspaceId);
+                LOG.info("ERROR PROCESSING {} - Issue with Large Neurons", workspace.getId());
             }
         }
     }
 
     @Override
-    public void insertTmNeurons(Collection<TmNeuronMetadata> neurons) {
-        this.saveAll(neurons);
-    }
-
-    @Override
-    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(String subjectKey, TmWorkspace workspace, long offset, int length) {
-        List<TmNeuronMetadata> workspaceNeurons = getTmNeuronMetadataByWorkspaceId(subjectKey, workspace.getId(), offset, length);
+    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(TmWorkspace workspace,
+                                                                                                       String subjectKey,
+                                                                                                       long offset, int length) {
+        List<TmNeuronMetadata> workspaceNeurons = getTmNeuronMetadataByWorkspaceId(workspace,subjectKey, offset, length);
         if (workspaceNeurons.isEmpty()) {
             return Collections.emptyList();
         }
@@ -329,7 +351,8 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     }
 
     @Override
-    public void updateNeuronTagsTagsForNeurons(List<Long> neuronIds, List<String> tags, boolean tagState, String subjectKey) {
+    public void updateNeuronTagsForNeurons(TmWorkspace workspace, List<Long> neuronIds, List<String> tags, boolean tagState,
+                                            String subjectKey) {
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatesBuilder = ImmutableMap.builder();
         if (tagState) {
             updatesBuilder.put("tags", new AppendFieldValueHandler<>(ImmutableSet.copyOf(tags)));
@@ -341,7 +364,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         UpdateOptions updateOptions = new UpdateOptions();
         updateOptions.upsert(false);
         MongoDaoHelper.updateMany(
-                mongoCollection,
+                getNeuronCollection(workspace.getNeuronCollection()),
                 MongoDaoHelper.createFilterCriteria(
                         ImmutableList.of(
                                 MongoDaoHelper.createFilterByIds(neuronIds),
@@ -349,5 +372,9 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 ),
                 updates,
                 updateOptions);
+    }
+
+    private MongoCollection<TmNeuronMetadata> getNeuronCollection(String collectionName) {
+        return mongoDatabase.getCollection(collectionName, TmNeuronMetadata.class);
     }
 }

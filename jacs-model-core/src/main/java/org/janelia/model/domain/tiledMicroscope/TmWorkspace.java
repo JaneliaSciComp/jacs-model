@@ -30,6 +30,7 @@ public class TmWorkspace extends AbstractDomainObject {
     
     private TmColorModel colorModel;
     private TmColorModel colorModel3d;
+    private String neuronCollection;
     private List<TmObjectMesh> objectMeshList;
 
     public TmWorkspace() {
@@ -127,5 +128,13 @@ public class TmWorkspace extends AbstractDomainObject {
     public TmWorkspace rename(String newName) {
         this.setName(newName);
         return this;
+    }
+
+    public String getNeuronCollection() {
+        return neuronCollection;
+    }
+
+    public void setNeuronCollection(String neuronCollection) {
+        this.neuronCollection = neuronCollection;
     }
 }
