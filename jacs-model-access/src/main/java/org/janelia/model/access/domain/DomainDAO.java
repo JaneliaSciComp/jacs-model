@@ -2066,7 +2066,7 @@ public class DomainDAO {
         if (nUpdatedEntities == 0) {
             return Stream.of();
         } else {
-            return collectPermissionChanges(subjectKey, className, ids, readers, writers, allowWriters, new HashSet<>());
+            return collectPermissionChanges(subjectKey, className, ids, allowWriters, new HashSet<>());
         }
     }
 
@@ -2169,7 +2169,9 @@ public class DomainDAO {
                     nUpdates += updatePermissions(subjectKey, refClassName, refIds, readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
                 }
             }
+
             if (ColorDepthSearch.class.isAssignableFrom(clazz)) {
+
                 for (ColorDepthSearch search : getDomainObjectsAs(objectRefs, ColorDepthSearch.class)) {
                     log.trace("Changing permissions on all masks and results associated with {}", search);
 
@@ -2181,7 +2183,10 @@ public class DomainDAO {
                     log.trace("Updated permissions on {} results", wr2.getN());
                     nUpdates += wr2.getN();
                 }
-            } else if (ColorDepthLibrary.class.isAssignableFrom(clazz)) {
+
+            }
+            else if (ColorDepthLibrary.class.isAssignableFrom(clazz)) {
+
                 for (ColorDepthLibrary library : getDomainObjectsAs(objectRefs, ColorDepthLibrary.class)) {
                     log.trace("Changing permissions on all images associated with {}", library);
 
@@ -2189,7 +2194,10 @@ public class DomainDAO {
                     log.trace("Updated permissions on {} masks", wr1.getN());
                     nUpdates += wr1.getN();
                 }
-            } else if ("sample".equals(collectionName)) {
+
+            }
+            else if ("sample".equals(collectionName)) {
+
                 log.trace("Changing permissions on all fragments and lsms associated with samples: {}", loggedIdsParam);
 
                 List<String> sampleRefs = DomainUtils.getRefStrings(objectRefs);
@@ -2200,15 +2208,25 @@ public class DomainDAO {
 
                 WriteResult wr2 = imageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} lsms", wr2.getN());
-                nUpdates += wr1.getN();
-            } else if ("fragment".equals(collectionName)) {
+                nUpdates += wr2.getN();
+
+                WriteResult wr3 = colorDepthImageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
+                log.trace("Updated permissions on {} color depth images", wr3.getN());
+                nUpdates += wr3.getN();
+
+            }
+            else if ("fragment".equals(collectionName)) {
+
                 Set<Long> sampleIds = new HashSet<>();
                 for (NeuronFragment fragment : getDomainObjectsAs(subjectKey, objectRefs, NeuronFragment.class)) {
                     sampleIds.add(fragment.getSample().getTargetId());
                 }
                 log.trace("Changing permissions on {} samples associated with fragments: {}", sampleIds.size(), loggedIdsParam);
                 nUpdates += updatePermissions(subjectKey, Sample.class.getName(), sampleIds, readers, writers, grant, allowWriters, forceChildUpdates, false, visited);
-            } else if ("dataSet".equals(collectionName)) {
+
+            }
+            else if ("dataSet".equals(collectionName)) {
+
                 log.trace("Changing permissions on all objects in data sets: {}", loggedIdsParam);
                 for (Long id : ids) {
                     // Retrieve the data set in order to find its identifier
@@ -2243,7 +2261,10 @@ public class DomainDAO {
                                 readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
                     }
                 }
-            } else if ("tmWorkspace".equals(collectionName)) {
+
+            }
+            else if ("tmWorkspace".equals(collectionName)) {
+
                 log.trace("Changing permissions on the TmSamples associated with the TmWorkspaces: {}", loggedIdsParam);
 
                 List<Long> sampleIds = new ArrayList<>();
@@ -2259,19 +2280,20 @@ public class DomainDAO {
                 log.trace("Changing permissions on the TmNeurons associated with the TmWorkspaces: {}", workspaceRefs);
                 WriteResult wr2 = tmNeuronCollection.update("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} TmNeurons", wr2.getN());
-                nUpdates += wr1.getN();
+                nUpdates += wr2.getN();
 
                 WriteResult wr3 = tmReviewTaskCollection.update("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} TmReviewTask", wr3.getN());
-                nUpdates += wr1.getN();
+                nUpdates += wr3.getN();
             }
+
         }
 
         return nUpdates;
     }
 
 
-    private Stream<? extends DomainObject> collectPermissionChanges(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers, boolean allowWriters, Set<Reference> visited) {
+    private Stream<? extends DomainObject> collectPermissionChanges(String subjectKey, String className, Collection<Long> ids, boolean allowWriters, Set<Reference> visited) {
         String collectionName = DomainUtils.getCollectionName(className);
         String queryClause = allowWriters ? "writers:{$in:#}" : "ownerKey:#";
         Object queryParam = allowWriters ? getWriterSet(subjectKey) : subjectKey;
@@ -2321,7 +2343,7 @@ public class DomainDAO {
                 Collection<Long> refIds = groupedIdsToBeUpdated.get(refClassName);
                 updatedDomainObjectsStream = Stream.concat(
                         updatedDomainObjectsStream,
-                        collectPermissionChanges(subjectKey, refClassName, refIds, readers, writers, allowWriters, visited)
+                        collectPermissionChanges(subjectKey, refClassName, refIds, allowWriters, visited)
                 );
             }
         }
@@ -2355,6 +2377,10 @@ public class DomainDAO {
                     updatedDomainObjectsStream,
                     streamFindResult(imageCollection, Image.class, "{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam)
             );
+            updatedDomainObjectsStream = Stream.concat(
+                    updatedDomainObjectsStream,
+                    streamFindResult(colorDepthImageCollection, Image.class, "{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam)
+            );
         } else if ("fragment".equals(collectionName)) {
             Set<Long> sampleIds = new HashSet<>();
             for (NeuronFragment fragment : getDomainObjectsAs(subjectKey, objectRefs, NeuronFragment.class)) {
@@ -2362,7 +2388,7 @@ public class DomainDAO {
             }
             updatedDomainObjectsStream = Stream.concat(
                     updatedDomainObjectsStream,
-                    collectPermissionChanges(subjectKey, Sample.class.getName(), sampleIds, readers, writers, allowWriters, visited)
+                    collectPermissionChanges(subjectKey, Sample.class.getName(), sampleIds, allowWriters, visited)
             );
         } else if ("dataSet".equals(collectionName)) {
             List<DataSet> dataSets = streamFindResult(collection, DataSet.class, "{_id:{$in:#}," + queryClause + "}", ids, queryParam).collect(Collectors.toList());
@@ -2380,8 +2406,8 @@ public class DomainDAO {
                     streamFindResult(imageCollection.find("{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam), Image.class),
                     dataSets.stream()
                             .map(ds -> getColorDepthLibraryByIdentifier(ds.getOwnerKey(), ds.getIdentifier()))
-                            .filter(cdl -> cdl != null)
-                            .flatMap(cdl -> collectPermissionChanges(subjectKey, ColorDepthLibrary.class.getName(), Collections.singletonList(cdl.getId()), readers, writers, allowWriters, visited)))
+                            .filter(Objects::nonNull)
+                            .flatMap(cdl -> collectPermissionChanges(subjectKey, ColorDepthLibrary.class.getName(), Collections.singletonList(cdl.getId()), allowWriters, visited)))
                     .flatMap(s -> s)
                     ;
         } else if ("tmWorkspace".equals(collectionName)) {
