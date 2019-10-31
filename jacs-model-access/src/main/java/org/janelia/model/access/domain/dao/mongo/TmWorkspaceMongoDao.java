@@ -12,11 +12,13 @@ import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.bson.Document;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.IdSource;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
@@ -41,6 +43,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
 
     private final DomainDAO domainDao;
     private final TmNeuronMetadataDao tmNeuronMetadataDao;
+    private final MongoDatabase mongoDatabase;
 
     @Inject
     TmWorkspaceMongoDao(MongoDatabase mongoDatabase,
@@ -49,6 +52,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                         DomainDAO domainDao,
                         TmNeuronMetadataDao tmNeuronMetadataDao) {
         super(mongoDatabase, permissionsHelper, updateHelper);
+        this.mongoDatabase = mongoDatabase;
         this.domainDao = domainDao;
         this.tmNeuronMetadataDao = tmNeuronMetadataDao;
     }
@@ -87,6 +91,12 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     @Override
     public TmWorkspace createTmWorkspace(String subjectKey, TmWorkspace tmWorkspace) {
         try {
+            // find a suitable collection to store this workspace's neurons
+            boolean isViable = false;
+            String collectionName = MongoDaoHelper.findOrCreateCappedCollection (this, mongoDatabase,
+                    "tmNeuron", 20000000000L, TmNeuronMetadata.class);
+            tmWorkspace.setNeuronCollection(collectionName);
+
             TmWorkspace workspace = domainDao.save(subjectKey, tmWorkspace);
             TreeNode folder = domainDao.getOrCreateDefaultTreeNodeFolder(subjectKey, DomainConstants.NAME_TM_WORKSPACE_FOLDER);
             domainDao.addChildren(subjectKey, folder, Arrays.asList(Reference.createFor(workspace)));
