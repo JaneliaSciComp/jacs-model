@@ -135,7 +135,7 @@ class SolrConnector {
                 result.addAndGet(solrDocsBatch.size());
                 itemsToCommit.addAndGet(solrDocsBatch.size());
             } catch (Throwable e) {
-                LOG.error("Error while updating solr index for {}", solrDocsBatch, e);
+                LOG.error("Error while updating solr index with {} docs", solrDocsBatch.size(), e);
             } finally {
                 solrDocsBatch.clear();
             }
