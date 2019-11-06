@@ -99,7 +99,7 @@ class SolrConnector {
                                 LOG.info("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get() + itemsToCommit.get(), stopwatch.elapsed(TimeUnit.SECONDS));
                                 solrServer.add(solrDocsBatch);
                                 nAdded = nDocs;
-                            } catch (Exception e) {
+                            } catch (Throwable e) {
                                 LOG.error("Error while updating solr index with {} documents", nDocs, e);
                                 nAdded = 0;
                             } finally {
@@ -134,7 +134,7 @@ class SolrConnector {
                 solrServer.add(solrDocsBatch);
                 result.addAndGet(solrDocsBatch.size());
                 itemsToCommit.addAndGet(solrDocsBatch.size());
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 LOG.error("Error while updating solr index for {}", solrDocsBatch, e);
             } finally {
                 solrDocsBatch.clear();
