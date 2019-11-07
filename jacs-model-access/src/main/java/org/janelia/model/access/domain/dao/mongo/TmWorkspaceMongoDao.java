@@ -155,7 +155,6 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                     .flatMap(neuronStream -> neuronStream)
                     .forEach(target -> {
                         TmNeuronMetadata neuronCopy = TmNeuronMetadata.copy(target);
-                        neuronCopy.setId(neuronIdSource.next());
                         neuronCopy.setWorkspaceRef(Reference.createFor(workspaceCopy));
                         if (assignOwner != null) {
                             neuronCopy.setOwnerKey(assignOwner);

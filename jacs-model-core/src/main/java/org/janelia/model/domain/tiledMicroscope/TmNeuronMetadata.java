@@ -58,6 +58,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         copy.setColorHex(neuron.getColorHex());
         copy.setOwnerKey(neuron.getOwnerKey());
         copy.setTags(new HashSet<String>(neuron.getTags()));
+        copy.setNeuronData(neuron.getNeuronData());
         return copy;
     }
 
