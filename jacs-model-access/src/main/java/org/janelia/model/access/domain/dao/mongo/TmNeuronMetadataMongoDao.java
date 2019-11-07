@@ -293,12 +293,34 @@ stopWatch.start();
 
     @Override
     public void bulkMigrateNeuronsInWorkspace(TmWorkspace workspace, Collection<TmNeuronMetadata> neurons, String subjectKey) {
-        MongoCollection<TmNeuronMetadata> copyLoc = getNeuronCollection(workspace.getNeuronCollection());
+        String collectionName = MongoDaoHelper.findOrCreateCappedCollection (this, mongoDatabase,
+                "tmNeuron", 20000000000L, TmNeuronMetadata.class);
+        try {
+            workspace.setNeuronCollection(collectionName);
+            workspace = domainDao.save(subjectKey, workspace);
+        } catch (Exception e) {
+            e.printStackTrace();
+            LOG.info("ERROR SAVING WORKSPACE {} - Issue with Neuron Collection Key", workspace.getId());
+            throw new RuntimeException("ERROR SAVING WORKSPACE" + workspace.getId() + " - Issue with Neuron Collection Key");
+        }
+
+        MongoCollection<TmNeuronMetadata> copyLoc = getNeuronCollection(collectionName);
         if (neurons==null || neurons.isEmpty())
             return;
         List<TmNeuronMetadata> neuronList = new ArrayList<>(neurons);
         try {
-            copyLoc.insertMany(neuronList);
+            int prevCount = 0;
+            for (int i=0; i<neuronList.size(); i=i+1000) {
+                if (neuronList.size()>(i+1000)) {
+                    copyLoc.insertMany(neuronList.subList(i, i + 1000));
+                    LOG.info("Inserted {} neurons", i+1000);
+                }
+                else {
+                    copyLoc.insertMany(neuronList.subList(i, neuronList.size()));
+                    LOG.info("Inserted {} neurons", neuronList.size());
+                }
+            }
+            LOG.info("Finished workspace {}",workspace.getId());
         } catch (org.bson.BsonMaximumSizeExceededException e) {
             // one or more of the documents is too big
             // save them to gridfs and then try again
@@ -323,6 +345,7 @@ stopWatch.start();
                     neuron.setLargeNeuron(isLarge);
                 }
             }
+
             try {
                 LOG.info("Large neurons in this batch are {}",largeNeurons);
                 if (!truncatedList.isEmpty())
