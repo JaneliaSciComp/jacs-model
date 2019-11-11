@@ -33,10 +33,7 @@ import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronData;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.domain.tiledMicroscope.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -234,6 +231,9 @@ stopWatch.start();
         Date now = new Date();
         if (entity.getId() == null) {
             entity.setId(createNewId());
+            for (TmGeoAnnotation anno: entity.getRootAnnotations()) {
+                anno.setParentId(entity.getId());
+            }
             entity.setOwnerKey(subjectKey);
             entity.getReaders().add(subjectKey);
             entity.getWriters().add(subjectKey);
