@@ -72,7 +72,7 @@ class SolrConnector {
             solrServer.add(solrDoc);
             commit(false, false);
             return true;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOG.error("Error while adding {} to solr index", solrDoc, e);
             return false;
         }
@@ -99,7 +99,7 @@ class SolrConnector {
                                 LOG.info("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get() + itemsToCommit.get(), stopwatch.elapsed(TimeUnit.SECONDS));
                                 solrServer.add(solrDocsBatch);
                                 nAdded = nDocs;
-                            } catch (Exception e) {
+                            } catch (Throwable e) {
                                 LOG.error("Error while updating solr index with {} documents", nDocs, e);
                                 nAdded = 0;
                             } finally {
@@ -112,7 +112,7 @@ class SolrConnector {
                         try {
                             solrServer.add(solrDoc);
                             nAdded = 1;
-                        } catch (Exception e) {
+                        } catch (Throwable e) {
                             LOG.error("Error while updating solr index for {}", solrDoc, e);
                             nAdded = 0;
                         }
@@ -134,8 +134,8 @@ class SolrConnector {
                 solrServer.add(solrDocsBatch);
                 result.addAndGet(solrDocsBatch.size());
                 itemsToCommit.addAndGet(solrDocsBatch.size());
-            } catch (Exception e) {
-                LOG.error("Error while updating solr index for {}", solrDocsBatch, e);
+            } catch (Throwable e) {
+                LOG.error("Error while updating solr index with {} docs", solrDocsBatch.size(), e);
             } finally {
                 solrDocsBatch.clear();
             }
@@ -154,7 +154,7 @@ class SolrConnector {
         try {
             solrServer.deleteByQuery("*:*");
             commit(true, true);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new IllegalStateException(e);
         }
     }
@@ -168,7 +168,7 @@ class SolrConnector {
             solrServer.deleteById(id.toString());
             commit(false, false);
             return true;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new IllegalStateException(e);
         }
     }
@@ -232,7 +232,7 @@ class SolrConnector {
         try {
             solrServer.deleteByQuery(q);
             return ids.size();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOG.error("Error trying to delete using query: {}", q, e);
             return 0;
         }
@@ -251,7 +251,7 @@ class SolrConnector {
             LOG.debug("SOLR commit");
             solrServer.commit(waitFlush, waitSearcher);
             return true;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOG.error("SOLR commit error", e);
             return false;
         }

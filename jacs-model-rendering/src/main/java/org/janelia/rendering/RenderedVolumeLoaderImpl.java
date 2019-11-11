@@ -200,14 +200,11 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     public Optional<RawImage> findClosestRawImageFromVoxelCoord(RenderedVolumeLocation rvl, int xVoxel, int yVoxel, int zVoxel) {
         return loadVolume(rvl)
                 .flatMap(rv -> {
-                    Integer[] p = Arrays.stream(convertToMicroscopeCoord(
-                            new int[]{xVoxel, yVoxel, zVoxel},
-                            rv.getOriginVoxel(),
-                            rv.getMicromsPerVoxel())).boxed().toArray(Integer[]::new);
+                    Double[] stageCoordInNanos = convertToMicroscopeCoordInNanos(new int[]{xVoxel, yVoxel, zVoxel}, rv.getOriginVoxel(), rv.getMicromsPerVoxel());
                     return loadVolumeRawImageTiles(rvl).stream()
                             .min((t1, t2) -> {
-                                Double d1 = squaredMetricDistance(t1.getCenter(), p);
-                                Double d2 = squaredMetricDistance(t2.getCenter(), p);
+                                Double d1 = squaredMetricDistance(t1.getCenterInNanos(), stageCoordInNanos);
+                                Double d2 = squaredMetricDistance(t2.getCenterInNanos(), stageCoordInNanos);
                                 if (d1 < d2) {
                                     return -1;
                                 } else if (d1 > d2) {
@@ -220,7 +217,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                 });
     }
 
-    private Double squaredMetricDistance(Integer[] p1, Integer[] p2) {
+    private Double squaredMetricDistance(Double[] p1, Double[] p2) {
         return Streams.zip(Arrays.stream(p1), Arrays.stream(p2), (p1_coord, p2_coord) -> Math.pow((p1_coord.doubleValue() - p2_coord.doubleValue()), 2.))
                 .reduce(0., (d1, d2) -> d1 + d2);
     }
@@ -299,10 +296,10 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                 ;
     }
 
-    private int[] convertToMicroscopeCoord(int[] screenCoord, int[] origin, double[] microsPerVoxel) {
-        int[] microscopeCoord = new int[3];
+    private Double[] convertToMicroscopeCoordInNanos(int[] screenCoord, int[] origin, double[] microsPerVoxel) {
+        Double[] microscopeCoord = new Double[3];
         for (int i = 0; i < screenCoord.length; i++) {
-            microscopeCoord[i] = origin[i] + (int) (screenCoord[i] * microsPerVoxel[i]);
+            microscopeCoord[i] = (origin[i] + screenCoord[i]) * microsPerVoxel[i] * 1000.;
         }
         return microscopeCoord;
     }

@@ -116,10 +116,10 @@ public class RawImage {
     }
 
     @JsonIgnore
-    public Integer[] getCenter() {
+    public Double[] getCenterInNanos() {
         Preconditions.checkArgument(originInNanos != null && dimsInNanos != null && originInNanos.length == dimsInNanos.length,
                 "Incompatible originInNanos and dimsInNanos vectors in " + this.toString());
-        return Streams.zip(Arrays.stream(originInNanos), Arrays.stream(dimsInNanos), (coord, size) -> coord + size / 2).toArray(Integer[]::new);
+        return Streams.zip(Arrays.stream(originInNanos), Arrays.stream(dimsInNanos), (coord, size) -> (coord + size / 2.)).toArray(Double[]::new);
     }
 
     @JsonIgnore
