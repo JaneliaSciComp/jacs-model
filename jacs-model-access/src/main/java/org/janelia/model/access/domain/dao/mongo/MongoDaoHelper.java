@@ -3,6 +3,7 @@ package org.janelia.model.access.domain.dao.mongo;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
@@ -21,19 +22,13 @@ import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.RemoveFieldValueHandler;
 import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
+import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.util.SortCriteria;
 import java.io.*;
 import java.nio.file.Files;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 
@@ -246,6 +241,44 @@ class MongoDaoHelper {
             }
         } else {
             return Updates.set(fieldName, valueHandler.getFieldValue());
+        }
+    }
+
+    /**
+     * this method is useful for creating capped-size collections in Mongo.
+     * It will check all creations that start with a prefix and return the
+     * collection that can fit those items or create a collection if it can't find
+     * a suitable collection.  Need to add automatic index creation based off BSON parameters
+     */
+
+    static <T> String findOrCreateCappedCollection (AbstractMongoDao dao, MongoDatabase db, String prefix, double cappedSize, Class<T> domainClass) {
+        try {
+            // tried java 8 consumer but it's like lipstick on a pig; worse than just using an iterator
+            Iterator<String> nameIter = db.listCollectionNames().iterator();
+            while (nameIter.hasNext()) {
+               String name = nameIter.next();
+               if (name.startsWith(prefix)) {
+                    Document collStatsResults = db.runCommand(new Document("collStats", name));
+                    if (collStatsResults!=null) {
+                        double sizeCollection;
+                        if (collStatsResults.get("size") instanceof Integer)
+                            sizeCollection = ((Integer)collStatsResults.get("size")).doubleValue();
+                        else sizeCollection = (double)collStatsResults.get("size");
+                        if (sizeCollection<cappedSize) {
+                            return name;
+                        }
+                    }
+                }
+            }
+
+            // create new collection if we make it here
+            String newCollectionName = prefix + "_" + dao.createNewId();
+            db.getCollection(newCollectionName, domainClass);
+            return newCollectionName;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Problems retrieving a suitable collection for class" +
+                    domainClass.toString() + "of size " + cappedSize);
         }
     }
 }
