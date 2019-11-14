@@ -2,6 +2,7 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
@@ -15,6 +16,7 @@ import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
@@ -265,15 +267,22 @@ class MongoDaoHelper {
                             sizeCollection = ((Integer)collStatsResults.get("size")).doubleValue();
                         else sizeCollection = (double)collStatsResults.get("size");
                         if (sizeCollection<cappedSize) {
-                            return name;
+                            //return name;
                         }
                     }
                 }
             }
 
-            // create new collection if we make it here
+            // create new collection and indices if we make it here
             String newCollectionName = prefix + "_" + dao.createNewId();
-            db.getCollection(newCollectionName, domainClass);
+            MongoCollection newCollection = db.getCollection(newCollectionName, domainClass);
+            ListIndexesIterable<Document> indices = db.getCollection(prefix, domainClass).listIndexes();
+            indices.iterator().forEachRemaining(
+                    doc -> {
+                        Document keys = (Document)doc.get("key");
+                        newCollection.createIndex(keys);
+                    });
+
             return newCollectionName;
         } catch (Exception e) {
             e.printStackTrace();
