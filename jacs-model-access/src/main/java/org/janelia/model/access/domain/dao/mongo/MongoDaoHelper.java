@@ -267,7 +267,7 @@ class MongoDaoHelper {
                             sizeCollection = ((Integer)collStatsResults.get("size")).doubleValue();
                         else sizeCollection = (double)collStatsResults.get("size");
                         if (sizeCollection<cappedSize) {
-                            //return name;
+                            return name;
                         }
                     }
                 }
