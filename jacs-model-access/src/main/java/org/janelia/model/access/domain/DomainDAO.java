@@ -2437,11 +2437,11 @@ public class DomainDAO {
         return updatedDomainObjectsStream;
     }
 
-    private <T> Stream<T> streamFindResult(MongoCollection mongoCollection, Class<T> resultType, String query, Object... parameters) {
+    public <T> Stream<T> streamFindResult(MongoCollection mongoCollection, Class<T> resultType, String query, Object... parameters) {
         return streamFindResult(mongoCollection.find(query, parameters), resultType);
     }
 
-    private <T> Stream<T> streamFindResult(Find findResult, Class<T> resultType) {
+    public <T> Stream<T> streamFindResult(Find findResult, Class<T> resultType) {
         return StreamSupport.stream(
                 findResult
                         .with((DBCursor cursor) -> cursor.noCursorTimeout(true))
