@@ -138,7 +138,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
             byte[] binaryData = mapper.writeValueAsBytes(pointData);
             gridFSMongoDao.updateDataBlock(new ByteArrayInputStream(binaryData),neuronId.toString());
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error ("Problem saving large neuron to GridFS",e);
             throw new RuntimeException("Problem saving large neuron to GridFS");
         }
     }
@@ -147,7 +147,8 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         try {
             gridFSMongoDao.deleteDataBlock(neuronId.toString());
         } catch (Exception e) {
-            e.printStackTrace();
+
+            LOG.error ("Problem saving large neuron to GridFS",e);
             throw new RuntimeException("Problem removing large neuron from GridFS");
         }
     }
@@ -165,7 +166,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 return true;
             }
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            LOG.error ("Problem checking the size of the neuron",e);
             throw new RuntimeException("Problem checking the size of neuron "
                     + neuron.getId());
         }
@@ -299,8 +300,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
             workspace.setNeuronCollection(collectionName);
             workspace = domainDao.save(subjectKey, workspace);
         } catch (Exception e) {
-            e.printStackTrace();
-            LOG.info("ERROR SAVING WORKSPACE {} - Issue with Neuron Collection Key", workspace.getId());
+            LOG.error("ERROR SAVING WORKSPACE {} - Issue with Neuron Collection Key", workspace.getId(),e);
             throw new RuntimeException("ERROR SAVING WORKSPACE" + workspace.getId() + " - Issue with Neuron Collection Key");
         }
 
@@ -351,8 +351,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 if (!truncatedList.isEmpty())
                     copyLoc.insertMany(truncatedList);
             } catch (org.bson.BsonMaximumSizeExceededException ee) {
-                ee.printStackTrace();
-                LOG.info("ERROR PROCESSING {} - Issue with Large Neurons", workspace.getId());
+                LOG.error("ERROR PROCESSING {} - Issue with Large Neurons", workspace.getId(),e);
             }
         }
     }

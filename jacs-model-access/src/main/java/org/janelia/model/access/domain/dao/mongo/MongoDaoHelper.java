@@ -285,7 +285,6 @@ class MongoDaoHelper {
 
             return newCollectionName;
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException("Problems retrieving a suitable collection for class" +
                     domainClass.toString() + "of size " + cappedSize);
         }
