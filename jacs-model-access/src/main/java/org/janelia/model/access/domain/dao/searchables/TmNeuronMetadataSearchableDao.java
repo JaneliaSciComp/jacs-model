@@ -90,6 +90,11 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
     }
 
     @Override
+    public Long getNeuronCountsForWorkspace(TmWorkspace workspace, String subjectKey) {
+        return tmNeuronMetadataDao.getNeuronCountsForWorkspace(workspace, subjectKey);
+    }
+
+    @Override
     public TmNeuronMetadata saveNeuronMetadata(TmWorkspace workspace, TmNeuronMetadata neuron, String subjectKey) {
         return tmNeuronMetadataDao.saveNeuronMetadata(workspace, neuron, subjectKey);
     }

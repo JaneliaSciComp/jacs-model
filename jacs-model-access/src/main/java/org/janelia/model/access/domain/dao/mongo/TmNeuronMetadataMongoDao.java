@@ -110,7 +110,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                                                                    long offset, int length) {
         String workspaceRef = "TmWorkspace#" + workspace.getId();
         StopWatch stopWatch = new StopWatch();
-stopWatch.start();
+        stopWatch.start();
         List<TmNeuronMetadata> neuronList = find(
                 MongoDaoHelper.createFilterCriteria(
                         Filters.eq("workspaceRef", workspaceRef),
@@ -395,6 +395,17 @@ stopWatch.start();
                 ),
                 updates,
                 updateOptions);
+    }
+
+    @Override
+    public Long getNeuronCountsForWorkspace(TmWorkspace workspace, String subjectKey) {
+        MongoCollection<TmNeuronMetadata> mongoCollection = getNeuronCollection(workspace.getNeuronCollection());
+        return MongoDaoHelper.count(
+                MongoDaoHelper.createFilterCriteria(
+                Filters.eq("workspaceRef", Reference.createFor(workspace)),
+                permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
+                mongoCollection
+        );
     }
 
     private MongoCollection<TmNeuronMetadata> getNeuronCollection(String collectionName) {

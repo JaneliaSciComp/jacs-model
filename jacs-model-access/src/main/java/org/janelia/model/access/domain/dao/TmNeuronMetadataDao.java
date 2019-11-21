@@ -24,5 +24,6 @@ public interface TmNeuronMetadataDao extends DomainObjectDao<TmNeuronMetadata> {
     void removeEmptyNeuronsInWorkspace(TmWorkspace workspace, String subjectKey);
     void bulkMigrateNeuronsInWorkspace(TmWorkspace workspace, Collection<TmNeuronMetadata> neurons, String subjectKey);
     void updateNeuronTagsForNeurons(TmWorkspace workspace, List<Long> neuronIds, List<String> tags, boolean tagState, String subjectKey);
+    Long getNeuronCountsForWorkspace(TmWorkspace workspace, String subjectKey);
     TmNeuronMetadata saveNeuronMetadata(TmWorkspace workspace, TmNeuronMetadata neuron, String subjectKey);
 }
