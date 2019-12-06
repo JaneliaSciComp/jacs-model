@@ -36,4 +36,4 @@ git tag ${projectVersion}
 git push --tags
 
 # publish the artifacts
-gradle ${userArg} ${passwordArg} clean publish
+./gradlew ${userArg} ${passwordArg} clean publish
