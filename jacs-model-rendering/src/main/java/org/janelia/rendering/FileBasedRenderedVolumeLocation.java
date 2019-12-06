@@ -80,7 +80,7 @@ public class FileBasedRenderedVolumeLocation extends FileBasedDataLocation imple
         Path volumeBasePath = Paths.get(getBaseDataStoragePath());
         TiffOctreeImageVisitor imageVisitor = new TiffOctreeImageVisitor(volumeBasePath, level);
         try {
-            Files.walkFileTree(volumeBasePath, EnumSet.noneOf(FileVisitOption.class), level + 1, imageVisitor);
+            Files.walkFileTree(volumeBasePath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), level + 1, imageVisitor);
             return imageVisitor.tileImages.stream().map(Path::toUri).collect(Collectors.toList());
         } catch (IOException e) {
             throw new IllegalStateException(e);
