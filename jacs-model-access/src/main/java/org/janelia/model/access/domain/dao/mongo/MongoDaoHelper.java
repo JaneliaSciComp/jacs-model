@@ -1,6 +1,7 @@
 package org.janelia.model.access.domain.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
+import com.mongodb.DBCursor;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
@@ -32,6 +33,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 
 /**
@@ -114,6 +116,20 @@ class MongoDaoHelper {
         return results
                 .sort(sortCriteria)
                 .into(entityDocs);
+    }
+
+    static <R> FindIterable<R> rawFind(Bson queryFilter, long offset, int length, MongoCollection mongoCollection, Class<R> resultType) {
+        FindIterable<R> results = mongoCollection.find();
+        if (queryFilter != null) {
+            results = results.filter(queryFilter);
+        }
+        if (offset > 0) {
+            results = results.skip((int) offset);
+        }
+        if (length > 0) {
+            results = results.limit(length);
+        }
+        return results;
     }
 
     static <T, R> List<R> findPipeline(List<Bson> aggregationPipeline, Bson sortCriteria, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {

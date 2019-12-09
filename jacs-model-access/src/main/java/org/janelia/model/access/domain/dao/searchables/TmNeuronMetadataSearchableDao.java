@@ -3,10 +3,12 @@ package org.janelia.model.access.domain.dao.searchables;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.bson.Document;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
@@ -42,6 +44,11 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
     }
 
     @Override
+    public Iterable<TmNeuronMetadata> streamWorkspaceNeurons(TmWorkspace workspace, String subjectKey, long offset, int length) {
+        return tmNeuronMetadataDao.streamWorkspaceNeurons(workspace, subjectKey, offset, length);
+    }
+
+    @Override
     public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(TmWorkspace workspace, String subjectKey, long offset, int length) {
         return tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(workspace, subjectKey, offset, length);
     }
@@ -49,13 +56,6 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<Tm
     @Override
     public List<TmNeuronMetadata> getTmNeuronMetadataByNeuronIds(TmWorkspace workspace, List<Long> neuronIdList) {
         return tmNeuronMetadataDao.getTmNeuronMetadataByNeuronIds(workspace, neuronIdList);
-    }
-
-    @Override
-    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(TmWorkspace workspace,
-                                                                                                       String subjectKey,
-                                                                                                       long offset, int length) {
-        return tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(workspace, subjectKey,offset,length);
     }
 
     @Override

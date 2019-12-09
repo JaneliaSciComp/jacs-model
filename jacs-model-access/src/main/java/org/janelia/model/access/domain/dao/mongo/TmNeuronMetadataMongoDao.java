@@ -5,6 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
@@ -14,6 +16,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
@@ -23,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
@@ -105,6 +109,11 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         return MongoDaoHelper.find(queryFilter, sortCriteria, offset, length, neuronCollection, resultType);
     }
 
+    <R> FindIterable<R> rawFind(Bson queryFilter, long offset, int length,
+                                   MongoCollection neuronCollection, Class<R> resultType) {
+        return MongoDaoHelper.rawFind(queryFilter, offset, length, neuronCollection, resultType);
+    }
+
     @Override
     public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(TmWorkspace workspace, String subjectKey,
                                                                    long offset, int length) {
@@ -120,11 +129,33 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 length,
                 getEntityType(),
                 getNeuronCollection(workspace.getNeuronCollection()));
-         hydrateLargeNeurons(neuronList);
+        hydrateLargeNeurons(neuronList);
 
         LOG.info("BATCH TIME {} ms", stopWatch.getTime());
         stopWatch.stop();
-         return neuronList;
+        return neuronList;
+    }
+
+    @Override
+    public Iterable<TmNeuronMetadata> streamWorkspaceNeurons(TmWorkspace workspace, String subjectKey,
+                                                             long offset, int length) {
+        String workspaceRef = "TmWorkspace#" + workspace.getId();
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+        FindIterable<TmNeuronMetadata> neuronList =
+                rawFind(MongoDaoHelper.createFilterCriteria(
+                        Filters.eq("workspaceRef", workspaceRef),
+                        permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
+                        offset,
+                        length,
+                        getNeuronCollection(workspace.getNeuronCollection()),
+                        TmNeuronMetadata.class);
+        // this can be done on the Client side
+        // hydrateLargeNeurons(neuronList);
+
+        LOG.info("BATCH TIME {} ms", stopWatch.getTime());
+        stopWatch.stop();
+        return neuronList;
     }
 
     @Override
@@ -354,22 +385,6 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 LOG.error("ERROR PROCESSING {} - Issue with Large Neurons", workspace.getId(),e);
             }
         }
-    }
-
-    @Override
-    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(TmWorkspace workspace,
-                                                                                                       String subjectKey,
-                                                                                                       long offset, int length) {
-        List<TmNeuronMetadata> workspaceNeurons = getTmNeuronMetadataByWorkspaceId(workspace,subjectKey, offset, length);
-        if (workspaceNeurons.isEmpty()) {
-            return Collections.emptyList();
-        }
-        Map<Long, TmNeuronMetadata> indexedWorkspaceNeurons = DomainUtils.getMapById(workspaceNeurons);
-        Map<Long, InputStream> neuronsPointStreams = tmNeuronBufferDao.streamNeuronPointsByWorkspaceId(indexedWorkspaceNeurons.keySet(), workspace.getId());
-
-        return workspaceNeurons.stream()
-                .map(neuron -> ImmutablePair.of(neuron, neuronsPointStreams.get(neuron.getId())))
-                .collect(Collectors.toList());
     }
 
     @Override
