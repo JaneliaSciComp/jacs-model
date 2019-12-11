@@ -118,8 +118,8 @@ class MongoDaoHelper {
                 .into(entityDocs);
     }
 
-    static <R> FindIterable<R> rawFind(Bson queryFilter, long offset, int length, MongoCollection mongoCollection, Class<R> resultType) {
-        FindIterable<R> results = mongoCollection.find();
+    static <T, R> FindIterable<R> rawFind(Bson queryFilter, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
+        FindIterable<R> results = mongoCollection.find(resultType);
         if (queryFilter != null) {
             results = results.filter(queryFilter);
         }

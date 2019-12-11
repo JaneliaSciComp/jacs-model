@@ -109,11 +109,6 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         return MongoDaoHelper.find(queryFilter, sortCriteria, offset, length, neuronCollection, resultType);
     }
 
-    <R> FindIterable<R> rawFind(Bson queryFilter, long offset, int length,
-                                   MongoCollection neuronCollection, Class<R> resultType) {
-        return MongoDaoHelper.rawFind(queryFilter, offset, length, neuronCollection, resultType);
-    }
-
     @Override
     public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(TmWorkspace workspace, String subjectKey,
                                                                    long offset, int length) {
@@ -143,16 +138,15 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         FindIterable<TmNeuronMetadata> neuronList =
-                rawFind(MongoDaoHelper.createFilterCriteria(
-                        Filters.eq("workspaceRef", workspaceRef),
-                        permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
+                MongoDaoHelper.rawFind(
+                        MongoDaoHelper.createFilterCriteria(
+                                Filters.eq("workspaceRef", workspaceRef),
+                                permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
                         offset,
                         length,
                         getNeuronCollection(workspace.getNeuronCollection()),
-                        TmNeuronMetadata.class);
-        // this can be done on the Client side
-        // hydrateLargeNeurons(neuronList);
-
+                        TmNeuronMetadata.class
+                );
         LOG.info("BATCH TIME {} ms", stopWatch.getTime());
         stopWatch.stop();
         return neuronList;

@@ -11,11 +11,19 @@ import java.lang.reflect.ParameterizedType;
 public interface Dao<T, I> {
     @SuppressWarnings("unchecked")
     default Class<T> getEntityType() {
-        return (Class<T>)((ParameterizedType)this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+        Class<?> hierarchyClass = this.getClass();
+        while (!(hierarchyClass.getGenericSuperclass() instanceof ParameterizedType)) {
+            hierarchyClass = hierarchyClass.getSuperclass();
+        }
+        return (Class<T>)((ParameterizedType) hierarchyClass.getGenericSuperclass()).getActualTypeArguments()[0];
     }
 
     @SuppressWarnings("unchecked")
     default Class<I> getEntityIdType() {
-        return (Class<I>)((ParameterizedType)this.getClass().getGenericSuperclass()).getActualTypeArguments()[1];
+        Class<?> hierarchyClass = this.getClass();
+        while (!(hierarchyClass.getGenericSuperclass() instanceof ParameterizedType)) {
+            hierarchyClass = hierarchyClass.getSuperclass();
+        }
+        return (Class<I>)((ParameterizedType) hierarchyClass.getGenericSuperclass()).getActualTypeArguments()[1];
     }
 }

@@ -90,8 +90,7 @@ public class DomainUtils {
     static {
         try {
             registerAnnotatedClasses();
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             log.error("Error initializing DomainUtils", e);
         }
     }
@@ -195,7 +194,6 @@ public class DomainUtils {
 
     public static boolean hasCollectionName(Class<?> objectClass) {
         return getCollectionAnnotation(objectClass).isPresent();
-
     }
 
     private static Optional<MongoMapped> getCollectionAnnotation(Class<?> objectClass) {
