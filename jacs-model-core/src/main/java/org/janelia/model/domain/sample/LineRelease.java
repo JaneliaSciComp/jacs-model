@@ -36,7 +36,6 @@ public class LineRelease extends AbstractDomainObject implements Node {
     @Deprecated
     private List<String> dataSets = new ArrayList<>();
 
-    @Deprecated
     private List<String> annotators = new ArrayList<>();
 
     @Deprecated

@@ -175,7 +175,13 @@ public class ReflectionHelper {
      */
     public static Method getGetter(Class<?> clazz, String fieldName) throws Exception {
         String methodName = getAccessorName("get", fieldName);
-        return clazz.getMethod(methodName, EMPTY_ARGS_TYPES);
+        try {
+            return clazz.getMethod(methodName, EMPTY_ARGS_TYPES);
+        }
+        catch (NoSuchMethodException e) {
+            String methodName2 = getAccessorName("is", fieldName);
+            return clazz.getMethod(methodName2, EMPTY_ARGS_TYPES);
+        }
     }
 
     /**
