@@ -1,7 +1,18 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.google.common.collect.ImmutableList;
-import com.mongodb.DBCursor;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
@@ -12,12 +23,10 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-import com.mongodb.client.gridfs.*;
-import com.mongodb.client.gridfs.model.GridFSUploadOptions;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
@@ -25,15 +34,7 @@ import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.RemoveFieldValueHandler;
 import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
-import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.util.SortCriteria;
-import java.io.*;
-import java.nio.file.Files;
-
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 
 /**
@@ -118,8 +119,8 @@ class MongoDaoHelper {
                 .into(entityDocs);
     }
 
-    static <R> FindIterable<R> rawFind(Bson queryFilter, long offset, int length, MongoCollection mongoCollection, Class<R> resultType) {
-        FindIterable<R> results = mongoCollection.find();
+    static <T, R> FindIterable<R> rawFind(Bson queryFilter, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
+        FindIterable<R> results = mongoCollection.find(resultType);
         if (queryFilter != null) {
             results = results.filter(queryFilter);
         }

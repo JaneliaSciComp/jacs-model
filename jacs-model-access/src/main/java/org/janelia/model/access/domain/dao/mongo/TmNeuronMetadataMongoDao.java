@@ -2,11 +2,11 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -15,18 +15,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
@@ -35,9 +31,12 @@ import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
-import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.tiledMicroscope.*;
+import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
+import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronData;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
+import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,11 +108,6 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         return MongoDaoHelper.find(queryFilter, sortCriteria, offset, length, neuronCollection, resultType);
     }
 
-    <R> FindIterable<R> rawFind(Bson queryFilter, long offset, int length,
-                                   MongoCollection neuronCollection, Class<R> resultType) {
-        return MongoDaoHelper.rawFind(queryFilter, offset, length, neuronCollection, resultType);
-    }
-
     @Override
     public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(TmWorkspace workspace, String subjectKey,
                                                                    long offset, int length) {
@@ -148,14 +142,14 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                         permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
                         offset,
                         length,
-                        getNeuronCollection(workspace.getNeuronCollection()),
-                        TmNeuronMetadata.class);
-        // this can be done on the Client side
-        // hydrateLargeNeurons(neuronList);
-
+                        getNeuronCollection(workspace.getNeuronCollection()));
         LOG.info("BATCH TIME {} ms", stopWatch.getTime());
         stopWatch.stop();
         return neuronList;
+    }
+
+    private FindIterable<TmNeuronMetadata> rawFind(Bson queryFilter, long offset, int length, MongoCollection<TmNeuronMetadata> neuronCollection) {
+        return MongoDaoHelper.rawFind(queryFilter, offset, length, neuronCollection, TmNeuronMetadata.class);
     }
 
     @Override
