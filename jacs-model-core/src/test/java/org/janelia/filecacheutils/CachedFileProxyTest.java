@@ -163,7 +163,7 @@ public class CachedFileProxyTest {
         byte[] testContent = new byte[100];
         random.nextBytes(testContent);
 
-        LocalFileCacheStorage testLocalFileCacheStorage = new LocalFileCacheStorage(testCacheRootDir, 100, 50);
+        LocalFileCacheStorage testLocalFileCacheStorage = new LocalFileCacheStorage(testCacheRootDir, 100, 50, 100);
 
         TestFileKey testFileKey = new TestFileKey(testFilePath);
 
@@ -205,7 +205,7 @@ public class CachedFileProxyTest {
         byte[] testContent = new byte[100];
         random.nextBytes(testContent);
 
-        LocalFileCacheStorage testLocalFileCacheStorage = new LocalFileCacheStorage(testCacheRootDir, 100, 50);
+        LocalFileCacheStorage testLocalFileCacheStorage = new LocalFileCacheStorage(testCacheRootDir, 100, 50, 100);
 
         cacheContent(testContent, testLocalFileCacheStorage);
         assertTrue(Files.exists(testFilePath));

@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AtomicDouble;
@@ -91,6 +92,7 @@ public class LocalFileCacheStorage {
     private final Comparator<Map.Entry<String, CachedFileEntry>> entryComparatorByUpdatedTimestamp;
     private long capacityInKB;
     private long maxCachedFileSizeInKB;
+    private final int maximumSize;
     private final AtomicLong currentSizeInKB; // cache size in KB
     private final AtomicInteger currentSize; // number of entries in the cache
     private boolean disabled;
@@ -99,11 +101,12 @@ public class LocalFileCacheStorage {
      * @param localFileCacheDir cache directory
      * @param capacityInKB cache capacity in kiloBytes
      */
-    LocalFileCacheStorage(Path localFileCacheDir, long capacityInKB, long maxCachedFileSizeInKB) {
+    LocalFileCacheStorage(Path localFileCacheDir, long capacityInKB, long maxCachedFileSizeInKB, int maximumSize) {
         Preconditions.checkState(Files.exists(localFileCacheDir), "Cache directory " + localFileCacheDir + " must exist");
         this.localFileCacheDir = localFileCacheDir;
         this.capacityInKB = capacityInKB;
         this.maxCachedFileSizeInKB = maxCachedFileSizeInKB;
+        this.maximumSize = maximumSize;
         this.currentSizeInKB = new AtomicLong(0);
         this.currentSize = new AtomicInteger(0);
         this.cachedFiles = new LinkedHashMap<>();
@@ -214,31 +217,55 @@ public class LocalFileCacheStorage {
             LOG.info("Local cache usage reached the high water mark -> {}", usage);
             AtomicDouble updatedSizeInKB = new AtomicDouble(currentSizeInKB.doubleValue());
             AtomicInteger usageAfterRemoval = new AtomicInteger(usage);
-            Collection<CachedFileEntry> cacheEntriesToBeDeleted = new LinkedList<>();
-            // this loop simply iterates and collect entries to be deleted until the low watermark is reached
-            cachedFiles.entrySet().stream()
-                    .sorted(entryComparatorByUpdatedTimestamp)
-                    .peek(cachedFileEntry -> {
-                        cacheEntriesToBeDeleted.add(cachedFileEntry.getValue());
-                        double updatedValue = updatedSizeInKB.addAndGet(-cachedFileEntry.getValue().fileSizeInKB);
+            removeCacheEntries(
+                    cachedFileEntry -> {
+                        double updatedValue = updatedSizeInKB.addAndGet(-cachedFileEntry.fileSizeInKB);
                         int updatedUsage  = (int) (updatedValue / capacityInKB * 100.);
                         usageAfterRemoval.set(updatedUsage);
-                    })
-                    .anyMatch(cachedFileEntry -> usageAfterRemoval.get() <= LOW_WATERMARK)
-                    ;
-            // now we are actually deleting
-            cacheEntriesToBeDeleted.forEach(cachedFileEntry -> {
-                CachedFileEntry removedEntry = cachedFiles.remove(cachedFileEntry.fileName);
-                if (removedEntry != null) {
-                    deleteCachedFile(removedEntry);
-                }
-            });
+                    },
+                    cachedFileEntry -> usageAfterRemoval.get() <= LOW_WATERMARK);
             LOG.info("Local cache storage has {} entries and it is {}% full ({}KB / {}KB)",
                     size(),
                     getUsageAsPercentage(),
                     getCurrentSizeInKB(),
                     getCapacityInKB());
+        } else if (currentSize.get() > maximumSize) {
+            LOG.info("Local cache usage reached the size limit -> {}", cachedFiles.size());
+            int toRemoveCount = (100 - LOW_WATERMARK) * currentSize.get() / 100 + 1;
+            AtomicInteger toRemove = new AtomicInteger(toRemoveCount);
+            removeCacheEntries(
+                    cachedFileEntry -> {
+                        toRemove.decrementAndGet();
+                    },
+                    cachedFileEntry -> toRemove.get() <= 0);
+            LOG.info("Removed {} entries from local cache storage which now has {} entries and it is {}% full ({}KB / {}KB)",
+                    toRemoveCount,
+                    size(),
+                    getUsageAsPercentage(),
+                    getCurrentSizeInKB(),
+                    getCapacityInKB());
         }
+    }
+
+    private void removeCacheEntries(Consumer<CachedFileEntry> entryInspector, Predicate<CachedFileEntry> endCond) {
+        Collection<CachedFileEntry> cacheEntriesToBeDeleted = new LinkedList<>();
+        // this loop simply iterates and collect entries to be deleted until the end condition is met
+        cachedFiles.entrySet().stream()
+                .sorted(entryComparatorByUpdatedTimestamp)
+                .peek(cachedFileEntry -> {
+                    cacheEntriesToBeDeleted.add(cachedFileEntry.getValue());
+                    entryInspector.accept(cachedFileEntry.getValue());
+                })
+                .anyMatch(cachedFileEntry -> endCond.test(cachedFileEntry.getValue()))
+        ;
+        // now we are actually deleting
+        cacheEntriesToBeDeleted.forEach(cachedFileEntry -> {
+            CachedFileEntry removedEntry = cachedFiles.remove(cachedFileEntry.fileName);
+            if (removedEntry != null) {
+                deleteCachedFile(removedEntry);
+            }
+        });
+
     }
 
     private synchronized void deleteCachedFile(CachedFileEntry cachedFileEntry) {

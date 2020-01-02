@@ -22,10 +22,12 @@ import org.slf4j.LoggerFactory;
  */
 public class LocalFileCacheStorageBuilder {
     private static final Logger LOG = LoggerFactory.getLogger(LocalFileCacheStorageBuilder.class);
+    private static final int DEFAULT_MAX_SIZE = 16384;
 
     private Path cacheDir;
     private long capacityInKB;
     private long maxFileSizeInKB;
+    private int maxSize = DEFAULT_MAX_SIZE;
     private boolean disabled;
     private ExecutorService executorService;
 
@@ -36,6 +38,12 @@ public class LocalFileCacheStorageBuilder {
 
     public LocalFileCacheStorageBuilder withMaxFileSizeInKB(long maxFileSizeInKB) {
         this.maxFileSizeInKB = maxFileSizeInKB;
+        return this;
+    }
+
+    public LocalFileCacheStorageBuilder withMaxSize(int maxSize) {
+        Preconditions.checkArgument(maxSize > 0, "Maximum cache size must be a positive integer");
+        this.maxSize = maxSize;
         return this;
     }
 
@@ -57,7 +65,7 @@ public class LocalFileCacheStorageBuilder {
     public LocalFileCacheStorage build() {
         Preconditions.checkArgument(cacheDir != null, "Cache base directory must be provided");
         prepareCacheDir();
-        LocalFileCacheStorage localFileCacheStorage = new LocalFileCacheStorage(cacheDir, capacityInKB, maxFileSizeInKB);
+        LocalFileCacheStorage localFileCacheStorage = new LocalFileCacheStorage(cacheDir, capacityInKB, maxFileSizeInKB, maxSize);
         localFileCacheStorage.setDisabled(disabled);
         initializeCache(localFileCacheStorage);
         return localFileCacheStorage;
