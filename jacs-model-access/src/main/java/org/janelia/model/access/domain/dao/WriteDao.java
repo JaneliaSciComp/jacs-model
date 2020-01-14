@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Write data access spec.
+ * Read/Write data access spec.
  *
  * @param <T> entity type
  * @param <I> entity identifier type
