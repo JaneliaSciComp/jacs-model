@@ -2107,6 +2107,7 @@ public class DomainDAO {
                     || clazz.isAssignableFrom(Filter.class)
                     || clazz.isAssignableFrom(Sample.class)
                     || clazz.isAssignableFrom(NeuronFragment.class)
+                    || clazz.isAssignableFrom(DataSet.class)
                     || clazz.isAssignableFrom(TmSample.class)
                     || clazz.isAssignableFrom(TmWorkspace.class)) {
 

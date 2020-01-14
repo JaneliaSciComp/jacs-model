@@ -11,12 +11,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+import com.google.common.base.Preconditions;
+
 /**
  * Proxy for accessing content from locally accessible files.
  */
 public class LocalFileProxy implements FileProxy {
 
     private final Path localFilePath;
+
+    public LocalFileProxy(Path localFilePath) {
+        Preconditions.checkArgument(localFilePath != null);
+        this.localFilePath = localFilePath;
+    }
 
     public LocalFileProxy(String localFilePath) {
         this.localFilePath = Paths.get(localFilePath);
@@ -41,8 +48,17 @@ public class LocalFileProxy implements FileProxy {
     }
 
     @Override
-    public InputStream openContentStream() throws FileNotFoundException {
-        return new FileInputStream(localFilePath.toFile());
+    public ContentStream openContentStream() throws FileNotFoundException {
+        if (Files.notExists(localFilePath)) {
+            throw new FileNotFoundException(localFilePath + " was not found");
+        }
+        return new SourceContentStream(() -> {
+            try {
+                return new FileInputStream(localFilePath.toFile());
+            } catch (IOException e) {
+                throw new IllegalStateException("Error opening " + localFilePath, e);
+            }
+        });
     }
 
     @Override

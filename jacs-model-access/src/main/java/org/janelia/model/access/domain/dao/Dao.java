@@ -15,7 +15,7 @@ public interface Dao<T, I> {
         while (!(hierarchyClass.getGenericSuperclass() instanceof ParameterizedType)) {
             hierarchyClass = hierarchyClass.getSuperclass();
         }
-        return (Class<T>)((ParameterizedType) hierarchyClass.getGenericSuperclass()).getActualTypeArguments()[0];
+        return (Class<T>) ((ParameterizedType) hierarchyClass.getGenericSuperclass()).getActualTypeArguments()[0];
     }
 
     @SuppressWarnings("unchecked")
@@ -24,6 +24,6 @@ public interface Dao<T, I> {
         while (!(hierarchyClass.getGenericSuperclass() instanceof ParameterizedType)) {
             hierarchyClass = hierarchyClass.getSuperclass();
         }
-        return (Class<I>)((ParameterizedType) hierarchyClass.getGenericSuperclass()).getActualTypeArguments()[1];
+        return (Class<I>) ((ParameterizedType) hierarchyClass.getGenericSuperclass()).getActualTypeArguments()[1];
     }
 }

@@ -3,6 +3,7 @@ package org.janelia.filecacheutils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -18,7 +19,6 @@ public class HttpFileProxy implements FileProxy {
     private final String url;
     private final Function<String, InputStream> httpContentStreamProvider;
     private final Function<String, Boolean> httpCheckContentProvider;
-    private CountingInputStream contentStream;
 
     public HttpFileProxy(String url,
                          Function<String, InputStream> httpContentStreamProvider,
@@ -26,7 +26,6 @@ public class HttpFileProxy implements FileProxy {
         this.url = url;
         this.httpContentStreamProvider = httpContentStreamProvider;
         this.httpCheckContentProvider = httpCheckContentProvider;
-        this.contentStream = null;
     }
 
     @Override
@@ -36,23 +35,30 @@ public class HttpFileProxy implements FileProxy {
 
     @Override
     public Long estimateSizeInBytes() {
-        if (contentStream == null) {
-            return 0L;
-        } else {
-            return contentStream.getCount();
-        }
+        return 0L; // don't know how to estimate the size
     }
 
     @Override
-    public InputStream openContentStream() throws FileNotFoundException {
+    public ContentStream openContentStream() throws FileNotFoundException {
         if (url.startsWith("http://") || url.startsWith("https://")) {
-            contentStream = new CountingInputStream(httpContentStreamProvider.apply(url));
+            return new SourceContentStream(() -> {
+                try {
+                    return httpContentStreamProvider.apply(url);
+                } catch (Exception e) {
+                    throw new IllegalStateException("Error opening " + url, e);
+                }
+            });
         } else if (url.startsWith("file://")) {
-            contentStream = new CountingInputStream(new FileInputStream(url));
+            return new SourceContentStream(() -> {
+                try {
+                    return new FileInputStream(url);
+                } catch (IOException e) {
+                    throw new IllegalStateException("Error opening " + url, e);
+                }
+            });
         } else {
             throw new IllegalArgumentException("URL scheme is not supported " + url);
         }
-        return contentStream;
     }
 
     @Override

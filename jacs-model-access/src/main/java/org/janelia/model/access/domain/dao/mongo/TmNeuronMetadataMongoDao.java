@@ -2,11 +2,11 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -15,18 +15,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
@@ -35,9 +31,12 @@ import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
-import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.tiledMicroscope.*;
+import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
+import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronData;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
+import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,7 +88,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 neuronMetadata.setNeuronData(null);
                 neuronMetadata.setLargeNeuron(true);
             }
-            persistedNeuronMetadata = saveNeuron(neuronMetadata,collection, neuronOwnerKey);
+            persistedNeuronMetadata = saveNeuron(neuronMetadata,collection, neuronOwnerKey, false);
             if (isLarge) {
                 saveLargeNeuronPointData(persistedNeuronMetadata.getId(), pointData);
             }
@@ -101,7 +100,13 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     @Override
     public TmNeuronMetadata getTmNeuronMetadata(String subjectKey, TmWorkspace workspace, Long neuronId) {
-        return MongoDaoHelper.findById(neuronId, getNeuronCollection(workspace.getNeuronCollection()), TmNeuronMetadata.class);
+        TmNeuronMetadata neuron = MongoDaoHelper.findById(neuronId, getNeuronCollection(workspace.getNeuronCollection()), TmNeuronMetadata.class);
+        if (neuron.isLargeNeuron()) {
+            List<TmNeuronMetadata> list = new ArrayList<TmNeuronMetadata>();
+            list.add(neuron);
+            hydrateLargeNeurons(list);
+        }
+        return neuron;
     }
 
     <R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType,
@@ -236,29 +241,37 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         TmNeuronData pointData = neuron.getNeuronData();
         if (isLarge) {
             neuron.setNeuronData(null);
+            if (!neuron.isLargeNeuron()) {
+                removeTmNeuron(neuron.getId(), isLarge, workspace, subjectKey);
+                neuron.setLargeNeuron(true);
+                saveNeuron(neuron, workspace.getNeuronCollection(), subjectKey, true);
+            } else {
+                saveNeuron(neuron, workspace.getNeuronCollection(), subjectKey, false);
+            }
             saveLargeNeuronPointData(neuron.getId(), pointData);
-            if (!neuron.isLargeNeuron())
-               removeTmNeuron(neuron.getId(),isLarge, workspace, subjectKey);
         } else {
             if (neuron.isLargeNeuron())
                 removeLargeNeuronPointData(neuron.getId());
+            neuron.setLargeNeuron(isLarge);
+            saveNeuron(neuron, workspace.getNeuronCollection(), subjectKey, false);
         }
-        neuron.setLargeNeuron(isLarge);
-        saveNeuron(neuron, workspace.getNeuronCollection(), subjectKey);
         if (isLarge)
             neuron.setNeuronData(pointData);
         return neuron;
     }
 
     private TmNeuronMetadata saveNeuron(TmNeuronMetadata entity,
-                                       String collectionName, String subjectKey) {
+                                       String collectionName, String subjectKey, boolean forceCreate) {
         MongoCollection<TmNeuronMetadata> mongoCollection =  getNeuronCollection(collectionName);
 
         Date now = new Date();
-        if (entity.getId() == null) {
-            entity.setId(createNewId());
-            for (TmGeoAnnotation anno: entity.getRootAnnotations()) {
-                anno.setParentId(entity.getId());
+        if (entity.getId() == null || forceCreate) {
+            if (!forceCreate)
+                entity.setId(createNewId());
+            if (entity.getNeuronData()!=null) {
+                for (TmGeoAnnotation anno : entity.getRootAnnotations()) {
+                    anno.setParentId(entity.getId());
+                }
             }
             entity.setOwnerKey(subjectKey);
             entity.getReaders().add(subjectKey);

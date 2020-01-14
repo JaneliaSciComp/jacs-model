@@ -18,7 +18,7 @@ dependencies {
 
         // utilities
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.9-RC1"
-        GUAVA_LIB = "com.google.guava:guava:26.0-jre"
+        GUAVA_LIB = "com.google.guava:guava:28.1-jre"
 
         // database
         MONGODB_DRIVER_VERSION = "3.10.2"

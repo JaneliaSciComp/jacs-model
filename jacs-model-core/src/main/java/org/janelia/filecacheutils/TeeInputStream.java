@@ -1,8 +1,6 @@
 package org.janelia.filecacheutils;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -15,9 +13,10 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class TeeInputStream extends FilterInputStream {
+class TeeInputStream implements ContentStream {
     private static final Logger LOG = LoggerFactory.getLogger(TeeInputStream.class);
 
+    private final ContentStream baseContentStream;
     private final WritableByteChannel outputChannel;
     private final Consumer<Void> onCloseHandler;
     private final ExecutorService outputExecutor;
@@ -27,8 +26,8 @@ class TeeInputStream extends FilterInputStream {
     // however this is not thread safe
     private volatile boolean writingInProgress;
 
-    TeeInputStream(InputStream in, OutputStream os, Consumer<Void> onCloseHandler, ExecutorService outputExecutor) {
-        super(in);
+    TeeInputStream(ContentStream in, OutputStream os, Consumer<Void> onCloseHandler, ExecutorService outputExecutor) {
+        this.baseContentStream = in;
         this.outputChannel = Channels.newChannel(os);
         this.onCloseHandler = onCloseHandler;
         this.outputExecutor = outputExecutor;
@@ -36,25 +35,10 @@ class TeeInputStream extends FilterInputStream {
         writingInProgress = false;
     }
 
-    @Override
-    public int read() throws IOException {
-        return readBytes(new byte[1], 0, 1);
-    }
-
-    @Override
-    public int read(byte[] buf) throws IOException {
-        return readBytes(buf, 0, buf.length);
-    }
-
-    @Override
-    public int read(byte[] buf, int off, int len) throws IOException {
-        return readBytes(buf, off, len);
-    }
-
-    private int readBytes(byte[] buf, int off, int len) throws IOException {
+    public int readBytes(byte[] buf, int off, int len) throws IOException {
         int n;
         try {
-            n = super.read(buf, off, len);
+            n = baseContentStream.readBytes(buf, off, len);
             if (n > 0) {
                 writeBuffer(buf, off, n);
             }
@@ -120,13 +104,8 @@ class TeeInputStream extends FilterInputStream {
     }
 
     @Override
-    public void close() throws IOException {
-        try {
-            super.close();
-        } catch (IOException e) {
-            handleIOException(e);
-            throw e;
-        }
+    public void close() {
+        baseContentStream.close();
         if (onCloseHandler != null) {
             if (outputExecutor != null) {
                 writeOp.thenAcceptAsync(onCloseHandler, outputExecutor);
