@@ -16,7 +16,7 @@ public interface FileProxy {
 
     Long estimateSizeInBytes();
 
-    InputStream openContentStream() throws FileNotFoundException;
+    ContentStream openContentStream() throws FileNotFoundException;
 
     File getLocalFile() throws FileNotFoundException;
 

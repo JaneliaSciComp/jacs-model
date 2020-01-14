@@ -1,6 +1,7 @@
 package org.janelia.org.janelia.model.util;
 
 import org.janelia.model.domain.sample.DataSet;
+import org.janelia.model.domain.sample.Image;
 import org.janelia.model.util.ReflectionHelper;
 import org.junit.Assert;
 import org.junit.Test;
@@ -37,13 +38,15 @@ public class ReflectionHelperTest {
         Assert.assertEquals("Test", ds.getName());
     }
 
-    // TODO: this doesn't work currently because the method has a primitive boolean parameter
-//    @Test
-//    public void testSetBoolean() throws Exception {
-//        DataSet ds = new DataSet();
-//        ReflectionHelper.setUsingSetter(ds, "sageSync", true);
-//        Assert.assertTrue(ds.isSageSync());
-//    }
+    /**
+     * This test only works for methods that take non primitive Boolean.
+      */
+    @Test
+    public void testSetBoolean() throws Exception {
+        Image image = new Image();
+        ReflectionHelper.setUsingSetter(image, "userDataFlag", true);
+        Assert.assertTrue(image.getUserDataFlag());
+    }
 
     @Test
     public void testNoSuchMethod() throws Exception {

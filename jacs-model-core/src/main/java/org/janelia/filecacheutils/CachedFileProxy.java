@@ -4,12 +4,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 public class CachedFileProxy<K extends FileKey> implements FileProxy {
     private static final Logger LOG = LoggerFactory.getLogger(CachedFileProxy.class);
     private static final Set<String> DOWNLOADING_FILES = new ConcurrentSkipListSet<>();
+    private static final int DEFAULT_RETRIES = 3;
 
     private final Path localFilePath;
     private final K delegateFileKey;
@@ -79,15 +80,15 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
     }
 
     @Override
-    public InputStream openContentStream() throws FileNotFoundException {
-        InputStream localFileStream = localFileCacheStorage.openLocalCachedFile(localFilePath);
+    public ContentStream openContentStream() throws FileNotFoundException {
+        ContentStream localFileStream = localFileCacheStorage.openLocalCachedFile(localFilePath);
         if (localFileStream != null) {
             return localFileStream;
         } else {
             if (delegateFileProxy == null) {
                 delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
             }
-            InputStream contentStream = delegateFileProxy.openContentStream();
+            ContentStream contentStream = new RetriedContentStream(delegateFileProxy.openContentStream(), DEFAULT_RETRIES);
             if (contentStream == null) {
                 return null;
             }
@@ -204,7 +205,8 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
             if (delegateFileProxy == null) {
                 delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
             }
-            InputStream contentStream = delegateFileProxy.openContentStream();
+            ContentStream contentStream = new RetriedContentStream(delegateFileProxy.openContentStream(), DEFAULT_RETRIES);
+
             if (contentStream == null) {
                 return null;
             }
@@ -220,7 +222,8 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
             try {
                 try {
                     makeDownloadDir();
-                    Files.copy(contentStream, downloadingLocalFilePath, StandardCopyOption.REPLACE_EXISTING);
+                    OutputStream os = Files.newOutputStream(downloadingLocalFilePath, StandardOpenOption.CREATE);
+                    contentStream.copyTo(os);
                 } catch (IOException e) {
                     LOG.error("Error saving downloadable stream to {}", downloadingLocalFilePath, e);
                     throw new IllegalStateException(e);
@@ -239,10 +242,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                     }
                 }
             } finally {
-                try {
-                    contentStream.close();
-                } catch (IOException ignore) {
-                }
+                contentStream.close();
                 DOWNLOADING_FILES.remove(localFilePath.toString());
             }
             return localFilePath.toFile();

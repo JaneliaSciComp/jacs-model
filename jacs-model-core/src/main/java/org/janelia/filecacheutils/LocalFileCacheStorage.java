@@ -319,12 +319,12 @@ public class LocalFileCacheStorage {
         }
     }
 
-    synchronized InputStream openLocalCachedFile(Path localFilePath) {
+    synchronized ContentStream openLocalCachedFile(Path localFilePath) {
         try {
             Path cachedFilePath = getLocalCachedFile(localFilePath);
             if (cachedFilePath != null) {
                 LOG.debug("Streaming from local cache {}", cachedFilePath);
-                return Files.newInputStream(cachedFilePath);
+                return new LocalFileProxy(localFilePath).openContentStream();
             }
         } catch (IOException e) {
             LOG.debug("Error getting the content of the locally cached file {}", localFilePath, e);
