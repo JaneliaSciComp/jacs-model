@@ -3,11 +3,12 @@ package org.janelia.filecacheutils;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RetriedContentStream implements ContentStream {
+public class RetriedContentStream extends ContentStream {
     private static final Logger LOG = LoggerFactory.getLogger(RetriedContentStream.class);
     private static final int DEFAULT_RETRIES = 1;
 
@@ -15,8 +16,12 @@ public class RetriedContentStream implements ContentStream {
     private final int maxRetries;
     private long baseContentOffset;
 
-    public RetriedContentStream(ContentStream baseContentStream, int maxRetries) {
-        this.baseContentStream = baseContentStream;
+    public RetriedContentStream(StreamSupplier inputStreamSupplier, int maxRetries) {
+        this(inputStreamSupplier, null, maxRetries);
+    }
+
+    public RetriedContentStream(StreamSupplier inputStreamSupplier, Consumer<Void> closeHandler, int maxRetries) {
+        this.baseContentStream = new ContentStream(inputStreamSupplier, closeHandler);
         this.maxRetries = maxRetries > 0 ? maxRetries : DEFAULT_RETRIES;
         this.baseContentOffset = 0L;
     }
@@ -27,7 +32,7 @@ public class RetriedContentStream implements ContentStream {
     }
 
     @Override
-    public int readBytes(byte[] buf, int off, int len) throws IOException {
+    protected int readBytes(byte[] buf, int off, int len) throws IOException {
         int nRetries = 0;
         for (;;) {
             try {

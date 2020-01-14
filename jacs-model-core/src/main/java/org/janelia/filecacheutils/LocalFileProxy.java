@@ -48,11 +48,11 @@ public class LocalFileProxy implements FileProxy {
     }
 
     @Override
-    public ContentStream openContentStream() throws FileNotFoundException {
+    public InputStream openContentStream() throws FileNotFoundException {
         if (Files.notExists(localFilePath)) {
             throw new FileNotFoundException(localFilePath + " was not found");
         }
-        return new SourceContentStream(() -> {
+        return new ContentStream(() -> {
             try {
                 return new FileInputStream(localFilePath.toFile());
             } catch (IOException e) {

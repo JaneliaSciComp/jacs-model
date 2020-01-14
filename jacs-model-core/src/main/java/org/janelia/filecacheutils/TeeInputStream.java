@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class TeeInputStream implements ContentStream {
+class TeeInputStream extends ContentStream {
     private static final Logger LOG = LoggerFactory.getLogger(TeeInputStream.class);
 
     private final ContentStream baseContentStream;
@@ -35,7 +35,8 @@ class TeeInputStream implements ContentStream {
         writingInProgress = false;
     }
 
-    public int readBytes(byte[] buf, int off, int len) throws IOException {
+    @Override
+    protected int readBytes(byte[] buf, int off, int len) throws IOException {
         int n;
         try {
             n = baseContentStream.readBytes(buf, off, len);

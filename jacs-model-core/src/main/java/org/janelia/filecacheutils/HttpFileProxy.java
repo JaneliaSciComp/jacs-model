@@ -41,15 +41,15 @@ public class HttpFileProxy implements FileProxy {
     @Override
     public ContentStream openContentStream() throws FileNotFoundException {
         if (url.startsWith("http://") || url.startsWith("https://")) {
-            return new SourceContentStream(() -> {
+            return new RetriedContentStream(() -> {
                 try {
                     return httpContentStreamProvider.apply(url);
                 } catch (Exception e) {
                     throw new IllegalStateException("Error opening " + url, e);
                 }
-            });
+            }, 2);
         } else if (url.startsWith("file://")) {
-            return new SourceContentStream(() -> {
+            return new ContentStream(() -> {
                 try {
                     return new FileInputStream(url);
                 } catch (IOException e) {

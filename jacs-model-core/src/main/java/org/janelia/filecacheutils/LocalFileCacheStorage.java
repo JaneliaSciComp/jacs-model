@@ -319,7 +319,7 @@ public class LocalFileCacheStorage {
         }
     }
 
-    synchronized ContentStream openLocalCachedFile(Path localFilePath) {
+    synchronized InputStream openLocalCachedFile(Path localFilePath) {
         try {
             Path cachedFilePath = getLocalCachedFile(localFilePath);
             if (cachedFilePath != null) {

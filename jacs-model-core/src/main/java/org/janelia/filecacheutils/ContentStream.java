@@ -3,47 +3,90 @@ package org.janelia.filecacheutils;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.function.Consumer;
 
-public interface ContentStream extends AutoCloseable {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class ContentStream extends InputStream {
+    private static final Logger LOG = LoggerFactory.getLogger(ContentStream.class);
+
     @FunctionalInterface
-    interface StreamSupplier {
+    public interface StreamSupplier {
         InputStream open() throws FileNotFoundException;
     }
 
+    private final StreamSupplier inputStreamSupplier;
+    private final Consumer<Void> closeHandler;
+    private InputStream currentInputStream;
+
+    protected ContentStream() {
+        this(() -> null);
+    }
+
+    public ContentStream(StreamSupplier inputStreamSupplier) {
+        this(inputStreamSupplier, null);
+    }
+
+    public ContentStream(StreamSupplier inputStreamSupplier, Consumer<Void> closeHandler) {
+        this.inputStreamSupplier = inputStreamSupplier;
+        this.closeHandler = closeHandler;
+        this.currentInputStream = null;
+    }
+
     @Override
-    void close();
+    public int read() throws IOException {
+        return readBytes(new byte[1], 0, 1);
+    }
 
-    default long copyTo(OutputStream dst) throws IOException {
-        final int BUFFER_SIZE = 16 * 1024; // 16K
+    @Override
+    public int read(byte[] buf, int off, int len) throws IOException {
+        return readBytes(buf, off, len);
+    }
 
-        byte[] buffer = new byte[BUFFER_SIZE];
-        long nread = 0L;
-        for (; ;) {
-            int n = readBytes(buffer, 0, buffer.length);
-            if (n == -1) {
-                return nread == 0L ? -1L : nread;
-            } else if (n > 0) {
-                nread += n;
-                // write to the destination
-                dst.write(buffer, 0, n);
+    protected int readBytes(byte[] buf, int off, int len) throws IOException {
+        int n;
+        try {
+            if (currentInputStream == null && !open()) {
+                return -1;
             }
+            n = currentInputStream.read(buf, off, len);
+            if (n == -1) {
+                close();
+            }
+            return n;
+        } catch (IOException e) {
+            handleIOException(e);
+            throw e;
         }
     }
 
-    int readBytes(byte[] buf, int off, int len) throws IOException;
-
-    default InputStream asInputStream() {
-        return new InputStream() {
-            @Override
-            public int read() throws IOException {
-                return readBytes(new byte[1], 0, 1);
-            }
-
-            @Override
-            public int read(byte[] buf, int off, int len) throws IOException {
-                return readBytes(buf, off, len);
-            }
-        };
+    private boolean open() throws FileNotFoundException {
+        // close current stream
+        close();
+        // then reopen it
+        this.currentInputStream = inputStreamSupplier.open();
+        return this.currentInputStream != null;
     }
+
+    private void handleIOException(IOException e) {
+        close();
+    }
+
+    @Override
+    public void close() {
+        if (currentInputStream != null) {
+            try {
+                currentInputStream.close();
+            } catch (IOException e) {
+                LOG.debug("Close stream exception", e);
+            } finally {
+                currentInputStream = null;
+            }
+        }
+        if (closeHandler != null) {
+            closeHandler.accept(null);
+        }
+    }
+
 }
