@@ -1,7 +1,5 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -12,22 +10,18 @@ import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.bson.Document;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.IdSource;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronAnnotation;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmProtobufExchanger;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.TreeNode;
@@ -161,7 +155,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                         }
                         try {
                             // Change the parent of the roots to be the neuron id
-                            for (TmGeoAnnotation annotation : neuronCopy.getRootAnnotations()) {
+                            for (TmNeuronAnnotation annotation : neuronCopy.getRootAnnotations()) {
                                 annotation.setParentId(neuronCopy.getId());
                             }
                             tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuronCopy, workspaceCopy);

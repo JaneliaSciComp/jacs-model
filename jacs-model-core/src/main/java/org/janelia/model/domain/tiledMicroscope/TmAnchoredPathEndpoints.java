@@ -1,12 +1,9 @@
 package org.janelia.model.domain.tiledMicroscope;
 
-import java.io.Serializable;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.protostuff.Tag;
 
 /**
- * this class encapsulates a pair of TmGeoAnnotation IDs, intended to be
+ * this class encapsulates a pair of TmNeuronAnnotation IDs, intended to be
  * neighboring, between which we will have a TmAnchoredPath; the
  * lesser of the two is stored as the first annotation
  *
@@ -25,7 +22,7 @@ public class TmAnchoredPathEndpoints {
         setAnnotations(annotationID1, annotationID2);
     }
 
-    public TmAnchoredPathEndpoints(TmGeoAnnotation annotation1, TmGeoAnnotation annotation2) {
+    public TmAnchoredPathEndpoints(TmNeuronAnnotation annotation1, TmNeuronAnnotation annotation2) {
         setAnnotations(annotation1.getId(), annotation2.getId());
     }
 

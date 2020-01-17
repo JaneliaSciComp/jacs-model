@@ -12,11 +12,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * Date: 5/1/13
  * Time: 1:23 PM
  */
-public class TmGeoAnnotation {
-
+public class TmNeuronAnnotation implements TmAnnotation {
     private Long id;
-    // parentId is the neuron (if root annotation) or another TmGeoAnn
 
+    // parentId is the neuron (if root annotation) or another TmGeoAnn
     private Long parentId;
     private Double x;
     private Double y;
@@ -45,10 +44,10 @@ public class TmGeoAnnotation {
     //  whole tree to get walked recursively, overflowing the stack; so
     //  now we just use the IDs (FW-2728)
 
-    public TmGeoAnnotation() {
+    public TmNeuronAnnotation() {
     }
     
-    public TmGeoAnnotation(Long id, Long parentId, Long neuronId, Double x, Double y, Double z, Double radius, Date creationDate, Date modificationDate) {
+    public TmNeuronAnnotation(Long id, Long parentId, Long neuronId, Double x, Double y, Double z, Double radius, Date creationDate, Date modificationDate) {
         this.id = id;
         this.parentId = parentId;
         this.setNeuronId(neuronId);
@@ -102,7 +101,7 @@ public class TmGeoAnnotation {
         updateModificationDate();
     }
 
-    public void addChild(TmGeoAnnotation child) {
+    public void addChild(TmNeuronAnnotation child) {
         childIds.add(child.getId());
     }
 

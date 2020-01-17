@@ -13,9 +13,9 @@ import org.janelia.model.util.MapFacade;
  *
  * @author murphys
  */
-public class TmNeuronData implements Serializable {
+public class TmNeuronSkeletons implements Serializable {
 
-    private final List<TmGeoAnnotation> geoAnnotations = new ArrayList<>();
+    private final List<TmNeuronAnnotation> geoAnnotations = new ArrayList<>();
     private final List<Long> rootAnnotationIds = new ArrayList<>();
     private final List<TmAnchoredPath> anchoredPaths = new ArrayList<>();
     private final List<TmStructuredTextAnnotation> textAnnotations = new ArrayList<>();
@@ -27,13 +27,13 @@ public class TmNeuronData implements Serializable {
     above when deserializing. The instances above are only used when creating a new instance.
      */
     @JsonIgnore
-    transient private Map<Long, TmGeoAnnotation> geoAnnotationMap;
+    transient private Map<Long, TmNeuronAnnotation> geoAnnotationMap;
     @JsonIgnore
     transient private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap;
     @JsonIgnore
     transient private Map<Long, TmStructuredTextAnnotation> textAnnotationMap;
 
-    public TmNeuronData() {
+    public TmNeuronSkeletons() {
     }
 
     public List<Long> getRootAnnotationIds() {
@@ -42,11 +42,11 @@ public class TmNeuronData implements Serializable {
 
     // maps geo ann ID to geo ann object
     @JsonIgnore
-    public Map<Long, TmGeoAnnotation> getGeoAnnotationMap() {
+    public Map<Long, TmNeuronAnnotation> getGeoAnnotationMap() {
         if (geoAnnotationMap==null) {
-                geoAnnotationMap = new MapFacade<Long, TmGeoAnnotation>(getGeoAnnotations()) {
+                geoAnnotationMap = new MapFacade<Long, TmNeuronAnnotation>(getGeoAnnotations()) {
                 @Override
-                public Long getKey(TmGeoAnnotation object) {
+                public Long getKey(TmNeuronAnnotation object) {
                     return object.getId();
                 }
             };
@@ -90,7 +90,7 @@ public class TmNeuronData implements Serializable {
             sb.append("    ").append(rootAnnotationId).append("\n");
         }
         sb.append("geoAnnotations:\n");
-        for(TmGeoAnnotation geoAnnotation : new ArrayList<>(getGeoAnnotations())) {
+        for(TmNeuronAnnotation geoAnnotation : new ArrayList<>(getGeoAnnotations())) {
             sb.append("    ").append(geoAnnotation.getId()).append(" at (").append(geoAnnotation).append(")\n");
             for(Long childId : geoAnnotation.getChildIds()) {
             	sb.append("      child ").append(childId).append("\n");
@@ -122,7 +122,7 @@ public class TmNeuronData implements Serializable {
     public List<String> checkRepairNeuron(Long neuronId, boolean repair) {
 
         List<Long> rootAnnotationIds = getRootAnnotationIds();
-        Map<Long, TmGeoAnnotation> geoAnnotationMap = getGeoAnnotationMap();
+        Map<Long, TmNeuronAnnotation> geoAnnotationMap = getGeoAnnotationMap();
 
         List<String> results = new ArrayList<>();
 
@@ -148,7 +148,7 @@ public class TmNeuronData implements Serializable {
         }
         if (repair) {
         	if (noRoot) {
-        		TmGeoAnnotation ann = getGeoAnnotations().get(0);
+        		TmNeuronAnnotation ann = getGeoAnnotations().get(0);
                 ann.setParentId(neuronId);
                 rootAnnotationIds.add(ann.getId());
                 results.add("promoted ann ID " + ann.getId() + " to root annotation");
@@ -160,7 +160,7 @@ public class TmNeuronData implements Serializable {
                 results.add("removed root ID " + r + " from root list");
             }
 
-            for (TmGeoAnnotation ann: geoAnnotationMap.values()) {
+            for (TmNeuronAnnotation ann: geoAnnotationMap.values()) {
             	// Fix null parents
                 if (ann.getParentId()==null) {
                     results.add("promoted ann ID " + ann.getId() + " to root annotation because it has a null parent");
@@ -185,7 +185,7 @@ public class TmNeuronData implements Serializable {
 
         // check annotation parents
         // all anns have parent in map?  roots in root list?
-        for (TmGeoAnnotation ann: geoAnnotationMap.values()) {
+        for (TmNeuronAnnotation ann: geoAnnotationMap.values()) {
             if (ann.getParentId().equals(neuronId)) {
                 // if parent = neuron, it's a root; in the root list?
                 if (!rootAnnotationIds.contains(ann.getId())) {
@@ -216,7 +216,7 @@ public class TmNeuronData implements Serializable {
         return results;
     }
 
-    public List<TmGeoAnnotation> getGeoAnnotations() {
+    public List<TmNeuronAnnotation> getGeoAnnotations() {
         return geoAnnotations;
     }
 

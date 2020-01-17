@@ -32,11 +32,8 @@ import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
-import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronData;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.domain.tiledMicroscope.*;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronSkeletons;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +80,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         TmNeuronMetadata persistedNeuronMetadata;
         try {
             boolean isLarge = checkLargeNeuron(neuronMetadata);
-            TmNeuronData pointData = neuronMetadata.getNeuronData();
+            TmNeuronSkeletons pointData = neuronMetadata.getNeuronData();
             if (isLarge) {
                 neuronMetadata.setNeuronData(null);
                 neuronMetadata.setLargeNeuron(true);
@@ -162,7 +159,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         return MongoDaoHelper.findByIds(neuronIdList, getNeuronCollection(workspace.getNeuronCollection()), TmNeuronMetadata.class);
     }
 
-    private void saveLargeNeuronPointData (Long neuronId, TmNeuronData pointData) {
+    private void saveLargeNeuronPointData (Long neuronId, TmNeuronSkeletons pointData) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             byte[] binaryData = mapper.writeValueAsBytes(pointData);
@@ -211,7 +208,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 if (neuron.isLargeNeuron()) {
                     ByteArrayOutputStream outputNeuron = new ByteArrayOutputStream();
                     gridFSMongoDao.downloadDataBlock(outputNeuron, neuron.getId().toString());
-                    TmNeuronData pointData = mapper.readValue(outputNeuron.toByteArray(), TmNeuronData.class);
+                    TmNeuronSkeletons pointData = mapper.readValue(outputNeuron.toByteArray(), TmNeuronSkeletons.class);
                     neuron.setNeuronData(pointData);
                 }
             }
@@ -238,7 +235,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     @Override
     public TmNeuronMetadata saveNeuronMetadata(TmWorkspace workspace, TmNeuronMetadata neuron, String subjectKey) {
         boolean isLarge = checkLargeNeuron(neuron);
-        TmNeuronData pointData = neuron.getNeuronData();
+        TmNeuronSkeletons pointData = neuron.getNeuronData();
         if (isLarge) {
             neuron.setNeuronData(null);
             if (!neuron.isLargeNeuron()) {
@@ -269,7 +266,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
             if (!forceCreate)
                 entity.setId(createNewId());
             if (entity.getNeuronData()!=null) {
-                for (TmGeoAnnotation anno : entity.getRootAnnotations()) {
+                for (TmNeuronAnnotation anno : entity.getRootAnnotations()) {
                     anno.setParentId(entity.getId());
                 }
             }
@@ -374,7 +371,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                         Filters.and(MongoDaoHelper.createFilterById(neuron.getId()),
                                 permissionsHelper.createWritePermissionFilterForSubjectKey(subjectKey)));
                 boolean isLarge = checkLargeNeuron(neuron);
-                TmNeuronData pointData = neuron.getNeuronData();
+                TmNeuronSkeletons pointData = neuron.getNeuronData();
                 if (isLarge) {
                     hitFirstLarge = true;
                     largeNeurons.add(neuron.getId());

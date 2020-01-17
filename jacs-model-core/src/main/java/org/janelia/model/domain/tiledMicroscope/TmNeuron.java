@@ -13,19 +13,11 @@ import org.janelia.model.util.ColorUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Joiner;
 
-/**
- * Metadata for a tiled microscope neuron in a TmWorkspace. The actual neuron point data
- * is stored in a companion table in MySQL, access via the TiledMicroscopeDAO.
- *
- * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
- */
 @MongoMapped(collectionName = "tmNeuron", label = "Tiled Microscope Neuron")
 @NotCacheable
-public class TmNeuronMetadata extends AbstractDomainObject {
+public class TmNeuron extends AbstractDomainObject {
 
     private Reference workspaceRef;
-    private Boolean largeNeuron;
-    private Boolean visible;
 
     @SearchAttribute(key = "color_s", label = "Color")
     private String colorHex;
@@ -33,21 +25,16 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     private Set<String> tags = new HashSet<>();
 
     // A reference that is used to keep things associated in memory, but persisted separately
-    private TmNeuronSkeletons neuronData = new TmNeuronSkeletons();
+    private TmNeuronSkeletons annotations = new TmNeuronSkeletons();
 
-    @JsonIgnore
-    transient private boolean synced;
-    @JsonIgnore
-    transient private int syncLevel = 0;
 
-    public TmNeuronMetadata() {
-        setLargeNeuron(false);
+    public TmNeuron() {
     }
 
-    public TmNeuronMetadata(TmWorkspace workspace, String name) {
+    public TmNeuron(TmWorkspace workspace, String name) {
         setName(name);
         this.workspaceRef = Reference.createFor(workspace);
-        this.neuronData = new TmNeuronSkeletons();
+        this.annotations = new TmNeuronSkeletons();
     }
 
     public static TmNeuronMetadata copy(TmNeuronMetadata neuron) {
@@ -65,33 +52,10 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     public void merge(TmNeuronMetadata neuron) {
         this.setName(neuron.getName());
         this.setWorkspaceRef(neuron.getWorkspaceRef());
-        this.setVisible(neuron.isVisible());
+        //this.setVisible(neuron.isVisible());
         this.setColorHex(neuron.getColorHex());
         this.setTags(new HashSet<String>(neuron.getTags()));
-        this.setNeuronData(neuron.getNeuronData());
-    }
-
-    @JsonIgnore
-    public int getSyncLevel() {
-        return syncLevel;
-    }
-
-    public synchronized void decrementSyncLevel() {
-        this.syncLevel--;
-    }
-
-    public synchronized void incrementSyncLevel() {
-        this.syncLevel++;
-    }
-
-    @JsonIgnore
-    public boolean isSynced() {
-        return synced;
-    }
-
-    @JsonIgnore
-    public void setSynced(boolean synced) {
-        this.synced = synced;
+        this.setAnnotations(neuron.getNeuronData());
     }
 
     @SearchAttribute(key = "workspace_id_l", label = "Workspace GUID")
@@ -109,25 +73,19 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     @SearchAttribute(key = "anno_count_i", label = "Number of Anchors")
     @JsonIgnore
     public Integer getAnnotationCount() {
-        return neuronData == null ? null : neuronData.getGeoAnnotationMap().size();
+        return annotations == null ? null : annotations.getGeoAnnotationMap().size();
     }
 
     @SearchAttribute(key = "root_count_i", label = "Number of Roots")
     @JsonIgnore
     public Integer getRootCount() {
-        return neuronData == null ? null : neuronData.getRootAnnotationIds().size();
+        return annotations == null ? null : annotations.getRootAnnotationIds().size();
     }
 
     @SearchAttribute(key = "text_anno_count_i", label = "Number of Notes")
     @JsonIgnore
     public Integer getTextAnnotationCount() {
-        return neuronData == null ? null : neuronData.getStructuredTextAnnotationMap().size();
-    }
-
-    @SearchAttribute(key = "visible_b", label = "Visibility")
-    @JsonIgnore
-    public Boolean getVisibility() {
-        return visible;
+        return annotations == null ? null : annotations.getStructuredTextAnnotationMap().size();
     }
 
     public Reference getWorkspaceRef() {
@@ -136,14 +94,6 @@ public class TmNeuronMetadata extends AbstractDomainObject {
 
     public void setWorkspaceRef(Reference workspaceRef) {
         this.workspaceRef = workspaceRef;
-    }
-
-    public boolean isVisible() {
-        return visible == null || visible;
-    }
-
-    public void setVisible(boolean visible) {
-        this.visible = visible;
     }
 
     public String getColorHex() {
@@ -173,20 +123,20 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         this.tags = tags;
     }
 
-    public TmNeuronSkeletons getNeuronData() {
-        return neuronData;
+    public TmNeuronSkeletons getAnnotations() {
+        return annotations;
     }
 
-    public void setNeuronData(TmNeuronSkeletons neuronData) {
-        this.neuronData = neuronData;
+    public void setAnnotations(TmNeuronSkeletons annotations) {
+        this.annotations = annotations;
     }
 
     /**
-     * This method can be used to complete NeuronData construction after deserialization.
+     * This method can be used to complete construction after deserialization.
      */
-    public void initNeuronData() {
-        for (Long geoId : neuronData.getGeoAnnotationMap().keySet()) {
-            TmNeuronAnnotation geoAnnotation = neuronData.getGeoAnnotationMap().get(geoId);
+    public void initNeuronAnnotations() {
+        for (Long geoId : annotations.getGeoAnnotationMap().keySet()) {
+            TmNeuronAnnotation geoAnnotation = annotations.getGeoAnnotationMap().get(geoId);
             geoAnnotation.setNeuronId(getId());
         }
     }
@@ -196,13 +146,12 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         getGeoAnnotationMap().put(tmNeuronAnnotation.getId(), tmNeuronAnnotation);
     }
 
-
     /**
      * Pass-through method to TmNeuronSkeletons
      */
     @JsonIgnore
     public Map<Long, TmNeuronAnnotation> getGeoAnnotationMap() {
-        return neuronData.getGeoAnnotationMap();
+        return annotations.getGeoAnnotationMap();
     }
 
     /**
@@ -210,7 +159,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
      */
     @JsonIgnore
     public Map<TmAnchoredPathEndpoints, TmAnchoredPath> getAnchoredPathMap() {
-        return neuronData.getAnchoredPathMap();
+        return annotations.getAnchoredPathMap();
     }
 
     /**
@@ -218,7 +167,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
      */
     @JsonIgnore
     public Map<Long, TmStructuredTextAnnotation> getStructuredTextAnnotationMap() {
-        return neuronData.getStructuredTextAnnotationMap();
+        return annotations.getStructuredTextAnnotationMap();
     }
 
     /**
@@ -239,20 +188,20 @@ public class TmNeuronMetadata extends AbstractDomainObject {
      */
     @JsonIgnore
     public List<TmNeuronAnnotation> getRootAnnotations() {
-        List<Long> rootAnnotationIds = neuronData.getRootAnnotationIds();
+        List<Long> rootAnnotationIds = annotations.getRootAnnotationIds();
         TmNeuronAnnotation[] tempList = new TmNeuronAnnotation[rootAnnotationIds.size()];
         int i = 0;
         for (Long id : rootAnnotationIds) {
-            tempList[i++] = neuronData.getGeoAnnotationMap().get(id);
+            tempList[i++] = annotations.getGeoAnnotationMap().get(id);
         }
         return Collections.unmodifiableList(Arrays.asList(tempList));
     }
 
     @JsonIgnore
     public TmNeuronAnnotation getFirstRoot() {
-        List<Long> rootAnnotationIds = neuronData.getRootAnnotationIds();
+        List<Long> rootAnnotationIds = annotations.getRootAnnotationIds();
         if (rootAnnotationIds.size() > 0) {
-            return neuronData.getGeoAnnotationMap().get(rootAnnotationIds.get(0));
+            return annotations.getGeoAnnotationMap().get(rootAnnotationIds.get(0));
         } else {
             return null;
         }
@@ -263,7 +212,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     }
 
     public void removeRootAnnotation(Long rootId) {
-        neuronData.getRootAnnotationIds().remove(rootId);
+        annotations.getRootAnnotationIds().remove(rootId);
     }
 
     public void addRootAnnotation(TmNeuronAnnotation root) {
@@ -271,7 +220,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     }
 
     public void addRootAnnotation(Long rootId) {
-        neuronData.getRootAnnotationIds().add(rootId);
+        annotations.getRootAnnotationIds().add(rootId);
     }
 
     public boolean containsRootAnnotation(TmNeuronAnnotation root) {
@@ -279,16 +228,16 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     }
 
     public boolean containsRootAnnotation(Long rootId) {
-        return neuronData.getRootAnnotationIds().contains(rootId);
+        return annotations.getRootAnnotationIds().contains(rootId);
     }
 
     @JsonIgnore
     public int getRootAnnotationCount() {
-        return neuronData.getRootAnnotationIds().size();
+        return annotations.getRootAnnotationIds().size();
     }
 
     public void clearRootAnnotations() {
-        neuronData.getRootAnnotationIds().clear();
+        annotations.getRootAnnotationIds().clear();
     }
 
     @JsonIgnore
@@ -297,10 +246,10 @@ public class TmNeuronMetadata extends AbstractDomainObject {
             return null;
         }
         // arguably this should throw an exception (annotation not in neuron)
-        if (!neuronData.getGeoAnnotationMap().containsKey(annotation.getId())) {
+        if (!annotations.getGeoAnnotationMap().containsKey(annotation.getId())) {
             return null;
         }
-        return neuronData.getGeoAnnotationMap().get(annotation.getParentId());
+        return annotations.getGeoAnnotationMap().get(annotation.getParentId());
     }
 
     @JsonIgnore
@@ -309,12 +258,12 @@ public class TmNeuronMetadata extends AbstractDomainObject {
             return null;
         }
         // arguably this should throw an exception (annotation not in neuron)
-        if (!neuronData.getGeoAnnotationMap().containsKey(annotation.getId())) {
+        if (!annotations.getGeoAnnotationMap().containsKey(annotation.getId())) {
             return null;
         }
         ArrayList<TmNeuronAnnotation> children = new ArrayList<>(annotation.getChildIds().size());
         for (Long childID : annotation.getChildIds()) {
-            children.add(neuronData.getGeoAnnotationMap().get(childID));
+            children.add(annotations.getGeoAnnotationMap().get(childID));
         }
         return children;
     }
@@ -371,23 +320,16 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     }
 
     public List<String> checkRepairNeuron() {
-        return neuronData.checkRepairNeuron(getId(), true);
+        return annotations.checkRepairNeuron(getId(), true);
     }
 
     public List<String> checkNeuron() {
-        return neuronData.checkRepairNeuron(getId(), false);
+        return annotations.checkRepairNeuron(getId(), false);
     }
 
     @JsonIgnore
     String getDebugString() {
-        return neuronData == null ? "No neuron data" : neuronData.getDebugString();
+        return annotations == null ? "No neuron data" : annotations.getDebugString();
     }
 
-    public Boolean isLargeNeuron() {
-        return largeNeuron;
-    }
-
-    public void setLargeNeuron(Boolean largeNeuron) {
-        this.largeNeuron = largeNeuron;
-    }
 }
