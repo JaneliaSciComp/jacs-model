@@ -18,8 +18,10 @@ import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.ontology.*;
 import org.janelia.model.domain.orders.IntakeOrder;
 import org.janelia.model.domain.sample.*;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
+import org.janelia.model.domain.screen.FlyLine;
+import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
+import org.janelia.model.domain.tiledMicroscope.TmNeuron;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.Node;
@@ -128,7 +130,7 @@ public class DomainDAO {
         this.preferenceCollection = getCollectionByClass(Preference.class);
         this.tmSampleCollection = getCollectionByClass(TmSample.class);
         this.tmWorkspaceCollection = getCollectionByClass(TmWorkspace.class);
-        this.tmNeuronCollection = getCollectionByClass(TmNeuronMetadata.class);
+        this.tmNeuronCollection = getCollectionByClass(TmNeuron.class);
         this.tmReviewTaskCollection = getCollectionByClass(TmReviewTask.class);
         this.colorDepthMaskCollection = getCollectionByClass(ColorDepthMask.class);
         this.colorDepthSearchCollection = getCollectionByClass(ColorDepthSearch.class);
@@ -352,8 +354,6 @@ public class DomainDAO {
         }
     }
 
-    /** @Deprecated use SubjectDao instead */
-    @Deprecated
     public void removeUserFromGroup(String userNameOrKey, String groupNameOrKey) throws Exception {
         log.debug("removeUserFromGroup(user={}, group={})", userNameOrKey, groupNameOrKey);
         User user = getUserByNameOrKey(userNameOrKey);
@@ -2498,7 +2498,7 @@ public class DomainDAO {
 
             updatedDomainObjectsStream = Stream.concat(
                     updatedDomainObjectsStream,
-                    streamFindResult(tmNeuronCollection, TmNeuronMetadata.class, "{workspaceRef:{$in:#}," + queryClause + "}", workspaceRefs, queryParam)
+                    streamFindResult(tmNeuronCollection, TmNeuron.class, "{workspaceRef:{$in:#}," + queryClause + "}", workspaceRefs, queryParam)
             );
 
             updatedDomainObjectsStream = Stream.concat(
