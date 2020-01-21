@@ -24,8 +24,8 @@ public class TmNeuronTagMap {
     //  means methods have to be synchronized
 
     private Map<Long,Set<String>> userTags = new HashMap<>();
-    private SetMultimap<TmNeuronMetadata, String> tags = HashMultimap.create();
-    private SetMultimap<String, TmNeuronMetadata> neurons = HashMultimap.create();
+    private SetMultimap<TmNeuron, String> tags = HashMultimap.create();
+    private SetMultimap<String, TmNeuron> neurons = HashMultimap.create();
     private Map<String,Map<String,Object>> tagGroupMappings = new HashMap<>();
     private Boolean saveUserGroupState = false;
 
@@ -35,7 +35,7 @@ public class TmNeuronTagMap {
         return PREDEFINED_TAGS;
     }
 
-    public Set<String> getTags(TmNeuronMetadata neuron) {
+    public Set<String> getTags(TmNeuron neuron) {
         return tags.get(neuron);
     }
 
@@ -43,24 +43,24 @@ public class TmNeuronTagMap {
         return neurons.keySet();
     }
 
-    public Set<TmNeuronMetadata> getNeurons(String tag) {
+    public Set<TmNeuron> getNeurons(String tag) {
         return neurons.get(tag);
     }
 
-    public Set<TmNeuronMetadata> getAllNeurons() {
+    public Set<TmNeuron> getAllNeurons() {
         return tags.keySet();
     }
 
-    public boolean hasTag(TmNeuronMetadata neuron, String tag) {
+    public boolean hasTag(TmNeuron neuron, String tag) {
         return tags.get(neuron).contains(tag);
     }
 
-    public synchronized void addTag(String tag, TmNeuronMetadata neuron) {
+    public synchronized void addTag(String tag, TmNeuron neuron) {
         tags.put(neuron, tag);
         neurons.put(tag, neuron);
     }
 
-    public synchronized void addUserTag(String tag, TmNeuronMetadata neuron) {
+    public synchronized void addUserTag(String tag, TmNeuron neuron) {
         Set<String> userNeuronSet = userTags.get(neuron.getId());
         if (userNeuronSet==null) {
             userNeuronSet = new HashSet<String>();
@@ -69,7 +69,7 @@ public class TmNeuronTagMap {
         userNeuronSet.add(tag);
     }
 
-    public synchronized void removeUserTag(String tag, TmNeuronMetadata neuron) {
+    public synchronized void removeUserTag(String tag, TmNeuron neuron) {
         Set<String> userNeuronTags = userTags.get(neuron.getId());
         if (userNeuronTags!=null) {
             userNeuronTags.remove(tag);
@@ -106,12 +106,12 @@ public class TmNeuronTagMap {
         return tagGroupMappings;
     }
 
-    public synchronized void removeTag(String tag, TmNeuronMetadata neuron) {
+    public synchronized void removeTag(String tag, TmNeuron neuron) {
         tags.remove(neuron, tag);
         neurons.remove(tag, neuron);
     }
 
-    public synchronized void clearTags(TmNeuronMetadata neuron) {
+    public synchronized void clearTags(TmNeuron neuron) {
         for (String tag: tags.get(neuron)) {
             neurons.remove(tag, neuron);
         }

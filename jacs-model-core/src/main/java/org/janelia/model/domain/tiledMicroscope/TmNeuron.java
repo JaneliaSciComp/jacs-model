@@ -16,8 +16,9 @@ import com.google.common.base.Joiner;
 @MongoMapped(collectionName = "tmNeuron", label = "Tiled Microscope Neuron")
 @NotCacheable
 public class TmNeuron extends AbstractDomainObject {
-
     private Reference workspaceRef;
+    private TmViewState viewState;
+    private AsyncPersistence persistence;
 
     @SearchAttribute(key = "color_s", label = "Color")
     private String colorHex;
@@ -37,25 +38,24 @@ public class TmNeuron extends AbstractDomainObject {
         this.annotations = new TmNeuronSkeletons();
     }
 
-    public static TmNeuronMetadata copy(TmNeuronMetadata neuron) {
-        TmNeuronMetadata copy = new TmNeuronMetadata();
+    public static TmNeuron copy(TmNeuron neuron) {
+        TmNeuron copy = new TmNeuron();
         copy.setName(neuron.getName());
         copy.setWorkspaceRef(neuron.getWorkspaceRef());
-        copy.setVisible(neuron.isVisible());
         copy.setColorHex(neuron.getColorHex());
         copy.setOwnerKey(neuron.getOwnerKey());
         copy.setTags(new HashSet<String>(neuron.getTags()));
-        copy.setNeuronData(neuron.getNeuronData());
+        copy.setAnnotations(neuron.getAnnotations());
         return copy;
     }
 
-    public void merge(TmNeuronMetadata neuron) {
+    public void merge(TmNeuron neuron) {
         this.setName(neuron.getName());
         this.setWorkspaceRef(neuron.getWorkspaceRef());
         //this.setVisible(neuron.isVisible());
         this.setColorHex(neuron.getColorHex());
         this.setTags(new HashSet<String>(neuron.getTags()));
-        this.setAnnotations(neuron.getNeuronData());
+        this.setAnnotations(neuron.getAnnotations());
     }
 
     @SearchAttribute(key = "workspace_id_l", label = "Workspace GUID")
@@ -332,4 +332,19 @@ public class TmNeuron extends AbstractDomainObject {
         return annotations == null ? "No neuron data" : annotations.getDebugString();
     }
 
+    public TmViewState getViewState() {
+        return viewState;
+    }
+
+    public void setViewState(TmViewState viewState) {
+        this.viewState = viewState;
+    }
+
+    public AsyncPersistence getPersistence() {
+        return persistence;
+    }
+
+    public void setPersistence(AsyncPersistence persistence) {
+        this.persistence = persistence;
+    }
 }

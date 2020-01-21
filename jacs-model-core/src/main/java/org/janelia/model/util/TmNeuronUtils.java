@@ -1,7 +1,7 @@
 package org.janelia.model.util;
 
 import org.janelia.model.domain.tiledMicroscope.TmNeuronAnnotation;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
+import org.janelia.model.domain.tiledMicroscope.TmNeuron;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +26,9 @@ public class TmNeuronUtils {
      */
     public static void addLinkedGeometricAnnotationsInMemory(Map<Integer, Integer> nodeParentLinkage,
                                                              Map<Integer, TmNeuronAnnotation> annotations,
-                                                             TmNeuronMetadata tmNeuronMetadata,
+                                                             TmNeuron TmNeuron,
                                                              Supplier<Long> neuronIdGenerator) {
-        Long neuronId = tmNeuronMetadata.getId();
+        Long neuronId = TmNeuron.getId();
         int putativeRootCount = 0;
         // Cache to avoid re-fetch.
         Map<Integer, Long> nodeIdToAnnotationId = new HashMap<>();
@@ -56,12 +56,12 @@ public class TmNeuronUtils {
 
             // Make the actual annotation, and save its linkage
             // through its original node id.
-            TmNeuronAnnotation linkedAnnotation = createGeometricAnnotationInMemory(tmNeuronMetadata,
+            TmNeuronAnnotation linkedAnnotation = createGeometricAnnotationInMemory(TmNeuron,
                     isRoot,
                     parentAnnotationId,
                     unlinkedAnnotation,
                     neuronIdGenerator);
-            TmNeuronAnnotation parentAnnotation = tmNeuronMetadata.getParentOf(linkedAnnotation);
+            TmNeuronAnnotation parentAnnotation = TmNeuron.getParentOf(linkedAnnotation);
             if (parentAnnotation != null) {
                 parentAnnotation.addChild(linkedAnnotation);
             }
@@ -76,7 +76,7 @@ public class TmNeuronUtils {
         }
     }
 
-    private static TmNeuronAnnotation createGeometricAnnotationInMemory(TmNeuronMetadata neuron,
+    private static TmNeuronAnnotation createGeometricAnnotationInMemory(TmNeuron neuron,
                                                                         boolean isRoot,
                                                                         Long parentAnnotationId,
                                                                         TmNeuronAnnotation unserializedAnno,
@@ -89,7 +89,7 @@ public class TmNeuronUtils {
                 neuronIdGenerator);
     }
 
-    private static TmNeuronAnnotation createGeometricAnnotationInMemory(TmNeuronMetadata tmNeuronMetadata,
+    private static TmNeuronAnnotation createGeometricAnnotationInMemory(TmNeuron TmNeuron,
                                                                         boolean isRoot,
                                                                         Long parentAnnotationId,
                                                                         double x, double y, double z, double radius,
@@ -98,10 +98,10 @@ public class TmNeuronUtils {
 
         Long generatedId = neuronIdGenerator.get();
         Date now = new Date();
-        TmNeuronAnnotation geoAnnotation = new TmNeuronAnnotation(generatedId, parentAnnotationId, tmNeuronMetadata.getId(), x, y, z, radius, now, now);
-        tmNeuronMetadata.getGeoAnnotationMap().put(geoAnnotation.getId(), geoAnnotation);
+        TmNeuronAnnotation geoAnnotation = new TmNeuronAnnotation(generatedId, parentAnnotationId, TmNeuron.getId(), x, y, z, radius, now, now);
+        TmNeuron.getGeoAnnotationMap().put(geoAnnotation.getId(), geoAnnotation);
         if (isRoot) {
-            tmNeuronMetadata.addRootAnnotation(geoAnnotation);
+            TmNeuron.addRootAnnotation(geoAnnotation);
         }
         else {
             if (parentAnnotationId==null) {

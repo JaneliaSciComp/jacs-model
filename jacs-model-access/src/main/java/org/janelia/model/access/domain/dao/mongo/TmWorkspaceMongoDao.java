@@ -16,12 +16,12 @@ import com.mongodb.client.model.Filters;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.IdSource;
-import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
+import org.janelia.model.access.domain.dao.TmNeuronDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronAnnotation;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
+import org.janelia.model.domain.tiledMicroscope.TmNeuron;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.TreeNode;
@@ -36,7 +36,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     private static final Logger LOG = LoggerFactory.getLogger(TmWorkspaceMongoDao.class);
 
     private final DomainDAO domainDao;
-    private final TmNeuronMetadataDao tmNeuronMetadataDao;
+    private final TmNeuronDao TmNeuronDao;
     private final MongoDatabase mongoDatabase;
 
     @Inject
@@ -44,11 +44,11 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                         DomainPermissionsMongoHelper permissionsHelper,
                         DomainUpdateMongoHelper updateHelper,
                         DomainDAO domainDao,
-                        TmNeuronMetadataDao tmNeuronMetadataDao) {
+                        TmNeuronDao TmNeuronDao) {
         super(mongoDatabase, permissionsHelper, updateHelper);
         this.mongoDatabase = mongoDatabase;
         this.domainDao = domainDao;
-        this.tmNeuronMetadataDao = tmNeuronMetadataDao;
+        this.TmNeuronDao = TmNeuronDao;
     }
 
     @Override
@@ -88,7 +88,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
             // find a suitable collection to store this workspace's neurons
             boolean isViable = false;
             String collectionName = MongoDaoHelper.findOrCreateCappedCollection (this, mongoDatabase,
-                    "tmNeuron", 20000000000L, TmNeuronMetadata.class);
+                    "tmNeuron", 20000000000L, TmNeuron.class);
             tmWorkspace.setNeuronCollection(collectionName);
 
             TmWorkspace workspace = domainDao.save(subjectKey, tmWorkspace);
@@ -105,13 +105,13 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
         // Create a copy of the workspace object with the new name
         TmWorkspace workspaceCopy = createTmWorkspace(subjectKey, TmWorkspace.copy(existingWorkspace).rename(newName));
         try {
-            Spliterator<Stream<TmNeuronMetadata>> neuronsSupplier = new Spliterator<Stream<TmNeuronMetadata>>() {
+            Spliterator<Stream<TmNeuron>> neuronsSupplier = new Spliterator<Stream<TmNeuron>>() {
                 volatile long offset = 0L;
                 int defaultLength = 100000;
 
                 @Override
-                public boolean tryAdvance(Consumer<? super Stream<TmNeuronMetadata>> action) {
-                    List<TmNeuronMetadata> tmNeurons = tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(existingWorkspace,
+                public boolean tryAdvance(Consumer<? super Stream<TmNeuron>> action) {
+                    List<TmNeuron> tmNeurons = TmNeuronDao.getTmNeuronByWorkspaceId(existingWorkspace,
                             subjectKey, offset, defaultLength);
                     long lastEntryOffset = offset + tmNeurons.size();
                     LOG.info("Retrieved {} neurons ({} - {})", tmNeurons.size(), offset, lastEntryOffset);
@@ -125,7 +125,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                 }
 
                 @Override
-                public Spliterator<Stream<TmNeuronMetadata>> trySplit() {
+                public Spliterator<Stream<TmNeuron>> trySplit() {
                     return null;
                 }
 
@@ -148,7 +148,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
             StreamSupport.stream(neuronsSupplier, true)
                     .flatMap(neuronStream -> neuronStream)
                     .forEach(target -> {
-                        TmNeuronMetadata neuronCopy = TmNeuronMetadata.copy(target);
+                        TmNeuron neuronCopy = TmNeuron.copy(target);
                         neuronCopy.setWorkspaceRef(Reference.createFor(workspaceCopy));
                         if (assignOwner != null) {
                             neuronCopy.setOwnerKey(assignOwner);
@@ -158,7 +158,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                             for (TmNeuronAnnotation annotation : neuronCopy.getRootAnnotations()) {
                                 annotation.setParentId(neuronCopy.getId());
                             }
-                            tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuronCopy, workspaceCopy);
+                            TmNeuronDao.createTmNeuronInWorkspace(subjectKey, neuronCopy, workspaceCopy);
                         } catch (Exception e) {
                             LOG.error("Error copying neuron from {} to {}", target, neuronCopy);
                             throw new IllegalStateException(e);

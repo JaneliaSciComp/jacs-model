@@ -3,7 +3,7 @@ package org.janelia.model.domain.tiledMicroscope;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public abstract class AsyncPersistence {
+public class AsyncPersistence {
 
     @JsonIgnore
     transient private boolean synced;

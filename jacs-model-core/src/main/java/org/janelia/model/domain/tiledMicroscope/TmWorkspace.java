@@ -31,7 +31,7 @@ public class TmWorkspace extends AbstractDomainObject {
     private TmColorModel colorModel;
     private TmColorModel colorModel3d;
     private String neuronCollection;
-    private List<TmObjectMesh> objectMeshList;
+    private TmSceneGraph sceneGraph;
 
     public TmWorkspace() {
     }
@@ -106,23 +106,19 @@ public class TmWorkspace extends AbstractDomainObject {
     }
 
     public void addObjectMesh (TmObjectMesh objectMesh) {
-        if (objectMeshList==null)
-            objectMeshList = new ArrayList<TmObjectMesh>();
-        objectMeshList.add(objectMesh);
+        sceneGraph.setMeshObject(objectMesh.getName(), objectMesh);
     }
 
     public void removeObjectMesh (TmObjectMesh objectMesh) {
-        if (objectMeshList==null)
-            objectMeshList = new ArrayList<TmObjectMesh>();
-        objectMeshList.remove(objectMesh);
+        sceneGraph.removeMeshObject(objectMesh.getName());
     }
 
-    public List<TmObjectMesh> getObjectMeshList() {
-        return objectMeshList;
+    public Object[] getObjectMeshList() {
+        return sceneGraph.getMeshes().entrySet().toArray();
     }
 
-    public void setObjectMesh(List<TmObjectMesh> objectMeshList) {
-        this.objectMeshList = objectMeshList;
+    public void setObjectMesh(TmObjectMesh objectMesh) {
+        sceneGraph.setMeshObject(objectMesh.getName(), objectMesh);
     }
 
     public TmWorkspace rename(String newName) {
