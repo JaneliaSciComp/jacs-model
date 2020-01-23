@@ -1,13 +1,8 @@
 package org.janelia.model.access.domain.dao;
 
-import java.io.InputStream;
-import java.util.List;
 import java.util.Collection;
-import java.util.stream.Stream;
+import java.util.List;
 
-import com.mongodb.client.FindIterable;
-import org.apache.commons.lang3.tuple.Pair;
-import org.bson.Document;
 import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.tiledMicroscope.TmNeuron;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;

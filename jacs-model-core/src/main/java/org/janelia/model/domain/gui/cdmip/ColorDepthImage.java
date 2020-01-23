@@ -5,11 +5,13 @@ import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasAnatomicalArea;
 import org.janelia.model.domain.sample.AlignedImage2d;
+import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
@@ -31,6 +33,14 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
     private String anatomicalArea;
 
     private int channelNumber;
+
+    private String publicImageUrl;
+
+    private String publicThumbnailUrl;
+
+    @SearchTraversal({})
+    @JsonIgnore
+    private Sample sample;
 
     public Set<String> getLibraries() {
         return libraries;
@@ -74,5 +84,31 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
     @Override
     public void setFiles(Map<FileType, String> files) {
         throw new UnsupportedOperationException("This field is calculated from filepath and cannot be changed");
+    }
+
+    public String getPublicImageUrl() {
+        return publicImageUrl;
+    }
+
+    public void setPublicImageUrl(String publicImageUrl) {
+        this.publicImageUrl = publicImageUrl;
+    }
+
+    public String getPublicThumbnailUrl() {
+        return publicThumbnailUrl;
+    }
+
+    public void setPublicThumbnailUrl(String publicThumbnailUrl) {
+        this.publicThumbnailUrl = publicThumbnailUrl;
+    }
+
+    @JsonIgnore
+    public Sample getSample() {
+        return sample;
+    }
+
+    @JsonProperty
+    public void setSample(Sample sample) {
+        this.sample = sample;
     }
 }
