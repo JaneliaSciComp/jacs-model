@@ -37,20 +37,20 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
     }
 
     @Override
-    public long countColorDepthMIPs(String ownerKey, String libraryName, String alignmentSpace, List<String> matchingNames, List<String> matchingFilepaths) {
-        return mongoCollection.countDocuments(createColorDepthMIPsFilter(ownerKey, libraryName, alignmentSpace, matchingNames, matchingFilepaths));
+    public long countColorDepthMIPs(String ownerKey, String alignmentSpace, List<String> libraryNames, List<String> matchingNames, List<String> matchingFilepaths) {
+        return mongoCollection.countDocuments(createColorDepthMIPsFilter(ownerKey, alignmentSpace, libraryNames, matchingNames, matchingFilepaths));
     }
 
-    private Bson createColorDepthMIPsFilter(String ownerKey, String libraryName, String alignmentSpace, List<String> matchingNames, List<String> matchingFilepaths) {
+    private Bson createColorDepthMIPsFilter(String ownerKey, String alignmentSpace, List<String> libraryNames, List<String> matchingNames, List<String> matchingFilepaths) {
         ImmutableList.Builder<Bson> cdmFiltersBuilder = ImmutableList.builder();
         if (StringUtils.isNotBlank(ownerKey)) {
             cdmFiltersBuilder.add(Filters.eq("ownerKey", ownerKey));
         }
-        if (StringUtils.isNotBlank(libraryName)) {
-            cdmFiltersBuilder.add(Filters.eq("libraries", libraryName));
-        }
         if (StringUtils.isNotBlank(alignmentSpace)) {
             cdmFiltersBuilder.add(Filters.eq("alignmentSpace", alignmentSpace));
+        }
+        if (CollectionUtils.isNotEmpty(libraryNames)) {
+            cdmFiltersBuilder.add(Filters.in("libraries", libraryNames));
         }
         if (CollectionUtils.isNotEmpty(matchingNames)) {
             cdmFiltersBuilder.add(Filters.in("name", matchingNames));
@@ -62,10 +62,10 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
     }
 
     @Override
-    public Stream<ColorDepthImage> streamColorDepthMIPs(String ownerKey, String libraryName, String alignmentSpace, List<String> matchingNames, List<String> matchingFilepaths,
+    public Stream<ColorDepthImage> streamColorDepthMIPs(String ownerKey, String alignmentSpace, List<String> libraryNames, List<String> matchingNames, List<String> matchingFilepaths,
                                                         int offset, int length) {
         Spliterator<ColorDepthImage> iterableCursor = MongoDaoHelper.rawFind(
-                createColorDepthMIPsFilter(ownerKey, libraryName, alignmentSpace, matchingNames, matchingFilepaths),
+                createColorDepthMIPsFilter(ownerKey, alignmentSpace, libraryNames, matchingNames, matchingFilepaths),
                 offset,
                 length,
                 this.mongoCollection,
