@@ -47,7 +47,7 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
             cdmFiltersBuilder.add(Filters.eq("ownerKey", ownerKey));
         }
         if (StringUtils.isNotBlank(libraryName)) {
-            cdmFiltersBuilder.add(Filters.elemMatch("libraries", Filters.eq(libraryName)));
+            cdmFiltersBuilder.add(Filters.eq("libraries", libraryName));
         }
         if (StringUtils.isNotBlank(alignmentSpace)) {
             cdmFiltersBuilder.add(Filters.eq("alignmentSpace", alignmentSpace));
