@@ -26,13 +26,13 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchablDao<Col
     }
 
     @Override
-    public long countColorDepthMIPs(String ownerKey, String libraryName, String alignmentSpace, List<String> matchingNames, List<String> matchingFilepaths) {
-        return colorDepthImageDao.countColorDepthMIPs(ownerKey, libraryName, alignmentSpace, matchingNames, matchingFilepaths);
+    public long countColorDepthMIPs(String ownerKey, String alignmentSpace, List<String> libraryNames, List<String> matchingNames, List<String> matchingFilepaths) {
+        return colorDepthImageDao.countColorDepthMIPs(ownerKey, alignmentSpace, libraryNames, matchingNames, matchingFilepaths);
     }
 
     @Override
-    public Stream<ColorDepthImage> streamColorDepthMIPs(String ownerKey, String libraryName, String alignmentSpace, List<String> matchingNames, List<String> matchingFilepaths, int offset, int length) {
-        return colorDepthImageDao.streamColorDepthMIPs(ownerKey, libraryName, alignmentSpace, matchingNames, matchingFilepaths, offset, length);
+    public Stream<ColorDepthImage> streamColorDepthMIPs(String ownerKey, String alignmentSpace, List<String> libraryNames, List<String> matchingNames, List<String> matchingFilepaths, int offset, int length) {
+        return colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace, libraryNames, matchingNames, matchingFilepaths, offset, length);
     }
 
     @Override
