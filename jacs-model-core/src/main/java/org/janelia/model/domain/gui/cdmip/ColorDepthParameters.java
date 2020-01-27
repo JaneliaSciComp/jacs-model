@@ -29,6 +29,9 @@ public class ColorDepthParameters {
     /** Should the mask be mirrored across the Y axis? */
     private Boolean mirrorMask;
 
+    /** Maxmimum number of results to persist per mask */
+    private Integer maxResultsPerMask;
+
 
     public List<String> getLibraries() {
         return libraries;
@@ -76,6 +79,14 @@ public class ColorDepthParameters {
 
     public void setMirrorMask(Boolean mirrorMask) {
         this.mirrorMask = mirrorMask;
+    }
+
+    public Integer getMaxResultsPerMask() {
+        return maxResultsPerMask;
+    }
+
+    public void setMaxResultsPerMask(Integer maxResultsPerMask) {
+        this.maxResultsPerMask = maxResultsPerMask;
     }
 
     public List<Reference> getMasks() {
