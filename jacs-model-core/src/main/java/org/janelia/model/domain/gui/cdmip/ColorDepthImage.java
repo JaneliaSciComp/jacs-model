@@ -102,13 +102,13 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
         this.publicThumbnailUrl = publicThumbnailUrl;
     }
 
-    @JsonIgnore
+    @JsonProperty
     public Sample getSample() {
         return sample;
     }
 
-    @JsonProperty
-    public void setSample(Sample sample) {
+    @JsonIgnore
+    void setSample(Sample sample) {
         this.sample = sample;
     }
 }
