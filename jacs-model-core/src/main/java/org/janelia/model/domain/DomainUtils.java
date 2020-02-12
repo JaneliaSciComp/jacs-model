@@ -290,6 +290,10 @@ public class DomainUtils {
         return searchClasses;
     }
 
+    public static boolean isSearcheableType(Class<? extends DomainObject> domainClass) {
+        return searchClasses.contains(domainClass);
+    }
+
     /**
      * Takes a @SearchType.key and returns the corresponding simple class name.
      * @param type
