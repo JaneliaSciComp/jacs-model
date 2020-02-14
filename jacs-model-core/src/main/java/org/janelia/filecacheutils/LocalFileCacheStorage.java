@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -217,40 +218,43 @@ public class LocalFileCacheStorage {
             LOG.info("Local cache usage reached the high water mark -> {}", usage);
             AtomicDouble updatedSizeInKB = new AtomicDouble(currentSizeInKB.doubleValue());
             AtomicInteger usageAfterRemoval = new AtomicInteger(usage);
-            removeCacheEntries(
+            removeCacheEntriesAsync(
                     cachedFileEntry -> {
                         double updatedValue = updatedSizeInKB.addAndGet(-cachedFileEntry.fileSizeInKB);
                         int updatedUsage  = (int) (updatedValue / capacityInKB * 100.);
                         usageAfterRemoval.set(updatedUsage);
                     },
                     cachedFileEntry -> usageAfterRemoval.get() <= LOW_WATERMARK);
-            LOG.info("Local cache storage has {} entries and it is {}% full ({}KB / {}KB)",
-                    size(),
-                    getUsageAsPercentage(),
-                    getCurrentSizeInKB(),
-                    getCapacityInKB());
         } else if (currentSize.get() > maximumSize) {
             LOG.info("Local cache usage reached the size limit -> {}", cachedFiles.size());
             int toRemoveCount = (100 - LOW_WATERMARK) * currentSize.get() / 100 + 1;
             AtomicInteger toRemove = new AtomicInteger(toRemoveCount);
-            removeCacheEntries(
+            removeCacheEntriesAsync(
                     cachedFileEntry -> {
                         toRemove.decrementAndGet();
                     },
                     cachedFileEntry -> toRemove.get() <= 0);
+        }
+    }
+
+    private void removeCacheEntriesAsync(Consumer<CachedFileEntry> entryInspector, Predicate<CachedFileEntry> endCond) {
+        CompletableFuture.supplyAsync(() -> removeCacheEntries(entryInspector, endCond)).thenAcceptAsync(nEntriesRemoved -> {
             LOG.info("Removed {} entries from local cache storage which now has {} entries and it is {}% full ({}KB / {}KB)",
-                    toRemoveCount,
+                    nEntriesRemoved,
                     size(),
                     getUsageAsPercentage(),
                     getCurrentSizeInKB(),
                     getCapacityInKB());
-        }
+        });
     }
 
-    private void removeCacheEntries(Consumer<CachedFileEntry> entryInspector, Predicate<CachedFileEntry> endCond) {
+    private int removeCacheEntries(Consumer<CachedFileEntry> entryInspector, Predicate<CachedFileEntry> endCond) {
         Collection<CachedFileEntry> cacheEntriesToBeDeleted = new LinkedList<>();
+        long lastUpdatedTime = System.currentTimeMillis() - 120000L; // 2min. ago
         // this loop simply iterates and collect entries to be deleted until the end condition is met
+        // but this skips all entries updated in the last 2 min.
         cachedFiles.entrySet().stream()
+                .filter(cachedFileEntry -> cachedFileEntry.getValue().lastUpdatedTimestamp < lastUpdatedTime) // only remove entries not updated in the last 2min.
                 .sorted(entryComparatorByUpdatedTimestamp)
                 .peek(cachedFileEntry -> {
                     cacheEntriesToBeDeleted.add(cachedFileEntry.getValue());
@@ -265,14 +269,14 @@ public class LocalFileCacheStorage {
                 deleteCachedFile(removedEntry);
             }
         });
-
+        return cacheEntriesToBeDeleted.size();
     }
 
     private synchronized void deleteCachedFile(CachedFileEntry cachedFileEntry) {
         try {
             Path p = Paths.get(cachedFileEntry.fileName);
             if (Files.deleteIfExists(p)) {
-                LOG.info("Removed {} ({} KB last used on {}) from local storage cache", cachedFileEntry.fileName, new Date(cachedFileEntry.lastUpdatedTimestamp), cachedFileEntry.fileSizeInKB);
+                LOG.debug("Removed {} ({} KB last used on {}) from local storage cache", cachedFileEntry.fileName, new Date(cachedFileEntry.lastUpdatedTimestamp), cachedFileEntry.fileSizeInKB);
                 currentSize.decrementAndGet();
                 currentSizeInKB.accumulateAndGet(-cachedFileEntry.fileSizeInKB, (v1, v2) -> {
                     long v = v1 + v2;
