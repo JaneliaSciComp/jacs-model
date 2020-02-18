@@ -54,7 +54,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
 
     @Override
     public Long estimateSizeInBytes() {
-        long currentSize = getCurrentSizeInBytes();
+        long currentSize = getFileSize(localFilePath);
         if (currentSize > 0) {
             return currentSize;
         } else if (delegateFileProxy == null) {
@@ -66,10 +66,6 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
             }
         }
         return delegateFileProxy.estimateSizeInBytes();
-    }
-
-    private long getCurrentSizeInBytes() {
-        return getFileSize(localFilePath) + getFileSize(getDownloadingLocalFilePath());
     }
 
     private long getFileSize(Path fp) {
@@ -190,7 +186,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                 // was downloading this file at the time of this was requested
                 DOWNLOADING_FILES.remove(localFilePath.toString());
                 // update the cache size
-                localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
+                localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getFileSize(localFilePath)));
             }
         }
     }
@@ -228,7 +224,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                 try {
                     if (contentSize > 0) {
                         Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-                        localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
+                        localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getFileSize(localFilePath)));
                     } else {
                         LOG.warn("Nothing copied from {} for {} to {}", delegateFileProxy.getFileId(), localFilePath, downloadingLocalFilePath);
                     }
@@ -246,7 +242,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                 }
             } catch (FileNotFoundException | IllegalStateException e) {
                 // remove file from the cache in case of an error
-                localFileCacheStorage.updateCachedFiles(localFilePath, -LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
+                localFileCacheStorage.updateCachedFiles(localFilePath, -LocalFileCacheStorage.BYTES_TO_KB.apply(getFileSize(localFilePath)));
                 throw e;
             } finally {
                 DOWNLOADING_FILES.remove(localFilePath.toString());
@@ -284,7 +280,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
 
     @Override
     public boolean deleteProxy() {
-        long sizeInBytes = getCurrentSizeInBytes();
+        long sizeInBytes = getFileSize(localFilePath);
         try {
             if (Files.exists(localFilePath)) {
                 // For safety I do not delete any file that somehow is outside the cache storage directory
