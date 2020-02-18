@@ -276,7 +276,7 @@ public class LocalFileCacheStorage {
         try {
             Path p = Paths.get(cachedFileEntry.fileName);
             if (Files.deleteIfExists(p)) {
-                LOG.debug("Removed {} ({} KB last used on {}) from local storage cache", cachedFileEntry.fileName, new Date(cachedFileEntry.lastUpdatedTimestamp), cachedFileEntry.fileSizeInKB);
+                LOG.debug("Removed {} ({} KB last used on {}) from local storage cache", cachedFileEntry.fileName, cachedFileEntry.fileSizeInKB, new Date(cachedFileEntry.lastUpdatedTimestamp));
                 currentSize.decrementAndGet();
                 currentSizeInKB.accumulateAndGet(-cachedFileEntry.fileSizeInKB, (v1, v2) -> {
                     long v = v1 + v2;

@@ -91,9 +91,6 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                 delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
             }
             ContentStream contentStream = new RetriedContentStream(() -> delegateFileProxy.openContentStream(), DEFAULT_RETRIES);
-            if (contentStream == null) {
-                return null;
-            }
             long estimatedSize = delegateFileProxy.estimateSizeInBytes();
             if (!localFileCacheStorage.isBytesSizeAcceptable(estimatedSize) || !DOWNLOADING_FILES.add(localFilePath.toString())) {
                 // if this file cannot be cached because it's either to large or caching it will exceed the cache capacity
@@ -207,31 +204,32 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
             if (delegateFileProxy == null) {
                 delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
             }
-            ContentStream contentStream = new RetriedContentStream(() -> delegateFileProxy.openContentStream(), DEFAULT_RETRIES);
-            if (contentStream == null) {
-                return null;
-            }
-            if (!DOWNLOADING_FILES.add(localFilePath.toString())) {
-                // some other thread may also be downloading this file so in this case simply return the file
-                // without trying to cache it locally again.
-                // this is a bit risky because the download may fail but this entire method should be scrapped
-                // and the calls to it should be refactored to use FileProxy instead of File
-                return localFilePath.toFile();
-            }
             // download remote file
-            Path downloadingLocalFilePath = getDownloadingLocalFilePath();
-            try {
+            try (ContentStream contentStream = new RetriedContentStream(() -> delegateFileProxy.openContentStream(), DEFAULT_RETRIES)) {
+                if (!DOWNLOADING_FILES.add(localFilePath.toString())) {
+                    // some other thread may also be downloading this file so in this case simply return the file
+                    // without trying to cache it locally again.
+                    // this is a bit risky because the download may fail but this entire method should be scrapped
+                    // and the calls to it should be refactored to use FileProxy instead of File
+                    return localFilePath.toFile();
+                }
+                Path downloadingLocalFilePath = getDownloadingLocalFilePath();
+                long contentSize;
                 try {
                     makeDownloadDir();
                     OutputStream os = Files.newOutputStream(downloadingLocalFilePath, StandardOpenOption.CREATE);
-                    ByteStreams.copy(contentStream, os);
+                    contentSize = ByteStreams.copy(contentStream, os);
                 } catch (IOException e) {
                     LOG.error("Error saving downloadable stream to {}", downloadingLocalFilePath, e);
                     throw new IllegalStateException(e);
                 }
                 try {
-                    Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-                    localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
+                    if (contentSize > 0) {
+                        Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                        localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
+                    } else {
+                        LOG.warn("Nothing copied from {} for {} to {}", delegateFileProxy.getFileId(), localFilePath, downloadingLocalFilePath);
+                    }
                 } catch (IOException e) {
                     LOG.error("Error moving downloaded file {} to {}", downloadingLocalFilePath, localFilePath, e);
                     throw new IllegalStateException(e);
@@ -243,7 +241,6 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                     }
                 }
             } finally {
-                contentStream.close();
                 DOWNLOADING_FILES.remove(localFilePath.toString());
             }
             return localFilePath.toFile();
