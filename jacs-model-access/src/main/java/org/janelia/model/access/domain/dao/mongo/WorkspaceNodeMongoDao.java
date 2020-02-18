@@ -13,6 +13,8 @@ import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.workspace.Workspace;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -23,6 +25,8 @@ import java.util.List;
  * {@link Workspace} Mongo DAO.
  */
 public class WorkspaceNodeMongoDao extends AbstractNodeMongoDao<Workspace> implements WorkspaceNodeDao {
+
+    private static final Logger log = LoggerFactory.getLogger(WorkspaceNodeMongoDao.class);
 
     @Inject
     WorkspaceNodeMongoDao(MongoDatabase mongoDatabase,
@@ -51,7 +55,7 @@ public class WorkspaceNodeMongoDao extends AbstractNodeMongoDao<Workspace> imple
                 Updates.setOnInsert("children", Collections.emptyList())
         );
 
-        return mongoCollection.findOneAndUpdate(
+        Workspace workspace = mongoCollection.findOneAndUpdate(
                 MongoDaoHelper.createFilterCriteria(
                         Filters.eq("class", Workspace.class.getName()),
                         Filters.eq("ownerKey", subjectKey),
@@ -60,6 +64,11 @@ public class WorkspaceNodeMongoDao extends AbstractNodeMongoDao<Workspace> imple
                 fieldsToInsert,
                 updateOptions
         );
+        if (workspace==null) {
+            throw new RuntimeException("Error creating default workspace for "+subjectKey);
+        }
+        log.info("Created {} for {}", workspace, subjectKey);
+        return workspace;
     }
 
     @Override

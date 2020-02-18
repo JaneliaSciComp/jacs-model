@@ -259,6 +259,8 @@ public class DomainDAO {
         return subjectCollection.findOne("{$or:[{name:#},{key:#}], class:#}", subjectNameOrKey, subjectNameOrKey, Group.class.getName()).as(Group.class);
     }
 
+    /** @Deprecated use SubjectDao instead */
+    @Deprecated
     public User createUser(String name, String fullName, String email) throws Exception {
         log.debug("createUser(name={}, fullName={}, email={})", name, fullName, email);
         User newSubject = new User();
@@ -283,6 +285,8 @@ public class DomainDAO {
         return user;
     }
 
+    /** @Deprecated use SubjectDao instead */
+    @Deprecated
     public Group createGroup(String name, String fullName) throws Exception {
         log.debug("createGroup(name={}, fullName={})", name, fullName);
         Group newSubject = new Group();
@@ -303,6 +307,8 @@ public class DomainDAO {
         return group;
     }
 
+    /** @Deprecated use SubjectDao instead */
+    @Deprecated
     public void remove(Subject subject) throws Exception {
         log.debug("remove({})", subject);
         WriteResult result = subjectCollection.remove("{_id:#}", subject.getId());
@@ -311,6 +317,8 @@ public class DomainDAO {
         }
     }
 
+    /** @Deprecated use SubjectDao instead */
+    @Deprecated
     public void removeUser(String userNameOrKey) throws Exception {
         log.debug("removeUser(subjectNameOrKey)", userNameOrKey);
         Subject user = getUserByNameOrKey(userNameOrKey);
@@ -318,6 +326,8 @@ public class DomainDAO {
         remove(user);
     }
 
+    /** @Deprecated use SubjectDao instead */
+    @Deprecated
     public void removeGroup(String groupNameOrKey) throws Exception {
         log.debug("removeGroup(subjectNameOrKey)", groupNameOrKey);
         Subject group = getGroupByNameOrKey(groupNameOrKey);
@@ -325,6 +335,8 @@ public class DomainDAO {
         remove(group);
     }
 
+    /** @Deprecated use SubjectDao instead */
+    @Deprecated
     public void addUserToGroup(String userNameOrKey, String groupNameOrKey, GroupRole role) throws Exception {
         log.debug("addUserToGroup(user={}, group={})", userNameOrKey, groupNameOrKey);
         User user = getUserByNameOrKey(userNameOrKey);
@@ -348,6 +360,8 @@ public class DomainDAO {
         }
     }
 
+    /** @Deprecated use SubjectDao instead */
+    @Deprecated
     public void removeUserFromGroup(String userNameOrKey, String groupNameOrKey) throws Exception {
         log.debug("removeUserFromGroup(user={}, group={})", userNameOrKey, groupNameOrKey);
         User user = getUserByNameOrKey(userNameOrKey);
