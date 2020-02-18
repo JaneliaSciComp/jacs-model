@@ -11,6 +11,8 @@ import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.*;
 import org.janelia.model.security.util.SubjectUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.beans.PropertyDescriptor;
@@ -22,9 +24,57 @@ import java.util.stream.Collectors;
  */
 public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements SubjectDao {
 
+    private static final Logger log = LoggerFactory.getLogger(SubjectMongoDao.class);
+
     @Inject
     public SubjectMongoDao(MongoDatabase mongoDatabase) {
         super(mongoDatabase);
+    }
+
+    @Override
+    public User createUser(String name, String fullName, String email) {
+        log.debug("createUser(name={}, fullName={}, email={})", name, fullName, email);
+        User newSubject = new User();
+        newSubject.setName(name);
+        newSubject.setKey("user:" + name);
+        newSubject.setFullName(fullName);
+        newSubject.setEmail(email);
+        save(newSubject);
+
+        User user = (User)findByName(name);
+        if (user == null) {
+            throw new RuntimeException("Problem creating user " + name);
+        }
+
+        log.debug("Created user " + user.getKey());
+        return user;
+    }
+
+    @Override
+    public boolean updateUserProperty(User user, String property, String value) {
+
+        UpdateOptions updateOptions = new UpdateOptions();
+        updateOptions.upsert(false);
+        DaoUpdateResult updateResult = MongoDaoHelper.updateMany(
+                mongoCollection,
+                MongoDaoHelper.createFilterCriteria(
+                        MongoDaoHelper.createFilterById(user.getId())
+                ),
+                ImmutableMap.of(
+                        property, new SetFieldValueHandler<>(value)
+                ),
+                updateOptions);
+        if (updateResult.getEntitiesFound() == 0) {
+            // no entity was found for update - this usually happens if the user does not have write permissions
+            return false;
+        } else {
+            try {
+                new PropertyDescriptor(property, User.class).getWriteMethod().invoke(user, value);
+            } catch (Exception e) {
+                throw new RuntimeException ("Problem try to change property" + property + " on User");
+            }
+            return true;
+        }
     }
 
     @Override
@@ -62,33 +112,6 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     }
 
     @Override
-    public boolean updateUserProperty(User user, String property, String value) {
-
-        UpdateOptions updateOptions = new UpdateOptions();
-        updateOptions.upsert(false);
-        DaoUpdateResult updateResult = MongoDaoHelper.updateMany(
-                mongoCollection,
-                MongoDaoHelper.createFilterCriteria(
-                        MongoDaoHelper.createFilterById(user.getId())
-                ),
-                ImmutableMap.of(
-                        property, new SetFieldValueHandler<>(value)
-                ),
-                updateOptions);
-        if (updateResult.getEntitiesFound() == 0) {
-            // no entity was found for update - this usually happens if the user does not have write permissions
-            return false;
-        } else {
-            try {
-                new PropertyDescriptor(property, User.class).getWriteMethod().invoke(user, value);
-            } catch (Exception e) {
-                throw new RuntimeException ("Problem try to change property" + property + " on User");
-            }
-            return true;
-        }
-    }
-
-    @Override
     public boolean updateUserGroupRoles(User user, Set<UserGroupRole> groupRoles) {
 
         UpdateOptions updateOptions = new UpdateOptions();
@@ -110,14 +133,21 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     }
 
     @Override
-    public Group createGroup(String groupKey, String fullName, String ldapName) {
+    public Group createGroup(String name, String fullName, String ldapName) {
         Group newGroup = new Group();
+        newGroup.setName(name);
+        newGroup.setKey("group:"+name);
         newGroup.setLdapGroupName(ldapName);
         newGroup.setFullName(fullName);
-        newGroup.setKey(groupKey);
         save(newGroup);
-        newGroup = (Group) findByKey(groupKey);
-        return newGroup;
+
+        Group group = (Group) findByName(name);
+        if (group == null) {
+            throw new RuntimeException("Problem creating group " + name);
+        }
+
+        log.debug("Created group " + group.getKey());
+        return group;
     }
 
     @Override
