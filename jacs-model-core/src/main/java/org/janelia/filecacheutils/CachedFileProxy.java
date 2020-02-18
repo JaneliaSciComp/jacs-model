@@ -220,8 +220,10 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                     OutputStream os = Files.newOutputStream(downloadingLocalFilePath, StandardOpenOption.CREATE);
                     contentSize = ByteStreams.copy(contentStream, os);
                 } catch (IOException e) {
-                    LOG.error("Error saving downloadable stream to {}", downloadingLocalFilePath, e);
-                    throw new IllegalStateException(e);
+                    LOG.error("Error saving downloadable stream to {} while downloading {}", downloadingLocalFilePath, localFilePath, e);
+                    FileNotFoundException nfe = new FileNotFoundException("Error saving temp file for " + localFilePath);
+                    nfe.initCause(e);
+                    throw nfe;
                 }
                 try {
                     if (contentSize > 0) {
@@ -232,7 +234,9 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                     }
                 } catch (IOException e) {
                     LOG.error("Error moving downloaded file {} to {}", downloadingLocalFilePath, localFilePath, e);
-                    throw new IllegalStateException(e);
+                    FileNotFoundException nfe = new FileNotFoundException("Error renaming temp file to " + localFilePath);
+                    nfe.initCause(e);
+                    throw nfe;
                 } finally {
                     try {
                         Files.deleteIfExists(downloadingLocalFilePath);
@@ -240,6 +244,10 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                         LOG.debug("Error deleting {}", downloadingLocalFilePath, deleteExc);
                     }
                 }
+            } catch (FileNotFoundException | IllegalStateException e) {
+                // remove file from the cache in case of an error
+                localFileCacheStorage.updateCachedFiles(localFilePath, -LocalFileCacheStorage.BYTES_TO_KB.apply(getCurrentSizeInBytes()));
+                throw e;
             } finally {
                 DOWNLOADING_FILES.remove(localFilePath.toString());
             }
