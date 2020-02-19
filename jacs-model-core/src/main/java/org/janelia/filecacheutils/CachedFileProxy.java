@@ -109,7 +109,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                                 // Instead of ignoring this, it's a warning because on Windows file cannot be moved if it is in use
                                 LOG.warn("Error closing downloading local file {}", downloadingLocalFilePath, e);
                             }
-                            persistToLocalCache(downloadingLocalFilePath);
+                            persistToLocalCache(downloadingLocalFilePath, estimatedSize);
                         },
                         localFileWriterExecutor) {
 
@@ -125,7 +125,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                                     // Instead of ignoring this, it's a warning because on Windows file cannot be moved if it is in use
                                     LOG.warn("Error closing downloading local file {}", downloadingLocalFilePath, e);
                                 }
-                                persistToLocalCache(downloadingLocalFilePath);
+                                persistToLocalCache(downloadingLocalFilePath, estimatedSize);
                             }
                         }
                     }
@@ -164,7 +164,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
      * atomically rename downloaded file.
      * @param downloadedFilePath
      */
-    private synchronized void persistToLocalCache(Path downloadedFilePath) {
+    private synchronized void persistToLocalCache(Path downloadedFilePath, Long expectedSize) {
         try {
             LOG.debug("Move {} -> {}", downloadedFilePath, localFilePath);
             Path localDir = localFilePath.getParent();
@@ -172,7 +172,13 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                 Files.createDirectories(localDir);
             }
             if (Files.notExists(localFilePath) && Files.exists(downloadedFilePath)) {
-                Files.move(downloadedFilePath, localFilePath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                if (expectedSize == null || expectedSize <= 0 || expectedSize == Files.size(downloadedFilePath)) {
+                    Files.move(downloadedFilePath, localFilePath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                    // update the cache size
+                    localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getFileSize(localFilePath)));
+                } else {
+                    LOG.warn("Skip caching {} because its size ({}) differs from the expected size ({})", localFilePath, getFileSize(downloadedFilePath), expectedSize);
+                }
             }
         } catch (IOException e) {
             LOG.error("Error moving downloaded file {} to local cache file {}", downloadedFilePath, localFilePath, e);
@@ -185,8 +191,6 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                 // this is safe to remove because this block should be executed only if no other thread
                 // was downloading this file at the time of this was requested
                 DOWNLOADING_FILES.remove(localFilePath.toString());
-                // update the cache size
-                localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getFileSize(localFilePath)));
             }
         }
     }
@@ -200,6 +204,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
             if (delegateFileProxy == null) {
                 delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
             }
+            Long estimatedSize = delegateFileProxy.estimateSizeInBytes();
             // download remote file
             try (ContentStream contentStream = new RetriedContentStream(() -> delegateFileProxy.openContentStream(), DEFAULT_RETRIES)) {
                 if (!DOWNLOADING_FILES.add(localFilePath.toString())) {
@@ -222,7 +227,8 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                     throw nfe;
                 }
                 try {
-                    if (contentSize > 0) {
+                    if (contentSize > 0 && (estimatedSize == null || estimatedSize == 0 || estimatedSize == contentSize)) {
+                        // only cache if size is unknown or transferred bytes count equal to estimated size
                         Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
                         localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getFileSize(localFilePath)));
                     } else {
