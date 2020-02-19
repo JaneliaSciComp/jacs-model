@@ -52,20 +52,27 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
         return localFilePath.toString();
     }
 
+    private FileProxy getFileProxy() {
+        if (delegateFileProxy == null) {
+            try {
+                delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
+            } catch (FileNotFoundException e) {
+                LOG.warn("No file found for {}", delegateFileKey);
+                return null;
+            }
+        }
+        return delegateFileProxy;
+    }
+
     @Override
     public Long estimateSizeInBytes() {
         long currentSize = getFileSize(localFilePath);
         if (currentSize > 0) {
             return currentSize;
-        } else if (delegateFileProxy == null) {
-            try {
-                delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
-            } catch (FileNotFoundException e) {
-                LOG.warn("No file found for {}", delegateFileKey);
-                return 0L;
-            }
+        } else {
+            FileProxy fp = getFileProxy();
+            return fp != null ? fp.estimateSizeInBytes() : 0L;
         }
-        return delegateFileProxy.estimateSizeInBytes();
     }
 
     private long getFileSize(Path fp) {
@@ -78,28 +85,30 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
     }
 
     @Override
-    public InputStream openContentStream() throws FileNotFoundException {
+    public InputStream openContentStream() {
         InputStream localFileStream = localFileCacheStorage.openLocalCachedFile(localFilePath);
         if (localFileStream != null) {
             return localFileStream;
         } else {
-            if (delegateFileProxy == null) {
-                delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
+            FileProxy fp = getFileProxy();
+            if (fp == null) {
+                return null;
             }
-            ContentStream contentStream = new RetriedContentStream(() -> delegateFileProxy.openContentStream(), DEFAULT_RETRIES);
-            long estimatedSize = delegateFileProxy.estimateSizeInBytes();
+            ContentStream contentStream = new RetriedContentStream(fp::openContentStream, DEFAULT_RETRIES);
+            Long estimatedSize = fp.estimateSizeInBytes();
+
             if (!localFileCacheStorage.isBytesSizeAcceptable(estimatedSize) || !DOWNLOADING_FILES.add(localFilePath.toString())) {
-                // if this file cannot be cached because it's either to large or caching it will exceed the cache capacity
+                // if this file is either null or too large and caching will exceed the cache capacity
                 // or some other thread is already downloading this file
-                // simply return the stream directly
+                // simply return the stream directly and do not attempt any caching
                 return contentStream;
             }
             try {
-                // download remote file
+                // prepare what's need it to cache the file locally
                 makeDownloadDir();
                 Path downloadingLocalFilePath = getDownloadingLocalFilePath();
                 OutputStream downloadingLocalFileStream = new FileOutputStream(downloadingLocalFilePath.toFile());
-                // the method tees the remote stream to a local file image which is being written as the remote stream is being read.
+                // tee the remote stream to a local file image which is being written as the remote stream is being read.
                 return new TeeInputStream(contentStream,
                         downloadingLocalFileStream,
                         (Void) -> {
@@ -154,15 +163,16 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                         DOWNLOADING_FILES.remove(localFilePath.toString());
                     }
                 };
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
+            } catch (Exception e) {
+                LOG.warn("Error opening temporary download file", e);
+                return contentStream; // in case of any exception return the content stream and don't attempt any caching
             }
         }
     }
 
     /**
      * atomically rename downloaded file.
-     * @param downloadedFilePath
+     * @param downloadedFilePath location of the temporary file created during download
      */
     private synchronized void persistToLocalCache(Path downloadedFilePath, Long expectedSize) {
         try {
@@ -171,7 +181,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
             if (localDir != null && Files.notExists(localDir)) {
                 Files.createDirectories(localDir);
             }
-            if (Files.notExists(localFilePath) && Files.exists(downloadedFilePath)) {
+            if (Files.exists(downloadedFilePath)) {
                 if (expectedSize == null || expectedSize <= 0 || expectedSize == Files.size(downloadedFilePath)) {
                     Files.move(downloadedFilePath, localFilePath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
                     // update the cache size
@@ -201,42 +211,29 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
         if (localCachedFilePath != null) {
             return localCachedFilePath.toFile();
         } else {
-            if (delegateFileProxy == null) {
-                delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
+            FileProxy fp = getFileProxy();
+            if (fp == null) {
+                return null;
             }
-            Long estimatedSize = delegateFileProxy.estimateSizeInBytes();
+            if (!DOWNLOADING_FILES.add(localFilePath.toString())) {
+                // some other thread may also be downloading this file so in this case simply return the file
+                // without trying to cache it locally again.
+                // this is a bit risky because the download may fail but this entire method should be scrapped
+                // and the calls to it should be refactored to use FileProxy instead of File
+                return localFilePath.toFile();
+            }
+            Long estimatedSize = fp.estimateSizeInBytes();
             // download remote file
-            try (ContentStream contentStream = new RetriedContentStream(() -> delegateFileProxy.openContentStream(), DEFAULT_RETRIES)) {
-                if (!DOWNLOADING_FILES.add(localFilePath.toString())) {
-                    // some other thread may also be downloading this file so in this case simply return the file
-                    // without trying to cache it locally again.
-                    // this is a bit risky because the download may fail but this entire method should be scrapped
-                    // and the calls to it should be refactored to use FileProxy instead of File
-                    return localFilePath.toFile();
-                }
+            try (ContentStream contentStream = new RetriedContentStream(fp::openContentStream, DEFAULT_RETRIES)) {
+                // copy remote content to a local file
                 Path downloadingLocalFilePath = getDownloadingLocalFilePath();
-                long contentSize;
-                try {
-                    makeDownloadDir();
-                    OutputStream os = Files.newOutputStream(downloadingLocalFilePath, StandardOpenOption.CREATE);
-                    contentSize = ByteStreams.copy(contentStream, os);
+                makeDownloadDir();
+                try (OutputStream os = Files.newOutputStream(downloadingLocalFilePath, StandardOpenOption.CREATE)) {
+                    ByteStreams.copy(contentStream, os);
+                    persistToLocalCache(downloadingLocalFilePath, estimatedSize);
                 } catch (IOException e) {
                     LOG.error("Error saving downloadable stream to {} while downloading {}", downloadingLocalFilePath, localFilePath, e);
                     FileNotFoundException nfe = new FileNotFoundException("Error saving temp file for " + localFilePath);
-                    nfe.initCause(e);
-                    throw nfe;
-                }
-                try {
-                    if (contentSize > 0 && (estimatedSize == null || estimatedSize == 0 || estimatedSize == contentSize)) {
-                        // only cache if size is unknown or transferred bytes count equal to estimated size
-                        Files.move(downloadingLocalFilePath, localFilePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-                        localFileCacheStorage.updateCachedFiles(localFilePath, LocalFileCacheStorage.BYTES_TO_KB.apply(getFileSize(localFilePath)));
-                    } else {
-                        LOG.warn("Nothing copied from {} for {} to {}", delegateFileProxy.getFileId(), localFilePath, downloadingLocalFilePath);
-                    }
-                } catch (IOException e) {
-                    LOG.error("Error moving downloaded file {} to {}", downloadingLocalFilePath, localFilePath, e);
-                    FileNotFoundException nfe = new FileNotFoundException("Error renaming temp file to " + localFilePath);
                     nfe.initCause(e);
                     throw nfe;
                 } finally {
@@ -273,14 +270,8 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
         if (Files.exists(localFilePath)) {
             return true;
         } else {
-            if (delegateFileProxy == null) {
-                try {
-                    delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
-                } catch (FileNotFoundException e) {
-                    return false;
-                }
-            }
-            return delegateFileProxy.exists();
+            FileProxy fp = getFileProxy();
+            return fp != null && fp.exists();
         }
     }
 
