@@ -29,8 +29,10 @@ jobs:
             - ~/.gradle
 
       - store_test_results:
-          paths: 
-            - jacs-model-core/build/test-results/test
-            - jacs-model-access/build/test-results/test
-            - jacs-model-rendering/build/test-results/test
-      
+          path: jacs-model-core/build/test-results/test
+
+      - store_test_results:
+          path: jacs-model-access/build/test-results/test
+
+      - store_test_results:
+          path: jacs-model-rendering/build/test-results/test
