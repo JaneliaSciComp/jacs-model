@@ -40,7 +40,7 @@ public class LocalFileCache<K extends FileKey> {
         CacheBuilder<K, FileProxy> cacheBuilder = CacheBuilder.newBuilder()
                 .maximumWeight(localFileCacheStorage.getCapacityInKB()) // the in memory cache uses the cache entry weigh and maximum weight for the eviction policy
                 .weigher((FileKey key, FileProxy fp) -> {
-                    Long fileEstimatedSize =  fp.estimateSizeInBytes();
+                    Long fileEstimatedSize =  fp.estimateSizeInBytes(false); // with caching we don't always check the latest size
                     if (fileEstimatedSize == null || fileEstimatedSize == 0L) {
                         return 1;
                     } else {

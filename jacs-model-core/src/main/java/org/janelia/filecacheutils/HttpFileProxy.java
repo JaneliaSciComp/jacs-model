@@ -5,11 +5,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.function.Function;
-
-import com.google.common.io.CountingInputStream;
 
 /**
  * Proxy for accessing content using http.
@@ -34,12 +33,12 @@ public class HttpFileProxy implements FileProxy {
     }
 
     @Override
-    public Long estimateSizeInBytes() {
+    public Long estimateSizeInBytes(boolean alwaysCheck) {
         return 0L; // don't know how to estimate the size
     }
 
     @Override
-    public ContentStream openContentStream() throws FileNotFoundException {
+    public ContentStream openContentStream(boolean alwaysDownload) throws FileNotFoundException {
         if (url.startsWith("http://") || url.startsWith("https://")) {
             return new RetriedContentStream(() -> {
                 try {
@@ -62,12 +61,16 @@ public class HttpFileProxy implements FileProxy {
     }
 
     @Override
-    public File getLocalFile() {
-        return null;
+    public File getLocalFile(boolean alwaysDownload) {
+        if (url.startsWith("file://")) {
+            return new File(URI.create(url));
+        } else {
+            return null;
+        }
     }
 
     @Override
-    public boolean exists() {
+    public boolean exists(boolean alwaysCheck) {
         if (url.startsWith("http://") || url.startsWith("https://")) {
             return httpCheckContentProvider.apply(url);
         } else if (url.startsWith("file://")) {

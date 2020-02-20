@@ -9,7 +9,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 
 import com.google.common.base.Preconditions;
 
@@ -35,7 +34,7 @@ public class LocalFileProxy implements FileProxy {
     }
 
     @Override
-    public Long estimateSizeInBytes() {
+    public Long estimateSizeInBytes(boolean alwaysCheck) {
         try {
             if (Files.exists(localFilePath)) {
                 return Files.size(localFilePath);
@@ -48,7 +47,7 @@ public class LocalFileProxy implements FileProxy {
     }
 
     @Override
-    public InputStream openContentStream() throws FileNotFoundException {
+    public InputStream openContentStream(boolean alwaysDownload) throws FileNotFoundException {
         if (Files.notExists(localFilePath)) {
             throw new FileNotFoundException(localFilePath + " was not found");
         }
@@ -62,7 +61,7 @@ public class LocalFileProxy implements FileProxy {
     }
 
     @Override
-    public File getLocalFile() throws FileNotFoundException{
+    public File getLocalFile(boolean alwaysDownload) throws FileNotFoundException{
         if (Files.exists(localFilePath)) {
             return localFilePath.toFile();
         } else {
@@ -71,7 +70,7 @@ public class LocalFileProxy implements FileProxy {
     }
 
     @Override
-    public boolean exists() {
+    public boolean exists(boolean alwaysCheck) {
         return Files.exists(localFilePath);
     }
 
