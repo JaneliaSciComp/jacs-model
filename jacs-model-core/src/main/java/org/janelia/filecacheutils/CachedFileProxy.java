@@ -65,13 +65,13 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
     }
 
     @Override
-    public Long estimateSizeInBytes() {
-        long currentSize = getFileSize(localFilePath);
+    public Long estimateSizeInBytes(boolean alwaysCheck) {
+        long currentSize = alwaysCheck ? 0L : getFileSize(localFilePath);
         if (currentSize > 0) {
             return currentSize;
         } else {
             FileProxy fp = getFileProxy();
-            return fp != null ? fp.estimateSizeInBytes() : 0L;
+            return fp != null ? fp.estimateSizeInBytes(alwaysCheck) : 0L;
         }
     }
 
@@ -85,8 +85,8 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
     }
 
     @Override
-    public InputStream openContentStream() {
-        InputStream localFileStream = localFileCacheStorage.openLocalCachedFile(localFilePath);
+    public InputStream openContentStream(boolean alwaysDownload) {
+        InputStream localFileStream = alwaysDownload ? null : localFileCacheStorage.openLocalCachedFile(localFilePath);
         if (localFileStream != null) {
             return localFileStream;
         } else {
@@ -94,10 +94,10 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
             if (fp == null) {
                 return null;
             }
-            ContentStream contentStream = new RetriedContentStream(fp::openContentStream, DEFAULT_RETRIES);
-            Long estimatedSize = fp.estimateSizeInBytes();
+            ContentStream contentStream = new RetriedContentStream(() -> fp.openContentStream(alwaysDownload), DEFAULT_RETRIES);
+            Long estimatedSize = fp.estimateSizeInBytes(alwaysDownload);
 
-            if (!localFileCacheStorage.isBytesSizeAcceptable(estimatedSize) || !DOWNLOADING_FILES.add(localFilePath.toString())) {
+            if (alwaysDownload || !localFileCacheStorage.isBytesSizeAcceptable(estimatedSize) || !DOWNLOADING_FILES.add(localFilePath.toString())) {
                 // if this file is either null or too large and caching will exceed the cache capacity
                 // or some other thread is already downloading this file
                 // simply return the stream directly and do not attempt any caching
@@ -206,9 +206,9 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
     }
 
     @Override
-    public File getLocalFile() throws FileNotFoundException {
+    public File getLocalFile(boolean alwaysDownload) throws FileNotFoundException {
         Path localCachedFilePath = localFileCacheStorage.getLocalCachedFile(localFilePath);
-        if (localCachedFilePath != null) {
+        if (!alwaysDownload && localCachedFilePath != null) {
             return localCachedFilePath.toFile();
         } else {
             FileProxy fp = getFileProxy();
@@ -222,9 +222,9 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                 // and the calls to it should be refactored to use FileProxy instead of File
                 return localFilePath.toFile();
             }
-            Long estimatedSize = fp.estimateSizeInBytes();
+            Long estimatedSize = fp.estimateSizeInBytes(alwaysDownload);
             // download remote file
-            try (ContentStream contentStream = new RetriedContentStream(fp::openContentStream, DEFAULT_RETRIES)) {
+            try (ContentStream contentStream = new RetriedContentStream(() -> fp.openContentStream(alwaysDownload) , DEFAULT_RETRIES)) {
                 // copy remote content to a local file
                 Path downloadingLocalFilePath = getDownloadingLocalFilePath();
                 makeDownloadDir();
@@ -266,12 +266,12 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
     }
 
     @Override
-    public boolean exists() {
-        if (Files.exists(localFilePath)) {
+    public boolean exists(boolean alwaysCheck) {
+        if (!alwaysCheck && Files.exists(localFilePath)) {
             return true;
         } else {
             FileProxy fp = getFileProxy();
-            return fp != null && fp.exists();
+            return fp != null && fp.exists(alwaysCheck);
         }
     }
 

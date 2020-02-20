@@ -95,7 +95,7 @@ public class CachedFileProxyTest {
         random.nextBytes(testContent);
 
         TestFileKey testFileKey = new TestFileKey(testFilePath);
-        FileKeyToProxyMapper<TestFileKey> testFileProxyMapper = prepareFileProxy(testContent);
+        FileKeyToProxyMapper<TestFileKey> testFileProxyMapper = prepareFileProxy(testContent, false);
 
         LocalFileCacheStorage testLocalFileCacheStorage = Mockito.mock(LocalFileCacheStorage.class);
         Mockito.when(testLocalFileCacheStorage.isBytesSizeAcceptable(anyLong())).thenReturn(true);
@@ -103,7 +103,7 @@ public class CachedFileProxyTest {
         ExecutorService testExecutorService = Executors.newWorkStealingPool();
 
         CachedFileProxy<TestFileKey> cachedFileProxy = new CachedFileProxy<>(testFileKey, testFileProxyMapper, testLocalFileCacheStorage, testExecutorService);
-        InputStream contentStream = cachedFileProxy.openContentStream();
+        InputStream contentStream = cachedFileProxy.openContentStream(false);
         assertFalse(Files.exists(testFilePath));
         byte[] readBuffer = new byte[32];
         int offset;
@@ -135,15 +135,42 @@ public class CachedFileProxyTest {
         random.nextBytes(testContent);
 
         TestFileKey testFileKey = new TestFileKey(testFilePath);
-        FileKeyToProxyMapper<TestFileKey> testFileProxyMapper = prepareFileProxy(testContent);
+        FileKeyToProxyMapper<TestFileKey> testFileProxyMapper = prepareFileProxy(testContent, false);
 
         LocalFileCacheStorage testLocalFileCacheStorage = Mockito.mock(LocalFileCacheStorage.class);
         Mockito.when(testLocalFileCacheStorage.isBytesSizeAcceptable(anyLong())).thenReturn(false);
 
         ExecutorService testExecutorService = null;
         CachedFileProxy<TestFileKey> cachedFileProxy = new CachedFileProxy<>(testFileKey, testFileProxyMapper, testLocalFileCacheStorage, testExecutorService);
-        InputStream contentStream = cachedFileProxy.openContentStream();
+        InputStream contentStream = cachedFileProxy.openContentStream(false);
         assertFalse(Files.exists(testFilePath));
+        byte[] readBuffer = new byte[32];
+        int offset;
+        for (offset = 0;;) {
+            int n = verifyRead(contentStream, testContent, offset, readBuffer);
+            if (n == -1) {
+                break;
+            }
+            offset += n;
+        }
+        assertEquals(testContent.length, offset);
+        contentStream.close();
+        assertFalse(Files.exists(testFilePath));
+    }
+
+    @Test
+    public void readContentWithAlwaysDownloadFlag() throws IOException {
+        byte[] testContent = new byte[100];
+        random.nextBytes(testContent);
+
+        LocalFileCacheStorage testLocalFileCacheStorage = new LocalFileCacheStorage(testCacheRootDir, 100, 50, 100);
+
+        TestFileKey testFileKey = new TestFileKey(testFilePath);
+
+        ExecutorService testExecutorService = null;
+        CachedFileProxy<TestFileKey> cachedFileProxy = new CachedFileProxy<>(testFileKey, prepareFileProxy(testContent, true), testLocalFileCacheStorage, testExecutorService);
+        InputStream contentStream = cachedFileProxy.openContentStream(true);
+
         byte[] readBuffer = new byte[32];
         int offset;
         for (offset = 0;;) {
@@ -168,10 +195,10 @@ public class CachedFileProxyTest {
         TestFileKey testFileKey = new TestFileKey(testFilePath);
 
         ExecutorService testExecutorService = Executors.newWorkStealingPool(2);
-        CachedFileProxy<TestFileKey> cachedFileProxy1 = new CachedFileProxy<>(testFileKey, prepareFileProxy(testContent), testLocalFileCacheStorage, testExecutorService);
-        CachedFileProxy<TestFileKey> cachedFileProxy2 = new CachedFileProxy<>(testFileKey, prepareFileProxy(testContent), testLocalFileCacheStorage, testExecutorService);
-        InputStream contentStream1 = cachedFileProxy1.openContentStream();
-        InputStream contentStream2 = cachedFileProxy2.openContentStream();
+        CachedFileProxy<TestFileKey> cachedFileProxy1 = new CachedFileProxy<>(testFileKey, prepareFileProxy(testContent, false), testLocalFileCacheStorage, testExecutorService);
+        CachedFileProxy<TestFileKey> cachedFileProxy2 = new CachedFileProxy<>(testFileKey, prepareFileProxy(testContent, false), testLocalFileCacheStorage, testExecutorService);
+        InputStream contentStream1 = cachedFileProxy1.openContentStream(false);
+        InputStream contentStream2 = cachedFileProxy2.openContentStream(false);
         assertFalse(Files.exists(testFilePath));
         byte[] readBuffer = new byte[32];
         int offset;
@@ -217,8 +244,8 @@ public class CachedFileProxyTest {
 
         TestFileKey testFileKey = new TestFileKey(testFilePath);
 
-        CachedFileProxy<TestFileKey> cachedFileProxy = new CachedFileProxy<>(testFileKey, prepareFileProxy(testContent), testLocalFileCacheStorage, null);
-        InputStream contentStream = cachedFileProxy.openContentStream();
+        CachedFileProxy<TestFileKey> cachedFileProxy = new CachedFileProxy<>(testFileKey, prepareFileProxy(testContent, false), testLocalFileCacheStorage, null);
+        InputStream contentStream = cachedFileProxy.openContentStream(false);
         byte[] readContent = ByteStreams.toByteArray(contentStream);
         contentStream.close();
         assertArrayEquals(testContent, readContent);
@@ -228,8 +255,8 @@ public class CachedFileProxyTest {
     private void cacheContent(byte[] content, LocalFileCacheStorage localFileCacheStorage) throws IOException {
         ExecutorService testExecutorService = null;
         TestFileKey testFileKey = new TestFileKey(testFilePath);
-        CachedFileProxy<TestFileKey> cachedFileProxy = new CachedFileProxy<>(testFileKey, prepareFileProxy(content), localFileCacheStorage, testExecutorService);
-        InputStream contentStream = cachedFileProxy.openContentStream();
+        CachedFileProxy<TestFileKey> cachedFileProxy = new CachedFileProxy<>(testFileKey, prepareFileProxy(content, false), localFileCacheStorage, testExecutorService);
+        InputStream contentStream = cachedFileProxy.openContentStream(false);
         assertFalse(Files.exists(testFilePath));
         ByteStreams.toByteArray(contentStream);
         contentStream.close();
@@ -244,10 +271,10 @@ public class CachedFileProxyTest {
         return n;
     }
 
-    private FileKeyToProxyMapper<TestFileKey> prepareFileProxy(byte[] testContent) throws FileNotFoundException {
+    private FileKeyToProxyMapper<TestFileKey> prepareFileProxy(byte[] testContent, boolean downloadFlag) throws FileNotFoundException {
         FileProxy fileProxy = Mockito.mock(FileProxy.class);
-        Mockito.when(fileProxy.openContentStream()).thenReturn(new ContentStream(() -> new ByteArrayInputStream(testContent)));
-        Mockito.when(fileProxy.estimateSizeInBytes()).thenReturn((long) testContent.length);
+        Mockito.when(fileProxy.openContentStream(downloadFlag)).thenReturn(new ContentStream(() -> new ByteArrayInputStream(testContent)));
+        Mockito.when(fileProxy.estimateSizeInBytes(downloadFlag)).thenReturn((long) testContent.length);
         return (fileKey) -> fileProxy;
     }
 }

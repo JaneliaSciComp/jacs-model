@@ -328,7 +328,7 @@ public class LocalFileCacheStorage {
             Path cachedFilePath = getLocalCachedFile(localFilePath);
             if (cachedFilePath != null) {
                 LOG.debug("Streaming from local cache {}", cachedFilePath);
-                return new LocalFileProxy(localFilePath).openContentStream();
+                return new LocalFileProxy(localFilePath).openContentStream(false);
             }
         } catch (IOException e) {
             LOG.debug("Error getting the content of the locally cached file {}", localFilePath, e);
