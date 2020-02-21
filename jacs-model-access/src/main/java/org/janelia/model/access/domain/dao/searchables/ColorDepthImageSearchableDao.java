@@ -1,6 +1,6 @@
 package org.janelia.model.access.domain.dao.searchables;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -26,13 +26,22 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchablDao<Col
     }
 
     @Override
-    public long countColorDepthMIPs(String ownerKey, String alignmentSpace, List<String> libraryNames, List<String> matchingNames, List<String> matchingFilepaths) {
-        return colorDepthImageDao.countColorDepthMIPs(ownerKey, alignmentSpace, libraryNames, matchingNames, matchingFilepaths);
+    public long countColorDepthMIPs(String ownerKey, String alignmentSpace,
+                                    Collection<String> libraryNames,
+                                    Collection<String> matchingNames,
+                                    Collection<String> matchingFilepaths,
+                                    Collection<String> matchingSampleRefs) {
+        return colorDepthImageDao.countColorDepthMIPs(ownerKey, alignmentSpace, libraryNames, matchingNames, matchingFilepaths, matchingSampleRefs);
     }
 
     @Override
-    public Stream<ColorDepthImage> streamColorDepthMIPs(String ownerKey, String alignmentSpace, List<String> libraryNames, List<String> matchingNames, List<String> matchingFilepaths, int offset, int length) {
-        return colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace, libraryNames, matchingNames, matchingFilepaths, offset, length);
+    public Stream<ColorDepthImage> streamColorDepthMIPs(String ownerKey, String alignmentSpace,
+                                                        Collection<String> libraryNames,
+                                                        Collection<String> matchingNames,
+                                                        Collection<String> matchingFilepaths,
+                                                        Collection<String> matchingSampleRefs,
+                                                        int offset, int length) {
+        return colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace, libraryNames, matchingNames, matchingFilepaths, matchingSampleRefs, offset, length);
     }
 
     @Override

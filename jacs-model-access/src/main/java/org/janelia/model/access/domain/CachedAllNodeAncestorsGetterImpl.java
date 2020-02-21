@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,7 +48,10 @@ public class CachedAllNodeAncestorsGetterImpl implements NodeAncestorsGetter {
                     treeNodeDao.streamAll()
                             .flatMap(tn -> {
                                 if (tn.hasChildren()) {
-                                    return tn.getChildren().stream().map(childRef -> ImmutablePair.of(childRef, Reference.createFor(tn)));
+                                    return tn.getChildren()
+                                            .stream()
+                                            .filter(Objects::nonNull)
+                                            .map(childRef -> ImmutablePair.of(childRef, Reference.createFor(tn)));
                                 } else {
                                     return Stream.of();
                                 }
