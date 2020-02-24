@@ -36,7 +36,13 @@ public class ContentStream extends InputStream {
 
     @Override
     public int read() throws IOException {
-        return readBytes(new byte[1], 0, 1);
+        byte[] buf = new byte[1];
+        int n = readBytes(buf, 0, 1);
+        if (n == -1) {
+            return -1;
+        } else {
+            return buf[0] & 0xFF;
+        }
     }
 
     @Override
@@ -50,11 +56,7 @@ public class ContentStream extends InputStream {
             if (currentInputStream == null && !open()) {
                 return -1;
             }
-            n = currentInputStream.read(buf, off, len);
-            if (n == -1) {
-                close();
-            }
-            return n;
+            return currentInputStream.read(buf, off, len);
         } catch (IOException e) {
             handleIOException(e);
             throw e;
