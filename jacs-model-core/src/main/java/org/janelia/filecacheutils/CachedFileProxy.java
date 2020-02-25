@@ -114,11 +114,11 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
                         (Void) -> {
                             try {
                                 downloadingLocalFileStream.close();
+                                persistToLocalCache(downloadingLocalFilePath, estimatedSize);
                             } catch (Exception e) {
                                 // Instead of ignoring this, it's a warning because on Windows file cannot be moved if it is in use
                                 LOG.warn("Error closing downloading local file {}", downloadingLocalFilePath, e);
                             }
-                            persistToLocalCache(downloadingLocalFilePath, estimatedSize);
                         },
                         localFileWriterExecutor) {
 
