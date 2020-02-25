@@ -27,6 +27,11 @@ public class RetriedContentStream extends ContentStream {
     }
 
     @Override
+    long getStreamPos() {
+        return baseContentStream.getStreamPos();
+    }
+
+    @Override
     public void close() {
         baseContentStream.close();
     }
@@ -42,10 +47,12 @@ public class RetriedContentStream extends ContentStream {
                 int n = baseContentStream.readBytes(buf, off, len);
                 if (n == -1) {
                     return n;
-                } else if (n > 0) {
-                    baseContentOffset += n;
+                } else if (n > 0 && baseContentOffset < baseContentStream.getStreamPos()) {
+                    baseContentOffset = baseContentStream.getStreamPos();
+                    return n;
+                } else {
+                    return 0; // behave as if nothing was read because this was already read in a previous trial
                 }
-                return n;
             } catch (FileNotFoundException e) {
                 // if the content does not exist no reason to retry
                 throw e;
@@ -53,6 +60,7 @@ public class RetriedContentStream extends ContentStream {
                 nRetries++;
                 if (nRetries < maxRetries) {
                     LOG.warn("Failed to copy content stream to destination after {} tries - will retry {} more times", nRetries, maxRetries - nRetries, e);
+                    baseContentStream.close();
                 } else {
                     LOG.warn("Failed to copy content stream to destination after {} tries", nRetries, e);
                     throw e;

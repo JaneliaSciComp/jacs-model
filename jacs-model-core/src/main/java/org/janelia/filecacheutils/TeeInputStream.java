@@ -36,6 +36,11 @@ class TeeInputStream extends ContentStream {
     }
 
     @Override
+    long getStreamPos() {
+        return baseContentStream.getStreamPos();
+    }
+
+    @Override
     protected int readBytes(byte[] buf, int off, int len) throws IOException {
         int n;
         try {

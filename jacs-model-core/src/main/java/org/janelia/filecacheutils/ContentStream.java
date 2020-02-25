@@ -19,6 +19,7 @@ public class ContentStream extends InputStream {
     private final StreamSupplier inputStreamSupplier;
     private final Consumer<Void> closeHandler;
     private InputStream currentInputStream;
+    private long streamPos;
 
     protected ContentStream() {
         this(() -> null);
@@ -32,6 +33,11 @@ public class ContentStream extends InputStream {
         this.inputStreamSupplier = inputStreamSupplier;
         this.closeHandler = closeHandler;
         this.currentInputStream = null;
+        this.streamPos = 0L;
+    }
+
+    long getStreamPos() {
+        return streamPos;
     }
 
     @Override
@@ -56,7 +62,11 @@ public class ContentStream extends InputStream {
             if (currentInputStream == null && !open()) {
                 return -1;
             }
-            return currentInputStream.read(buf, off, len);
+            n = currentInputStream.read(buf, off, len);
+            if (n > 0) {
+                streamPos += n;
+            }
+            return n;
         } catch (IOException e) {
             handleIOException(e);
             throw e;
@@ -68,6 +78,7 @@ public class ContentStream extends InputStream {
         close();
         // then reopen it
         this.currentInputStream = inputStreamSupplier.open();
+        this.streamPos = 0L;
         return this.currentInputStream != null;
     }
 
