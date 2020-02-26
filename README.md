@@ -16,12 +16,12 @@ Build the jar:
 
 Publish the jar to the local maven repo:
 ```
-gradle publishToMavenLocal
+./gradlew publishToMavenLocal
 ```
 
 To publish the jar to the remote repo you have to provide your maven repo credentials as gradle properties, e.g.
 ```
-gradle -PmavenRepoUser=YourUserName -PmavenRepoPassword=YourPassword publish
+./gradlew -PmavenRepoUser=YourUserName -PmavenRepoPassword=YourPassword publish
 ```
 
 There is also a publish script that takes username and password as positional arguments or if they are not provided it prompts the user to enter them as shown below:
