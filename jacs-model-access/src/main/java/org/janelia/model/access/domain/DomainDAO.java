@@ -10,24 +10,16 @@ import com.mongodb.client.MongoDatabase;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.janelia.model.domain.*;
-import org.janelia.model.domain.compartments.CompartmentSet;
 import org.janelia.model.domain.enums.OrderStatus;
 import org.janelia.model.domain.enums.PipelineStatus;
-import org.janelia.model.domain.gui.alignment_board.AlignmentBoard;
-import org.janelia.model.domain.gui.alignment_board.AlignmentContext;
-import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
-import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
-import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
-import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
-import org.janelia.model.domain.gui.cdmip.ColorDepthSearch;
+import org.janelia.model.domain.gui.cdmip.*;
 import org.janelia.model.domain.gui.search.Filter;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.ontology.*;
 import org.janelia.model.domain.orders.IntakeOrder;
 import org.janelia.model.domain.sample.*;
-import org.janelia.model.domain.screen.FlyLine;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
-import org.janelia.model.domain.tiledMicroscope.TmNeuron;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.Node;
@@ -136,7 +128,7 @@ public class DomainDAO {
         this.preferenceCollection = getCollectionByClass(Preference.class);
         this.tmSampleCollection = getCollectionByClass(TmSample.class);
         this.tmWorkspaceCollection = getCollectionByClass(TmWorkspace.class);
-        this.tmNeuronCollection = getCollectionByClass(TmNeuron.class);
+        this.tmNeuronCollection = getCollectionByClass(TmNeuronMetadata.class);
         this.tmReviewTaskCollection = getCollectionByClass(TmReviewTask.class);
         this.colorDepthMaskCollection = getCollectionByClass(ColorDepthMask.class);
         this.colorDepthSearchCollection = getCollectionByClass(ColorDepthSearch.class);
@@ -1122,6 +1114,62 @@ public class DomainDAO {
             libraries.sort(new DomainObjectComparator(subjectKey));
         }
         return libraries;
+    }
+
+    public Map<String,Map<String,Integer>> getColorDepthCounts() {
+
+        Aggregate.ResultsIterator<DBObject> results = colorDepthImageCollection.aggregate("{$unwind: \"$libraries\"}")
+                .and("{" +
+                        "        $group: {" +
+                        "            _id: {" +
+                        "                libraries: \"$libraries\"," +
+                        "                alignmentSpace: \"$alignmentSpace\"" +
+                        "            }," +
+                        "            spaceCount: { $sum: 1 }" +
+                        "        }" +
+                        "    }")
+                .and("{" +
+                        "        $group: {" +
+                        "            _id: \"$_id.libraries\"," +
+                        "            spaces: {" +
+                        "                $push: {" +
+                        "                    alignmentSpace: \"$_id.alignmentSpace\", " +
+                        "                    count: \"$spaceCount\"" +
+                        "                }," +
+                        "            }," +
+                        "            count: { $sum: \"$spaceCount\" }" +
+                        "        }" +
+                        "    }").as(DBObject.class);
+
+        Map<String,Map<String,Integer>> counts = new HashMap<>();
+
+        while (results.hasNext()) {
+            BasicDBObject result = (BasicDBObject)results.next();
+            String library = result.getString("_id");
+            BasicDBList spaces = (BasicDBList)result.get("spaces");
+            for(Object obj : spaces) {
+                BasicDBObject space = (BasicDBObject)obj;
+                String alignmentSpace = space.getString("alignmentSpace");
+                Integer count = space.getInt("count");
+                Map<String,Integer> spaceCounts = counts.getOrDefault(library, new HashMap<>());
+                spaceCounts.put(alignmentSpace, count);
+                counts.put(library, spaceCounts);
+            }
+        }
+
+        return counts;
+    }
+
+    public void updateColorDepthCounts(Map<String,Map<String,Integer>> counts) throws Exception {
+        for (String libraryIdentifier : counts.keySet()) {
+            Map<String, Integer> newCounts = counts.get(libraryIdentifier);
+            ColorDepthLibrary colorDepthLibrary = getColorDepthLibraryByIdentifier(null, libraryIdentifier);
+            if (colorDepthLibrary.getColorDepthCounts()==null || !newCounts.equals(colorDepthLibrary.getColorDepthCounts())) {
+                colorDepthLibrary.setColorDepthCounts(newCounts);
+                save(colorDepthLibrary.getOwnerKey(), colorDepthLibrary);
+                log.info("Updated counts for color depth library: {}", libraryIdentifier);
+            }
+        }
     }
 
     public DataSet createDataSet(String subjectKey, DataSet dataSet) throws Exception {
@@ -2440,7 +2488,7 @@ public class DomainDAO {
 
             updatedDomainObjectsStream = Stream.concat(
                     updatedDomainObjectsStream,
-                    streamFindResult(tmNeuronCollection, TmNeuron.class, "{workspaceRef:{$in:#}," + queryClause + "}", workspaceRefs, queryParam)
+                    streamFindResult(tmNeuronCollection, TmNeuronMetadata.class, "{workspaceRef:{$in:#}," + queryClause + "}", workspaceRefs, queryParam)
             );
 
             updatedDomainObjectsStream = Stream.concat(
