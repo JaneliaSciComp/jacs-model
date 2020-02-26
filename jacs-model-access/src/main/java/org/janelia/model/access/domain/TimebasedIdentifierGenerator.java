@@ -17,14 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * @deprecated
+ * @see org.janelia.model.util.TimebasedIdentifierGenerator
+ *
  * Created by IntelliJ IDEA.
  * User: smurphy
  * Date: Sep 29, 2006
  * Time: 10:02:26 AM
  *
- */
-
-/**
  * This class generates a time-based UUID encoded as a long.
  * <p/>
  * new Date().getTime() returns a long such as:
@@ -69,7 +69,6 @@ import org.slf4j.LoggerFactory;
  * If it runs out of values for the current millisecond, it will block
  * for 1 millisecond with Thread.sleep(1L) and continue.
  */
-
 public class TimebasedIdentifierGenerator implements IdentifierGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(TimebasedIdentifierGenerator.class);
