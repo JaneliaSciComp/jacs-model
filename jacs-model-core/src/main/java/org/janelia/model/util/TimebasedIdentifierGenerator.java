@@ -95,11 +95,15 @@ public class TimebasedIdentifierGenerator {
     }
 
     public TimebasedIdentifierGenerator(Integer deploymentContext) {
+        this(deploymentContext, false);
+    }
+
+    public TimebasedIdentifierGenerator(Integer deploymentContext, boolean useLoopback) {
         Preconditions.checkArgument(deploymentContext >= 0 && deploymentContext <= MAX_DEPLOYMENT_CONTEXT,
                 "Deployment context value is out of range. It's current value is "
                         + deploymentContext + " and the allowed values are between 0 and " + MAX_DEPLOYMENT_CONTEXT);
         this.deploymentContext = deploymentContext;
-        ipComponent = getIpAddrCompoment();
+        this.ipComponent = getIpAddrCompoment(useLoopback);
     }
 
     public List<Number> generateIdList(long n) {
@@ -139,11 +143,20 @@ public class TimebasedIdentifierGenerator {
         return idBlock;
     }
 
-    private int getIpAddrCompoment() {
+    private int getIpAddrCompoment(boolean useLoopback) {
+
+        if (useLoopback) {
+            // This is basically guaranteed to be very fast, because it doesn't do any hostname lookups.
+            byte[] ipAddress = InetAddress.getLoopbackAddress().getAddress();
+            return ((int)ipAddress[ipAddress.length - 1] & 0xFF);
+        }
+
         try {
+            // Could be slow on MacOS due to misconfigured /etc/hosts
             byte[] ipAddress = InetAddress.getLocalHost().getAddress();
             return ((int)ipAddress[ipAddress.length - 1] & 0xFF);
-        } catch (UnknownHostException e) {
+        }
+        catch (UnknownHostException e) {
             throw new IllegalStateException(e);
         }
     }
