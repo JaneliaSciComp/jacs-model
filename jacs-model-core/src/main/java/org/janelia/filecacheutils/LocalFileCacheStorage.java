@@ -16,6 +16,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -24,6 +26,7 @@ import java.util.function.Predicate;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AtomicDouble;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -34,9 +37,11 @@ import org.slf4j.LoggerFactory;
  * This class represents the storage used for local file caching.
  */
 public class LocalFileCacheStorage {
-    private static final int LOW_WATERMARK = 70;
-    private static final int HIGH_WATERMARK = 80;
+    private static final int LOW_WATERMARK = 80;
+    private static final int HIGH_WATERMARK = 85;
+
     private static final Logger LOG = LoggerFactory.getLogger(LocalFileCacheStorage.class);
+    private volatile boolean cleanupInProgress;
 
     private static class CachedFileEntry {
 
@@ -97,6 +102,7 @@ public class LocalFileCacheStorage {
     private final AtomicLong currentSizeInKB; // cache size in KB
     private final AtomicInteger currentSize; // number of entries in the cache
     private boolean disabled;
+    private final ExecutorService cleanupExecutor;
 
     /**
      * @param localFileCacheDir cache directory
@@ -110,8 +116,10 @@ public class LocalFileCacheStorage {
         this.maximumSize = maximumSize;
         this.currentSizeInKB = new AtomicLong(0);
         this.currentSize = new AtomicInteger(0);
+        this.cleanupInProgress = false;
         this.cachedFiles = new LinkedHashMap<>();
         this.entryComparatorByUpdatedTimestamp = Comparator.comparingLong(ce -> ce.getValue().lastUpdatedTimestamp);
+        this.cleanupExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("LocalFileCacheCleaner").setDaemon(true).build());
     }
 
     public Path getLocalFileCacheDir() {
@@ -147,7 +155,7 @@ public class LocalFileCacheStorage {
     }
 
     public boolean isBytesSizeAcceptable(long sizeInBytes) {
-        if (disabled || sizeInBytes <= 0) {
+        if (disabled || sizeInBytes <= 0 || cleanupInProgress /* don't cache anything if there is a cleanup process running */) {
             return false;
         } else {
             if (maxCachedFileSizeInKB <= 0) {
@@ -238,38 +246,44 @@ public class LocalFileCacheStorage {
     }
 
     private void removeCacheEntriesAsync(Consumer<CachedFileEntry> entryInspector, Predicate<CachedFileEntry> endCond) {
-        CompletableFuture.supplyAsync(() -> removeCacheEntries(entryInspector, endCond)).thenAcceptAsync(nEntriesRemoved -> {
-            LOG.info("Removed {} entries from local cache storage which now has {} entries and it is {}% full ({}KB / {}KB)",
-                    nEntriesRemoved,
-                    size(),
-                    getUsageAsPercentage(),
-                    getCurrentSizeInKB(),
-                    getCapacityInKB());
-        });
+        CompletableFuture
+                .supplyAsync(() -> removeCacheEntries(entryInspector, endCond), cleanupExecutor)
+                .thenAccept(nEntriesRemoved -> {
+                    LOG.info("Removed {} entries from local cache storage which now has {} entries and it is {}% full ({}KB / {}KB)",
+                            nEntriesRemoved,
+                            size(),
+                            getUsageAsPercentage(),
+                            getCurrentSizeInKB(),
+                            getCapacityInKB());
+                })
+        ;
     }
 
     private int removeCacheEntries(Consumer<CachedFileEntry> entryInspector, Predicate<CachedFileEntry> endCond) {
-        Collection<CachedFileEntry> cacheEntriesToBeDeleted = new LinkedList<>();
-        long lastUpdatedTime = System.currentTimeMillis() - 120000L; // 2min. ago
-        // this loop simply iterates and collect entries to be deleted until the end condition is met
-        // but this skips all entries updated in the last 2 min.
-        cachedFiles.entrySet().stream()
-                .filter(cachedFileEntry -> cachedFileEntry.getValue().lastUpdatedTimestamp < lastUpdatedTime) // only remove entries not updated in the last 2min.
-                .sorted(entryComparatorByUpdatedTimestamp)
-                .peek(cachedFileEntry -> {
-                    cacheEntriesToBeDeleted.add(cachedFileEntry.getValue());
-                    entryInspector.accept(cachedFileEntry.getValue());
-                })
-                .anyMatch(cachedFileEntry -> endCond.test(cachedFileEntry.getValue()))
-        ;
-        // now we are actually deleting
-        cacheEntriesToBeDeleted.forEach(cachedFileEntry -> {
-            CachedFileEntry removedEntry = cachedFiles.remove(cachedFileEntry.fileName);
-            if (removedEntry != null) {
-                deleteCachedFile(removedEntry);
-            }
-        });
-        return cacheEntriesToBeDeleted.size();
+        try {
+            cleanupInProgress = true;
+            Collection<CachedFileEntry> cacheEntriesToBeDeleted = new LinkedList<>();
+            // this loop simply iterates and collect entries to be deleted until the end condition is met
+            // but this skips all entries updated in the last 2 min.
+            cachedFiles.entrySet().stream()
+                    .sorted(entryComparatorByUpdatedTimestamp)
+                    .peek(cachedFileEntry -> {
+                        cacheEntriesToBeDeleted.add(cachedFileEntry.getValue());
+                        entryInspector.accept(cachedFileEntry.getValue());
+                    })
+                    .anyMatch(cachedFileEntry -> endCond.test(cachedFileEntry.getValue()))
+            ;
+            // now we are actually deleting
+            cacheEntriesToBeDeleted.forEach(cachedFileEntry -> {
+                CachedFileEntry removedEntry = cachedFiles.remove(cachedFileEntry.fileName);
+                if (removedEntry != null) {
+                    deleteCachedFile(removedEntry);
+                }
+            });
+            return cacheEntriesToBeDeleted.size();
+        } finally {
+            cleanupInProgress = false;
+        }
     }
 
     private synchronized void deleteCachedFile(CachedFileEntry cachedFileEntry) {

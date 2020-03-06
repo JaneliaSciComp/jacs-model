@@ -17,8 +17,6 @@ import org.slf4j.LoggerFactory;
  */
 public class RemoteFileLoader<K extends FileKey> extends CacheLoader<K, FileProxy> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RemoteFileLoader.class);
-
     private final LocalFileCacheStorage localFileCacheStorage;
     private final FileKeyToProxyMapper<K> fileKeyToProxyMapper;
     private final ExecutorService localFileWriterExecutor;
