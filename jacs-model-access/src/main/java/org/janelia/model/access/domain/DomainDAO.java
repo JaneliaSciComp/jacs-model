@@ -2147,7 +2147,7 @@ public class DomainDAO {
         Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(className);
         List<Reference> objectRefs = ids.stream().map(id -> Reference.createFor(clazz, id)).collect(Collectors.toList());
 
-        log.debug("{}({}, {}, ids={}, readers={}, writers={})", grant ? "grantPermissions" : "revokePermissions", subjectKey, collectionName, loggedIdsParam, readers, writers);
+        log.debug("{}({}, {}, ids={}, readers={}, writers={}, allowWriters={}, forceChildUpdates={}, createSharedDataLinks={})", grant ? "grantPermissions" : "revokePermissions", subjectKey, collectionName, loggedIdsParam, readers, writers, allowWriters, forceChildUpdates, createSharedDataLinks);
 
         if (readers.isEmpty() && writers.isEmpty()) {
             return 0;
@@ -2282,7 +2282,9 @@ public class DomainDAO {
 
                 Set<Long> sampleIds = new HashSet<>();
                 for (NeuronFragment fragment : getDomainObjectsAs(subjectKey, objectRefs, NeuronFragment.class)) {
-                    sampleIds.add(fragment.getSample().getTargetId());
+                    if (fragment.getSample()!=null) {
+                        sampleIds.add(fragment.getSample().getTargetId());
+                    }
                 }
                 log.trace("Changing permissions on {} samples associated with fragments: {}", sampleIds.size(), loggedIdsParam);
                 nUpdates += updatePermissions(subjectKey, Sample.class.getName(), sampleIds, readers, writers, grant, allowWriters, forceChildUpdates, false, visited);
@@ -2447,7 +2449,9 @@ public class DomainDAO {
         } else if ("fragment".equals(collectionName)) {
             Set<Long> sampleIds = new HashSet<>();
             for (NeuronFragment fragment : getDomainObjectsAs(subjectKey, objectRefs, NeuronFragment.class)) {
-                sampleIds.add(fragment.getSample().getTargetId());
+                if (fragment.getSample()!=null) {
+                    sampleIds.add(fragment.getSample().getTargetId());
+                }
             }
             updatedDomainObjectsStream = Stream.concat(
                     updatedDomainObjectsStream,
