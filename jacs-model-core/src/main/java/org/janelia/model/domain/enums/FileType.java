@@ -73,6 +73,7 @@ public enum FileType {
     LargeVolumeOctree("Large Volume Octree", false, false, false),
     LargeVolumeKTX("Large Volume KTX", false, false, false),
     TwoPhotonAcquisition("Two Photon Acquisition", false, false, false),
+    CompressedAcquisition("Compressed Acquisition", false, false, false),
 
     // Legacy files
     Unclassified2d("2D Image", true, false, false),

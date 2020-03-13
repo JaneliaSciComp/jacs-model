@@ -21,6 +21,7 @@ public class RawImage {
      * Default raw tile channel suffix pattern
      */
     private String DEFAULT_RAW_CH_SUFFIX_PATTERN = "-ngc.%s.tif";
+    private String DEFAULT_RAW_PATTERN = "-ngc.%s.";
 
     private String renderedVolumePath;
     private String acquisitionPath;
@@ -132,14 +133,19 @@ public class RawImage {
     }
 
     @JsonIgnore
-    public String getRawImagePath(int channel) {
+    public String getRawImagePath(int channel, String extensionSuffix) {
         Path imagePath;
         if (StringUtils.isBlank(relativePath)) {
             imagePath = Paths.get(acquisitionPath);
         } else {
             imagePath = Paths.get(acquisitionPath, StringUtils.stripStart(relativePath, "/"));
         }
-        String channelSuffix = String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel);
+        String channelSuffix;
+        if (extensionSuffix==null) {
+            channelSuffix = String.format(DEFAULT_RAW_CH_SUFFIX_PATTERN, channel);
+        } else {
+            channelSuffix = String.format(DEFAULT_RAW_PATTERN + extensionSuffix, channel);
+        }
         Path fullImagePath = imagePath.resolve(imagePath.getFileName().toString() + channelSuffix);
         return fullImagePath.toString().replace('\\', '/');
     }
