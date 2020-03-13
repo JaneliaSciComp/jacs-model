@@ -107,8 +107,19 @@ public class TmSample extends AbstractDomainObject implements HasFiles {
     }
 
     @JsonIgnore
+    public boolean hasCompressedAcquisition() {
+        if (files.containsKey(FileType.CompressedAcquisition)) {
+            return true;
+        }
+        return false;
+    }
+
+    @JsonIgnore
     @SearchAttribute(key="path_raw_txt",label="RAW Filepath")
-    public String getTwoPhotonAcquisitionFilepath() {
+    public String getAcquisitionFilepath() {
+        if (files.containsKey(FileType.CompressedAcquisition)) {
+            return files.get(FileType.CompressedAcquisition);
+        }
         return files.get(FileType.TwoPhotonAcquisition);
     }
 
@@ -123,8 +134,15 @@ public class TmSample extends AbstractDomainObject implements HasFiles {
     }
 
     @JsonIgnore
-    public String setTwoPhotonAcquisitionFilepath(String filepath) {
-        return files.put(FileType.TwoPhotonAcquisition, filepath);
+    public String setAcquisitionFilepath(String filepath, boolean compressed) {
+        if (compressed) {
+            files.remove(FileType.TwoPhotonAcquisition);
+            return files.put(FileType.CompressedAcquisition, filepath);
+        } else {
+            files.remove(FileType.CompressedAcquisition);
+            return files.put(FileType.TwoPhotonAcquisition, filepath);
+        }
+
     }
 
     /**
