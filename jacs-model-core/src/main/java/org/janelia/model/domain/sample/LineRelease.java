@@ -20,8 +20,17 @@ import org.janelia.model.domain.workspace.Node;
 @MongoMapped(collectionName="release",label="Line Release")
 public class LineRelease extends AbstractDomainObject implements Node {
 
+    private boolean sageSync;
+
+    private String targetWebsite;
+
+    private List<String> annotators = new ArrayList<>();
+
+    @SearchTraversal({})
+    private List<Reference> children = new ArrayList<>();
+
     @Deprecated
-	private boolean autoRelease;
+    private boolean autoRelease;
 
     @Deprecated
     @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
@@ -31,18 +40,18 @@ public class LineRelease extends AbstractDomainObject implements Node {
     private Integer lagTimeMonths;
 
     @Deprecated
-    private boolean sageSync;
-
-    @Deprecated
     private List<String> dataSets = new ArrayList<>();
-
-    private List<String> annotators = new ArrayList<>();
 
     @Deprecated
     private List<String> subscribers = new ArrayList<>();
 
-    @SearchTraversal({})
-    private List<Reference> children = new ArrayList<>();
+    public String getTargetWebsite() {
+        return targetWebsite;
+    }
+
+    public void setTargetWebsite(String targetWebsite) {
+        this.targetWebsite = targetWebsite;
+    }
 
     @Override
     public List<Reference> getChildren() {
