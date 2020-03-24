@@ -10,6 +10,7 @@ project(":jacs-model-core") {
                        JACKSON_CORE_LIB,
                        JACKSON_ANNOTATIONS_LIB,
                        JAMA_LIB,
-                       MONGODB_DRIVER_LIB
+                       MONGODB_DRIVER_LIB,
+                       SOLR_SEARCH_LIB
     }
 }
