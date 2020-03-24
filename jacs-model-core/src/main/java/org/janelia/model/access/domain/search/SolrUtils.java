@@ -10,7 +10,7 @@ import java.util.Date;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-class SolrUtils {
+public class SolrUtils {
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T00:00:00Z'");
     private static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -21,7 +21,7 @@ class SolrUtils {
      * @param date
      * @return
      */
-    static String formatDate(Date date) {
+    public static String formatDate(Date date) {
         return DATE_FORMAT.format(date);
     }
 
@@ -31,7 +31,7 @@ class SolrUtils {
      * @param date
      * @return
      */
-    static String formatDateTime(Date date) {
+    public static String formatDateTime(Date date) {
         return DATE_TIME_FORMAT.format(date);
     }
     
@@ -41,7 +41,7 @@ class SolrUtils {
      * @param name
      * @return
      */
-    static String getFormattedName(String name) {
+    public static String getFormattedName(String name) {
         return name.toLowerCase().replaceAll("\\W+", "_");
     }
 
@@ -51,7 +51,7 @@ class SolrUtils {
      * @param name
      * @return
      */
-    static String getDynamicFieldName(String name) {
+    public static String getDynamicFieldName(String name) {
         return getFormattedName(name) + "_txt";
     }
 
@@ -61,7 +61,7 @@ class SolrUtils {
      * @param solrFieldName
      * @return
      */
-    static String getAttributeNameFromSolrFieldName(String solrFieldName) {
+    public static String getAttributeNameFromSolrFieldName(String solrFieldName) {
         if (solrFieldName == null) {
             return null;
         }
@@ -74,7 +74,7 @@ class SolrUtils {
      * @param s
      * @return
      */
-    private static String underscoreToTitleCase(String s) {
+    public static String underscoreToTitleCase(String s) {
         if (StringUtils.isBlank(s)) return s;
         String[] words = s.split("_");
         StringBuffer buf = new StringBuffer();

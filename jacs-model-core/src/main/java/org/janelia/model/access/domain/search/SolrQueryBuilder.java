@@ -18,7 +18,7 @@ import java.util.Set;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-class SolrQueryBuilder {
+public class SolrQueryBuilder {
 
     private static final Logger log = LoggerFactory.getLogger(SolrQueryBuilder.class);
     private String searchString;
@@ -31,86 +31,86 @@ class SolrQueryBuilder {
     private String sortField;
     private boolean ascending;
 
-    SolrQueryBuilder() {
+    public SolrQueryBuilder() {
     }
 
-    String getSearchString() {
+    public String getSearchString() {
         return searchString;
     }
 
-    void setSearchString(String searchString) {
+    public void setSearchString(String searchString) {
         this.searchString = searchString;
     }
 
-    String getAuxString() {
+    public String getAuxString() {
         return auxString;
     }
 
-    void setAuxString(String auxString) {
+    public void setAuxString(String auxString) {
         this.auxString = auxString;
     }
 
-    String getAuxAnnotationQueryString() {
+    public String getAuxAnnotationQueryString() {
         return auxAnnotationQueryString;
     }
 
-    void setAuxAnnotationQueryString(String auxAnnotationQueryString) {
+    public void setAuxAnnotationQueryString(String auxAnnotationQueryString) {
         this.auxAnnotationQueryString = auxAnnotationQueryString;
     }
 
-    Long getRootId() {
+    public Long getRootId() {
         return rootId;
     }
 
-    void setRootId(Long rootId) {
+    public void setRootId(Long rootId) {
         this.rootId = rootId;
     }
 
-    List<String> getOwnerKeys() {
+    public List<String> getOwnerKeys() {
         return ownerKeys;
     }
 
-    void addOwnerKey(String ownerKey) {
+    public void addOwnerKey(String ownerKey) {
         this.ownerKeys.add(ownerKey);
     }
 
-    Map<String, Set<String>> getFilters() {
+    public Map<String, Set<String>> getFilters() {
         return filters;
     }
 
-    void setFilters(Map<String, Set<String>> filters) {
+    public void setFilters(Map<String, Set<String>> filters) {
         this.filters = filters;
     }
 
-    List<String> getFacets() {
+    public List<String> getFacets() {
         return facets;
     }
 
-    void setFacets(List<String> facets) {
+    public void setFacets(List<String> facets) {
         this.facets = facets;
     }
 
-    String getSortField() {
+    public String getSortField() {
         return sortField;
     }
 
-    void setSortField(String sortField) {
+    public void setSortField(String sortField) {
         this.sortField = sortField;
     }
 
-    boolean isAscending() {
+    public boolean isAscending() {
         return ascending;
     }
 
-    void setAscending(boolean ascending) {
+    public void setAscending(boolean ascending) {
         this.ascending = ascending;
     }
 
-    boolean hasQuery() {
+    public boolean hasQuery() {
         return !StringUtils.isEmpty(searchString) || !StringUtils.isEmpty(auxString) || !StringUtils.isEmpty(auxAnnotationQueryString) || rootId != null || !filters.isEmpty();
     }
 
-    SolrQuery getQuery() {
+    public SolrQuery getQuery() {
         StringBuilder qs = new StringBuilder();
         if (!ownerKeys.isEmpty()) {
             qs.append("+subjects:(");
@@ -222,7 +222,7 @@ class SolrQueryBuilder {
         return query.toString();
     }
 
-    static DocumentSearchParams serializeSolrQuery(SolrQuery query) {
+    public static DocumentSearchParams serializeSolrQuery(SolrQuery query) {
         DocumentSearchParams queryParams = new DocumentSearchParams();
         queryParams.setQuery(query.getQuery());
         queryParams.setSortField(query.getSortField());
@@ -233,7 +233,7 @@ class SolrQueryBuilder {
         return queryParams;
     }
 
-    static SolrQuery deSerializeSolrQuery(DocumentSearchParams queryParams) {
+    public static SolrQuery deSerializeSolrQuery(DocumentSearchParams queryParams) {
         SolrQuery query = new SolrQuery();
         query.setQuery(queryParams.getQuery());
         if (queryParams.getSortField() != null) {
