@@ -33,10 +33,10 @@ public enum PipelineProcess implements NamedEnum {
     FlyLightPairedSample2018MCFOFull("FlyLight Paired MCFO 2018 (Full Scale 63x) Alignment Pipeline"),
     FlyLightPairedSample2018PolarityFull("FlyLight Paired Polarity 2018 (Full Scale 63x) Alignment Pipeline"),
     FlyLightMCFO40x2018("FlyLight MCFO 40x 2018 Alignment Pipeline"),
-    
+
     FlyLightPolarityCase3("Fly Light Polarity Case 3 Pipeline"),
     FlyLightPolarityCase5("Fly Light Polarity Case 5 Pipeline"),
-    
+
     LeetCentralBrain63x("Lee Central Brain 63x Pipeline"),
     LeetWholeBrain40x("Lee Whole Brain 40x Pipeline"),
     LeetWholeBrain40x512pxINT("Lee Whole Brain 40x 512px INTensity Pipeline"),
@@ -53,7 +53,7 @@ public enum PipelineProcess implements NamedEnum {
     NernaPolarityCase3("Aljoscha Polarity Case 3 Pipeline"),
     NernaPolarityCase3WithoutGrouper("Aljoscha Polarity Case 3 (Without Grouper) Pipeline"),
     NernaPolarityCase3WithGrouper("Aljoscha Polarity Case 3 (With Grouper) Pipeline"),
-    
+
     PTR10ProjectionOnly("PTR 10 Projection Only Pipeline"),
     PTR20JBAAlignment("PTR 20 JBA Alignment Pipeline"),
     PTR30ANTSAlignment("PTR 30 ANTS Alignment Pipeline"),
@@ -64,9 +64,9 @@ public enum PipelineProcess implements NamedEnum {
     PTR40NeuronSeparation("PTR 40 Neuron Separation Pipeline"),
 
     SimpsonDescending("Simpson Lab Sensory Descending Alignment Pipeline"),
-    
+
     TerraIncognita40x("Terra Incognita 40x Whole Brain Pipeline"),
-    
+
     WolfftMCFOCase1("Tanya Central Brain MCFO Case 1 Pipeline"),
     WolfftMCFOCase1Unaligned("Tanya MCFO Case 1 Unaligned Pipeline"),
 
@@ -86,8 +86,12 @@ public enum PipelineProcess implements NamedEnum {
     YoshiMacroPolarityCase4("Yoshi Polarity Case 4 Macro Pipeline"),
     YoshiMacroMCFOCase1("Yoshi MCFO Case 1 Macro Pipeline"),
 
-    TrumanLarval40x("Truman Larval 40x Pipeline");
-    
+    TrumanLarval40x("Truman Larval 40x Pipeline"),
+
+    FlyLightSample("FlyLight Sample 20x/40x/63x Pipeline"),
+    FlyLightSampleMCFO("FlyLight Sample 20x/40x/63x MCFO Pipeline"),
+    FlyLightSamplePolarity("FlyLight Sample 20x/40x/63x Polarity Pipeline");
+
     private String name;
 
     private PipelineProcess(String name) {
