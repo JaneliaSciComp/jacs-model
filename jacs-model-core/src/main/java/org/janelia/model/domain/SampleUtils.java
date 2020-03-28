@@ -89,14 +89,14 @@ public class SampleUtils {
             List<ObjectiveSample> objectiveSamples = sample.getObjectiveSamples();
             for(int i=objectiveSamples.size()-1; i>=0; i--) {
                 ObjectiveSample objectiveSample = objectiveSamples.get(i);
-                log.debug("Testing objective: "+objectiveSample.getObjective());
+                log.debug("Testing objective: {}", objectiveSample.getObjective());
                 chosenResults.addAll(getMatchingResults(objectiveSample, area, aligned, resultClass, resultName, groupName));
             }
         }
         else {
             ObjectiveSample objectiveSample = sample.getObjectiveSample(objective);
             if (objectiveSample!=null) {
-                log.debug("Testing objective: "+objectiveSample.getObjective());
+                log.debug("Testing objective: {}", objectiveSample.getObjective());
                 chosenResults.addAll(getMatchingResults(objectiveSample, area, aligned, resultClass, resultName, groupName));
             }
         }
@@ -119,7 +119,7 @@ public class SampleUtils {
             }
         }
 
-        log.debug("Got results: "+finalResults);
+        log.debug("Got results: {}", finalResults);
         return finalResults;
     }
 
@@ -131,18 +131,26 @@ public class SampleUtils {
         Set<String> validAreas = new HashSet<>();
         Set<String> validTiles = new HashSet<>();
         for (SampleTile tile : objectiveSample.getTiles()) {
-            String tileArea = tile.getAnatomicalArea();
-            if (area==null || StringUtils.equalsIgnoreCase(area, tileArea)) {
-                validAreas.add(tileArea);
-                validTiles.add(tile.getName());
+            String tileAreaName = tile.getAnatomicalArea();
+            if (area==null || StringUtils.equalsIgnoreCase(area, tileAreaName)) {
+
+                // Same replacements as the SampleHelper in the Sample Pipeline
+                String tileName = tile.getName().replaceAll("\\s+", "_").replaceAll("-", "_");
+
+                validTiles.add(tileName);
+                validAreas.add(tileAreaName);
+
             }
         }
+
+        log.trace("  validAreas: {}", validAreas);
+        log.trace("  validTiles: {}", validTiles);
 
         // Walk pipeline runs backwards to get latest first
         List<SamplePipelineRun> runs = objectiveSample.getPipelineRuns();
         for(int i=runs.size()-1; i>=0; i--) {
             SamplePipelineRun run = runs.get(i);
-            log.debug("  Testing run: " + run.getId());
+            log.debug("  Testing run: {}", run.getId());
 
             boolean matchedResultName = false;
 
@@ -150,21 +158,21 @@ public class SampleUtils {
             List<PipelineResult> results = run.getResults();
             for (int j = results.size()-1; j>=0; j--) {
                 PipelineResult pipelineResult = results.get(j);
-                log.debug("  Testing result: " + pipelineResult.getId());
+                log.debug("  Testing result: {}", pipelineResult.getId());
 
                 boolean isAligned = pipelineResult instanceof SampleAlignmentResult;
                 if (aligned==null || aligned==isAligned) {
-                    log.debug("    Found result matching align="+aligned);
+                    log.debug("    Found result matching align={}", aligned);
 
                     if (resultClass==null || StringUtils.equals(pipelineResult.getClass().getName(), resultClass)) {
-                        log.debug("    Found result matching resultClass=" + resultClass);
+                        log.debug("    Found result matching resultClass={}", resultClass);
 
                         String pipelineResultName = pipelineResult.getName();
 
                         boolean matchingResultName = StringUtils.equals(pipelineResultName, resultName);
 
                         if (resultName == null || (!matchedResultName && matchingResultName)) {
-                            log.debug("    Found result matching resultName=" + resultName);
+                            log.debug("    Found result matching resultName={}", resultName);
                             if (matchingResultName) {
                                 // Return only one result with the same name
                                 matchedResultName = true;
@@ -177,16 +185,18 @@ public class SampleUtils {
                                 else if (pipelineResult instanceof HasAnatomicalArea) {
                                     HasAnatomicalArea aaResult = (HasAnatomicalArea) pipelineResult;
                                     if (StringUtils.equals(area, aaResult.getAnatomicalArea())) {
+                                        log.debug("    Found result matching area={}", aaResult.getAnatomicalArea());
                                         chosenResults.put(pipelineResult.getId().toString(), pipelineResult);
                                     }
                                 }
                                 else if (pipelineResult instanceof SamplePostProcessingResult) {
                                     HasFileGroups hasGroups = (HasFileGroups) pipelineResult;
                                     for (FileGroup fileGroup : hasGroups.getGroups()) {
-                                        // Same replacements as the SampleHelper in the Sample Pipeline
-                                        String key = fileGroup.getKey().replaceAll("\\s+", "_").replaceAll("-", "_");
+                                        String key = fileGroup.getKey();
+                                        log.trace("    Checking for {}", key);
                                         // Could be an area or a tile name
                                         if (validAreas.contains(key) || validTiles.contains(key)) {
+                                            log.debug("    Found result matching key={}", key);
                                             chosenResults.put(pipelineResult.getId() + "~" + key, fileGroup);
                                         }
                                     }
@@ -196,7 +206,7 @@ public class SampleUtils {
                                 HasFileGroups hasGroups = (HasFileGroups) pipelineResult;
                                 HasFiles hasFiles = hasGroups.getGroup(groupName);
                                 if (hasFiles != null) {
-                                    log.debug("    Found group: " + groupName);
+                                    log.debug("    Found group: {}", groupName);
                                     chosenResults.put(pipelineResult.getId() + "~" + groupName, hasFiles);
                                 }
                             }
@@ -236,7 +246,7 @@ public class SampleUtils {
                     for(PipelineResult result : run.getResults()) {
                         if (result!=null && result.getResults()!=null) {
                             for(PipelineResult secondaryResult : result.getResults()) {
-                                if (secondaryResult!=null && secondaryResult instanceof NeuronSeparation) {
+                                if (secondaryResult instanceof NeuronSeparation) {
                                     NeuronSeparation separation = (NeuronSeparation)secondaryResult;
                                     if (separation.getFragmentsReference().getReferenceId().equals(neuronFragment.getSeparationId())) {
                                         return returnClazz.equals(NeuronSeparation.class) ? (T)separation : (T)result;
