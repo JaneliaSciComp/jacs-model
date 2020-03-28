@@ -79,12 +79,6 @@ public enum PipelineProcess implements NamedEnum {
     YoshiMBPolarityCase3("Yoshi MB Polarity Case 3 Pipeline"),
     YoshiMBPolarityCase4("Yoshi MB Polarity Case 4 Pipeline"),
     YoshiMBSplitMCFOCase1("Yoshi MB Split MCFO Case 1 Pipeline"),
-    YoshiMacroMB63xFlpout("Yoshi MB 63x Flpout Fiji Macro Pipeline"),
-    YoshiMacroPolarityCase1("Yoshi Polarity Case 1 Macro Pipeline"),
-    YoshiMacroPolarityCase2("Yoshi Polarity Case 2 Macro Pipeline"),
-    YoshiMacroPolarityCase3("Yoshi Polarity Case 3 Macro Pipeline"),
-    YoshiMacroPolarityCase4("Yoshi Polarity Case 4 Macro Pipeline"),
-    YoshiMacroMCFOCase1("Yoshi MCFO Case 1 Macro Pipeline"),
 
     TrumanLarval40x("Truman Larval 40x Pipeline"),
 
