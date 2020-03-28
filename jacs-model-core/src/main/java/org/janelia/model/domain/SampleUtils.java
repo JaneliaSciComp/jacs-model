@@ -132,7 +132,7 @@ public class SampleUtils {
         Set<String> validTiles = new HashSet<>();
         for (SampleTile tile : objectiveSample.getTiles()) {
             String tileArea = tile.getAnatomicalArea();
-            if (area==null || StringUtils.equals(area, tileArea)) {
+            if (area==null || StringUtils.equalsIgnoreCase(area, tileArea)) {
                 validAreas.add(tileArea);
                 validTiles.add(tile.getName());
             }
@@ -183,7 +183,9 @@ public class SampleUtils {
                                 else if (pipelineResult instanceof SamplePostProcessingResult) {
                                     HasFileGroups hasGroups = (HasFileGroups) pipelineResult;
                                     for (FileGroup fileGroup : hasGroups.getGroups()) {
-                                        String key = fileGroup.getKey(); // Could be an area or a tile name
+                                        // Same replacements as the SampleHelper in the Sample Pipeline
+                                        String key = fileGroup.getKey().replaceAll("\\s+", "_").replaceAll("-", "_");
+                                        // Could be an area or a tile name
                                         if (validAreas.contains(key) || validTiles.contains(key)) {
                                             chosenResults.put(pipelineResult.getId() + "~" + key, fileGroup);
                                         }
