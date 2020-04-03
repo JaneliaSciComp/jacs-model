@@ -1,10 +1,11 @@
 package org.janelia.model.domain.gui.cdmip;
 
 import java.io.File;
-import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.sample.Sample;
 
@@ -13,7 +14,11 @@ import org.janelia.model.domain.sample.Sample;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ColorDepthFilepathParser {
+public class ColorDepthFileComponents {
+
+    public static ColorDepthFileComponents fromFilepath(String filepath) {
+        return new ColorDepthFileComponents(filepath);
+    }
 
     private File file;
     private Reference sampleRef;
@@ -23,7 +28,7 @@ public class ColorDepthFilepathParser {
     private String anatomicalArea;
     private Integer channelNumber;
 
-    private ColorDepthFilepathParser(String filepath) throws ParseException {
+    private ColorDepthFileComponents(String filepath) {
         this.file = new File(filepath);
 
         Pattern p = Pattern.compile("^(?<sampleName>.*?)-(?<objective>\\d+x)-(?<anatomicalArea>\\w+?)-" +
@@ -38,13 +43,6 @@ public class ColorDepthFilepathParser {
             channelNumber = new Integer(m.group("channelNum"));
             alignmentSpace = m.group("alignmentSpace");
         }
-        else {
-            throw new ParseException("Could not parse path "+filepath, 0);
-        }
-    }
-
-    public static ColorDepthFilepathParser parse(String filepath) throws ParseException {
-        return new ColorDepthFilepathParser(filepath);
     }
 
     public File getFile() {
@@ -73,5 +71,25 @@ public class ColorDepthFilepathParser {
 
     public Integer getChannelNumber() {
         return channelNumber;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ColorDepthFileComponents that = (ColorDepthFileComponents) o;
+
+        return new EqualsBuilder()
+                .append(file, that.file)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(file)
+                .toHashCode();
     }
 }
