@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.search.Filtering;
 import org.janelia.model.domain.gui.search.criteria.Criteria;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
@@ -27,6 +28,11 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
     @SearchAttribute(key="identifier_txt",label="Library Identifier")
     private String identifier;
 
+    private String version;
+
+    @SearchTraversal({})
+    private Reference parentLibraryRef;
+
     @SearchTraversal({})
     private Map<String,Integer> colorDepthCounts = new HashMap<>();
 
@@ -39,6 +45,22 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
 
     public void setIdentifier(String identifier) {
         this.identifier = identifier;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public Reference getParentLibraryRef() {
+        return parentLibraryRef;
+    }
+
+    public void setParentLibraryRef(Reference parentLibraryRef) {
+        this.parentLibraryRef = parentLibraryRef;
     }
 
     public Map<String, Integer> getColorDepthCounts() {
