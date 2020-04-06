@@ -628,7 +628,13 @@ public class DomainDAO {
         Set<String> subjects = getWriterSet(subjectKey);
         String collectionName = DomainUtils.getCollectionName(domainClass);
 
-        WriteResult wr = getCollectionByName(collectionName).remove("{_id:{$in:#},writers:{$in:#}}", ids, subjects);
+        WriteResult wr;
+        if (subjects == null) {
+            wr = getCollectionByName(collectionName).remove("{_id:{$in:#}}", ids);
+        } else {
+            wr = getCollectionByName(collectionName).remove("{_id:{$in:#},writers:{$in:#}}", ids, subjects);
+        }
+
         if (wr.getN() != ids.size()) {
             log.warn("Only deleted " + wr.getN() + " objects from " + ids);
             return false;
