@@ -1,17 +1,12 @@
 package org.janelia.model.domain.sample;
 
-import java.util.Date;
-
-import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.interfaces.HasAnatomicalArea;
-import org.janelia.model.domain.support.ReprocessOnChange;
-import org.janelia.model.domain.support.SAGEAttribute;
-import org.janelia.model.domain.support.SearchAttribute;
-import org.janelia.model.domain.support.SearchTraversal;
-import org.janelia.model.domain.support.SearchType;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.interfaces.HasAnatomicalArea;
+import org.janelia.model.domain.support.*;
+
+import java.util.Date;
 
 /**
  * A 3d image stack in LSM format, usually output from a microscope. 
@@ -108,7 +103,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private String detectionChannel3DetectorGain;
 
     @SAGEAttribute(cvName="light_imagery", termName="driver")
-    @SearchAttribute(key="driver_txt",label="Driver")
+    @SearchAttribute(key="driver_txt",label="Driver",facet="driver_s")
     private String driver;
     
     @SAGEAttribute(cvName="fly", termName="effector")
@@ -130,7 +125,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
 
     @ReprocessOnChange
     @SAGEAttribute(cvName="light_imagery", termName="mounting_protocol")
-    @SearchAttribute(key="mount_protocol_txt",label="Mounting Protocol")
+    @SearchAttribute(key="mount_protocol_txt",label="Mounting Protocol",facet="mount_protocol_s")
     private String mountingProtocol;
 
     // Only used by T. Lee lab
@@ -172,7 +167,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private String illuminationChannel3PowerBC1;
 
     @SAGEAttribute(cvName="light_imagery", termName="family")
-    @SearchAttribute(key="family_txt",label="Image Family")
+    @SearchAttribute(key="family_txt",label="Image Family",facet="family_s")
     private String imageFamily;
 
     @SAGEAttribute(cvName="light_imagery", termName="created_by")
@@ -184,7 +179,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private String dataSet;
 
     @SAGEAttribute(cvName="light_imagery", termName="imaging_project")
-    @SearchAttribute(key="img_proj_txt",label="Imaging Project")
+    @SearchAttribute(key="img_proj_txt",label="Imaging Project",facet="img_proj_s")
     private String imagingProject;
 
     @SAGEAttribute(cvName="light_imagery", termName="interpolation_elapsed")
@@ -200,7 +195,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private Integer interpolationStop;
 
     @SAGEAttribute(cvName="light_imagery", termName="microscope")
-    @SearchAttribute(key="ms_txt",label="Microscope")
+    @SearchAttribute(key="ms_txt",label="Microscope",facet="ms_s")
     private String microscope;
 
     @SAGEAttribute(cvName="light_imagery", termName="microscope_filename")
@@ -232,7 +227,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private Integer scanStop;
 
     @SAGEAttribute(cvName="light_imagery", termName="scan_type")
-    @SearchAttribute(key="scan_type_txt",label="Scan Type")
+    @SearchAttribute(key="scan_type_txt",label="Scan Type",facet="scan_type_s")
     private String scanType;
 
     @SAGEAttribute(cvName="light_imagery", termName="screen_state")
@@ -245,11 +240,11 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
 
     @ReprocessOnChange
     @SAGEAttribute(cvName="light_imagery", termName="tile")
-    @SearchAttribute(key="tile_txt",label="RawTile")
+    @SearchAttribute(key="tile_txt",label="Tile")
     private String tile;
 
     @SAGEAttribute(cvName="light_imagery", termName="tissue_orientation")
-    @SearchAttribute(key="orientation_txt",label="Tissue Orientation")
+    @SearchAttribute(key="orientation_txt",label="Tissue Orientation",facet="orientation_s")
     private String tissueOrientation;
 
     @SAGEAttribute(cvName="light_imagery", termName="total_pixels")
@@ -321,11 +316,11 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private Integer flycoreId;
 
     @SAGEAttribute(cvName="line", termName="flycore_alias")
-    @SearchAttribute(key="fcalias_s",label="Fly Core Alias")
+    @SearchAttribute(key="fcalias_s",label="Fly Core Alias",facet="fcalias_s")
     private String flycoreAlias;
 
     @SAGEAttribute(cvName="line", termName="flycore_lab")
-    @SearchAttribute(key="fclab_s",label="Fly Core Lab Id")
+    @SearchAttribute(key="fclab_s",label="Fly Core Lab Id",facet="fclab_s")
     private String flycoreLabId;
     
     @SAGEAttribute(cvName="line", termName="flycore_landing_site")
@@ -333,11 +328,11 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private String flycoreLandingSite;
 
     @SAGEAttribute(cvName="line", termName="flycore_permission")
-    @SearchAttribute(key="fcpermn_txt",label="Fly Core Permission")
+    @SearchAttribute(key="fcpermn_txt",label="Fly Core Permission",facet="fcpermn_s")
     private String flycorePermission;
     
     @SAGEAttribute(cvName="line", termName="flycore_project")
-    @SearchAttribute(key="fcproj_txt",label="Fly Core Project")
+    @SearchAttribute(key="fcproj_txt",label="Fly Core Project",facet="fcproj_s")
     private String flycoreProject;
 
     @SAGEAttribute(cvName="line", termName="flycore_project_subcat")
