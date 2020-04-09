@@ -16,10 +16,7 @@ import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchType;
 import org.janelia.model.util.ModelStringUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * All the processing results of a particular specimen. Uniqueness of a Sample is determined by a combination 
@@ -185,6 +182,9 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="heat_shock_minutes_txt",label="Heat Shock Age Minutes")
     private String heatShockMinutes;
 
+    @SearchAttribute(key="published_b",label="Staged for Publishing")
+    private Boolean publishedToStaging = false;
+
     @JsonProperty
     public List<ObjectiveSample> getObjectiveSamples() {
         return objectiveSamples;
@@ -209,9 +209,14 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     @JsonIgnore
     private void resortObjectiveSamples() {
-        Collections.sort(objectiveSamples, (o1, o2) -> ComparisonChain.start()
-                .compare(o1.getObjective(), o2.getObjective(), Ordering.natural().nullsLast())
-                .result());
+        Collections.sort(objectiveSamples, new Comparator<ObjectiveSample>() {
+            @Override
+            public int compare(ObjectiveSample o1, ObjectiveSample o2) {
+                return ComparisonChain.start()
+                        .compare(o1.getObjective(), o2.getObjective(), Ordering.natural().nullsLast())
+                        .result();
+            }
+        });
     }
 
     @JsonIgnore
@@ -384,6 +389,30 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     public void setFlycoreLabId(String flycoreLabId) {
         this.flycoreLabId = flycoreLabId;
+    }
+
+    public String getFlycoreLandingSite() {
+        return flycoreLandingSite;
+    }
+
+    public void setFlycoreLandingSite(String flycoreLandingSite) {
+        this.flycoreLandingSite = flycoreLandingSite;
+    }
+
+    public String getFlycorePermission() {
+        return flycorePermission;
+    }
+
+    public void setFlycorePermission(String flycorePermission) {
+        this.flycorePermission = flycorePermission;
+    }
+
+    public String getFlycorePSubcategory() {
+        return flycorePSubcategory;
+    }
+
+    public void setFlycorePSubcategory(String flycorePSubcategory) {
+        this.flycorePSubcategory = flycorePSubcategory;
     }
 
     public String getImagingProject() {
@@ -590,6 +619,19 @@ public class Sample extends AbstractDomainObject implements IsParent {
     
     public void setPurged(Boolean purged) {
         this.purged = purged;
+    }
+
+    @JsonIgnore
+    public boolean isSamplePublishedToStaging() {
+        return publishedToStaging!=null && publishedToStaging;
+    }
+
+    public Boolean getPublishedToStaging() {
+        return publishedToStaging;
+    }
+
+    public void setPublishedToStaging(Boolean publishedToStaging) {
+        this.publishedToStaging = publishedToStaging;
     }
 
     public Long getDiskSpaceUsage() {
