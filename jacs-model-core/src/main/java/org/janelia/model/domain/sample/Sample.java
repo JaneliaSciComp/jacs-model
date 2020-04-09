@@ -18,7 +18,6 @@ import org.janelia.model.util.ModelStringUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -48,10 +47,6 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="effector_txt",label="Effector")
     private String effector;
 
-    @SAGEAttribute(cvName="line", termName="flycore_alias")
-    @SearchAttribute(key="fcalias_s",label="Fly Core Alias")
-    private String flycoreAlias;
-
     @SAGEAttribute(cvName="light_imagery", termName="gender")
     @SearchAttribute(key="gender_txt",label="Gender",facet="gender_s")
     private String gender;
@@ -72,24 +67,40 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="flycore_id_i",label="Fly Core Id")
     private Integer flycoreId;
 
+    @SAGEAttribute(cvName="line", termName="flycore_alias")
+    @SearchAttribute(key="fcalias_s",label="Fly Core Alias",facet="fcalias_s")
+    private String flycoreAlias;
+
+    @SAGEAttribute(cvName="line", termName="flycore_lab")
+    @SearchAttribute(key="fclab_s",label="Fly Core Lab Id",facet="fclab_s")
+    private String flycoreLabId;
+
+    @SAGEAttribute(cvName="line", termName="flycore_landing_site")
+    @SearchAttribute(key="fclanding_txt",label="Fly Core Landing Site")
+    private String flycoreLandingSite;
+
+    @SAGEAttribute(cvName="line", termName="flycore_permission")
+    @SearchAttribute(key="fcpermn_txt",label="Fly Core Permission",facet="fcpermn_s")
+    private String flycorePermission;
+
+    @SAGEAttribute(cvName="line", termName="flycore_project")
+    @SearchAttribute(key="fcproj_txt",label="Fly Core Project",facet="fcproj_s")
+    private String flycoreProject;
+
+    @SAGEAttribute(cvName="line", termName="flycore_project_subcat")
+    @SearchAttribute(key="fcsubcat_txt",label="Fly Core Subcategory")
+    private String flycorePSubcategory;
+
     @SAGEAttribute(cvName="light_imagery", termName="imaging_project")
-    @SearchAttribute(key="img_proj_txt",label="Imaging Project")
+    @SearchAttribute(key="img_proj_txt",label="Imaging Project",facet="img_proj_s")
     private String imagingProject;
     
     @SAGEAttribute(cvName="light_imagery", termName="driver")
-    @SearchAttribute(key="driver_txt",label="Driver")
+    @SearchAttribute(key="driver_txt",label="Driver",facet="driver_s")
     private String driver;
-    
-    @SAGEAttribute(cvName="line", termName="flycore_project")
-    @SearchAttribute(key="fcproj_txt",label="Fly Core Project")
-    private String flycoreProject;
-
-    @SAGEAttribute(cvName="line", termName="flycore_lab")
-    @SearchAttribute(key="fclab_s",label="Fly Core Lab Id")
-    private String flycoreLabId;
 
     @SAGEAttribute(cvName="light_imagery", termName="family")
-    @SearchAttribute(key="family_txt",label="Image Family")
+    @SearchAttribute(key="family_txt",label="Image Family",facet="family_s")
     private String imageFamily;
     
     @SAGEAttribute(cvName="image_query", termName="line")
@@ -198,14 +209,9 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     @JsonIgnore
     private void resortObjectiveSamples() {
-        Collections.sort(objectiveSamples, new Comparator<ObjectiveSample>() {
-            @Override
-            public int compare(ObjectiveSample o1, ObjectiveSample o2) {
-                return ComparisonChain.start()
-                        .compare(o1.getObjective(), o2.getObjective(), Ordering.natural().nullsLast())
-                        .result();
-            }
-        });
+        Collections.sort(objectiveSamples, (o1, o2) -> ComparisonChain.start()
+                .compare(o1.getObjective(), o2.getObjective(), Ordering.natural().nullsLast())
+                .result());
     }
 
     @JsonIgnore
@@ -274,14 +280,6 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     public void setEffector(String effector) {
         this.effector = effector;
-    }
-    
-    public String getFlycoreAlias() {
-        return flycoreAlias;
-    }
-
-    public void setFlycoreAlias(String flycoreAlias) {
-        this.flycoreAlias = flycoreAlias;
     }
 
     public String getGender() {
@@ -364,20 +362,12 @@ public class Sample extends AbstractDomainObject implements IsParent {
         this.flycoreId = flycoreId;
     }
 
-    public String getImagingProject() {
-        return imagingProject;
+    public String getFlycoreAlias() {
+        return flycoreAlias;
     }
 
-    public void setImagingProject(String imagingProject) {
-        this.imagingProject = imagingProject;
-    }
-
-    public String getDriver() {
-        return driver;
-    }
-
-    public void setDriver(String driver) {
-        this.driver = driver;
+    public void setFlycoreAlias(String flycoreAlias) {
+        this.flycoreAlias = flycoreAlias;
     }
 
     public String getFlycoreProject() {
@@ -394,6 +384,22 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     public void setFlycoreLabId(String flycoreLabId) {
         this.flycoreLabId = flycoreLabId;
+    }
+
+    public String getImagingProject() {
+        return imagingProject;
+    }
+
+    public void setImagingProject(String imagingProject) {
+        this.imagingProject = imagingProject;
+    }
+
+    public String getDriver() {
+        return driver;
+    }
+
+    public void setDriver(String driver) {
+        this.driver = driver;
     }
 
     public String getImageFamily() {
