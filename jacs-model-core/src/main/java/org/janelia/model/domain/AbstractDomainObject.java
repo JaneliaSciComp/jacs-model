@@ -1,10 +1,12 @@
 package org.janelia.model.domain;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.janelia.model.domain.support.MongoMapped;
@@ -149,6 +151,14 @@ public abstract class AbstractDomainObject implements DomainObject, Serializable
         this.readers = readers;
     }
 
+    public boolean addReaders(Collection<String> readers) {
+        if (CollectionUtils.isNotEmpty(readers)) {
+            return this.readers.addAll(readers);
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public Set<String> getWriters() {
         return writers;
@@ -158,6 +168,14 @@ public abstract class AbstractDomainObject implements DomainObject, Serializable
     public void setWriters(Set<String> writers) {
         if (writers==null) throw new IllegalArgumentException("Property cannot be null");
         this.writers = writers;
+    }
+
+    public boolean addWriters(Collection<String> writers) {
+        if (CollectionUtils.isNotEmpty(writers)) {
+            return this.writers.addAll(writers);
+        } else {
+            return false;
+        }
     }
 
     @Override
