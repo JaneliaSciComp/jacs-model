@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.search.Filtering;
@@ -36,6 +38,8 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
     @SearchTraversal({})
     private Map<String,Integer> colorDepthCounts = new HashMap<>();
 
+    private List<Reference> sourceReleases;
+
     @JsonIgnore
     private List<Criteria> lazyCriteria;
 
@@ -55,6 +59,10 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
         this.version = version;
     }
 
+    public boolean hasVersion() {
+        return parentLibraryRef != null && StringUtils.isNotBlank(version);
+    }
+
     public Reference getParentLibraryRef() {
         return parentLibraryRef;
     }
@@ -70,6 +78,23 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
     public void setColorDepthCounts(Map<String, Integer> colorDepthCounts) {
         if (colorDepthCounts==null) throw new IllegalArgumentException("Property cannot be null");
         this.colorDepthCounts = colorDepthCounts;
+    }
+
+    public List<Reference> getSourceReleases() {
+        return sourceReleases;
+    }
+
+    public void setSourceReleases(List<Reference> sourceReleases) {
+        this.sourceReleases = sourceReleases;
+    }
+
+    public void addSourceRelease(Reference sourceRelease) {
+        if (sourceRelease != null) {
+            if (sourceReleases == null) {
+                sourceReleases = new ArrayList<>();
+            }
+            sourceReleases.add(sourceRelease);
+        }
     }
 
     /* implement Filtering interface */

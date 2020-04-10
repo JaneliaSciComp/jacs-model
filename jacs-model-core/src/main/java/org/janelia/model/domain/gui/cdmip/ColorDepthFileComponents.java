@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.janelia.model.domain.Reference;
@@ -20,6 +21,26 @@ public class ColorDepthFileComponents {
         return new ColorDepthFileComponents(filepath);
     }
 
+    public static String createCDMName(String sampleName,
+                                        String objective,
+                                        String anatomicalArea,
+                                        String alignmentSpace,
+                                        Reference sampleRef,
+                                        Integer channelNumber,
+                                        String versionSuffix) {
+        StringBuilder cdmNameBuilder = new StringBuilder()
+                .append(sampleName).append('-')
+                .append(objective).append('-')
+                .append(anatomicalArea).append('-')
+                .append(alignmentSpace).append('-')
+                .append(sampleRef.getTargetId()).append('-')
+                .append("CH").append(channelNumber);
+        if (StringUtils.isNotBlank(versionSuffix)) {
+            cdmNameBuilder.append('-').append(versionSuffix).append("_CDM");
+        }
+        return cdmNameBuilder.toString();
+    }
+
     private File file;
     private Reference sampleRef;
     private String alignmentSpace;
@@ -27,12 +48,13 @@ public class ColorDepthFileComponents {
     private String objective;
     private String anatomicalArea;
     private Integer channelNumber;
+    private String versionSuffix;
 
     private ColorDepthFileComponents(String filepath) {
         this.file = new File(filepath);
 
         Pattern p = Pattern.compile("^(?<sampleName>.*?)-(?<objective>\\d+x)-(?<anatomicalArea>\\w+?)-" +
-                "(?<alignmentSpace>\\w+?)-(?<sampleId>\\d+)-CH(?<channelNum>\\d)_CDM\\.\\w+$");
+                "(?<alignmentSpace>\\w+?)-(?<sampleId>\\d+)-CH(?<channelNum>\\d)(-(?<versionSuffix>.+?))?_CDM\\.\\w+$");
 
         Matcher m = p.matcher(file.getName());
         if (m.matches()) {
@@ -42,6 +64,7 @@ public class ColorDepthFileComponents {
             sampleRef = Reference.createFor(Sample.class, new Long(m.group("sampleId")));
             channelNumber = new Integer(m.group("channelNum"));
             alignmentSpace = m.group("alignmentSpace");
+            versionSuffix = m.group("versionSuffix");
         }
     }
 
@@ -71,6 +94,10 @@ public class ColorDepthFileComponents {
 
     public Integer getChannelNumber() {
         return channelNumber;
+    }
+
+    public String getVersionSuffix() {
+        return versionSuffix;
     }
 
     @Override
