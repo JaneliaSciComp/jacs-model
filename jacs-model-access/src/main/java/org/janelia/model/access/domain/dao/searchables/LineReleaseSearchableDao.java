@@ -1,5 +1,7 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import java.util.List;
+
 import javax.inject.Inject;
 
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -20,5 +22,15 @@ public class LineReleaseSearchableDao extends AbstractDomainSearchablDao<LineRel
                              @AsyncIndex DomainObjectIndexer objectIndexer) {
         super(lineReleaseDao, objectIndexer);
         this.lineReleaseDao = lineReleaseDao;
+    }
+
+    @Override
+    public List<LineRelease> findReleasesByPublishingSites(List<String> publishingSites) {
+        return lineReleaseDao.findReleasesByPublishingSites(publishingSites);
+    }
+
+    @Override
+    public List<LineRelease> findReleasesByName(List<String> names) {
+        return lineReleaseDao.findReleasesByName(names);
     }
 }

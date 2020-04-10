@@ -29,6 +29,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.janelia.model.access.domain.dao.AddToSetFieldValueHandler;
 import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
@@ -250,6 +251,13 @@ class MongoDaoHelper {
                 }
             } else {
                 return Updates.push(fieldName, value);
+            }
+        } else if (valueHandler instanceof AddToSetFieldValueHandler) {
+            Object value = valueHandler.getFieldValue();
+            if (value instanceof Iterable) {
+                return Updates.addEachToSet(fieldName, ImmutableList.copyOf((Iterable) value));
+            } else {
+                return Updates.addToSet(fieldName, value);
             }
         } else if (valueHandler instanceof RemoveItemsFieldValueHandler) {
             Object value = valueHandler.getFieldValue();

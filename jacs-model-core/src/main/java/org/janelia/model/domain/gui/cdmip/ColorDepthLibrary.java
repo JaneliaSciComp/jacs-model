@@ -2,8 +2,10 @@ package org.janelia.model.domain.gui.cdmip;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -38,7 +40,7 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
     @SearchTraversal({})
     private Map<String,Integer> colorDepthCounts = new HashMap<>();
 
-    private List<Reference> sourceReleases;
+    private Set<Reference> sourceReleases;
 
     @JsonIgnore
     private List<Criteria> lazyCriteria;
@@ -80,20 +82,22 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
         this.colorDepthCounts = colorDepthCounts;
     }
 
-    public List<Reference> getSourceReleases() {
+    public Set<Reference> getSourceReleases() {
         return sourceReleases;
     }
 
-    public void setSourceReleases(List<Reference> sourceReleases) {
+    public void setSourceReleases(Set<Reference> sourceReleases) {
         this.sourceReleases = sourceReleases;
     }
 
-    public void addSourceRelease(Reference sourceRelease) {
+    public boolean addSourceRelease(Reference sourceRelease) {
         if (sourceRelease != null) {
             if (sourceReleases == null) {
-                sourceReleases = new ArrayList<>();
+                sourceReleases = new HashSet<>();
             }
-            sourceReleases.add(sourceRelease);
+            return sourceReleases.add(sourceRelease);
+        } else {
+            return false;
         }
     }
 
