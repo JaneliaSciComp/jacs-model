@@ -39,6 +39,9 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
     private String publicThumbnailUrl;
 
     @SearchTraversal({})
+    private Reference sourceImageRef;
+
+    @SearchTraversal({})
     @JsonIgnore
     private Sample sample;
 
@@ -57,6 +60,14 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
 
     public void setSampleRef(Reference sampleRef) {
         this.sampleRef = sampleRef;
+    }
+
+    public Reference getSourceImageRef() {
+        return sourceImageRef;
+    }
+
+    public void setSourceImageRef(Reference sourceImageRef) {
+        this.sourceImageRef = sourceImageRef;
     }
 
     @Override
@@ -101,6 +112,7 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
     public void setPublicThumbnailUrl(String publicThumbnailUrl) {
         this.publicThumbnailUrl = publicThumbnailUrl;
     }
+
 
     @JsonProperty
     public Sample getSample() {
