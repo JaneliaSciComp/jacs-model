@@ -227,7 +227,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private Integer scanStop;
 
     @SAGEAttribute(cvName="light_imagery", termName="scan_type")
-    @SearchAttribute(key="scan_type_txt",label="Scan Type",facet="scan_type_s")
+    @SearchAttribute(key="scan_type_txt",label="Scan Type")
     private String scanType;
 
     @SAGEAttribute(cvName="light_imagery", termName="screen_state")
