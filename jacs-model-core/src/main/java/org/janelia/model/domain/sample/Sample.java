@@ -65,7 +65,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     private Integer flycoreId;
 
     @SAGEAttribute(cvName="line", termName="flycore_alias")
-    @SearchAttribute(key="fcalias_s",label="Fly Core Alias",facet="fcalias_s")
+    @SearchAttribute(key="fcalias_s",label="Fly Core Alias")
     private String flycoreAlias;
 
     @SAGEAttribute(cvName="line", termName="flycore_lab")
