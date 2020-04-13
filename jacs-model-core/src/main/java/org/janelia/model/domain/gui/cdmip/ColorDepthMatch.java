@@ -1,5 +1,6 @@
 package org.janelia.model.domain.gui.cdmip;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.model.domain.Reference;
 
 /**
@@ -34,5 +35,14 @@ public class ColorDepthMatch {
 
     public void setScorePercent(Double scorePercent) {
         this.scorePercent = scorePercent;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("imageRef", imageRef)
+                .append("score", score)
+                .append("scorePercent", scorePercent)
+                .toString();
     }
 }
