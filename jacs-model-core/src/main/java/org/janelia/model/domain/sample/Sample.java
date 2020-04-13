@@ -182,7 +182,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="heat_shock_minutes_txt",label="Heat Shock Age Minutes")
     private String heatShockMinutes;
 
-    @SearchAttribute(key="published_b",label="Staged for Publishing")
+    @SearchAttribute(key="published_b",label="Published To Staging")
     private Boolean publishedToStaging = false;
 
     @JsonProperty
