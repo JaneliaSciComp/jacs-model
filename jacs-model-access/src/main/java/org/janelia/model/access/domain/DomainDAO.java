@@ -1166,11 +1166,11 @@ public class DomainDAO {
         return counts;
     }
 
-    public void updateColorDepthCounts(Map<String,Map<String,Integer>> counts) throws Exception {
+    public void updateColorDepthCounts(Map<String, Map<String,Integer>> counts) throws Exception {
         for (String libraryIdentifier : counts.keySet()) {
             Map<String, Integer> newCounts = counts.get(libraryIdentifier);
             ColorDepthLibrary colorDepthLibrary = getColorDepthLibraryByIdentifier(null, libraryIdentifier);
-            if (colorDepthLibrary.getColorDepthCounts()==null || !newCounts.equals(colorDepthLibrary.getColorDepthCounts())) {
+            if (colorDepthLibrary.getColorDepthCounts()==null || (newCounts != null && !newCounts.equals(colorDepthLibrary.getColorDepthCounts()))) {
                 colorDepthLibrary.setColorDepthCounts(newCounts);
                 save(colorDepthLibrary.getOwnerKey(), colorDepthLibrary);
                 log.info("Updated counts for color depth library: {}", libraryIdentifier);
