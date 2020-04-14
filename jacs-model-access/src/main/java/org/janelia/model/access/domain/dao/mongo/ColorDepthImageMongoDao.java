@@ -44,11 +44,11 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
 
     @Override
     public long countColorDepthMIPs(String ownerKey, String alignmentSpace,
-                                    Collection<String> libraryNames,
+                                    Collection<String> libraryIdentifiers,
                                     Collection<String> matchingNames,
                                     Collection<String> matchingFilepaths,
                                     Collection<String> matchingSampleRefs) {
-        return mongoCollection.countDocuments(createColorDepthMIPsFilter(ownerKey, alignmentSpace, libraryNames, matchingNames, matchingFilepaths, matchingSampleRefs));
+        return mongoCollection.countDocuments(createColorDepthMIPsFilter(ownerKey, alignmentSpace, libraryIdentifiers, matchingNames, matchingFilepaths, matchingSampleRefs));
     }
 
     @Override
@@ -65,7 +65,7 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
     }
 
     private Bson createColorDepthMIPsFilter(String ownerKey, String alignmentSpace,
-                                            Collection<String> libraryNames,
+                                            Collection<String> libraryIdentifiers,
                                             Collection<String> matchingNames,
                                             Collection<String> matchingFilepaths,
                                             Collection<String> matchingSampleRefs) {
@@ -76,8 +76,8 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
         if (StringUtils.isNotBlank(alignmentSpace)) {
             cdmFiltersBuilder.add(Filters.eq("alignmentSpace", alignmentSpace));
         }
-        if (CollectionUtils.isNotEmpty(libraryNames)) {
-            cdmFiltersBuilder.add(Filters.in("libraries", libraryNames));
+        if (CollectionUtils.isNotEmpty(libraryIdentifiers)) {
+            cdmFiltersBuilder.add(Filters.in("libraries", libraryIdentifiers));
         }
         if (CollectionUtils.isNotEmpty(matchingNames)) {
             cdmFiltersBuilder.add(Filters.in("name", matchingNames));
@@ -93,13 +93,13 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
 
     @Override
     public Stream<ColorDepthImage> streamColorDepthMIPs(String ownerKey, String alignmentSpace,
-                                                        Collection<String> libraryNames,
+                                                        Collection<String> libraryIdentifiers,
                                                         Collection<String> matchingNames,
                                                         Collection<String> matchingFilepaths,
                                                         Collection<String> matchingSampleRefs,
                                                         int offset, int length) {
         Spliterator<ColorDepthImage> iterableCursor = MongoDaoHelper.rawFind(
-                createColorDepthMIPsFilter(ownerKey, alignmentSpace, libraryNames, matchingNames, matchingFilepaths, matchingSampleRefs),
+                createColorDepthMIPsFilter(ownerKey, alignmentSpace, libraryIdentifiers, matchingNames, matchingFilepaths, matchingSampleRefs),
                 offset,
                 length,
                 this.mongoCollection,
