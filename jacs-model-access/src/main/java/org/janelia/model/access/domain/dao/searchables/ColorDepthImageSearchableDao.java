@@ -1,7 +1,10 @@
 package org.janelia.model.access.domain.dao.searchables;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -29,11 +32,11 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchablDao<Col
 
     @Override
     public long countColorDepthMIPs(String ownerKey, String alignmentSpace,
-                                    Collection<String> libraryNames,
+                                    Collection<String> libraryIdentifiers,
                                     Collection<String> matchingNames,
                                     Collection<String> matchingFilepaths,
                                     Collection<String> matchingSampleRefs) {
-        return colorDepthImageDao.countColorDepthMIPs(ownerKey, alignmentSpace, libraryNames, matchingNames, matchingFilepaths, matchingSampleRefs);
+        return colorDepthImageDao.countColorDepthMIPs(ownerKey, alignmentSpace, libraryIdentifiers, matchingNames, matchingFilepaths, matchingSampleRefs);
     }
 
     @Override
@@ -43,12 +46,12 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchablDao<Col
 
     @Override
     public Stream<ColorDepthImage> streamColorDepthMIPs(String ownerKey, String alignmentSpace,
-                                                        Collection<String> libraryNames,
+                                                        Collection<String> libraryIdentifiers,
                                                         Collection<String> matchingNames,
                                                         Collection<String> matchingFilepaths,
                                                         Collection<String> matchingSampleRefs,
                                                         int offset, int length) {
-        return colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace, libraryNames, matchingNames, matchingFilepaths, matchingSampleRefs, offset, length);
+        return colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace, libraryIdentifiers, matchingNames, matchingFilepaths, matchingSampleRefs, offset, length);
     }
 
     @Override
@@ -58,6 +61,20 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchablDao<Col
 
     @Override
     public long addLibraryBySampleRefs(String libraryIdentifier, Collection<Reference> sampleRefs) {
-        return colorDepthImageDao.addLibraryBySampleRefs(libraryIdentifier, sampleRefs);
+        long nUpdates = colorDepthImageDao.addLibraryBySampleRefs(libraryIdentifier, sampleRefs);
+        if (nUpdates > 0) {
+            Set<String> ssampleRefs = sampleRefs.stream().map(Reference::toString).collect(Collectors.toSet());
+            domainObjectIndexer.indexDocumentStream(colorDepthImageDao.streamColorDepthMIPs(
+                    null,
+                    null,
+                    Collections.singleton(libraryIdentifier),
+                    null,
+                    null,
+                    ssampleRefs,
+                    0,
+                    -1
+                    ));
+        }
+        return nUpdates;
     }
 }
