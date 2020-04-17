@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.support.MongoMapped;
@@ -19,6 +20,9 @@ import org.janelia.model.domain.workspace.Node;
  */
 @MongoMapped(collectionName="release",label="Line Release")
 public class LineRelease extends AbstractDomainObject implements Node {
+
+    @JsonIgnore
+    public static final String[] TARGET_WEBSITES = {"Split GAL4", "Gen1 MCFO"};
 
     private boolean sageSync;
 
