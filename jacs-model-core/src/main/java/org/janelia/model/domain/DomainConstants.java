@@ -56,5 +56,4 @@ public class DomainConstants {
     public static final String FILE_STORE_CENTRAL_DIR_PROP = "FileStore.CentralDir";
     
     public static final String SAMPLE_PIPELINE_LOCK_DESCRIPTION = "Sample Processing Pipeline";
-    
 }
