@@ -123,7 +123,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         List<TmNeuronMetadata> neuronList = find(
                 MongoDaoHelper.createFilterCriteria(
                         Filters.eq("workspaceRef", workspaceRef),
-                        permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
+                        permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey)),
                 null,
                 offset,
                 length,
@@ -146,7 +146,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 MongoDaoHelper.rawFind(
                         MongoDaoHelper.createFilterCriteria(
                                 Filters.eq("workspaceRef", workspaceRef),
-                                permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
+                                permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey)),
                         offset,
                         length,
                         getNeuronCollection(workspace.getNeuronCollection()),
