@@ -147,6 +147,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                         MongoDaoHelper.createFilterCriteria(
                                 Filters.eq("workspaceRef", workspaceRef),
                                 permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey)),
+                        null,
                         offset,
                         length,
                         getNeuronCollection(workspace.getNeuronCollection()),

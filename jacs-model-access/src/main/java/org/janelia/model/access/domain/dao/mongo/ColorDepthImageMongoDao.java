@@ -30,6 +30,7 @@ import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+import org.janelia.model.util.SortCriteria;
 
 /**
  * {@link ColorDepthImage} Mongo DAO.
@@ -100,6 +101,7 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
                                                         int offset, int length) {
         Spliterator<ColorDepthImage> iterableCursor = MongoDaoHelper.rawFind(
                 createColorDepthMIPsFilter(ownerKey, alignmentSpace, libraryIdentifiers, matchingNames, matchingFilepaths, matchingSampleRefs),
+                MongoDaoHelper.createBsonSortCriteria(new SortCriteria("filepath")),
                 offset,
                 length,
                 this.mongoCollection,

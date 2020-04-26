@@ -120,7 +120,7 @@ class MongoDaoHelper {
                 .into(entityDocs);
     }
 
-    static <T, R> FindIterable<R> rawFind(Bson queryFilter, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
+    static <T, R> FindIterable<R> rawFind(Bson queryFilter, Bson sortCriteria, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
         FindIterable<R> results = mongoCollection.find(resultType);
         if (queryFilter != null) {
             results = results.filter(queryFilter);
@@ -131,7 +131,7 @@ class MongoDaoHelper {
         if (length > 0) {
             results = results.limit(length);
         }
-        return results;
+        return results.sort(sortCriteria);
     }
 
     static <T, R> List<R> findPipeline(List<Bson> aggregationPipeline, Bson sortCriteria, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
