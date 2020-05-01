@@ -121,13 +121,25 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
     }
 
     @Override
-    public long addLibraryBySampleRefs(String libraryIdentifier, Collection<Reference> sampleRefs) {
+    public long addLibraryBySampleRefs(String libraryIdentifier, String objective, Collection<Reference> sampleRefs, boolean includeDerivedImages) {
         if (CollectionUtils.isNotEmpty(sampleRefs) && StringUtils.isNotBlank(libraryIdentifier)) {
             UpdateOptions updateOptions = new UpdateOptions();
             updateOptions.upsert(false);
+            // create filter for update
+            ImmutableList.Builder<Bson> filterBuilder = ImmutableList.<Bson>builder()
+                    .add(Filters.in("sampleRef", sampleRefs));
+            if (StringUtils.isNotBlank(objective)) {
+                filterBuilder.add(Filters.eq("objective", objective));
+            }
+            if (!includeDerivedImages) {
+                filterBuilder.add(Filters.or(
+                        Filters.exists("sourceImageRef", false),
+                        Filters.eq("sourceImageRef", null)
+                ));
+            }
             DaoUpdateResult result = MongoDaoHelper.updateMany(
                     mongoCollection,
-                    Filters.in("sampleRef", sampleRefs),
+                    MongoDaoHelper.createFilterCriteria(filterBuilder.build()),
                     ImmutableMap.of(
                             "libraries", new AddToSetFieldValueHandler<>(libraryIdentifier)
                     ),

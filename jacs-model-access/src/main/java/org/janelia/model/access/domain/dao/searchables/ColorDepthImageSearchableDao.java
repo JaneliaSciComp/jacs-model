@@ -60,8 +60,8 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchablDao<Col
     }
 
     @Override
-    public long addLibraryBySampleRefs(String libraryIdentifier, Collection<Reference> sampleRefs) {
-        long nUpdates = colorDepthImageDao.addLibraryBySampleRefs(libraryIdentifier, sampleRefs);
+    public long addLibraryBySampleRefs(String libraryIdentifier, String objective, Collection<Reference> sampleRefs, boolean includeDerivedImages) {
+        long nUpdates = colorDepthImageDao.addLibraryBySampleRefs(libraryIdentifier, objective, sampleRefs, includeDerivedImages);
         if (nUpdates > 0) {
             Set<String> ssampleRefs = sampleRefs.stream().map(Reference::toString).collect(Collectors.toSet());
             domainObjectIndexer.indexDocumentStream(colorDepthImageDao.streamColorDepthMIPs(

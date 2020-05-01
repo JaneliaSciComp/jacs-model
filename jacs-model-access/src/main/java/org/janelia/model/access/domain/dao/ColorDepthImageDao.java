@@ -24,5 +24,8 @@ public interface ColorDepthImageDao extends DomainObjectDao<ColorDepthImage> {
                                                  Collection<String> matchingSampleRefs,
                                                  int offset, int length);
     void updatePublicUrls(ColorDepthImage cdmi);
-    long addLibraryBySampleRefs(String libraryIdentifier, Collection<Reference> sampleRefs);
+    long addLibraryBySampleRefs(String libraryIdentifier,
+                                String objective,
+                                Collection<Reference> sampleRefs,
+                                boolean includeDerivedImages);
 }
