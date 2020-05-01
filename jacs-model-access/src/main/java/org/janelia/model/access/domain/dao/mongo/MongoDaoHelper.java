@@ -34,6 +34,7 @@ import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.RemoveFieldValueHandler;
+import org.janelia.model.access.domain.dao.RemoveFromSetFieldValueHandler;
 import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
 import org.janelia.model.util.SortCriteria;
 
@@ -258,6 +259,13 @@ class MongoDaoHelper {
                 return Updates.addEachToSet(fieldName, ImmutableList.copyOf((Iterable) value));
             } else {
                 return Updates.addToSet(fieldName, value);
+            }
+        } else if (valueHandler instanceof RemoveFromSetFieldValueHandler) {
+            Object value = valueHandler.getFieldValue();
+            if (value instanceof Iterable) {
+                return Updates.pullAll(fieldName, ImmutableList.copyOf((Iterable) value));
+            } else {
+                return Updates.pull(fieldName, value);
             }
         } else if (valueHandler instanceof RemoveItemsFieldValueHandler) {
             Object value = valueHandler.getFieldValue();

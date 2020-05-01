@@ -27,6 +27,7 @@ import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.AddToSetFieldValueHandler;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
+import org.janelia.model.access.domain.dao.RemoveFromSetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
@@ -142,6 +143,25 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
                     MongoDaoHelper.createFilterCriteria(filterBuilder.build()),
                     ImmutableMap.of(
                             "libraries", new AddToSetFieldValueHandler<>(libraryIdentifier)
+                    ),
+                    updateOptions
+            );
+            return result.getEntitiesAffected();
+        } else {
+            return 0L;
+        }
+    }
+
+    @Override
+    public long removeAllMipsFromLibrary(String libraryIdentifier) {
+        if (StringUtils.isNotBlank(libraryIdentifier)) {
+            UpdateOptions updateOptions = new UpdateOptions();
+            updateOptions.upsert(false);
+            DaoUpdateResult result = MongoDaoHelper.updateMany(
+                    mongoCollection,
+                    Filters.eq("libraries", libraryIdentifier),
+                    ImmutableMap.of(
+                            "libraries", new RemoveFromSetFieldValueHandler<>(libraryIdentifier)
                     ),
                     updateOptions
             );

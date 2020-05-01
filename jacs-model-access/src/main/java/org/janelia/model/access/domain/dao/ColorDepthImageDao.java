@@ -28,4 +28,5 @@ public interface ColorDepthImageDao extends DomainObjectDao<ColorDepthImage> {
                                 String objective,
                                 Collection<Reference> sampleRefs,
                                 boolean includeDerivedImages);
+    long removeAllMipsFromLibrary(String libraryIdentifier);
 }

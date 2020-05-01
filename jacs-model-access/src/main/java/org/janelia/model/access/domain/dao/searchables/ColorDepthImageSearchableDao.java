@@ -77,4 +77,9 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchablDao<Col
         }
         return nUpdates;
     }
+
+    @Override
+    public long removeAllMipsFromLibrary(String libraryIdentifier) {
+        return colorDepthImageDao.removeAllMipsFromLibrary(libraryIdentifier);
+    }
 }
