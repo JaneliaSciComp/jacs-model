@@ -2012,6 +2012,10 @@ public class DomainDAO {
     @SuppressWarnings("unchecked")
     public <T extends DomainObject> T updateProperty(String subjectKey, String className, Long id, String propName, Object propValue) throws Exception {
         Class<T> clazz = (Class<T>) DomainUtils.getObjectClassByName(className);
+        if (propValue==null) {
+            deleteProperty(subjectKey, clazz, propName);
+            return getDomainObject(subjectKey, clazz, id);
+        }
         T domainObject = getDomainObject(subjectKey, clazz, id);
         try {
             set(domainObject, propName, propValue);
