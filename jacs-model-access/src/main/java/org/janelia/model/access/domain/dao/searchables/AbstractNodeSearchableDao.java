@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
+import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.workspace.Node;
 
@@ -29,5 +30,11 @@ public class AbstractNodeSearchableDao<T extends Node> extends AbstractDomainSea
     public List<T> getNodesByParentNameAndOwnerKey(Long parentNodeId, String name, String ownerKey) {
         return nodeDao.getNodesByParentNameAndOwnerKey(parentNodeId, name, ownerKey);
     }
+
+    @Override
+    public List<DomainObject> getChildren(String subjectKey, Node node, String sortCriteriaStr, long page, int pageSize) {
+        return nodeDao.getChildren(subjectKey, node, sortCriteriaStr, page, pageSize);
+    }
+
 
 }

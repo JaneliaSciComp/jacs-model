@@ -175,7 +175,8 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
             entity.setCreationDate(now);
             entity.setUpdatedDate(now);
             mongoCollection.insertOne(entity);
-        } else {
+        }
+        else {
             entity.setUpdatedDate(now);
             mongoCollection.updateOne(
                     Filters.and(MongoDaoHelper.createFilterById(entity.getId()),
@@ -188,12 +189,15 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
 
     @Override
     public void save(T entity) {
-        Date now = new Date();
         if (entity.getId() == null) {
+            Date now = new Date();
             entity.setId(createNewId());
             entity.setCreationDate(now);
             entity.setUpdatedDate(now);
             mongoCollection.insertOne(entity);
+        }
+        else {
+            throw new IllegalArgumentException("The save() method does not support updates to existing objects");
         }
     }
 
@@ -205,6 +209,9 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
             if (e.getId() == null) {
                 e.setId(idIterator.next());
                 toInsert.add(e);
+            }
+            else {
+                throw new IllegalArgumentException("The saveAll() method does not support updates to existing objects");
             }
         });
         if (!toInsert.isEmpty()) {

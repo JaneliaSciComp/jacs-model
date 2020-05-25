@@ -170,7 +170,7 @@ class MongoDaoHelper {
     static Bson createFilterCriteria(List<Bson> filters) {
         if (CollectionUtils.isNotEmpty(filters)) {
             return filters.stream()
-                    .filter(f -> f != null)
+                    .filter(Objects::nonNull)
                     .reduce((f1, f2) -> Filters.and(f1, f2))
                     .orElse(new Document());
         } else {
@@ -186,6 +186,8 @@ class MongoDaoHelper {
         if (CollectionUtils.isNotEmpty(sortCriteria)) {
             Map<String, Object> sortCriteriaAsMap = sortCriteria.stream()
                     .filter(sc -> StringUtils.isNotBlank(sc.getField()))
+                    // Convert "id" to "_id" if necessary
+                    .map(sc -> new SortCriteria("id".equals(sc.getField()) ? "_id" : sc.getField(), sc.getDirection()))
                     .collect(Collectors.toMap(
                             SortCriteria::getField,
                             sc -> sc.getDirection() == SortCriteria.SortDirection.DESC ? -1 : 1,

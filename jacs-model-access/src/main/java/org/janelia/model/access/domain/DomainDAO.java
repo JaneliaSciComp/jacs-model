@@ -1921,6 +1921,15 @@ public class DomainDAO {
         return getDomainObjects(subjectKey, node.getChildren());
     }
 
+    public List<DomainObject> getChildren(String subjectKey, Node node, String sortCriteria, int page, int pageSize) {
+        // TODO: this could be a lot more efficient in both cpu and memory by only returning the sort keys for the children,
+        //  and then sorting the keys first, before extracting the requested page of domain objects.
+        List<DomainObject> domainObjects = getDomainObjects(subjectKey, node.getChildren());
+        DomainUtils.sortDomainObjects(domainObjects, sortCriteria);
+        int firstIndex = page * pageSize;
+        return domainObjects.subList(firstIndex, firstIndex + pageSize);
+    }
+
     public <T extends Node> T addChildren(String subjectKey, T nodeArg, Collection<Reference> references) throws Exception {
         return addChildren(subjectKey, nodeArg, references, null);
     }

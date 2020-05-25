@@ -5,6 +5,7 @@ import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ontology.OntologyTerm;
+import org.janelia.model.util.ModelStringUtil;
 
 import java.util.List;
 
@@ -12,6 +13,8 @@ import java.util.List;
  * Created by schauderd on 8/24/15.
  */
 public class DomainQuery {
+
+    private static final int MAX_LIST_PRINT_LENGTH = 80;
 
     private String subjectKey;
     private List<Reference> references;
@@ -116,14 +119,14 @@ public class DomainQuery {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("subjectKey", subjectKey)
-                .append("references", references)
-                .append("objectIds", objectIds)
+                .append("references", ModelStringUtil.getCommaDelimited(references, MAX_LIST_PRINT_LENGTH))
+                .append("objectIds", ModelStringUtil.getCommaDelimited(objectIds, MAX_LIST_PRINT_LENGTH))
                 .append("ordering", ordering)
                 .append("objectType", objectType)
                 .append("propertyName", propertyName)
                 .append("propertyValue", propertyValue)
                 .append("domainObject", domainObject)
-                .append("objectList", objectList)
+                .append("objectList", ModelStringUtil.getCommaDelimited(objectList, MAX_LIST_PRINT_LENGTH))
                 .append("preference", preference)
                 .toString();
     }

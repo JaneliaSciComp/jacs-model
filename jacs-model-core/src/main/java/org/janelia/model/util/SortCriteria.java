@@ -16,8 +16,14 @@ public class SortCriteria {
         this(null, SortDirection.ASC);
     }
 
-    public SortCriteria(String field) {
-        this(field, SortDirection.ASC);
+    /**
+     * Create a sort criteria from a string.
+     * If the string starts with + or -, this is taken as the sort direction.
+     * @param sortCriteriaString sort field optionally starting with plus or minus
+     */
+    public SortCriteria(String sortCriteriaString) {
+        this(sortCriteriaString.replaceFirst("[+\\-]",""),
+                sortCriteriaString.startsWith("-") ? SortDirection.DESC : SortDirection.ASC);
     }
 
     public SortCriteria(String field, SortDirection direction) {

@@ -1,5 +1,6 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.google.common.collect.ImmutableList;
 import com.mongodb.client.model.Filters;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bson.Document;
@@ -25,13 +26,18 @@ class DomainPermissionsMongoHelper {
         Set<String> readers = subjectDao.getReaderSetByKey(subjectKey);
         if (CollectionUtils.isEmpty(readers)) {
             // only include entities that have no reader restrictions
-            return Filters.or(
+            return Filters.and(
                     Filters.eq("ownerKey", subjectKey),
-                    Filters.exists("readers", false)
+                    Filters.or(
+                        Filters.exists("readers", false),
+                        Filters.eq("readers", ImmutableList.of())
+                    )
             );
-        } else if (readers.contains(Subject.ADMIN_KEY)) {
+        }
+        else if (readers.contains(Subject.ADMIN_KEY)) {
             return new Document(); // user is in the admin group so simply ignore the filtering in this case
-        } else {
+        }
+        else {
             return Filters.or(
                     Filters.eq("ownerKey", subjectKey),
                     Filters.in("readers", readers)

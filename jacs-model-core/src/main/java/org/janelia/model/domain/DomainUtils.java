@@ -794,18 +794,14 @@ public class DomainUtils {
             }
         }
 
-        Collections.sort(domainObjects, new Comparator<DomainObject>() {
-            @Override
-            @SuppressWarnings({"rawtypes", "unchecked"})
-            public int compare(DomainObject o1, DomainObject o2) {
-                Comparable v1 = (Comparable) fieldValues.get(o1);
-                Comparable v2 = (Comparable) fieldValues.get(o2);
-                Ordering ordering = Ordering.natural().nullsLast();
-                if (!ascending) {
-                    ordering = ordering.reverse();
-                }
-                return ComparisonChain.start().compare(v1, v2, ordering).result();
-        }
+        domainObjects.sort((Comparator<DomainObject>) (o1, o2) -> {
+            Comparable v1 = (Comparable) fieldValues.get(o1);
+            Comparable v2 = (Comparable) fieldValues.get(o2);
+            Ordering ordering = Ordering.natural().nullsLast();
+            if (!ascending) {
+                ordering = ordering.reverse();
+            }
+            return ComparisonChain.start().compare(v1, v2, ordering).result();
         });
     }
 
