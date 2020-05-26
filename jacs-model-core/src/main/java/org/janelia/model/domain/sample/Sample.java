@@ -19,10 +19,10 @@ import org.janelia.model.util.ModelStringUtil;
 import java.util.*;
 
 /**
- * All the processing results of a particular specimen. Uniqueness of a Sample is determined by a combination 
- * of data set and slide code. A single sample may include many LSMs. For example, it may include images taken 
- * at multiple objectives (e.g. 20x/63x), of different anatomical areas (e.g. Brain/VNC), and of different 
- * tile regions which are stitched together.   
+ * All the processing results of a particular specimen. Uniqueness of a Sample is determined by a combination
+ * of data set and slide code. A single sample may include many LSMs. For example, it may include images taken
+ * at multiple objectives (e.g. 20x/63x), of different anatomical areas (e.g. Brain/VNC), and of different
+ * tile regions which are stitched together.
  *
  * Contains references to NeuronFragment objects in the fragment collection.  
  *
@@ -184,6 +184,17 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     @SearchAttribute(key="published_b",label="Published To Staging")
     private Boolean publishedToStaging = false;
+
+    private List<String> publishedObjectives;
+
+    private Reference releaseRef;
+
+    // Denormalized release name and owner, for viewing by the user
+    @SearchAttribute(key="published_b",label="Fly Line Release")
+    private String releaseLabel;
+
+    @SearchAttribute(key="puberror_txt",label="Publishing Error")
+    private String publishingError;
 
     @JsonProperty
     public List<ObjectiveSample> getObjectiveSamples() {
@@ -632,6 +643,44 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     public void setPublishedToStaging(Boolean publishedToStaging) {
         this.publishedToStaging = publishedToStaging;
+    }
+
+    @JsonIgnore
+    @SearchAttribute(key="pubobj_txt",label="Published Objectives")
+    public String getPublishedObjectiveString() {
+        return ModelStringUtil.getCommaDelimited(publishedObjectives);
+    }
+
+    public List<String> getPublishedObjectives() {
+        return publishedObjectives;
+    }
+
+    public void setPublishedObjectives(List<String> publishedObjectives) {
+        this.publishedObjectives = publishedObjectives;
+    }
+
+    public Reference getReleaseRef() {
+        return releaseRef;
+    }
+
+    public void setReleaseRef(Reference releaseRef) {
+        this.releaseRef = releaseRef;
+    }
+
+    public String getReleaseLabel() {
+        return releaseLabel;
+    }
+
+    public void setReleaseLabel(String releaseLabel) {
+        this.releaseLabel = releaseLabel;
+    }
+
+    public String getPublishingError() {
+        return publishingError;
+    }
+
+    public void setPublishingError(String publishingError) {
+        this.publishingError = publishingError;
     }
 
     public Long getDiskSpaceUsage() {
