@@ -1,9 +1,11 @@
 package org.janelia.model.domain.gui.cdmip;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -21,13 +23,13 @@ public class ColorDepthFileComponents {
         return new ColorDepthFileComponents(filepath);
     }
 
-    public static String createCDMName(String sampleName,
-                                        String objective,
-                                        String anatomicalArea,
-                                        String alignmentSpace,
-                                        Reference sampleRef,
-                                        Integer channelNumber,
-                                        String versionSuffix) {
+    public static String createCDMNameFromNameComponents(String sampleName,
+                                                         String objective,
+                                                         String anatomicalArea,
+                                                         String alignmentSpace,
+                                                         Reference sampleRef,
+                                                         Integer channelNumber,
+                                                         String versionSuffix) {
         StringBuilder cdmNameBuilder = new StringBuilder()
                 .append(sampleName).append('-')
                 .append(objective).append('-')
@@ -41,14 +43,15 @@ public class ColorDepthFileComponents {
         return cdmNameBuilder.toString();
     }
 
-    private File file;
-    private Reference sampleRef;
-    private String alignmentSpace;
-    private String sampleName;
-    private String objective;
-    private String anatomicalArea;
-    private Integer channelNumber;
-    private String versionSuffix;
+    private final File file;
+    private final Reference sampleRef;
+    private final String alignmentSpace;
+    private final String sampleName;
+    private final String objective;
+    private final String anatomicalArea;
+    private final Integer channelNumber;
+    private final String versionSuffix;
+    private final boolean componentsFound;
 
     private ColorDepthFileComponents(String filepath) {
         this.file = new File(filepath);
@@ -65,11 +68,27 @@ public class ColorDepthFileComponents {
             channelNumber = new Integer(m.group("channelNum"));
             alignmentSpace = m.group("alignmentSpace");
             versionSuffix = m.group("versionSuffix");
+            componentsFound = true;
+        } else {
+            this.sampleName = null;
+            this.objective = null;
+            this.anatomicalArea = null;
+            sampleRef = null;
+            channelNumber = -1;
+            alignmentSpace = null;
+            versionSuffix = null;
+            componentsFound = false;
         }
     }
 
     public File getFile() {
         return file;
+    }
+
+    public String getFileName() {
+        return file != null
+                ? RegExUtils.replacePattern(file.getName(), "\\.\\D*$", "")
+                : null;
     }
 
     public Reference getSampleRef() {
@@ -98,6 +117,10 @@ public class ColorDepthFileComponents {
 
     public String getVersionSuffix() {
         return versionSuffix;
+    }
+
+    public boolean hasNameComponents() {
+        return this.componentsFound;
     }
 
     @Override
