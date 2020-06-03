@@ -2539,13 +2539,10 @@ public class DomainDAO {
         return releases;
     }
 
-    public LineRelease createLineRelease(String subjectKey, String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception {
-        log.debug("createLineRelease({}, name={}, releaseDate={}, lagTimeMonths={}, dataSets={})", subjectKey, name, dataSets);
+    public LineRelease createLineRelease(String subjectKey, String name) throws Exception {
+        log.debug("createLineRelease({}, name={})", subjectKey, name);
         LineRelease release = new LineRelease();
         release.setName(name);
-        release.setReleaseDate(releaseDate);
-        release.setLagTimeMonths(lagTimeMonths);
-        release.setDataSets(dataSets);
         return save(subjectKey, release);
     }
 
@@ -2561,17 +2558,14 @@ public class DomainDAO {
 
         Aggregate.ResultsIterator<Long> results = sampleCollection
                 .aggregate("{$match: {\"dataSet\": \"" + dataSetIdentifier + "\"}}")
-                .and("{$group: {_id:\"sum\",count:{$sum:\"$diskSpaceUsage\"}}}").map(new ResultHandler<Long>() {
-                    @Override
-                    public Long map(DBObject result) {
-                        log.trace("Got result: {}", result);
-                        // Count is usually a Long, but can be an Integer when it's zero. Let's play it safe.
-                        Number count = (Number) result.get("count");
-                        if (count == null) {
-                            return 0L;
-                        }
-                        return count.longValue();
+                .and("{$group: {_id:\"sum\",count:{$sum:\"$diskSpaceUsage\"}}}").map(result -> {
+                    log.trace("Got result: {}", result);
+                    // Count is usually a Long, but can be an Integer when it's zero. Let's play it safe.
+                    Number count = (Number) result.get("count");
+                    if (count == null) {
+                        return 0L;
                     }
+                    return count.longValue();
                 });
 
         Long usage = 0L;
