@@ -20,6 +20,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
 import org.janelia.model.domain.DomainObject;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 /**
  * Abstract Domain DAO that can handle entity access.
@@ -34,9 +35,10 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
     private final DomainUpdateMongoHelper updateHelper;
 
     AbstractDomainObjectMongoDao(MongoDatabase mongoDatabase,
+                                 TimebasedIdentifierGenerator idGenerator,
                                  DomainPermissionsMongoHelper permissionsHelper,
                                  DomainUpdateMongoHelper updateHelper) {
-        super(mongoDatabase);
+        super(mongoDatabase, idGenerator);
         this.permissionsHelper = permissionsHelper;
         this.updateHelper = updateHelper;
     }

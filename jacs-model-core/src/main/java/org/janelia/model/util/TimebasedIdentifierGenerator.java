@@ -78,7 +78,7 @@ public class TimebasedIdentifierGenerator {
             return currentIndex < BLOCK_SIZE;
         }
 
-        private synchronized Number next() {
+        private synchronized BigInteger next() {
             BigInteger nextId = BigInteger.valueOf(timeComponent).shiftLeft(22)
                                     .add(BigInteger.valueOf(currentIndex << 12))
                                     .add(BigInteger.valueOf(deploymentContext << 8))
@@ -106,8 +106,8 @@ public class TimebasedIdentifierGenerator {
         this.ipComponent = getIpAddrCompoment(useLoopback);
     }
 
-    public List<Number> generateIdList(long n) {
-        List<Number> idList = new ArrayList<>();
+    public List<BigInteger> generateIdList(long n) {
+        List<BigInteger> idList = new ArrayList<>();
         long total = 0L;
         while (total < n) {
             IDBlock idBlock = getIDBlock();
@@ -118,7 +118,7 @@ public class TimebasedIdentifierGenerator {
         return idList;
     }
 
-    public Number generateId() {
+    public BigInteger generateId() {
         IDBlock idBlock = getIDBlock();
         return idBlock.next();
     }
@@ -155,8 +155,7 @@ public class TimebasedIdentifierGenerator {
             // Could be slow on MacOS due to misconfigured /etc/hosts
             byte[] ipAddress = InetAddress.getLocalHost().getAddress();
             return ((int)ipAddress[ipAddress.length - 1] & 0xFF);
-        }
-        catch (UnknownHostException e) {
+        } catch (UnknownHostException e) {
             throw new IllegalStateException(e);
         }
     }

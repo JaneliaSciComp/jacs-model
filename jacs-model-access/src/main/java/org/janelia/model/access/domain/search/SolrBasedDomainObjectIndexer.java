@@ -14,6 +14,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainObjectGetter;
 import org.janelia.model.domain.ontology.DomainAnnotationGetter;
+import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.NodeAncestorsGetter;
 
 public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
@@ -24,7 +25,7 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
     private final int solrCommitSize;
 
     public SolrBasedDomainObjectIndexer(SolrServer solrServer,
-                                        NodeAncestorsGetter nodeAncestorsGetter,
+                                        NodeAncestorsGetter<? extends Node> nodeAncestorsGetter,
                                         DomainAnnotationGetter nodeAnnotationGetter,
                                         DomainObjectGetter objectGetter,
                                         int solrBatchSize,

@@ -4,6 +4,7 @@ import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.dao.TmReviewTaskDao;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -17,10 +18,11 @@ public class TmReviewTaskMongoDao extends AbstractDomainObjectMongoDao<TmReviewT
 
     @Inject
     TmReviewTaskMongoDao(MongoDatabase mongoDatabase,
+                         TimebasedIdentifierGenerator idGenerator,
                          DomainPermissionsMongoHelper permissionsHelper,
                          DomainUpdateMongoHelper updateHelper,
                          DomainDAO domainDao) {
-        super(mongoDatabase, permissionsHelper, updateHelper);
+        super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
         this.domainDao = domainDao;
     }
 

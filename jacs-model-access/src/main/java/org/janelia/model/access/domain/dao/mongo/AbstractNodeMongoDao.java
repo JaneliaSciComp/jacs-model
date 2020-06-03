@@ -16,6 +16,7 @@ import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.util.SortCriteria;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +35,10 @@ public abstract class AbstractNodeMongoDao<T extends Node> extends AbstractDomai
     private static final Logger LOG = LoggerFactory.getLogger(AbstractNodeMongoDao.class);
 
     AbstractNodeMongoDao(MongoDatabase mongoDatabase,
+                         TimebasedIdentifierGenerator idGenerator,
                          DomainPermissionsMongoHelper permissionsHelper,
                          DomainUpdateMongoHelper updateHelper) {
-        super(mongoDatabase, permissionsHelper, updateHelper);
+        super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
     }
 
     @Override

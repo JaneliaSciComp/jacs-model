@@ -19,7 +19,7 @@ import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
  * {@link ColorDepthImage} DAO.
  */
 @AsyncIndex
-public class ColorDepthImageSearchableDao extends AbstractDomainSearchablDao<ColorDepthImage> implements ColorDepthImageDao {
+public class ColorDepthImageSearchableDao extends AbstractDomainSearchableDao<ColorDepthImage> implements ColorDepthImageDao {
 
     private final ColorDepthImageDao colorDepthImageDao;
 

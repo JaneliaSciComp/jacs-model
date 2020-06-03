@@ -1,5 +1,6 @@
 package org.janelia.model.access.domain.dao;
 
+import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 import org.janelia.model.security.Group;
@@ -13,6 +14,16 @@ import java.util.Set;
  * Interface for accessing subject info.
  */
 public interface SubjectDao extends ReadDao<Subject, Long>, WriteDao<Subject, Long> {
+
+    /**
+     * @return all user subjects.
+     */
+    List<User> findAllUsers();
+
+    /**
+     * @return all group subjects
+     */
+    List<Group> findAllGroups();
 
     /**
      * Return the subject identified by the given subject key. Subject keys start with a user: or group: prefix.
@@ -34,6 +45,20 @@ public interface SubjectDao extends ReadDao<Subject, Long>, WriteDao<Subject, Lo
      * @return
      */
     Subject findByNameOrKey(String nameOrKey);
+
+    /**
+     * Return the group identified by the given name or key.
+     * @param groupNameOrKey must be a group name or key
+     * @return the group identified by the name or key or null if none found
+     */
+    Group findGroupByNameOrKey(String groupNameOrKey);
+
+    /**
+     * Return the user identified by the given name or key.
+     * @param userNameOrKey must be a user name or key
+     * @return the user identified by the name or key or null if none found
+     */
+    User findUserByNameOrKey(String userNameOrKey);
 
     /**
      * Return all of the subjects which the given subject has access to read.
@@ -88,6 +113,10 @@ public interface SubjectDao extends ReadDao<Subject, Long>, WriteDao<Subject, Lo
      * @return
      */
     User setUserPassword(User user, String passwordHash);
+
+    void addUserToGroup(String userNameOrKey, String groupNameOrKey, GroupRole role);
+
+    void removeUserFromGroup(String userNameOrKey, String groupNameOrKey);
 
     /**
      * Update a user's group roles.

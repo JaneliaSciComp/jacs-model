@@ -5,6 +5,7 @@ import com.mongodb.client.model.Filters;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.domain.sample.DataSet;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -18,9 +19,10 @@ import java.util.stream.Collectors;
 public class DatasetMongoDao extends AbstractDomainObjectMongoDao<DataSet> implements DatasetDao {
     @Inject
     DatasetMongoDao(MongoDatabase mongoDatabase,
+                    TimebasedIdentifierGenerator idGenerator,
                     DomainPermissionsMongoHelper permissionsHelper,
                     DomainUpdateMongoHelper updateHelper) {
-        super(mongoDatabase, permissionsHelper, updateHelper);
+        super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
     }
 
     @Override

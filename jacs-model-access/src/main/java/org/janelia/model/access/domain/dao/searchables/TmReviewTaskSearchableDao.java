@@ -13,7 +13,7 @@ import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
  * {@link TmReviewTask} DAO.
  */
 @AsyncIndex
-public class TmReviewTaskSearchableDao extends AbstractDomainSearchablDao<TmReviewTask> implements TmReviewTaskDao {
+public class TmReviewTaskSearchableDao extends AbstractDomainSearchableDao<TmReviewTask> implements TmReviewTaskDao {
 
     private final TmReviewTaskDao tmReviewTaskDao;
 

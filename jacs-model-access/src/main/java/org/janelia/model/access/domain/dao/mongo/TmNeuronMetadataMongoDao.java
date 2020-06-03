@@ -37,6 +37,7 @@ import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronData;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +48,6 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     private static final Logger LOG = LoggerFactory.getLogger(TmNeuronMetadataMongoDao.class);
 
     private final DomainDAO domainDao;
-    private final TmNeuronBufferDao tmNeuronBufferDao;
     private final MongoDatabase mongoDatabase;
     private final DomainUpdateMongoHelper updateHelper;
 
@@ -56,15 +56,14 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     @Inject
     TmNeuronMetadataMongoDao(MongoDatabase mongoDatabase,
+                             TimebasedIdentifierGenerator idGenerator,
                              DomainPermissionsMongoHelper permissionsHelper,
                              DomainUpdateMongoHelper updateHelper,
-                             DomainDAO domainDao,
-                             TmNeuronBufferDao tmNeuronBufferDao) {
-        super(mongoDatabase, permissionsHelper, updateHelper);
+                             DomainDAO domainDao) {
+        super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
         this.domainDao = domainDao;
         this.updateHelper = updateHelper;
         this.mongoDatabase = mongoDatabase;
-        this.tmNeuronBufferDao = tmNeuronBufferDao;
     }
 
     @Override

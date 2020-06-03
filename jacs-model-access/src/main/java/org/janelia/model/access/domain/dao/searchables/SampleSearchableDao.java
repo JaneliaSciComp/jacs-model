@@ -14,7 +14,7 @@ import org.janelia.model.domain.sample.Sample;
  * {@link Sample} DAO.
  */
 @AsyncIndex
-public class SampleSearchableDao extends AbstractDomainSearchablDao<Sample> implements SampleDao {
+public class SampleSearchableDao extends AbstractDomainSearchableDao<Sample> implements SampleDao {
 
     private final SampleDao sampleDao;
 

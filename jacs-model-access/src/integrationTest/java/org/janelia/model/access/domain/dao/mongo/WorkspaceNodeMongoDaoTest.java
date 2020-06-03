@@ -15,6 +15,7 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.workspace.NodeUtils;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,9 +30,11 @@ public class WorkspaceNodeMongoDaoTest extends AbstractMongoDaoTest {
 
     @Before
     public void setUp() {
-        SubjectMongoDao subjectMongoDao = new SubjectMongoDao(testMongoDatabase);
+        TimebasedIdentifierGenerator timebasedIdentifierGenerator = new TimebasedIdentifierGenerator(0);
+        SubjectMongoDao subjectMongoDao = new SubjectMongoDao(testMongoDatabase, timebasedIdentifierGenerator);
         workspaceNodeMongoDao = new WorkspaceNodeMongoDao(
                 testMongoDatabase,
+                timebasedIdentifierGenerator,
                 new DomainPermissionsMongoHelper(subjectMongoDao),
                 new DomainUpdateMongoHelper(testObjectMapper));
     }

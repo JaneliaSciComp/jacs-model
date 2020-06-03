@@ -13,7 +13,7 @@ import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
  * {@link TmWorkspace} DAO.
  */
 @AsyncIndex
-public class TmWorkspaceSearchableDao extends AbstractDomainSearchablDao<TmWorkspace> implements TmWorkspaceDao {
+public class TmWorkspaceSearchableDao extends AbstractDomainSearchableDao<TmWorkspace> implements TmWorkspaceDao {
 
     private final TmWorkspaceDao tmWorkspaceDao;
 

@@ -13,6 +13,7 @@ import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.workspace.Workspace;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,9 +31,10 @@ public class WorkspaceNodeMongoDao extends AbstractNodeMongoDao<Workspace> imple
 
     @Inject
     WorkspaceNodeMongoDao(MongoDatabase mongoDatabase,
+                          TimebasedIdentifierGenerator idGenerator,
                           DomainPermissionsMongoHelper permissionsHelper,
                           DomainUpdateMongoHelper updateHelper) {
-        super(mongoDatabase, permissionsHelper, updateHelper);
+        super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
     }
 
     @Override

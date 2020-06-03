@@ -14,7 +14,7 @@ import org.janelia.model.domain.sample.DataSet;
  * {@link DataSet} DAO.
  */
 @AsyncIndex
-public class DatasetSearchableDao extends AbstractDomainSearchablDao<DataSet> implements DatasetDao {
+public class DatasetSearchableDao extends AbstractDomainSearchableDao<DataSet> implements DatasetDao {
 
     private final DatasetDao datasetDao;
 

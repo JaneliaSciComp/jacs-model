@@ -9,6 +9,7 @@ import org.janelia.model.domain.ontology.Category;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
 import org.janelia.model.domain.ontology.Tag;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,9 +23,11 @@ public class OntologyMongoDaoTest extends AbstractMongoDaoTest {
 
     @Before
     public void setUp() {
-        subjectMongoDao = new SubjectMongoDao(testMongoDatabase);
+        TimebasedIdentifierGenerator timebasedIdentifierGenerator = new TimebasedIdentifierGenerator(0);
+        subjectMongoDao = new SubjectMongoDao(testMongoDatabase, timebasedIdentifierGenerator);
         ontologyMongoDao = new OntologyMongoDao(
                 testMongoDatabase,
+                timebasedIdentifierGenerator,
                 new DomainPermissionsMongoHelper(subjectMongoDao),
                 new DomainUpdateMongoHelper(testObjectMapper));
     }

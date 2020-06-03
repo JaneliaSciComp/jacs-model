@@ -7,12 +7,12 @@ import org.janelia.model.domain.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AllNodeAncestorsGetter implements NodeAncestorsGetter {
+public class AllNodeAncestorsGetter<T extends Node> implements NodeAncestorsGetter<T> {
     private static final Logger LOG = LoggerFactory.getLogger(AllNodeAncestorsGetter.class);
 
-    private final DirectNodeAncestorsGetter directNodeAncestorsGetter;
+    private final DirectNodeAncestorsGetter<T> directNodeAncestorsGetter;
 
-    public AllNodeAncestorsGetter(DirectNodeAncestorsGetter directNodeAncestorsGetter) {
+    public AllNodeAncestorsGetter(DirectNodeAncestorsGetter<T> directNodeAncestorsGetter) {
         this.directNodeAncestorsGetter = directNodeAncestorsGetter;
     }
 

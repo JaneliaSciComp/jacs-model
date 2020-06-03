@@ -12,6 +12,7 @@ import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.workspace.NodeUtils;
 import org.janelia.model.domain.workspace.TreeNode;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -33,17 +34,21 @@ public class TreeNodeMongoDaoTest extends AbstractMongoDaoTest {
 
     @Before
     public void setUp() {
-        SubjectMongoDao subjectMongoDao = new SubjectMongoDao(testMongoDatabase);
+        TimebasedIdentifierGenerator timebasedIdentifierGenerator = new TimebasedIdentifierGenerator(0);
+        SubjectMongoDao subjectMongoDao = new SubjectMongoDao(testMongoDatabase, timebasedIdentifierGenerator);
         this.treeNodeMongoDao = new TreeNodeMongoDao(
                 testMongoDatabase,
+                timebasedIdentifierGenerator,
                 new DomainPermissionsMongoHelper(subjectMongoDao),
                 new DomainUpdateMongoHelper(testObjectMapper));
         this.datasetMongoDao = new DatasetMongoDao(
                 testMongoDatabase,
+                timebasedIdentifierGenerator,
                 new DomainPermissionsMongoHelper(subjectMongoDao),
                 new DomainUpdateMongoHelper(testObjectMapper));
         this.sampleMongoDao = new SampleMongoDao(
                 testMongoDatabase,
+                timebasedIdentifierGenerator,
                 new DomainPermissionsMongoHelper(subjectMongoDao),
                 new DomainUpdateMongoHelper(testObjectMapper));
     }

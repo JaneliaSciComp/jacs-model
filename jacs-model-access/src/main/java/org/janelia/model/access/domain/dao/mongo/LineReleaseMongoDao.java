@@ -12,16 +12,18 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.LineRelease;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 /**
  * {@link DataSet} Mongo DAO.
  */
-public class LineReleaseMongoDao extends AbstractDomainObjectMongoDao<LineRelease> implements LineReleaseDao {
+public class LineReleaseMongoDao extends AbstractNodeMongoDao<LineRelease> implements LineReleaseDao {
     @Inject
     LineReleaseMongoDao(MongoDatabase mongoDatabase,
+                        TimebasedIdentifierGenerator idGenerator,
                         DomainPermissionsMongoHelper permissionsHelper,
                         DomainUpdateMongoHelper updateHelper) {
-        super(mongoDatabase, permissionsHelper, updateHelper);
+        super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
     }
 
     @Override

@@ -19,7 +19,7 @@ import org.janelia.model.domain.ontology.Annotation;
  * {@link Annotation} DAO.
  */
 @AsyncIndex
-public class AnnotationSearchableDao extends AbstractDomainSearchablDao<Annotation> implements AnnotationDao {
+public class AnnotationSearchableDao extends AbstractDomainSearchableDao<Annotation> implements AnnotationDao {
 
     private final AnnotationDao annotationDao;
     private final ReferenceDomainObjectReadDao referenceDomainObjectReadDao;

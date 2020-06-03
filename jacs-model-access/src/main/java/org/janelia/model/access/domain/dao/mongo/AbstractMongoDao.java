@@ -3,27 +3,30 @@ package org.janelia.model.access.domain.dao.mongo;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.dao.EntityUtils;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Abstract Mongo DAO.
  */
 abstract class AbstractMongoDao {
 
+    final TimebasedIdentifierGenerator idGenerator;
     final MongoDatabase mongoDatabase;
 
-    AbstractMongoDao(MongoDatabase mongoDatabase) {
+    AbstractMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator) {
         this.mongoDatabase = mongoDatabase;
+        this.idGenerator = idGenerator;
     }
 
     Long createNewId() {
-        return TimebasedIdentifierGenerator.generateIdList(1).get(0);
+        return idGenerator.generateIdList(1).get(0).longValue();
     }
 
     List<Long> createNewIds(int size) {
-        return TimebasedIdentifierGenerator.generateIdList(size);
+        return idGenerator.generateIdList(size).stream().map(Number::longValue).collect(Collectors.toList());
     }
 
     <T> MongoCollection<T> getEntityCollection(Class<T> entityClass) {

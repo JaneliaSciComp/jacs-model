@@ -27,6 +27,7 @@ import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.*;
 import org.janelia.model.security.util.SubjectUtils;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.jongo.*;
 import org.jongo.marshall.jackson.JacksonMapper;
 import org.slf4j.Logger;
@@ -75,6 +76,7 @@ public class DomainDAO {
     private MongoCollection colorDepthResultCollection;
     private MongoCollection colorDepthImageCollection;
     private MongoCollection colorDepthLibraryCollection;
+    private final TimebasedIdentifierGenerator idGenerator;
 
     public DomainDAO(String serverUrl, String databaseName) {
         this(serverUrl, databaseName, null, null);
@@ -98,10 +100,12 @@ public class DomainDAO {
         }
 
         init(m, databaseName);
+        this.idGenerator = new TimebasedIdentifierGenerator(0);
     }
 
     public DomainDAO(MongoClient m, String databaseName) {
         init(m, databaseName);
+        this.idGenerator = new TimebasedIdentifierGenerator(0);
     }
 
     @SuppressWarnings("deprecation")
@@ -236,69 +240,6 @@ public class DomainDAO {
         return subjectCollection.findOne("{$or:[{name:#},{key:#}]}", subjectNameOrKey, subjectNameOrKey).as(Subject.class);
     }
 
-    /**
-     * Return user by name or key.
-     */
-    public User getUserByNameOrKey(String subjectNameOrKey) {
-        log.debug("getUserByNameOrKey({})", subjectNameOrKey);
-        return subjectCollection.findOne("{$or:[{name:#},{key:#}], class:#}", subjectNameOrKey, subjectNameOrKey, User.class.getName()).as(User.class);
-    }
-
-    /**
-     * Return group by name or key.
-     */
-    public Group getGroupByNameOrKey(String subjectNameOrKey) {
-        return subjectCollection.findOne("{$or:[{name:#},{key:#}], class:#}", subjectNameOrKey, subjectNameOrKey, Group.class.getName()).as(Group.class);
-    }
-
-    /** @Deprecated use SubjectDao instead */
-    @Deprecated
-    public User createUser(String name, String fullName, String email) throws Exception {
-        log.debug("createUser(name={}, fullName={}, email={})", name, fullName, email);
-        User newSubject = new User();
-        newSubject.setId(getNewId());
-        newSubject.setName(name);
-        newSubject.setKey("user:" + name);
-        newSubject.setFullName(fullName);
-        newSubject.setEmail(email);
-        // Add user to the "everyone" group
-        newSubject.setUserGroupRole(Subject.USERS_KEY, GroupRole.Reader);
-        subjectCollection.insert(newSubject);
-
-        User user = getUserByNameOrKey(name);
-        if (user != null) {
-            log.debug("Created user " + user.getKey());
-            // If the user was created, make sure they have a workspace
-            createWorkspace(user.getKey());
-        } else {
-            throw new Exception("Problem creating user " + name);
-        }
-
-        return user;
-    }
-
-    /** @Deprecated use SubjectDao instead */
-    @Deprecated
-    public Group createGroup(String name, String fullName) throws Exception {
-        log.debug("createGroup(name={}, fullName={})", name, fullName);
-        Group newSubject = new Group();
-        newSubject.setId(getNewId());
-        newSubject.setName(name);
-        newSubject.setKey("group:" + name);
-        newSubject.setFullName(fullName);
-        subjectCollection.insert(newSubject);
-
-        Group group = getGroupByNameOrKey(name);
-        if (group != null) {
-            log.info("Created group " + group.getKey());
-            createWorkspace(group.getKey());
-        } else {
-            throw new Exception("Problem creating group " + name);
-        }
-
-        return group;
-    }
-
     /** @Deprecated use SubjectDao instead */
     @Deprecated
     public void remove(Subject subject) throws Exception {
@@ -306,74 +247,6 @@ public class DomainDAO {
         WriteResult result = subjectCollection.remove("{_id:#}", subject.getId());
         if (result.getN() != 1) {
             throw new IllegalStateException("Deleted " + result.getN() + " records instead of one: Subject#" + subject.getId());
-        }
-    }
-
-    /** @Deprecated use SubjectDao instead */
-    @Deprecated
-    public void removeUser(String userNameOrKey) throws Exception {
-        log.debug("removeUser(subjectNameOrKey)", userNameOrKey);
-        Subject user = getUserByNameOrKey(userNameOrKey);
-        if (user == null) throw new IllegalArgumentException("User not found: " + userNameOrKey);
-        remove(user);
-    }
-
-    /** @Deprecated use SubjectDao instead */
-    @Deprecated
-    public void removeGroup(String groupNameOrKey) throws Exception {
-        log.debug("removeGroup(subjectNameOrKey)", groupNameOrKey);
-        Subject group = getGroupByNameOrKey(groupNameOrKey);
-        if (group == null) throw new IllegalArgumentException("Group not found: " + groupNameOrKey);
-        remove(group);
-    }
-
-    /** @Deprecated use SubjectDao instead */
-    @Deprecated
-    public void addUserToGroup(String userNameOrKey, String groupNameOrKey, GroupRole role) throws Exception {
-        log.debug("addUserToGroup(user={}, group={})", userNameOrKey, groupNameOrKey);
-        User user = getUserByNameOrKey(userNameOrKey);
-        if (user == null) throw new IllegalArgumentException("User not found: " + userNameOrKey);
-        Group group = getGroupByNameOrKey(groupNameOrKey);
-        if (group == null) throw new IllegalArgumentException("Group not found: " + groupNameOrKey);
-
-        UserGroupRole ugr = user.getRole(group.getKey());
-        if (ugr != null) {
-            if (ugr.getRole().equals(role)) {
-                log.info("User " + userNameOrKey + " already has role " + role + " in group " + groupNameOrKey + ". Skipping add...");
-            } else {
-                ugr.setRole(role);
-                subjectCollection.save(user);
-                log.info("Set role for " + userNameOrKey + " to " + role + " in group " + groupNameOrKey);
-            }
-        } else {
-            user.setUserGroupRole(group.getKey(), role);
-            subjectCollection.save(user);
-            log.info("Set role for " + userNameOrKey + " to " + role + " in group " + groupNameOrKey);
-        }
-    }
-
-    /** @Deprecated use SubjectDao instead */
-    @Deprecated
-    public void removeUserFromGroup(String userNameOrKey, String groupNameOrKey) throws Exception {
-        log.debug("removeUserFromGroup(user={}, group={})", userNameOrKey, groupNameOrKey);
-        User user = getUserByNameOrKey(userNameOrKey);
-        if (user == null) throw new IllegalArgumentException("User not found: " + userNameOrKey);
-        Group group = getGroupByNameOrKey(groupNameOrKey);
-        if (group == null) throw new IllegalArgumentException("Group not found: " + groupNameOrKey);
-
-        boolean dirty = false;
-        // Purge all roles for this group
-        UserGroupRole ugr = null;
-        while ((ugr = user.getRole(group.getKey())) != null) {
-            user.getUserGroupRoles().remove(ugr);
-            dirty = true;
-        }
-
-        if (dirty) {
-            subjectCollection.save(user);
-            log.info("Removed user " + userNameOrKey + " from group " + groupNameOrKey);
-        } else {
-            log.debug("User " + userNameOrKey + " does not belong to group " + groupNameOrKey + ". Skipping removal...");
         }
     }
 
@@ -2634,7 +2507,7 @@ public class DomainDAO {
     }
 
     public Long getNewId() {
-        return TimebasedIdentifierGenerator.generateIdList(1).get(0);
+        return idGenerator.generateIdList(1).get(0).longValue();
     }
 
     public List<LineRelease> getLineReleases(String subjectKey) {

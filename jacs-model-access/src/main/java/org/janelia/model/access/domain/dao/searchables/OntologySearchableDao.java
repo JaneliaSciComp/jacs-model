@@ -14,7 +14,7 @@ import org.janelia.model.domain.ontology.OntologyTerm;
  * {@link Ontology} DAO.
  */
 @AsyncIndex
-public class OntologySearchableDao extends AbstractDomainSearchablDao<Ontology> implements OntologyDao {
+public class OntologySearchableDao extends AbstractDomainSearchableDao<Ontology> implements OntologyDao {
 
     private final OntologyDao ontologyDao;
 

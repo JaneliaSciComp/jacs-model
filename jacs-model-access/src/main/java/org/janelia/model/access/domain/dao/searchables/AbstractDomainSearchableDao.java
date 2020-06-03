@@ -20,16 +20,15 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T> type of the element
  */
-public abstract class AbstractDomainSearchablDao<T extends DomainObject>
-        implements DomainObjectDao<T> {
+public abstract class AbstractDomainSearchableDao<T extends DomainObject> implements DomainObjectDao<T> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractDomainSearchablDao.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractDomainSearchableDao.class);
 
     final DomainObjectDao<T> domainObjectDao;
     final DomainObjectIndexer domainObjectIndexer;
 
-    AbstractDomainSearchablDao(DomainObjectDao<T> domainObjectDao,
-                               DomainObjectIndexer domainObjectIndexer) {
+    AbstractDomainSearchableDao(DomainObjectDao<T> domainObjectDao,
+                                DomainObjectIndexer domainObjectIndexer) {
         this.domainObjectDao = domainObjectDao;
         this.domainObjectIndexer = domainObjectIndexer;
     }

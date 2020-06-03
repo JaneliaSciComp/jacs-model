@@ -3,6 +3,7 @@ package org.janelia.model.access.domain.dao.mongo;
 import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.dao.TreeNodeDao;
 import org.janelia.model.domain.workspace.TreeNode;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
 
@@ -13,8 +14,9 @@ public class TreeNodeMongoDao extends AbstractNodeMongoDao<TreeNode> implements 
 
     @Inject
     TreeNodeMongoDao(MongoDatabase mongoDatabase,
+                     TimebasedIdentifierGenerator idGenerator,
                      DomainPermissionsMongoHelper permissionsHelper,
                      DomainUpdateMongoHelper updateHelper) {
-        super(mongoDatabase, permissionsHelper, updateHelper);
+        super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
     }
 }

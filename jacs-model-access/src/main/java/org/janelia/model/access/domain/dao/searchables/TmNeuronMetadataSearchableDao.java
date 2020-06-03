@@ -1,14 +1,10 @@
 package org.janelia.model.access.domain.dao.searchables;
 
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.bson.Document;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
@@ -20,7 +16,7 @@ import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
  * {@link TmNeuronMetadata} DAO.
  */
 @AsyncIndex
-public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchablDao<TmNeuronMetadata> implements TmNeuronMetadataDao {
+public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchableDao<TmNeuronMetadata> implements TmNeuronMetadataDao {
 
     private final TmNeuronMetadataDao tmNeuronMetadataDao;
 

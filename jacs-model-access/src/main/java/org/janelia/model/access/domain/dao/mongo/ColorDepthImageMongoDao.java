@@ -32,6 +32,7 @@ import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.util.SortCriteria;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 /**
  * {@link ColorDepthImage} Mongo DAO.
@@ -39,9 +40,10 @@ import org.janelia.model.util.SortCriteria;
 public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorDepthImage> implements ColorDepthImageDao {
     @Inject
     ColorDepthImageMongoDao(MongoDatabase mongoDatabase,
+                            TimebasedIdentifierGenerator idGenerator,
                             DomainPermissionsMongoHelper permissionsHelper,
                             DomainUpdateMongoHelper updateHelper) {
-        super(mongoDatabase, permissionsHelper, updateHelper);
+        super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
     }
 
     @Override

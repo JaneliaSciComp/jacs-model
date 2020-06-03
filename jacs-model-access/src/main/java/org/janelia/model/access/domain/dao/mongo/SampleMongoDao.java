@@ -12,6 +12,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 /**
  * {@link DataSet} Mongo DAO.
@@ -19,9 +20,10 @@ import org.janelia.model.domain.sample.Sample;
 public class SampleMongoDao extends AbstractDomainObjectMongoDao<Sample> implements SampleDao {
     @Inject
     SampleMongoDao(MongoDatabase mongoDatabase,
+                   TimebasedIdentifierGenerator idGenerator,
                    DomainPermissionsMongoHelper permissionsHelper,
                    DomainUpdateMongoHelper updateHelper) {
-        super(mongoDatabase, permissionsHelper, updateHelper);
+        super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
     }
 
     @Override

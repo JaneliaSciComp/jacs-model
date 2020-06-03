@@ -33,6 +33,7 @@ import org.janelia.model.domain.ontology.SimpleDomainAnnotation;
 import org.janelia.model.domain.searchable.SearchableDocType;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
+import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.NodeAncestorsGetter;
 import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.util.ReflectionHelper;
@@ -45,7 +46,7 @@ class DomainObject2SolrDoc {
     private static final Logger LOG = LoggerFactory.getLogger(DomainObject2SolrDoc.class);
     private static final String JANELIA_MODEL_PACKAGE = "org.janelia.model.domain";
 
-    private final NodeAncestorsGetter nodeAncestorsGetter;
+    private final NodeAncestorsGetter<? extends Node> nodeAncestorsGetter;
     private final DomainAnnotationGetter nodeAnnotationGetter;
     private final DomainObjectGetter objectGetter;
 
@@ -73,7 +74,7 @@ class DomainObject2SolrDoc {
         }
     }
 
-    DomainObject2SolrDoc(NodeAncestorsGetter nodeAncestorsGetter,
+    DomainObject2SolrDoc(NodeAncestorsGetter<? extends Node> nodeAncestorsGetter,
                          DomainAnnotationGetter nodeAnnotationGetter,
                          DomainObjectGetter objectGetter) {
         this.nodeAncestorsGetter = nodeAncestorsGetter;

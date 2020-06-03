@@ -15,6 +15,7 @@ import org.janelia.model.domain.report.DatabaseSummary;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
@@ -26,8 +27,8 @@ import java.util.List;
 public class SummaryMongoDao extends AbstractMongoDao implements SummaryDao {
 
     @Inject
-    public SummaryMongoDao(MongoDatabase mongoDatabase) {
-        super(mongoDatabase);
+    public SummaryMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator) {
+        super(mongoDatabase, idGenerator);
     }
 
     @Override

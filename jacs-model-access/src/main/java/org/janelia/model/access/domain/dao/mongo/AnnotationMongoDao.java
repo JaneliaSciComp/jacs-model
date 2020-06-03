@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ontology.Annotation;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
 
@@ -22,9 +23,10 @@ import javax.inject.Inject;
 public class AnnotationMongoDao extends AbstractDomainObjectMongoDao<Annotation> implements AnnotationDao {
     @Inject
     AnnotationMongoDao(MongoDatabase mongoDatabase,
+                       TimebasedIdentifierGenerator idGenerator,
                        DomainPermissionsMongoHelper permissionsHelper,
                        DomainUpdateMongoHelper updateHelper) {
-        super(mongoDatabase, permissionsHelper, updateHelper);
+        super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
     }
 
     @Override

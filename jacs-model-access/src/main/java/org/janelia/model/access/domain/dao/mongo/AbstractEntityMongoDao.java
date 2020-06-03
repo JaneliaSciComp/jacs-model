@@ -10,6 +10,7 @@ import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.ReadDao;
 import org.janelia.model.access.domain.dao.WriteDao;
 import org.janelia.model.domain.interfaces.HasIdentifier;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 import java.util.Collection;
 import java.util.List;
@@ -26,8 +27,8 @@ public abstract class AbstractEntityMongoDao<T extends HasIdentifier>
 
     final MongoCollection<T> mongoCollection;
 
-    AbstractEntityMongoDao(MongoDatabase mongoDatabase) {
-        super(mongoDatabase);
+    AbstractEntityMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator) {
+        super(mongoDatabase, idGenerator);
         Class<T> entityClass = getEntityType();
         mongoCollection = getEntityCollection(entityClass);
     }

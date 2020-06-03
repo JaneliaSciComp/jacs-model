@@ -11,7 +11,7 @@ import org.janelia.model.domain.tiledMicroscope.TmSample;
  * {@link TmSample} DAO.
  */
 @AsyncIndex
-public class TmSampleSearchableDao extends AbstractDomainSearchablDao<TmSample> implements TmSampleDao {
+public class TmSampleSearchableDao extends AbstractDomainSearchableDao<TmSample> implements TmSampleDao {
 
     private final TmSampleDao tmSampleDao;
 

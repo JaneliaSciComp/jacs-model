@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import org.janelia.model.domain.sample.DataSet;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,12 +23,14 @@ public class SummaryMongoDaoTest extends AbstractMongoDaoTest {
 
     @Before
     public void setUp() {
-        subjectMongoDao = new SubjectMongoDao(testMongoDatabase);
+        TimebasedIdentifierGenerator timebasedIdentifierGenerator = new TimebasedIdentifierGenerator(0);
+        subjectMongoDao = new SubjectMongoDao(testMongoDatabase, timebasedIdentifierGenerator);
         datasetMongoDao = new DatasetMongoDao(
                 testMongoDatabase,
+                timebasedIdentifierGenerator,
                 new DomainPermissionsMongoHelper(subjectMongoDao),
                 new DomainUpdateMongoHelper(testObjectMapper));
-        summaryMongoDao = new SummaryMongoDao(testMongoDatabase);
+        summaryMongoDao = new SummaryMongoDao(testMongoDatabase, timebasedIdentifierGenerator);
     }
 
     @Test

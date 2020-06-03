@@ -774,7 +774,7 @@ public class DomainUtils {
      * @param domainObjects
      * @param sortCriteria
      */
-    public static void sortDomainObjects(List<? extends DomainObject> domainObjects, String sortCriteria) {
+    public static <T extends DomainObject> void sortDomainObjects(List<T> domainObjects, String sortCriteria) {
 
         if (StringUtils.isEmpty(sortCriteria)) return;
         final String sortField = (sortCriteria.startsWith("-") || sortCriteria.startsWith("+")) ? sortCriteria.substring(1) : sortCriteria;
@@ -785,19 +785,17 @@ public class DomainUtils {
             try {
                 Object value = org.janelia.model.util.ReflectionUtils.get(domainObject, sortField);
                 fieldValues.put(domainObject, value);
-            }
-            catch (NoSuchMethodException e) {
+            } catch (NoSuchMethodException e) {
                 // This is okay. Some objects in the list may not have the sort criteria field.
-            }
-            catch (IllegalAccessException | InvocationTargetException e) {
+            } catch (IllegalAccessException | InvocationTargetException e) {
                 log.error("Error getting sort value", e);
             }
         }
 
-        domainObjects.sort((Comparator<DomainObject>) (o1, o2) -> {
-            Comparable v1 = (Comparable) fieldValues.get(o1);
-            Comparable v2 = (Comparable) fieldValues.get(o2);
-            Ordering ordering = Ordering.natural().nullsLast();
+        domainObjects.sort((o1, o2) -> {
+            Comparable<?> v1 = (Comparable<?>) fieldValues.get(o1);
+            Comparable<?> v2 = (Comparable<?>) fieldValues.get(o2);
+            Ordering<Comparable<?>> ordering = Ordering.natural().nullsLast();
             if (!ascending) {
                 ordering = ordering.reverse();
             }

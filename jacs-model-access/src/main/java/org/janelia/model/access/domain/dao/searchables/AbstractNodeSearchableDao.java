@@ -11,7 +11,7 @@ import org.janelia.model.domain.workspace.Node;
 /**
  * {@link Node} DAO.
  */
-public class AbstractNodeSearchableDao<T extends Node> extends AbstractDomainSearchablDao<T> implements NodeDao<T> {
+public class AbstractNodeSearchableDao<T extends Node> extends AbstractDomainSearchableDao<T> implements NodeDao<T> {
 
     private final NodeDao<T> nodeDao;
 

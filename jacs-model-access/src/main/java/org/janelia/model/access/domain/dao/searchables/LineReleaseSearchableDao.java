@@ -13,7 +13,7 @@ import org.janelia.model.domain.sample.LineRelease;
  * {@link LineRelease} DAO.
  */
 @AsyncIndex
-public class LineReleaseSearchableDao extends AbstractDomainSearchablDao<LineRelease> implements LineReleaseDao {
+public class LineReleaseSearchableDao extends AbstractNodeSearchableDao<LineRelease> implements LineReleaseDao {
 
     private final LineReleaseDao lineReleaseDao;
 

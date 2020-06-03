@@ -1,16 +1,19 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.access.domain.dao.AddToSetFieldValueHandler;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.*;
 import org.janelia.model.security.util.SubjectUtils;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +30,8 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     private static final Logger log = LoggerFactory.getLogger(SubjectMongoDao.class);
 
     @Inject
-    public SubjectMongoDao(MongoDatabase mongoDatabase) {
-        super(mongoDatabase);
+    public SubjectMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator) {
+        super(mongoDatabase, idGenerator);
     }
 
     @Override
@@ -43,7 +46,7 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
 
         User user = (User)findByName(name);
         if (user == null) {
-            throw new RuntimeException("Problem creating user " + name);
+            throw new IllegalStateException("Problem creating user " + name);
         }
 
         log.debug("Created user " + user.getKey());
@@ -52,7 +55,6 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
 
     @Override
     public boolean updateUserProperty(User user, String property, String value) {
-
         UpdateOptions updateOptions = new UpdateOptions();
         updateOptions.upsert(false);
         DaoUpdateResult updateResult = MongoDaoHelper.updateMany(
@@ -82,15 +84,13 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
         if (entity.getId() == null) {
             entity.setId(createNewId());
             insertNewEntity(entity);
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Cannot save object which already has an id");
         }
     }
 
     @Override
     public User setUserPassword(User user, String passwordHash) {
-
         UpdateOptions updateOptions = new UpdateOptions();
         updateOptions.upsert(false);
         DaoUpdateResult updateResult = MongoDaoHelper.updateMany(
@@ -112,8 +112,38 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     }
 
     @Override
-    public boolean updateUserGroupRoles(User user, Set<UserGroupRole> groupRoles) {
+    public void addUserToGroup(String userNameOrKey, String groupNameOrKey, GroupRole role) {
+        User u = findUserByNameOrKey(userNameOrKey);
+        Preconditions.checkArgument(u != null, "No user found for " + userNameOrKey);
+        Group g = findGroupByNameOrKey(groupNameOrKey);
+        Preconditions.checkArgument(g != null, "No group found for " + groupNameOrKey);
+        UpdateOptions updateOptions = new UpdateOptions();
+        updateOptions.upsert(false);
+        MongoDaoHelper.updateMany(
+                mongoCollection,
+                MongoDaoHelper.createFilterCriteria(
+                        MongoDaoHelper.createFilterById(u.getId())
+                ),
+                ImmutableMap.of(
+                        "userGroupRoles", new AddToSetFieldValueHandler<>(new UserGroupRole(g.getKey(), role))
+                ),
+                updateOptions);
+    }
 
+    @Override
+    public void removeUserFromGroup(String userNameOrKey, String groupNameOrKey) {
+        User u = findUserByNameOrKey(userNameOrKey);
+        Preconditions.checkArgument(u != null, "No user found for " + userNameOrKey);
+        Set<UserGroupRole> userGroupRoles = u.getUserGroupRoles().stream()
+                .filter(ugr -> !StringUtils.equals(ugr.getGroupKey(), groupNameOrKey))
+                .collect(Collectors.toSet());
+        if (userGroupRoles.size() != u.getUserGroupRoles().size()) {
+            updateUserGroupRoles(u, userGroupRoles);
+        }
+    }
+
+    @Override
+    public boolean updateUserGroupRoles(User user, Set<UserGroupRole> groupRoles) {
         UpdateOptions updateOptions = new UpdateOptions();
         updateOptions.upsert(false);
         DaoUpdateResult updateResult = MongoDaoHelper.updateMany(
@@ -143,7 +173,7 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
 
         Group group = (Group) findByName(name);
         if (group == null) {
-            throw new RuntimeException("Problem creating group " + name);
+            throw new IllegalStateException("Problem creating group " + name);
         }
 
         log.debug("Created group " + group.getKey());
@@ -164,6 +194,16 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
             }
         });
         insertNewEntities(toInsert);
+    }
+
+    @Override
+    public List<User> findAllUsers() {
+        return find(Filters.regex("key", "^user:"), null, 0, -1, User.class);
+    }
+
+    @Override
+    public List<Group> findAllGroups() {
+        return find(Filters.regex("key", "^group:"), null, 0, -1, Group.class);
     }
 
     @Override
@@ -205,6 +245,50 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
                     getEntityType());
             if (CollectionUtils.isNotEmpty(subjects)) {
                 return subjects.get(0);
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public Group findGroupByNameOrKey(String groupNameOrKey) {
+        if (StringUtils.isNotBlank(groupNameOrKey)) {
+            List<Group> groups = find(
+                    Filters.and(
+                            Filters.or(Filters.eq("key", groupNameOrKey), Filters.eq("name", groupNameOrKey)),
+                            Filters.eq("class", Group.class.getName())
+                    ),
+                    null,
+                    0,
+                    -1,
+                    Group.class);
+            if (CollectionUtils.isNotEmpty(groups)) {
+                return groups.get(0);
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public User findUserByNameOrKey(String userNameOrKey) {
+        if (StringUtils.isNotBlank(userNameOrKey)) {
+            List<User> users = find(
+                    Filters.and(
+                            Filters.or(Filters.eq("key", userNameOrKey), Filters.eq("name", userNameOrKey)),
+                            Filters.eq("class", User.class.getName())
+                    ),
+                    null,
+                    0,
+                    -1,
+                    User.class);
+            if (CollectionUtils.isNotEmpty(users)) {
+                return users.get(0);
             } else {
                 return null;
             }

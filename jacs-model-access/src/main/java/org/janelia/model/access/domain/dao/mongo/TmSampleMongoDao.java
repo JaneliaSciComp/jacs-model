@@ -8,6 +8,7 @@ import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.workspace.TreeNode;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -21,10 +22,11 @@ public class TmSampleMongoDao extends AbstractDomainObjectMongoDao<TmSample> imp
 
     @Inject
     TmSampleMongoDao(MongoDatabase mongoDatabase,
+                     TimebasedIdentifierGenerator idGenerator,
                      DomainPermissionsMongoHelper permissionsHelper,
                      DomainUpdateMongoHelper updateHelper,
                      DomainDAO domainDao) {
-        super(mongoDatabase, permissionsHelper, updateHelper);
+        super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
         this.domainDao = domainDao;
     }
 
