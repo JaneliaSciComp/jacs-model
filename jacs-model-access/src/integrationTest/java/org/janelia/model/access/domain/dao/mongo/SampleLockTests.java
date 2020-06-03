@@ -1,13 +1,16 @@
-package org.janelia.model.access.domain.dao;
+package org.janelia.model.access.domain.dao.mongo;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.model.access.domain.DomainDAO;
+import org.janelia.model.access.domain.dao.DomainDAOManager;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.sample.SampleLock;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.jongo.MongoCollection;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -22,7 +25,7 @@ import static org.junit.Assert.assertTrue;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleLockTests {
+public class SampleLockTests extends AbstractMongoDaoTest {
 
     private static final DomainDAO dao = DomainDAOManager.getInstance().getDao();
 
@@ -33,34 +36,23 @@ public class SampleLockTests {
     private static final String lockDescription = "Test Lock";
     private static final Long testTaskId = 123456789L;
 
-    @BeforeClass
-    public static void beforeClass() throws Exception {
-        cleanup();
-    }
+    private SubjectMongoDao subjectMongoDao;
 
-    @AfterClass
-    public static void afterClass() throws Exception {
-        cleanup();
-    }
-
-    /**
-     * Clean up any test data that was created but failed to be deleted.
-     * @throws Exception
-     */
-    private static void cleanup() throws Exception {
-        DomainDAOManager.getInstance().dropTestDatabase();
+    @Before
+    public void setUp() {
+        TimebasedIdentifierGenerator timebasedIdentifierGenerator = new TimebasedIdentifierGenerator(0);
+        subjectMongoDao = new SubjectMongoDao(testMongoDatabase, timebasedIdentifierGenerator);
     }
 
     private void createTestData() throws Exception {
-        dao.createUser(testName, "Tester", null);
+        subjectMongoDao.createUser(testName, "Tester", null);
 
-        for(int i=1; i<10; i++) {
+        for (int i = 1; i < 10; i++) {
             Sample sample = new Sample();
             sample.setDataSet(testDataSetIdentifier);
             sample.setSlideCode(testSlideCodePrefix + i);
             dao.save(testUser, sample);
         }
-
     }
 
     @Test

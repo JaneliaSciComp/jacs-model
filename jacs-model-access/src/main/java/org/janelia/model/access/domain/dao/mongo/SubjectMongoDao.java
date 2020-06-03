@@ -143,6 +143,13 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     }
 
     @Override
+    public void removeSubjectByKey(String key) {
+        MongoDaoHelper.deleteMatchingRecords(
+                mongoCollection,
+                MongoDaoHelper.createAttributeFilter("key", key));
+    }
+
+    @Override
     public boolean updateUserGroupRoles(User user, Set<UserGroupRole> groupRoles) {
         UpdateOptions updateOptions = new UpdateOptions();
         updateOptions.upsert(false);

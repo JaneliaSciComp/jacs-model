@@ -114,9 +114,27 @@ public interface SubjectDao extends ReadDao<Subject, Long>, WriteDao<Subject, Lo
      */
     User setUserPassword(User user, String passwordHash);
 
+    /**
+     * Add user to group with specified role.
+     *
+     * @param userNameOrKey
+     * @param groupNameOrKey
+     * @param role
+     */
     void addUserToGroup(String userNameOrKey, String groupNameOrKey, GroupRole role);
 
+    /**
+     * Remove user from a group.
+     * @param userNameOrKey
+     * @param groupNameOrKey
+     */
     void removeUserFromGroup(String userNameOrKey, String groupNameOrKey);
+
+    /**
+     * Remove subject
+     * @param key
+     */
+    void removeSubjectByKey(String key);
 
     /**
      * Update a user's group roles.
