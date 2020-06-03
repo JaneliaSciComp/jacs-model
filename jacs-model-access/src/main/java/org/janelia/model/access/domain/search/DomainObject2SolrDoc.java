@@ -222,9 +222,10 @@ class DomainObject2SolrDoc {
             }
             DomainObject refObj = objectGetter.getDomainObjectByReference(ref);
             if (refObj == null) {
-                LOG.warn("No domain object found for field {} of {} with value {}", field, currentObject, ref);
+                LOG.debug("No domain object found for field {} of {} with value {}", field, currentObject, ref);
+            } else {
+                traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue);
             }
-            traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue);
         } else if (fieldValue instanceof ReverseReference) {
             ReverseReference reverseRef = (ReverseReference) fieldValue;
             List<? extends DomainObject> refObjs = objectGetter.getDomainObjectsReferencedBy(reverseRef);
@@ -287,9 +288,10 @@ class DomainObject2SolrDoc {
                             }
                             DomainObject refObj = objectGetter.getDomainObjectByReference(ref);
                             if (refObj == null) {
-                                LOG.warn("No domain object found for collection member of field {} value {}", field, ref);
+                                LOG.debug("No domain object found for collection member of field {} value {}", field, ref);
+                            } else {
+                                traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue);
                             }
-                            traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, refObj, false, visited, fullTextIndexableValue);
                         } else {
                             traverseDomainObjectFieldsForFullTextIndexedValues(rootObject, member, false, visited, fullTextIndexableValue);
                         }

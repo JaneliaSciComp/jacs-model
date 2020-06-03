@@ -96,7 +96,7 @@ class SolrConnector {
                         int nDocs = solrDocsBatch.size();
                         if (nDocs >= batchSize) {
                             try {
-                                LOG.info("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get() + itemsToCommit.get(), stopwatch.elapsed(TimeUnit.SECONDS));
+                                LOG.debug("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get() + itemsToCommit.get(), stopwatch.elapsed(TimeUnit.SECONDS));
                                 solrServer.add(solrDocsBatch);
                                 nAdded = nDocs;
                             } catch (Throwable e) {
@@ -130,7 +130,7 @@ class SolrConnector {
                 ;
         if (solrDocsBatch.size() > 0) {
             try {
-                LOG.info("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get(), stopwatch.elapsed(TimeUnit.SECONDS));
+                LOG.debug("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get(), stopwatch.elapsed(TimeUnit.SECONDS));
                 solrServer.add(solrDocsBatch);
                 result.addAndGet(solrDocsBatch.size());
                 itemsToCommit.addAndGet(solrDocsBatch.size());
