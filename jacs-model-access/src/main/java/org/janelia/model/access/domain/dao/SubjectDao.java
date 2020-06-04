@@ -30,21 +30,21 @@ public interface SubjectDao extends ReadDao<Subject, Long>, WriteDao<Subject, Lo
      * @param key
      * @return
      */
-    Subject findByKey(String key);
+    Subject findSubjectByKey(String key);
 
     /**
      * Return the subject identified by the given unique name.
      * @param name
      * @return
      */
-    Subject findByName(String name);
+    Subject findSubjectByName(String name);
 
     /**
      * Return the subject identified by the given subject key or name.
      * @param nameOrKey
      * @return
      */
-    Subject findByNameOrKey(String nameOrKey);
+    Subject findSubjectByNameOrKey(String nameOrKey);
 
     /**
      * Return the group identified by the given name or key.

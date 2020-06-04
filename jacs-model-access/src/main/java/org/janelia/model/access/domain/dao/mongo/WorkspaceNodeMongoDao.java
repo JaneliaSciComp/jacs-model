@@ -13,7 +13,7 @@ import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.workspace.Workspace;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

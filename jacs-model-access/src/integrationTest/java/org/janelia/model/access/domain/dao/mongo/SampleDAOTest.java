@@ -7,7 +7,7 @@ import org.janelia.model.access.domain.dao.DomainDAOManager;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.User;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.Test;
 

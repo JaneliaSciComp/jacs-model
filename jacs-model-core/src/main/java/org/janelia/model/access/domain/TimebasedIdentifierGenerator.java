@@ -1,4 +1,4 @@
-package org.janelia.model.util;
+package org.janelia.model.access.domain;
 
 import com.google.common.base.Preconditions;
 
@@ -58,7 +58,7 @@ import java.util.List;
  * @author Cristian Goina
  * @author Sean Murphy
  */
-public class TimebasedIdentifierGenerator {
+public class TimebasedIdentifierGenerator implements IdGenerator<Long> {
 
     private static final Long CURRENT_TIME_OFFSET = 921700000000L;
     private static final int MAX_DEPLOYMENT_CONTEXT = 15; // 4 bits only
@@ -106,21 +106,23 @@ public class TimebasedIdentifierGenerator {
         this.ipComponent = getIpAddrCompoment(useLoopback);
     }
 
-    public List<BigInteger> generateIdList(long n) {
-        List<BigInteger> idList = new ArrayList<>();
+    @Override
+    public Long generateId() {
+        IDBlock idBlock = getIDBlock();
+        return idBlock.next().longValue();
+    }
+
+    @Override
+    public List<Long> generateIdList(int n) {
+        List<Long> idList = new ArrayList<>();
         long total = 0L;
         while (total < n) {
             IDBlock idBlock = getIDBlock();
             for (; total < n && idBlock.hasNext(); total++) {
-                idList.add(idBlock.next());
+                idList.add(idBlock.next().longValue());
             }
         }
         return idList;
-    }
-
-    public BigInteger generateId() {
-        IDBlock idBlock = getIDBlock();
-        return idBlock.next();
     }
 
     private synchronized IDBlock getIDBlock() {

@@ -5,7 +5,7 @@ import com.mongodb.client.model.Filters;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.domain.sample.DataSet;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
 import java.util.List;

@@ -25,7 +25,7 @@ import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.util.SortCriteria;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

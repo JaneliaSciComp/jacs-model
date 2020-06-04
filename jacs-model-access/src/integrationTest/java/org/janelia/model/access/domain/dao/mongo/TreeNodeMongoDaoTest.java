@@ -12,7 +12,7 @@ import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.workspace.NodeUtils;
 import org.janelia.model.domain.workspace.TreeNode;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;

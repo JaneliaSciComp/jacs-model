@@ -5,7 +5,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,7 +15,6 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -46,7 +44,7 @@ class DomainObject2SolrDoc {
     private static final Logger LOG = LoggerFactory.getLogger(DomainObject2SolrDoc.class);
     private static final String JANELIA_MODEL_PACKAGE = "org.janelia.model.domain";
 
-    private final NodeAncestorsGetter<? extends Node> nodeAncestorsGetter;
+    private final List<NodeAncestorsGetter<? extends Node>> nodeAncestorsGetters;
     private final DomainAnnotationGetter nodeAnnotationGetter;
     private final DomainObjectGetter objectGetter;
 
@@ -74,22 +72,20 @@ class DomainObject2SolrDoc {
         }
     }
 
-    DomainObject2SolrDoc(NodeAncestorsGetter<? extends Node> nodeAncestorsGetter,
+    DomainObject2SolrDoc(List<NodeAncestorsGetter<? extends Node>> nodeAncestorsGetters,
                          DomainAnnotationGetter nodeAnnotationGetter,
                          DomainObjectGetter objectGetter) {
-        this.nodeAncestorsGetter = nodeAncestorsGetter;
+        this.nodeAncestorsGetters = nodeAncestorsGetters;
         this.nodeAnnotationGetter = nodeAnnotationGetter;
         this.objectGetter = objectGetter;
     }
 
     SolrInputDocument domainObjectToSolrDocument(DomainObject domainObject) {
-        Set<Reference> ancestorReferences = nodeAncestorsGetter.getNodeAncestors(Reference.createFor(domainObject));
-        Set<Long> ancestorIds;
-        if (CollectionUtils.isNotEmpty(ancestorReferences)) {
-            ancestorIds = ancestorReferences.stream().map(ref -> ref.getTargetId()).collect(Collectors.toSet());
-        } else {
-            ancestorIds = Collections.emptySet();
-        }
+        Reference domainObjectReference = Reference.createFor(domainObject);
+        Set<Long> ancestorIds = nodeAncestorsGetters.stream()
+                .flatMap(nodeAncestorsGetter -> nodeAncestorsGetter.getNodeAncestors(domainObjectReference).stream())
+                .map(ref -> ref.getTargetId())
+                .collect(Collectors.toSet());
         return createSolrDoc(domainObject, ancestorIds);
     }
 

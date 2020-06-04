@@ -9,7 +9,7 @@ import org.janelia.model.domain.ontology.Category;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
 import org.janelia.model.domain.ontology.Tag;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.Test;
 

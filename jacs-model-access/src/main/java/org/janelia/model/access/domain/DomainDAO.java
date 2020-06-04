@@ -27,7 +27,6 @@ import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.*;
 import org.janelia.model.security.util.SubjectUtils;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.jongo.*;
 import org.jongo.marshall.jackson.JacksonMapper;
 import org.slf4j.Logger;
@@ -2507,7 +2506,7 @@ public class DomainDAO {
     }
 
     public Long getNewId() {
-        return idGenerator.generateIdList(1).get(0).longValue();
+        return idGenerator.generateIdList(1).get(0);
     }
 
     public List<LineRelease> getLineReleases(String subjectKey) {

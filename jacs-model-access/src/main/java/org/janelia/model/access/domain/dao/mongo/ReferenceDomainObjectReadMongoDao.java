@@ -16,7 +16,7 @@ import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 /**
  * DAO for reading entities by their references.

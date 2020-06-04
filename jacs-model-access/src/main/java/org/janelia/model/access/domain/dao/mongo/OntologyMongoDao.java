@@ -23,7 +23,7 @@ import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
 import org.janelia.model.util.SortCriteria;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 /**
  * {@link Ontology} Mongo DAO.

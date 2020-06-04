@@ -7,11 +7,9 @@ import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.dao.DomainDAOManager;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.sample.SampleLock;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.jongo.MongoCollection;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

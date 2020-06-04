@@ -1,9 +1,9 @@
 package org.janelia.model.access.domain.search;
 
-import org.janelia.model.domain.DomainObject;
-
 import java.util.Set;
 import java.util.stream.Stream;
+
+import org.janelia.model.domain.DomainObject;
 
 public interface  DomainObjectIndexer {
     DocumentSearchResults searchIndex(DocumentSearchParams searchParams);

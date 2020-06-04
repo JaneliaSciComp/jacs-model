@@ -1,6 +1,5 @@
-package org.janelia.model.util;
+package org.janelia.model.access.domain;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import com.google.common.collect.ImmutableSet;
@@ -21,7 +20,7 @@ public class TimebasedIdentifierGeneratorTest {
 
     @Test
     public void generateLargeListOfIds() {
-        List<BigInteger> idList = idGenerator.generateIdList(16384);
+        List<Long> idList = idGenerator.generateIdList(16384);
         assertThat(ImmutableSet.copyOf(idList), hasSize(idList.size()));
     }
 }

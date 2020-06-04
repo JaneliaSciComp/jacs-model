@@ -10,7 +10,7 @@ import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.ReadDao;
 import org.janelia.model.access.domain.dao.WriteDao;
 import org.janelia.model.domain.interfaces.HasIdentifier;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 import java.util.Collection;
 import java.util.List;

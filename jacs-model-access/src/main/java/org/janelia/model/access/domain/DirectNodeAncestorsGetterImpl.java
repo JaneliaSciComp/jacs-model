@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import org.janelia.model.access.domain.dao.NodeDao;
-import org.janelia.model.access.domain.dao.TreeNodeDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.workspace.DirectNodeAncestorsGetter;
 import org.janelia.model.domain.workspace.Node;
@@ -19,7 +18,6 @@ public class DirectNodeAncestorsGetterImpl<T extends Node> implements DirectNode
 
     private final NodeDao<T> nodeDao;
 
-    @Inject
     public DirectNodeAncestorsGetterImpl(NodeDao<T> nodeDao) {
         this.nodeDao = nodeDao;
     }

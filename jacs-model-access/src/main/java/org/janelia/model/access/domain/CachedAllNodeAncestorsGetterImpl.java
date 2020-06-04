@@ -9,30 +9,24 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
-
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.janelia.model.access.cdi.WithCache;
-import org.janelia.model.access.domain.dao.TreeNodeDao;
+import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.ontology.SimpleDomainAnnotation;
-import org.janelia.model.domain.workspace.DirectNodeAncestorsGetter;
+import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.NodeAncestorsGetter;
 import org.janelia.model.domain.workspace.NodeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@WithCache
-public class CachedAllNodeAncestorsGetterImpl implements NodeAncestorsGetter {
+public class CachedAllNodeAncestorsGetterImpl<T extends Node> implements NodeAncestorsGetter<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CachedAllNodeAncestorsGetterImpl.class);
 
-    private final TreeNodeDao treeNodeDao;
+    private final NodeDao<T> nodeDao;
     private final Map<Reference, Set<Reference>> nodeAncestorsCache;
 
-    @Inject
-    public CachedAllNodeAncestorsGetterImpl(TreeNodeDao treeNodeDao) {
-        this.treeNodeDao = treeNodeDao;
+    public CachedAllNodeAncestorsGetterImpl(NodeDao<T> nodeDao) {
+        this.nodeDao = nodeDao;
         this.nodeAncestorsCache = loadAllNodeAncestors();
     }
 
@@ -45,7 +39,7 @@ public class CachedAllNodeAncestorsGetterImpl implements NodeAncestorsGetter {
         LOG.info("Start loading all node ancestors cache");
         try {
             Map<Reference, Set<Reference>> directAncestors =
-                    treeNodeDao.streamAll()
+                    nodeDao.streamAll()
                             .flatMap(tn -> {
                                 if (tn.hasChildren()) {
                                     return tn.getChildren()

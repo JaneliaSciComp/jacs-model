@@ -3,7 +3,7 @@ package org.janelia.model.access.domain.dao.mongo;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.dao.EntityUtils;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,11 +22,11 @@ abstract class AbstractMongoDao {
     }
 
     Long createNewId() {
-        return idGenerator.generateIdList(1).get(0).longValue();
+        return idGenerator.generateIdList(1).get(0);
     }
 
     List<Long> createNewIds(int size) {
-        return idGenerator.generateIdList(size).stream().map(Number::longValue).collect(Collectors.toList());
+        return idGenerator.generateIdList(size);
     }
 
     <T> MongoCollection<T> getEntityCollection(Class<T> entityClass) {

@@ -29,7 +29,6 @@ import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
-import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
@@ -37,7 +36,7 @@ import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronData;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

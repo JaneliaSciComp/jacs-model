@@ -25,13 +25,13 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
     private final int solrCommitSize;
 
     public SolrBasedDomainObjectIndexer(SolrServer solrServer,
-                                        NodeAncestorsGetter<? extends Node> nodeAncestorsGetter,
+                                        List<NodeAncestorsGetter<? extends Node>> nodeAncestorsGetters,
                                         DomainAnnotationGetter nodeAnnotationGetter,
                                         DomainObjectGetter objectGetter,
                                         int solrBatchSize,
                                         int solrCommitSize) {
         this.solrConnector = new SolrConnector(solrServer);
-        this.domainObject2SolrDocConverter = new DomainObject2SolrDoc(nodeAncestorsGetter, nodeAnnotationGetter, objectGetter);
+        this.domainObject2SolrDocConverter = new DomainObject2SolrDoc(nodeAncestorsGetters, nodeAnnotationGetter, objectGetter);
         this.solrBatchSize = solrBatchSize;
         this.solrCommitSize = solrCommitSize;
     }

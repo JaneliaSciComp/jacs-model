@@ -1,21 +1,7 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-
-import org.janelia.model.access.domain.dao.SetFieldValueHandler;
-import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.workspace.NodeUtils;
-import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.Test;
 

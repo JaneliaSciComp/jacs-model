@@ -13,7 +13,7 @@ import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.*;
 import org.janelia.model.security.util.SubjectUtils;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +44,7 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
         newSubject.setEmail(email);
         save(newSubject);
 
-        User user = (User)findByName(name);
+        User user = (User) findSubjectByName(name);
         if (user == null) {
             throw new IllegalStateException("Problem creating user " + name);
         }
@@ -178,7 +178,7 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
         newGroup.setFullName(fullName);
         save(newGroup);
 
-        Group group = (Group) findByName(name);
+        Group group = (Group) findSubjectByName(name);
         if (group == null) {
             throw new IllegalStateException("Problem creating group " + name);
         }
@@ -214,7 +214,7 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     }
 
     @Override
-    public Subject findByKey(String key) {
+    public Subject findSubjectByKey(String key) {
         if (StringUtils.isNotBlank(key)) {
             List<Subject> subjects = find(Filters.eq("key", key), null, 0, -1, getEntityType());
             if (CollectionUtils.isNotEmpty(subjects)) {
@@ -228,7 +228,7 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     }
 
     @Override
-    public Subject findByName(String name) {
+    public Subject findSubjectByName(String name) {
         if (StringUtils.isNotBlank(name)) {
             List<Subject> subjects = find(Filters.eq("name", name), null, 0, -1, getEntityType());
             if (CollectionUtils.isNotEmpty(subjects)) {
@@ -242,7 +242,7 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     }
 
     @Override
-    public Subject findByNameOrKey(String nameOrKey) {
+    public Subject findSubjectByNameOrKey(String nameOrKey) {
         if (StringUtils.isNotBlank(nameOrKey)) {
             List<Subject> subjects = find(
                     Filters.or(Filters.eq("key", nameOrKey), Filters.eq("name", nameOrKey)),
@@ -306,7 +306,7 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
 
     @Override
     public Set<String> getReaderSetByKey(String subjectKey) {
-        Subject subject = findByKey(subjectKey);
+        Subject subject = findSubjectByKey(subjectKey);
         if (subject == null) {
             return Collections.emptySet();
         } else {
@@ -316,7 +316,7 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
 
     @Override
     public Set<String> getWriterSetByKey(String subjectKey) {
-        Subject subject = findByKey(subjectKey);
+        Subject subject = findSubjectByKey(subjectKey);
         if (subject == null) {
             return Collections.emptySet();
         } else {

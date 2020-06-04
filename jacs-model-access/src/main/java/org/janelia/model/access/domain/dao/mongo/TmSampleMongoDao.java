@@ -8,7 +8,7 @@ import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.workspace.TreeNode;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
 import java.util.Arrays;

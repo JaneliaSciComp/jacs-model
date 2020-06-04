@@ -20,7 +20,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
 import org.janelia.model.domain.DomainObject;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 /**
  * Abstract Domain DAO that can handle entity access.

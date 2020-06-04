@@ -12,7 +12,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.LineRelease;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 /**
  * {@link DataSet} Mongo DAO.

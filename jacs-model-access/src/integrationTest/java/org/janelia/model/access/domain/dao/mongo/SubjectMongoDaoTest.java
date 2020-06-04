@@ -1,17 +1,11 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import org.janelia.model.access.domain.DomainDAO;
-import org.janelia.model.access.domain.dao.mongo.SubjectMongoDao;
-import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
 import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
-import org.junit.After;
-import org.junit.AfterClass;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -91,13 +85,13 @@ public class SubjectMongoDaoTest extends AbstractMongoDaoTest {
     @Test
     public void testUserGetters() {
         subjectMongoDao.createUser(testUser, testUserFullName, null);
-        Subject subject = subjectMongoDao.findByNameOrKey(testUser);
+        Subject subject = subjectMongoDao.findSubjectByNameOrKey(testUser);
         assertNotNull(subject);
         
-        subject = subjectMongoDao.findByName(subject.getName());
+        subject = subjectMongoDao.findSubjectByName(subject.getName());
         assertNotNull(subject);
 
-        subject = subjectMongoDao.findByKey(subject.getKey());
+        subject = subjectMongoDao.findSubjectByKey(subject.getKey());
         assertNotNull(subject);
 
         subject = subjectMongoDao.findUserByNameOrKey(subject.getName());
@@ -114,13 +108,13 @@ public class SubjectMongoDaoTest extends AbstractMongoDaoTest {
     @Test
     public void testGroupGetters() throws Exception {
         subjectMongoDao.createGroup(testGroup, testGroupFullName, null);
-        Subject subject = subjectMongoDao.findByNameOrKey(testGroup);
+        Subject subject = subjectMongoDao.findSubjectByNameOrKey(testGroup);
         assertNotNull(subject);
         
-        subject = subjectMongoDao.findByName(subject.getName());
+        subject = subjectMongoDao.findSubjectByName(subject.getName());
         assertNotNull(subject);
 
-        subject = subjectMongoDao.findByKey(subject.getKey());
+        subject = subjectMongoDao.findSubjectByKey(subject.getKey());
         assertNotNull(subject);
 
         subject = subjectMongoDao.findGroupByNameOrKey(subject.getName());

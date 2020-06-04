@@ -15,7 +15,7 @@ import org.janelia.model.domain.report.DatabaseSummary;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.sample.Sample;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;

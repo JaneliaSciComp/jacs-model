@@ -9,11 +9,10 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ontology.Annotation;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
 

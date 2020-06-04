@@ -11,12 +11,11 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.domain.DomainObject;
-import org.janelia.model.domain.DomainObjectComparator;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.util.SortCriteria;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
