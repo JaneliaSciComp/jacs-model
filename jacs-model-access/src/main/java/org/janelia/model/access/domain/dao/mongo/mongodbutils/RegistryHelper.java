@@ -15,7 +15,8 @@ public class RegistryHelper {
         return CodecRegistries.fromRegistries(
                 MongoClient.getDefaultCodecRegistry(),
                 CodecRegistries.fromCodecs(
-                        new ReferenceCodec()
+                        new ReferenceCodec(),
+                        new ClassCodec()
                 ),
                 CodecRegistries.fromProviders(new EnumCodecProvider())
         );
