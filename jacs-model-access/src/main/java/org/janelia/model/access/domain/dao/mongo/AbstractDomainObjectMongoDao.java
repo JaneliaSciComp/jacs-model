@@ -114,7 +114,7 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
 
             private void setCursor() {
                 cursor = mongoCollection
-                        .find()
+                        .find(Filters.eq("class", getEntityType()))
                         .noCursorTimeout(true)
                         .iterator();
             }
