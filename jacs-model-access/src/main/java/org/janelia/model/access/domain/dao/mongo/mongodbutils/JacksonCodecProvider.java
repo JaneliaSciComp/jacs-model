@@ -56,6 +56,8 @@ public class JacksonCodecProvider implements CodecProvider {
     }
 
     private <T> boolean checkCodecApplicability(Class<T> clazz) {
-        return !String.class.equals(clazz) && !Number.class.isAssignableFrom(clazz);
+        return !String.class.equals(clazz) &&
+                !Number.class.isAssignableFrom(clazz) &&
+                !Class.class.isAssignableFrom(clazz);
     }
 }
