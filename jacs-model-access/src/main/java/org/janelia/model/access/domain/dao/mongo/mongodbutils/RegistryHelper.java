@@ -2,6 +2,8 @@ package org.janelia.model.access.domain.dao.mongo.mongodbutils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoClient;
+
+import org.bson.codecs.LongCodec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
@@ -13,7 +15,8 @@ public class RegistryHelper {
         return CodecRegistries.fromRegistries(
                 MongoClient.getDefaultCodecRegistry(),
                 CodecRegistries.fromCodecs(
-                        new ReferenceCodec()
+                        new ReferenceCodec(),
+                        new LongCodec()
                 ),
                 CodecRegistries.fromProviders(new EnumCodecProvider())
         );
