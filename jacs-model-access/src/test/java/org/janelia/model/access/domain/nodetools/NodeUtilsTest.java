@@ -1,4 +1,4 @@
-package org.janelia.model.domain.workspace;
+package org.janelia.model.access.domain.nodetools;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

@@ -1,7 +1,7 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
+import org.janelia.model.domain.workspace.Workspace;
 import org.junit.Before;
 import org.junit.Test;
 

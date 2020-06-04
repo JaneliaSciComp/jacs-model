@@ -32,7 +32,7 @@ import org.janelia.model.domain.searchable.SearchableDocType;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.workspace.Node;
-import org.janelia.model.domain.workspace.NodeAncestorsGetter;
+import org.janelia.model.access.domain.nodetools.NodeAncestorsGetter;
 import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.util.ReflectionHelper;
 import org.janelia.model.util.ReflectionUtils;

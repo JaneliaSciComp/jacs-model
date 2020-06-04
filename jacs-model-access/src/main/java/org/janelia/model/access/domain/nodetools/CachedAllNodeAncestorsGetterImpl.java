@@ -1,4 +1,4 @@
-package org.janelia.model.access.domain;
+package org.janelia.model.access.domain.nodetools;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,8 +13,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.workspace.Node;
-import org.janelia.model.domain.workspace.NodeAncestorsGetter;
-import org.janelia.model.domain.workspace.NodeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

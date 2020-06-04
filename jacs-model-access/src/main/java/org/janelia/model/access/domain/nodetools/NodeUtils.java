@@ -1,4 +1,4 @@
-package org.janelia.model.domain.workspace;
+package org.janelia.model.access.domain.nodetools;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -10,6 +10,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.workspace.Node;
 
 /**
  * Utilities for implementing a node, since Java does not support mix-ins.

@@ -15,7 +15,7 @@ import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainObjectGetter;
 import org.janelia.model.domain.ontology.DomainAnnotationGetter;
 import org.janelia.model.domain.workspace.Node;
-import org.janelia.model.domain.workspace.NodeAncestorsGetter;
+import org.janelia.model.access.domain.nodetools.NodeAncestorsGetter;
 
 public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
 
