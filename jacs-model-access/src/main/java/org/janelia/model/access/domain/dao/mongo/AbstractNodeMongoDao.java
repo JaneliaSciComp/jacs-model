@@ -43,7 +43,10 @@ public abstract class AbstractNodeMongoDao<T extends Node> extends AbstractDomai
     @Override
     public List<T> getNodeDirectAncestors(Reference nodeReference) {
         return MongoDaoHelper.find(
-                Filters.all("children", Collections.singletonList(nodeReference)),
+                Filters.and(
+                        Filters.eq("class", getEntityType().getName()),
+                        Filters.all("children", Collections.singletonList(nodeReference))
+                ),
                 null,
                 0,
                 -1,
