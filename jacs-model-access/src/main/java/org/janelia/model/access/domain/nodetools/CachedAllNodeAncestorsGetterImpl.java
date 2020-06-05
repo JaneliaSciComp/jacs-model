@@ -34,7 +34,7 @@ public class CachedAllNodeAncestorsGetterImpl<T extends Node> implements NodeAnc
     }
 
     private Map<Reference, Set<Reference>> loadAllNodeAncestors() {
-        LOG.info("Start loading all node ancestors cache");
+        LOG.info("Start loading all node ancestors cache of type {}", nodeDao.getEntityType());
         try {
             Map<Reference, Set<Reference>> directAncestors =
                     nodeDao.streamAll()
@@ -58,7 +58,7 @@ public class CachedAllNodeAncestorsGetterImpl<T extends Node> implements NodeAnc
             });
             return allAncestorsMap;
         } finally {
-            LOG.info("Finished loading all node ancestors cache");
+            LOG.info("Finished loading all node ancestors cache of type {}", nodeDao.getEntityType());
         }
     }
 

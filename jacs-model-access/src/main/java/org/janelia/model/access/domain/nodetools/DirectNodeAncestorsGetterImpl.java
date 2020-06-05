@@ -25,11 +25,11 @@ public class DirectNodeAncestorsGetterImpl<T extends Node> implements DirectNode
     }
 
     private Set<Reference> getDirectAncestorsForNodeRef(Reference reference) {
-        LOG.debug("Start loading direct node ancestors for {}", reference);
+        LOG.debug("Start loading direct node ancestors of type {} for {}", nodeDao.getEntityType(), reference);
         try {
             return nodeDao.getNodeDirectAncestors(reference).stream().map(Reference::createFor).collect(Collectors.toSet());
         } finally {
-            LOG.debug("Finished loading direct node ancestors for {}", reference);
+            LOG.debug("Finished loading direct node ancestors of type {} for {}", nodeDao.getEntityType(), reference);
         }
     }
 
