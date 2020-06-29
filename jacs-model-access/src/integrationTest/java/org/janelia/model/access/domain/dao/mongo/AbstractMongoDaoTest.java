@@ -1,7 +1,7 @@
 package org.janelia.model.access.domain.dao.mongo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 
 import org.janelia.model.access.domain.dao.DomainDAOManager;
@@ -25,6 +25,8 @@ public class AbstractMongoDaoTest {
                 null,
                 null,
                 null,
+                null,
+                false,
                 0, // use default
                 0, // use default
                 -1, // use default

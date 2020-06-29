@@ -40,7 +40,7 @@ public class SampleDAOTest extends AbstractMongoDaoTest {
 
     private DataSet createTestData() throws Exception {
         User u = subjectMongoDao.createUser(testName, "Tester", null);
-        Workspace workspace = workspaceNodeMongoDao.createDefaultWorkspace(u.getKey());
+        workspaceNodeMongoDao.createDefaultWorkspace(u.getKey());
         DataSet dataSet = new DataSet();
         dataSet.setName("Screen");
         dataSet.setIdentifier(testDataSetIdentifier);

@@ -1,23 +1,71 @@
 package org.janelia.model.access.domain;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import com.mongodb.*;
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.DuplicateKeyException;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoException;
+import com.mongodb.WriteResult;
 import com.mongodb.client.MongoDatabase;
-import org.apache.commons.lang3.StringUtils;
+
 import org.bson.Document;
-import org.janelia.model.domain.*;
+import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoDBHelper;
+import org.janelia.model.domain.DomainConstants;
+import org.janelia.model.domain.DomainObject;
+import org.janelia.model.domain.DomainObjectComparator;
+import org.janelia.model.domain.DomainUtils;
+import org.janelia.model.domain.Preference;
+import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.OrderStatus;
 import org.janelia.model.domain.enums.PipelineStatus;
-import org.janelia.model.domain.gui.cdmip.*;
+import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
+import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
+import org.janelia.model.domain.gui.cdmip.ColorDepthSearch;
 import org.janelia.model.domain.gui.search.Filter;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
-import org.janelia.model.domain.ontology.*;
+import org.janelia.model.domain.ontology.Annotation;
+import org.janelia.model.domain.ontology.Category;
+import org.janelia.model.domain.ontology.EnumItem;
+import org.janelia.model.domain.ontology.Ontology;
+import org.janelia.model.domain.ontology.OntologyTerm;
+import org.janelia.model.domain.ontology.OntologyTermReference;
 import org.janelia.model.domain.orders.IntakeOrder;
-import org.janelia.model.domain.sample.*;
+import org.janelia.model.domain.sample.DataSet;
+import org.janelia.model.domain.sample.Image;
+import org.janelia.model.domain.sample.LSMImage;
+import org.janelia.model.domain.sample.LineRelease;
+import org.janelia.model.domain.sample.NeuronFragment;
+import org.janelia.model.domain.sample.NeuronSeparation;
+import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.domain.sample.SampleLock;
+import org.janelia.model.domain.sample.StatusTransition;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
@@ -25,17 +73,16 @@ import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
-import org.janelia.model.security.*;
+import org.janelia.model.security.Subject;
 import org.janelia.model.security.util.SubjectUtils;
-import org.jongo.*;
+import org.jongo.Aggregate;
+import org.jongo.Find;
+import org.jongo.Jongo;
+import org.jongo.MongoCollection;
+import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.janelia.model.domain.DomainUtils.abbr;
 
@@ -48,7 +95,7 @@ public class DomainDAO {
 
     private static final Logger log = LoggerFactory.getLogger(DomainDAO.class);
 
-    private MongoClient m;
+    private MongoClient mongoClient;
     private Jongo jongo;
 
     private String databaseName;
@@ -82,40 +129,41 @@ public class DomainDAO {
     }
 
     public DomainDAO(String serverUrl, String databaseName, String username, String password) {
-        List<ServerAddress> members = new ArrayList<>();
-        for (String serverMember : serverUrl.split(",")) {
-            members.add(new ServerAddress(serverMember));
-        }
-
-        MongoClientOptions options = MongoClientOptions.builder().writeConcern(WriteConcern.JOURNALED).build();
-
-        if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
-            MongoCredential credential = MongoCredential.createCredential(username, databaseName, password.toCharArray());
-            this.m = new MongoClient(members, credential, options);
-            log.info("Connected to MongoDB (" + databaseName + "@" + serverUrl + ") as user " + username);
-        } else {
-            this.m = new MongoClient(members, options);
-            log.info("Connected to MongoDB (" + databaseName + "@" + serverUrl + ")");
-        }
-
-        init(m, databaseName);
+        MongoClient mongoClient = MongoDBHelper.createLegacyMongoClient(
+                null,
+                serverUrl,
+                databaseName,
+                username,
+                password,
+                false,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                () -> null
+        );
+        init(mongoClient, databaseName);
         this.idGenerator = new TimebasedIdentifierGenerator(0);
     }
 
-    public DomainDAO(MongoClient m, String databaseName) {
-        init(m, databaseName);
+    public DomainDAO(MongoClient mongoClient, String databaseName) {
+        init(mongoClient, databaseName);
         this.idGenerator = new TimebasedIdentifierGenerator(0);
     }
 
     @SuppressWarnings("deprecation")
-    private void init(MongoClient m, String databaseName) {
-        this.m = m;
+    private void init(MongoClient mongoClient, String databaseName) {
+        this.mongoClient = mongoClient;
         this.databaseName = databaseName;
-        this.jongo = new Jongo(m.getDB(databaseName),
+        this.jongo = new Jongo(
+                this.mongoClient.getDB(databaseName),
                 new JacksonMapper.Builder()
                         .enable(MapperFeature.AUTO_DETECT_GETTERS)
                         .enable(MapperFeature.AUTO_DETECT_SETTERS)
-                        .build());
+                        .build()
+        );
         this.annotationCollection = getCollectionByClass(Annotation.class);
         this.dataSetCollection = getCollectionByClass(DataSet.class);
         this.releaseCollection = getCollectionByClass(LineRelease.class);
@@ -141,7 +189,7 @@ public class DomainDAO {
     }
 
     public com.mongodb.client.MongoCollection<Document> getNativeCollection(String collectionName) {
-        MongoDatabase db = m.getDatabase(databaseName);
+        MongoDatabase db = mongoClient.getDatabase(databaseName);
         return db.getCollection(collectionName);
     }
 
@@ -158,7 +206,7 @@ public class DomainDAO {
     }
 
     public MongoClient getMongo() {
-        return m;
+        return mongoClient;
     }
 
     public Jongo getJongo() {
@@ -239,7 +287,9 @@ public class DomainDAO {
         return subjectCollection.findOne("{$or:[{name:#},{key:#}]}", subjectNameOrKey, subjectNameOrKey).as(Subject.class);
     }
 
-    /** @Deprecated use SubjectDao instead */
+    /**
+     * @Deprecated use SubjectDao instead
+     */
     @Deprecated
     public void remove(Subject subject) throws Exception {
         log.debug("remove({})", subject);
@@ -351,14 +401,12 @@ public class DomainDAO {
         if (preference.getId() == null) {
             preference.setId(getNewId());
             preferenceCollection.insert(preference);
-        }
-        else {
-            if (preference.getValue()==null) {
+        } else {
+            if (preference.getValue() == null) {
                 // Null value means that the preference should be deleted
                 preferenceCollection.remove("{_id:#,subjectKey:#}", preference.getId(), subjectKey);
                 log.trace("Removed " + preference.getClass().getName() + "#" + preference.getId());
-            }
-            else {
+            } else {
                 // The placeholder is important here. Without it, nulls would not be set (see https://github.com/bguerout/jongo/issues/231)
                 WriteResult result = preferenceCollection.update("{_id:#,subjectKey:#}", preference.getId(), subjectKey).with("#", preference);
                 if (result.getN() != 1) {
@@ -387,8 +435,7 @@ public class DomainDAO {
         Set<String> nodeCollections = DomainUtils.getObjectClasses(Node.class).stream()
                 .filter(nodeClass -> DomainUtils.hasCollectionName(nodeClass))
                 .map(nodeClass -> DomainUtils.getCollectionName(nodeClass))
-                .collect(Collectors.toSet())
-                ;
+                .collect(Collectors.toSet());
         return nodeCollections.stream()
                 .map(collectionName -> getCollectionByName(collectionName))
                 .flatMap(collection -> toList(collection.find("{children:#}", refStr).as(Node.class)).stream())
@@ -972,8 +1019,7 @@ public class DomainDAO {
         List<ColorDepthImage> images = getDomainObjectsWithProperty(subjectKey, ColorDepthImage.class, "filepath", filepath);
         if (images.isEmpty()) {
             return null;
-        }
-        else if (images.size()>1) {
+        } else if (images.size() > 1) {
             log.warn("More than one image with filepath {}", filepath);
         }
         return images.iterator().next();
@@ -994,7 +1040,7 @@ public class DomainDAO {
         return libraries;
     }
 
-    public Map<String,Map<String,Integer>> getColorDepthCounts() {
+    public Map<String, Map<String, Integer>> getColorDepthCounts() {
 
         Aggregate.ResultsIterator<DBObject> results = colorDepthImageCollection.aggregate("{$unwind: \"$libraries\"}")
                 .and("{" +
@@ -1019,17 +1065,17 @@ public class DomainDAO {
                         "        }" +
                         "    }").as(DBObject.class);
 
-        Map<String,Map<String,Integer>> counts = new HashMap<>();
+        Map<String, Map<String, Integer>> counts = new HashMap<>();
 
         while (results.hasNext()) {
-            BasicDBObject result = (BasicDBObject)results.next();
+            BasicDBObject result = (BasicDBObject) results.next();
             String library = result.getString("_id");
-            BasicDBList spaces = (BasicDBList)result.get("spaces");
-            for(Object obj : spaces) {
-                BasicDBObject space = (BasicDBObject)obj;
+            BasicDBList spaces = (BasicDBList) result.get("spaces");
+            for (Object obj : spaces) {
+                BasicDBObject space = (BasicDBObject) obj;
                 String alignmentSpace = space.getString("alignmentSpace");
                 Integer count = space.getInt("count");
-                Map<String,Integer> spaceCounts = counts.getOrDefault(library, new HashMap<>());
+                Map<String, Integer> spaceCounts = counts.getOrDefault(library, new HashMap<>());
                 spaceCounts.put(alignmentSpace, count);
                 counts.put(library, spaceCounts);
             }
@@ -1038,11 +1084,11 @@ public class DomainDAO {
         return counts;
     }
 
-    public void updateColorDepthCounts(Map<String, Map<String,Integer>> counts) throws Exception {
+    public void updateColorDepthCounts(Map<String, Map<String, Integer>> counts) throws Exception {
         for (String libraryIdentifier : counts.keySet()) {
             Map<String, Integer> newCounts = counts.get(libraryIdentifier);
             ColorDepthLibrary colorDepthLibrary = getColorDepthLibraryByIdentifier(null, libraryIdentifier);
-            if (colorDepthLibrary.getColorDepthCounts()==null || (newCounts != null && !newCounts.equals(colorDepthLibrary.getColorDepthCounts()))) {
+            if (colorDepthLibrary.getColorDepthCounts() == null || (newCounts != null && !newCounts.equals(colorDepthLibrary.getColorDepthCounts()))) {
                 colorDepthLibrary.setColorDepthCounts(newCounts);
                 save(colorDepthLibrary.getOwnerKey(), colorDepthLibrary);
                 log.info("Updated counts for color depth library: {}", libraryIdentifier);
@@ -1507,7 +1553,7 @@ public class DomainDAO {
     }
 
     private <T extends DomainObject> T saveImpl(String subjectKey, T domainObject) throws Exception {
-        if (subjectKey==null) {
+        if (subjectKey == null) {
             throw new IllegalArgumentException("Owner cannot be null");
         }
         String collectionName = DomainUtils.getCollectionName(domainObject);
@@ -1893,7 +1939,7 @@ public class DomainDAO {
     @SuppressWarnings("unchecked")
     public <T extends DomainObject> T updateProperty(String subjectKey, String className, Long id, String propName, Object propValue) throws Exception {
         Class<T> clazz = (Class<T>) DomainUtils.getObjectClassByName(className);
-        if (propValue==null) {
+        if (propValue == null) {
             deleteProperty(subjectKey, clazz, propName);
             return getDomainObject(subjectKey, clazz, id);
         }
@@ -2138,8 +2184,7 @@ public class DomainDAO {
                     nUpdates += wr2.getN();
                 }
 
-            }
-            else if (ColorDepthLibrary.class.isAssignableFrom(clazz)) {
+            } else if (ColorDepthLibrary.class.isAssignableFrom(clazz)) {
 
                 for (ColorDepthLibrary library : getDomainObjectsAs(objectRefs, ColorDepthLibrary.class)) {
                     log.trace("Changing permissions on all images associated with {}", library);
@@ -2149,8 +2194,7 @@ public class DomainDAO {
                     nUpdates += wr1.getN();
                 }
 
-            }
-            else if ("sample".equals(collectionName)) {
+            } else if ("sample".equals(collectionName)) {
 
                 log.trace("Changing permissions on all fragments and lsms associated with samples: {}", loggedIdsParam);
 
@@ -2168,20 +2212,18 @@ public class DomainDAO {
                 log.trace("Updated permissions on {} color depth images", wr3.getN());
                 nUpdates += wr3.getN();
 
-            }
-            else if ("fragment".equals(collectionName)) {
+            } else if ("fragment".equals(collectionName)) {
 
                 Set<Long> sampleIds = new HashSet<>();
                 for (NeuronFragment fragment : getDomainObjectsAs(subjectKey, objectRefs, NeuronFragment.class)) {
-                    if (fragment.getSample()!=null) {
+                    if (fragment.getSample() != null) {
                         sampleIds.add(fragment.getSample().getTargetId());
                     }
                 }
                 log.trace("Changing permissions on {} samples associated with fragments: {}", sampleIds.size(), loggedIdsParam);
                 nUpdates += updatePermissions(subjectKey, Sample.class.getName(), sampleIds, readers, writers, grant, allowWriters, forceChildUpdates, false, visited);
 
-            }
-            else if ("dataSet".equals(collectionName)) {
+            } else if ("dataSet".equals(collectionName)) {
 
                 log.trace("Changing permissions on all objects in data sets: {}", loggedIdsParam);
                 for (Long id : ids) {
@@ -2218,8 +2260,7 @@ public class DomainDAO {
                     }
                 }
 
-            }
-            else if ("tmWorkspace".equals(collectionName)) {
+            } else if ("tmWorkspace".equals(collectionName)) {
 
                 log.trace("Changing permissions on the TmSamples associated with the TmWorkspaces: {}", loggedIdsParam);
 
@@ -2256,7 +2297,7 @@ public class DomainDAO {
 
         MongoCollection collection = getCollectionByName(collectionName);
 
-        Stream<? extends DomainObject> updatedDomainObjectsStream = streamFindResult(collection, DomainObject.class,"{_id:{$in:#}," + queryClause + "}", ids, queryParam);
+        Stream<? extends DomainObject> updatedDomainObjectsStream = streamFindResult(collection, DomainObject.class, "{_id:{$in:#}," + queryClause + "}", ids, queryParam);
 
         Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(className);
         List<Reference> objectRefs = ids.stream().map(id -> Reference.createFor(clazz, id)).collect(Collectors.toList());
@@ -2340,7 +2381,7 @@ public class DomainDAO {
         } else if ("fragment".equals(collectionName)) {
             Set<Long> sampleIds = new HashSet<>();
             for (NeuronFragment fragment : getDomainObjectsAs(subjectKey, objectRefs, NeuronFragment.class)) {
-                if (fragment.getSample()!=null) {
+                if (fragment.getSample() != null) {
                     sampleIds.add(fragment.getSample().getTargetId());
                 }
             }
@@ -2353,8 +2394,7 @@ public class DomainDAO {
             List<Long> sampleIds = dataSets.stream()
                     .flatMap(ds -> streamFindResult(sampleCollection.find("{dataSet:#}", ds.getIdentifier()).projection("{class:1,_id:1}"), Sample.class))
                     .map(s -> s.getId())
-                    .collect(Collectors.toList())
-                    ;
+                    .collect(Collectors.toList());
             List<String> sampleRefs = sampleIds.stream().map(id -> "Sample#" + id).collect(Collectors.toList());
 
             updatedDomainObjectsStream = Stream.of(
@@ -2367,7 +2407,7 @@ public class DomainDAO {
                             .filter(Objects::nonNull)
                             .flatMap(cdl -> collectPermissionChanges(subjectKey, ColorDepthLibrary.class.getName(), Collections.singletonList(cdl.getId()), allowWriters, visited)))
                     .flatMap(s -> s)
-                    ;
+            ;
         } else if ("tmWorkspace".equals(collectionName)) {
             List<Long> sampleIds = new ArrayList<>();
             for (TmWorkspace workspace : tmWorkspaceCollection.find("{_id:{$in:#}}", ids).projection("{class:1,sampleRef:1}").as(TmWorkspace.class)) {
