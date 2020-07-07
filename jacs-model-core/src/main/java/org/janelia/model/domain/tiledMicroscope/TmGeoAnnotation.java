@@ -109,6 +109,10 @@ public class TmGeoAnnotation {
         updateModificationDate();
     }
 
+    public List<TmNeuronEdge> getNeuronEdges() {
+        return neuronEdges;
+    }
+
     public void addChild(TmGeoAnnotation child) {
         childIds.add(child.getId());
     }
