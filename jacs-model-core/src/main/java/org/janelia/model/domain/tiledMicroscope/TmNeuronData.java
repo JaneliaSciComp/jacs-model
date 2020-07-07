@@ -33,11 +33,22 @@ public class TmNeuronData implements Serializable {
     @JsonIgnore
     transient private Map<Long, TmStructuredTextAnnotation> textAnnotationMap;
 
+
     public TmNeuronData() {
     }
 
     public List<Long> getRootAnnotationIds() {
         return rootAnnotationIds;
+    }
+
+
+    @JsonIgnore
+    public Collection<TmNeuronEdge> getEdges() {
+        List<TmNeuronEdge> totalEdges = new ArrayList<>();
+        for (TmGeoAnnotation annotation : geoAnnotations) {
+            totalEdges.addAll(annotation.getNeuronEdges());
+        }
+        return totalEdges;
     }
 
     // maps geo ann ID to geo ann object
