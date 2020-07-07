@@ -62,6 +62,10 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         return copy;
     }
 
+    public void updateEdges() {
+
+    }
+
     public void merge(TmNeuronMetadata neuron) {
         this.setName(neuron.getName());
         this.setWorkspaceRef(neuron.getWorkspaceRef());
@@ -196,6 +200,14 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         getGeoAnnotationMap().put(tmGeoAnnotation.getId(), tmGeoAnnotation);
     }
 
+
+    /**
+     * Pass-through method to TmNeuronData
+     */
+    @JsonIgnore
+    public Collection<TmNeuronEdge> getEdges() {
+        return neuronData.getEdges();
+    }
 
     /**
      * Pass-through method to TmNeuronData

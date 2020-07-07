@@ -3,6 +3,7 @@ package org.janelia.model.domain.tiledMicroscope;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -40,6 +41,9 @@ public class TmGeoAnnotation {
     @JsonIgnore
     transient private Long neuronId = null;
 
+    @JsonIgnore
+    transient private List<TmNeuronEdge> neuronEdges;
+
     // implementation note: at one point we stored the parent and child objects,
     //  but serializing them for calling remote server routines caused the
     //  whole tree to get walked recursively, overflowing the stack; so
@@ -58,7 +62,9 @@ public class TmGeoAnnotation {
         this.radius = radius;
         this.creationDate = creationDate;
         this.modificationDate = modificationDate;
+        this.neuronEdges = new ArrayList<>();
     }
+
 
     @Override
     public String toString() {
@@ -100,6 +106,10 @@ public class TmGeoAnnotation {
     public void setZ(Double z) {
         this.z = z;
         updateModificationDate();
+    }
+
+    public List<TmNeuronEdge> getNeuronEdges() {
+        return neuronEdges;
     }
 
     public void addChild(TmGeoAnnotation child) {
