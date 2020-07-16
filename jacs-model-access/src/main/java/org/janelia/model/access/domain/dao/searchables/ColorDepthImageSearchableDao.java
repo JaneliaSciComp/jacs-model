@@ -11,6 +11,7 @@ import javax.inject.Inject;
 
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
+import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
@@ -31,12 +32,8 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchableDao<Co
     }
 
     @Override
-    public long countColorDepthMIPs(String ownerKey, String alignmentSpace,
-                                    Collection<String> libraryIdentifiers,
-                                    Collection<String> matchingNames,
-                                    Collection<String> matchingFilepaths,
-                                    Collection<String> matchingSampleRefs) {
-        return colorDepthImageDao.countColorDepthMIPs(ownerKey, alignmentSpace, libraryIdentifiers, matchingNames, matchingFilepaths, matchingSampleRefs);
+    public long countColorDepthMIPs(ColorDepthImageQuery cdmQuery) {
+        return colorDepthImageDao.countColorDepthMIPs(cdmQuery);
     }
 
     @Override
@@ -45,13 +42,8 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchableDao<Co
     }
 
     @Override
-    public Stream<ColorDepthImage> streamColorDepthMIPs(String ownerKey, String alignmentSpace,
-                                                        Collection<String> libraryIdentifiers,
-                                                        Collection<String> matchingNames,
-                                                        Collection<String> matchingFilepaths,
-                                                        Collection<String> matchingSampleRefs,
-                                                        int offset, int length) {
-        return colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace, libraryIdentifiers, matchingNames, matchingFilepaths, matchingSampleRefs, offset, length);
+    public Stream<ColorDepthImage> streamColorDepthMIPs(ColorDepthImageQuery cdmQuery) {
+        return colorDepthImageDao.streamColorDepthMIPs(cdmQuery);
     }
 
     @Override
@@ -65,15 +57,9 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchableDao<Co
         if (nUpdates > 0) {
             Set<String> ssampleRefs = sampleRefs.stream().map(Reference::toString).collect(Collectors.toSet());
             domainObjectIndexer.indexDocumentStream(colorDepthImageDao.streamColorDepthMIPs(
-                    null,
-                    null,
-                    Collections.singleton(libraryIdentifier),
-                    null,
-                    null,
-                    ssampleRefs,
-                    0,
-                    -1
-                    ));
+                    new ColorDepthImageQuery()
+                            .withLibraryIdentifiers(Collections.singleton(libraryIdentifier))
+                            .withSampleRefs(ssampleRefs)));
         }
         return nUpdates;
     }

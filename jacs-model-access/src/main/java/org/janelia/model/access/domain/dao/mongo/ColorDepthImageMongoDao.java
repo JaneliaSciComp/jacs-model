@@ -26,6 +26,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.AddToSetFieldValueHandler;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
+import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.RemoveFromSetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
@@ -47,12 +48,8 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
     }
 
     @Override
-    public long countColorDepthMIPs(String ownerKey, String alignmentSpace,
-                                    Collection<String> libraryIdentifiers,
-                                    Collection<String> matchingNames,
-                                    Collection<String> matchingFilepaths,
-                                    Collection<String> matchingSampleRefs) {
-        return mongoCollection.countDocuments(createColorDepthMIPsFilter(ownerKey, alignmentSpace, libraryIdentifiers, matchingNames, matchingFilepaths, matchingSampleRefs));
+    public long countColorDepthMIPs(ColorDepthImageQuery cdmQuery) {
+        return mongoCollection.countDocuments(createColorDepthMIPsFilter(cdmQuery));
     }
 
     @Override
@@ -68,45 +65,54 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
         return countsByAligmentSpace.stream().collect(Collectors.toMap(d -> d.getString("_id"), d -> d.getInteger("count")));
     }
 
-    private Bson createColorDepthMIPsFilter(String ownerKey, String alignmentSpace,
-                                            Collection<String> libraryIdentifiers,
-                                            Collection<String> matchingNames,
-                                            Collection<String> matchingFilepaths,
-                                            Collection<String> matchingSampleRefs) {
+    private Bson createColorDepthMIPsFilter(ColorDepthImageQuery cdmQuery) {
         ImmutableList.Builder<Bson> cdmFiltersBuilder = ImmutableList.builder();
-        if (StringUtils.isNotBlank(ownerKey)) {
-            cdmFiltersBuilder.add(Filters.eq("ownerKey", ownerKey));
+        if (StringUtils.isNotBlank(cdmQuery.getOwner())) {
+            cdmFiltersBuilder.add(Filters.eq("ownerKey", cdmQuery.getOwner()));
         }
-        if (StringUtils.isNotBlank(alignmentSpace)) {
-            cdmFiltersBuilder.add(Filters.eq("alignmentSpace", alignmentSpace));
+        if (StringUtils.isNotBlank(cdmQuery.getAlignmentSpace())) {
+            cdmFiltersBuilder.add(Filters.eq("alignmentSpace", cdmQuery.getAlignmentSpace()));
         }
-        if (CollectionUtils.isNotEmpty(libraryIdentifiers)) {
-            cdmFiltersBuilder.add(Filters.in("libraries", libraryIdentifiers));
+        if (CollectionUtils.isNotEmpty(cdmQuery.getLibraryIdentifiers())) {
+            cdmFiltersBuilder.add(Filters.in("libraries", cdmQuery.getLibraryIdentifiers()));
         }
-        if (CollectionUtils.isNotEmpty(matchingNames)) {
-            cdmFiltersBuilder.add(Filters.in("name", matchingNames));
+        if (CollectionUtils.isNotEmpty(cdmQuery.getExactNames())) {
+            cdmFiltersBuilder.add(Filters.in("name", cdmQuery.getExactNames()));
         }
-        if (CollectionUtils.isNotEmpty(matchingFilepaths)) {
-            cdmFiltersBuilder.add(Filters.in("filepath", matchingFilepaths));
+        if (CollectionUtils.isNotEmpty(cdmQuery.getFuzzyNames())) {
+            List<Bson> fuzzyNamesFilters = cdmQuery.getFuzzyNames().stream()
+                    .filter(StringUtils::isNotBlank)
+                    .map(fuzzyName -> Filters.regex("name", fuzzyName))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(fuzzyNamesFilters)) {
+                cdmFiltersBuilder.add(Filters.or(fuzzyNamesFilters));
+            }
         }
-        if (CollectionUtils.isNotEmpty(matchingSampleRefs)) {
-            cdmFiltersBuilder.add(Filters.in("sampleRef", matchingSampleRefs));
+        if (CollectionUtils.isNotEmpty(cdmQuery.getExactFilepaths())) {
+            cdmFiltersBuilder.add(Filters.in("filepath", cdmQuery.getExactFilepaths()));
+        }
+        if (CollectionUtils.isNotEmpty(cdmQuery.getFuzzyFilepaths())) {
+            List<Bson> fuzzyPathsFilters = cdmQuery.getFuzzyFilepaths().stream()
+                    .filter(StringUtils::isNotBlank)
+                    .map(fuzzyPath -> Filters.regex("filepath", fuzzyPath))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(fuzzyPathsFilters)) {
+                cdmFiltersBuilder.add(Filters.or(fuzzyPathsFilters));
+            }
+        }
+        if (CollectionUtils.isNotEmpty(cdmQuery.getSampleRefs())) {
+            cdmFiltersBuilder.add(Filters.in("sampleRef", cdmQuery.getSampleRefs()));
         }
         return MongoDaoHelper.createFilterCriteria(cdmFiltersBuilder.build());
     }
 
     @Override
-    public Stream<ColorDepthImage> streamColorDepthMIPs(String ownerKey, String alignmentSpace,
-                                                        Collection<String> libraryIdentifiers,
-                                                        Collection<String> matchingNames,
-                                                        Collection<String> matchingFilepaths,
-                                                        Collection<String> matchingSampleRefs,
-                                                        int offset, int length) {
+    public Stream<ColorDepthImage> streamColorDepthMIPs(ColorDepthImageQuery cdmQuery) {
         Spliterator<ColorDepthImage> iterableCursor = MongoDaoHelper.rawFind(
-                createColorDepthMIPsFilter(ownerKey, alignmentSpace, libraryIdentifiers, matchingNames, matchingFilepaths, matchingSampleRefs),
+                createColorDepthMIPsFilter(cdmQuery),
                 MongoDaoHelper.createBsonSortCriteria(new SortCriteria("filepath")),
-                offset,
-                length,
+                cdmQuery.getOffset(),
+                cdmQuery.getLength(),
                 this.mongoCollection,
                 ColorDepthImage.class)
                 .noCursorTimeout(true)
