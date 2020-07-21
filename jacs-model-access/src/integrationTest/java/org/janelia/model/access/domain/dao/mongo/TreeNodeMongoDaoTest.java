@@ -21,6 +21,7 @@ import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.junit.Before;
 import org.junit.Test;
@@ -140,7 +141,7 @@ public class TreeNodeMongoDaoTest extends AbstractMongoDaoTest {
             NodeUtils.traverseAllAncestors(
                     Reference.createFor(td.startNode),
                     nodeReference -> {
-                        List<TreeNode> nodeAncestors = treeNodeMongoDao.getNodeDirectAncestors(nodeReference);
+                        List<? extends Node> nodeAncestors = treeNodeMongoDao.getNodeDirectAncestors(nodeReference);
                         return nodeAncestors.stream().map(Reference::createFor).collect(Collectors.toSet());
                     },
                     n -> foundAncestors.add(n),

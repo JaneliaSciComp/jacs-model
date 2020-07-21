@@ -22,7 +22,7 @@ public class AbstractNodeSearchableDao<T extends Node> extends AbstractDomainSea
     }
 
     @Override
-    public List<T> getNodeDirectAncestors(Reference nodeReference) {
+    public List<? extends Node> getNodeDirectAncestors(Reference nodeReference) {
         return nodeDao.getNodeDirectAncestors(nodeReference);
     }
 

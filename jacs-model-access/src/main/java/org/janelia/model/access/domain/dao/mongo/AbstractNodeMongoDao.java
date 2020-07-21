@@ -1,28 +1,37 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import com.google.common.collect.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Ordering;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
+
 import org.apache.commons.lang3.time.StopWatch;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.util.SortCriteria;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static com.mongodb.client.model.Projections.include;
 
@@ -41,17 +50,16 @@ public abstract class AbstractNodeMongoDao<T extends Node> extends AbstractDomai
     }
 
     @Override
-    public List<T> getNodeDirectAncestors(Reference nodeReference) {
+    public List<? extends Node> getNodeDirectAncestors(Reference nodeReference) {
         return MongoDaoHelper.find(
                 Filters.and(
-                        Filters.eq("class", getEntityType().getName()),
-                        Filters.all("children", Collections.singletonList(nodeReference))
+                        Filters.eq("children", nodeReference)
                 ),
                 null,
                 0,
                 -1,
                 mongoCollection,
-                getEntityType());
+                Node.class);
     }
 
     @Override
@@ -103,8 +111,11 @@ public abstract class AbstractNodeMongoDao<T extends Node> extends AbstractDomai
      * @return domain objects on the given page
      */
     @Override
-    public List<DomainObject> getChildren(String subjectKey, Node node, String sortCriteriaStr,
-                                                 long page, int pageSize) {
+    public List<DomainObject> getChildren(String subjectKey,
+                                          Node node,
+                                          String sortCriteriaStr,
+                                          long page,
+                                          int pageSize) {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
