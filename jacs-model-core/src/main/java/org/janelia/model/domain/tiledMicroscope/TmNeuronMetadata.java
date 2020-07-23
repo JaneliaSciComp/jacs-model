@@ -193,6 +193,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
             TmGeoAnnotation geoAnnotation = neuronData.getGeoAnnotationMap().get(geoId);
             geoAnnotation.setNeuronId(getId());
         }
+
     }
 
     public void addGeometricAnnotation(TmGeoAnnotation tmGeoAnnotation) {
