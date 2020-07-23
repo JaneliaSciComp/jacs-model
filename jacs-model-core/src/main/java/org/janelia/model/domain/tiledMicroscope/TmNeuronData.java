@@ -32,6 +32,8 @@ public class TmNeuronData implements Serializable {
     transient private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap;
     @JsonIgnore
     transient private Map<Long, TmStructuredTextAnnotation> textAnnotationMap;
+    @JsonIgnore
+    transient private Set<TmNeuronEdge> neuronEdges;
 
 
     public TmNeuronData() {
@@ -42,13 +44,18 @@ public class TmNeuronData implements Serializable {
     }
 
 
+    // for now
     @JsonIgnore
     public Collection<TmNeuronEdge> getEdges() {
-        List<TmNeuronEdge> totalEdges = new ArrayList<>();
-        for (TmGeoAnnotation annotation : geoAnnotations) {
-            totalEdges.addAll(annotation.getNeuronEdges());
+        if (neuronEdges == null) {
+            neuronEdges = new HashSet<>();
+            for (TmGeoAnnotation annotation : geoAnnotations) {
+                TmGeoAnnotation parent = getGeoAnnotationMap().get(annotation.getParentId());
+                TmNeuronEdge edge = new TmNeuronEdge(parent, annotation);
+                neuronEdges.add(edge);
+            }
         }
-        return totalEdges;
+        return neuronEdges;
     }
 
     // maps geo ann ID to geo ann object

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.janelia.model.domain.DomainObject;
 
 /**
  * Created with IntelliJ IDEA.
@@ -106,10 +107,6 @@ public class TmGeoAnnotation {
     public void setZ(Double z) {
         this.z = z;
         updateModificationDate();
-    }
-
-    public List<TmNeuronEdge> getNeuronEdges() {
-        return neuronEdges;
     }
 
     public void addChild(TmGeoAnnotation child) {
