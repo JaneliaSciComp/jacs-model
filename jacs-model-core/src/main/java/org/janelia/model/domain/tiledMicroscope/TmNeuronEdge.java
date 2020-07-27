@@ -4,7 +4,7 @@ public class TmNeuronEdge {
     private final TmGeoAnnotation child;
     private final TmGeoAnnotation parent;
 
-    TmNeuronEdge(TmGeoAnnotation parent, TmGeoAnnotation child)
+    public TmNeuronEdge(TmGeoAnnotation parent, TmGeoAnnotation child)
     {
         this.parent = parent;
         this.child = child;
