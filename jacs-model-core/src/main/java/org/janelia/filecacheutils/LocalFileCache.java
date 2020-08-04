@@ -1,16 +1,14 @@
 package org.janelia.filecacheutils;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListeners;
+
 import java.io.FileNotFoundException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-
-import javax.annotation.Nullable;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalListeners;
 
 /**
  * LocalFileCache implements the file cache.

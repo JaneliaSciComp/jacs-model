@@ -52,14 +52,9 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
         return localFilePath.toString();
     }
 
-    private FileProxy getFileProxy() {
+    private FileProxy getFileProxy() throws FileNotFoundException {
         if (delegateFileProxy == null) {
-            try {
-                delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
-            } catch (FileNotFoundException e) {
-                LOG.warn("No file found for {}", delegateFileKey);
-                return null;
-            }
+            delegateFileProxy = delegateFileKeyToProxyMapper.getProxyFromKey(delegateFileKey);
         }
         return delegateFileProxy;
     }
@@ -70,8 +65,12 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
         if (currentSize > 0) {
             return currentSize;
         } else {
-            FileProxy fp = getFileProxy();
-            return fp != null ? fp.estimateSizeInBytes(alwaysCheck) : 0L;
+            try {
+                FileProxy fp = getFileProxy();
+                return fp != null ? fp.estimateSizeInBytes(alwaysCheck) : 0L;
+            } catch (FileNotFoundException e) {
+                return 0L;
+            }
         }
     }
 
@@ -85,7 +84,7 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
     }
 
     @Override
-    public InputStream openContentStream(boolean alwaysDownload) {
+    public InputStream openContentStream(boolean alwaysDownload) throws FileNotFoundException {
         InputStream localFileStream = alwaysDownload ? null : localFileCacheStorage.openLocalCachedFile(localFilePath);
         if (localFileStream != null) {
             return localFileStream;
@@ -270,8 +269,12 @@ public class CachedFileProxy<K extends FileKey> implements FileProxy {
         if (!alwaysCheck && Files.exists(localFilePath)) {
             return true;
         } else {
-            FileProxy fp = getFileProxy();
-            return fp != null && fp.exists(alwaysCheck);
+            try {
+                FileProxy fp = getFileProxy();
+                return fp != null && fp.exists(alwaysCheck);
+            } catch (FileNotFoundException e) {
+                return false;
+            }
         }
     }
 
