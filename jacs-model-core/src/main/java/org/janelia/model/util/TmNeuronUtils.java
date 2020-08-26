@@ -1,16 +1,16 @@
 package org.janelia.model.util;
 
-import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
+
+import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TmNeuronUtils {
 
@@ -85,7 +85,6 @@ public class TmNeuronUtils {
                 isRoot,
                 parentAnnotationId,
                 unserializedAnno.getX(), unserializedAnno.getY(), unserializedAnno.getZ(), unserializedAnno.getRadius(),
-                neuron.getId(),
                 neuronIdGenerator);
     }
 
@@ -93,7 +92,6 @@ public class TmNeuronUtils {
                                                                      boolean isRoot,
                                                                      Long parentAnnotationId,
                                                                      double x, double y, double z, double radius,
-                                                                     Long neuronId,
                                                                      Supplier<Long> neuronIdGenerator) {
 
         Long generatedId = neuronIdGenerator.get();
@@ -102,8 +100,7 @@ public class TmNeuronUtils {
         tmNeuronMetadata.getGeoAnnotationMap().put(geoAnnotation.getId(), geoAnnotation);
         if (isRoot) {
             tmNeuronMetadata.addRootAnnotation(geoAnnotation);
-        }
-        else {
+        } else {
             if (parentAnnotationId==null) {
                 LOG.error("Non-root geometric annotation has null parent id for neuron "+generatedId);
             }
