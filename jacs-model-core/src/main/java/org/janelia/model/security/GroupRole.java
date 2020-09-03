@@ -10,19 +10,21 @@ import java.io.Serializable;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public enum GroupRole implements Serializable {
-    Owner("Owner", true, true),
-    Admin("Admin", true, true),
-    Writer("Writer", true, true),
-    Reader("Reader", true, false);
+    Owner("Owner", true, true, true),
+    Admin("Admin", true, true, true),
+    Writer("Writer", true, true, false),
+    Reader("Reader", true, false, false);
     
     private String label;
     private boolean canRead;
     private boolean canWrite;
+    private boolean canAdmin;
     
-    private GroupRole(String label, boolean canRead, boolean canWrite) {
+    GroupRole(String label, boolean canRead, boolean canWrite, boolean canAdmin) {
         this.label = label;
         this.canRead = canRead;
         this.canWrite = canWrite;
+        this.canAdmin = canAdmin;
     }
 
     public String getLabel() {
@@ -35,5 +37,13 @@ public enum GroupRole implements Serializable {
 
     public boolean isWrite() {
         return canWrite;
+    }
+
+    public boolean isAdmin() {
+        return canAdmin;
+    }
+
+    public boolean isOwner() {
+        return this==Owner;
     }
 }

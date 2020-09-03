@@ -1,7 +1,6 @@
 package org.janelia.model.security.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.model.domain.enums.SubjectRole;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 
@@ -64,4 +63,14 @@ public class SubjectUtils {
         return set;
     }
 
+    public static Set<String> getAdminSet(Subject subject) {
+        Set<String> set = new HashSet<>();
+        if (subject==null) return set;
+        set.add(subject.getKey());
+        if (subject instanceof User) {
+            User user = (User)subject;
+            set.addAll(user.getAdminGroups());
+        }
+        return set;
+    }
 }

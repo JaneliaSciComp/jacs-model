@@ -1,30 +1,13 @@
 package org.janelia.model.domain;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.LinkedHashMultiset;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Ordering;
+import com.google.common.collect.*;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.enums.AlignmentScoreType;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.gui.search.Filter;
 import org.janelia.model.domain.gui.search.Filtering;
-import org.janelia.model.domain.gui.search.criteria.AttributeValueCriteria;
-import org.janelia.model.domain.gui.search.criteria.Criteria;
-import org.janelia.model.domain.gui.search.criteria.DateRangeCriteria;
-import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
-import org.janelia.model.domain.gui.search.criteria.TreeNodeCriteria;
-import org.janelia.model.domain.interfaces.HasFileGroups;
-import org.janelia.model.domain.interfaces.HasFilepath;
-import org.janelia.model.domain.interfaces.HasFiles;
-import org.janelia.model.domain.interfaces.HasIdentifier;
-import org.janelia.model.domain.interfaces.HasRelativeFiles;
+import org.janelia.model.domain.gui.search.criteria.*;
+import org.janelia.model.domain.interfaces.*;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.support.MongoMapped;
@@ -44,16 +27,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Utility methods for dealing with the domain model. 
@@ -721,7 +695,7 @@ public class DomainUtils {
     public static boolean hasReadAccess(DomainObject domainObject, String subjectKey) {
         return domainObject.getReaders().contains(subjectKey);
     }
-    
+
     public static boolean hasWriteAccess(DomainObject domainObject, String subjectKey) {
         return domainObject.getWriters().contains(subjectKey);
     }
@@ -754,16 +728,11 @@ public class DomainUtils {
      * @param subjects
      */
     public static void sortSubjects(List<Subject> subjects) {
-        Collections.sort(subjects, new Comparator<Subject>() {
-            @Override
-            public int compare(Subject o1, Subject o2) {
-                return ComparisonChain.start()
-                        .compare(getTypeFromSubjectKey(o1.getKey()), getTypeFromSubjectKey(o2.getKey()), Ordering.natural())
-                        .compare(o1.getFullName(), o2.getFullName(), Ordering.natural().nullsLast())
-                        .compare(o1.getName(), o2.getName(), Ordering.natural().nullsFirst())
-                        .result();
-            }
-        });
+        subjects.sort((o1, o2) -> ComparisonChain.start()
+                .compare(getTypeFromSubjectKey(o1.getKey()), getTypeFromSubjectKey(o2.getKey()), Ordering.natural())
+                .compare(o1.getFullName(), o2.getFullName(), Ordering.natural().nullsLast())
+                .compare(o1.getName(), o2.getName(), Ordering.natural().nullsFirst())
+                .result());
     }
 
     /**

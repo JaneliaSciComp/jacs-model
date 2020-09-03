@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A user in the Workstation system who can be part of one or more groups.
@@ -63,49 +64,52 @@ public class User extends Subject {
         return ugr==null ? null : ugr.getRole();
     }
 
-
     @JsonIgnore
     public Set<String> getReadGroups() {
-        Set<String> groups = new HashSet<>();
-        for(UserGroupRole groupRole : userGroupRoles) {
-            if (groupRole.getRole().isRead()) {
-                groups.add(groupRole.getGroupKey());
-            }
-        }
-        return groups;
+        return userGroupRoles.stream()
+                .filter(groupRole -> groupRole.getRole().isRead())
+                .map(UserGroupRole::getGroupKey)
+                .collect(Collectors.toSet());
     }
 
     @JsonIgnore
     public Set<String> getWriteGroups() {
-        Set<String> groups = new HashSet<>();
-        for(UserGroupRole groupRole : userGroupRoles) {
-            if (groupRole.getRole().isWrite()) {
-                groups.add(groupRole.getGroupKey());
-            }
-        }
-        return groups;
+        return userGroupRoles.stream()
+                .filter(groupRole -> groupRole.getRole().isWrite())
+                .map(UserGroupRole::getGroupKey)
+                .collect(Collectors.toSet());
     }
-    
+
+    @JsonIgnore
+    public Set<String> getAdminGroups() {
+        return userGroupRoles.stream()
+                .filter(groupRole -> groupRole.getRole().isAdmin())
+                .map(UserGroupRole::getGroupKey)
+                .collect(Collectors.toSet());
+    }
+
+    @JsonIgnore
     public boolean hasGroupRead(String groupKey) {
         return userGroupRoles.stream()
                 .filter(groupRole -> groupRole.getGroupKey().equals(groupKey))
-                .filter(groupRole -> groupRole.getRole().isRead())
-                .findFirst()
-                .map(userGroupRole -> true)
-                .orElse(false)
-                ;
+                .anyMatch(groupRole -> groupRole.getRole().isRead());
     }
 
+    @JsonIgnore
     public boolean hasGroupWrite(String groupKey) {
         return userGroupRoles.stream()
                 .filter(groupRole -> groupRole.getGroupKey().equals(groupKey))
-                .filter(groupRole -> groupRole.getRole().isWrite())
-                .findFirst()
-                .map(userGroupRole -> true)
-                .orElse(false)
-                ;
+                .anyMatch(groupRole -> groupRole.getRole().isWrite());
     }
-    
+
+    @JsonIgnore
+    public boolean hasGroupAdmin(String groupKey) {
+        return userGroupRoles.stream()
+                .filter(groupRole -> groupRole.getGroupKey().equals(groupKey))
+                .anyMatch(groupRole -> groupRole.getRole().isAdmin());
+    }
+
+    @JsonIgnore
     public UserGroupRole getRole(String groupKey) {
         for(UserGroupRole groupRole : userGroupRoles) {
             if (groupRole.getGroupKey().equals(groupKey)) {

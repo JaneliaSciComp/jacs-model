@@ -252,7 +252,7 @@ public class DomainDAO {
      */
     public Set<String> getReaderSet(String subjectKey) {
         if (subjectKey == null) return null;
-        Subject subject = subjectCollection.findOne("{key:#}", subjectKey).as(Subject.class);
+        Subject subject = getSubjectByKey(subjectKey);
         if (subject == null) {
             throw new IllegalArgumentException("No such subject: " + subjectKey);
         }
@@ -265,11 +265,24 @@ public class DomainDAO {
      */
     public Set<String> getWriterSet(String subjectKey) {
         if (subjectKey == null) return null;
-        Subject subject = subjectCollection.findOne("{key:#}", subjectKey).as(Subject.class);
+        Subject subject = getSubjectByKey(subjectKey);
         if (subject == null) {
             throw new IllegalArgumentException("No such subject: " + subjectKey);
         }
         return SubjectUtils.getWriterSet(subject);
+    }
+
+    /**
+     * Return the set of subjectKeys which are writable by the given subject.
+     * This includes the subject itself, and all of the groups it has write access for.
+     */
+    public Set<String> getAdminSet(String subjectKey) {
+        if (subjectKey == null) return null;
+        Subject subject = getSubjectByKey(subjectKey);
+        if (subject == null) {
+            throw new IllegalArgumentException("No such subject: " + subjectKey);
+        }
+        return SubjectUtils.getAdminSet(subject);
     }
 
     public Subject getSubjectByKey(String subjectKey) {
@@ -2090,10 +2103,11 @@ public class DomainDAO {
             return 0;
         }
 
-        int nUpdates;
+        log.debug("Changed permissions on {} {} documents", ids.size(), className);
+
         MongoCollection collection = getCollectionByName(collectionName);
         WriteResult wr = collection.update("{_id:{$in:#}," + updateQueryClause + "}", ids, updateQueryParam).multi().with(withClause, readers, writers);
-        nUpdates = wr.getN();
+        int nUpdates = wr.getN();
 
         if (createSharedDataLinks) {
             // Ensure shared items are in the grantee's Shared Data folder
@@ -2123,7 +2137,7 @@ public class DomainDAO {
             }
         }
 
-        log.debug("Changing permissions on {} documents", nUpdates);
+        log.debug("Updated permissions on {} documents", nUpdates);
 
         if (forceChildUpdates || nUpdates > 0) {
             // Update related objects
@@ -2225,38 +2239,40 @@ public class DomainDAO {
 
             } else if ("dataSet".equals(collectionName)) {
 
-                log.trace("Changing permissions on all objects in data sets: {}", loggedIdsParam);
+                log.trace("Changing permissions on all objects associated with data sets: {}", loggedIdsParam);
                 for (Long id : ids) {
                     // Retrieve the data set in order to find its identifier
                     DataSet dataSet = collection.findOne("{_id:#," + updateQueryClause + "}", id, updateQueryParam).as(DataSet.class);
-                    if (dataSet == null) {
-                        throw new IllegalArgumentException("Could not find an writeable data set with id=" + id);
+                    if (dataSet != null) {
+                        // Get all sample ids for a given data set
+                        List<String> sampleRefs = new ArrayList<>();
+                        for (Sample sample : sampleCollection.find("{dataSet:#}", dataSet.getIdentifier()).projection("{class:1,_id:1}").as(Sample.class)) {
+                            sampleRefs.add("Sample#" + sample.getId());
+                        }
+                        // This could just call changePermissions recursively, but batching is far more efficient.
+                        WriteResult wr1 = sampleCollection.update("{dataSet:#," + updateQueryClause + "}", dataSet.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
+                        log.debug("Changed permissions on {} samples", wr1.getN());
+                        nUpdates += wr1.getN();
+
+                        WriteResult wr2 = fragmentCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
+                        log.debug("Updated permissions on {} fragments", wr2.getN());
+                        nUpdates += wr2.getN();
+
+                        WriteResult wr3 = imageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
+                        log.debug("Updated permissions on {} lsms", wr3.getN());
+                        nUpdates += wr3.getN();
+
+                        // Recurse to change corresponding color depth library, if any
+                        ColorDepthLibrary colorDepthLibrary = getColorDepthLibraryByIdentifier(dataSet.getOwnerKey(), dataSet.getIdentifier());
+                        if (colorDepthLibrary != null) {
+                            log.info("Sharing associated color depth library: {}", colorDepthLibrary);
+                            nUpdates += updatePermissions(subjectKey,
+                                    ColorDepthLibrary.class.getName(), Collections.singletonList(colorDepthLibrary.getId()),
+                                    readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
+                        }
                     }
-                    // Get all sample ids for a given data set
-                    List<String> sampleRefs = new ArrayList<>();
-                    for (Sample sample : sampleCollection.find("{dataSet:#}", dataSet.getIdentifier()).projection("{class:1,_id:1}").as(Sample.class)) {
-                        sampleRefs.add("Sample#" + sample.getId());
-                    }
-                    // This could just call changePermissions recursively, but batching is far more efficient.
-                    WriteResult wr1 = sampleCollection.update("{dataSet:#," + updateQueryClause + "}", dataSet.getIdentifier(), updateQueryParam).multi().with(withClause, readers, writers);
-                    log.debug("Changed permissions on {} samples", wr1.getN());
-                    nUpdates += wr1.getN();
-
-                    WriteResult wr2 = fragmentCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
-                    log.debug("Updated permissions on {} fragments", wr2.getN());
-                    nUpdates += wr2.getN();
-
-                    WriteResult wr3 = imageCollection.update("{sampleRef:{$in:#}," + updateQueryClause + "}", sampleRefs, updateQueryParam).multi().with(withClause, readers, writers);
-                    log.debug("Updated permissions on {} lsms", wr3.getN());
-                    nUpdates += wr3.getN();
-
-                    // Recurse to change corresponding color depth library, if any
-                    ColorDepthLibrary colorDepthLibrary = getColorDepthLibraryByIdentifier(dataSet.getOwnerKey(), dataSet.getIdentifier());
-                    if (colorDepthLibrary != null) {
-                        log.info("Sharing associated color depth library: {}", colorDepthLibrary);
-                        nUpdates += updatePermissions(subjectKey,
-                                ColorDepthLibrary.class.getName(), Collections.singletonList(colorDepthLibrary.getId()),
-                                readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
+                    else {
+                        log.warn("Could not find writeable DataSet#{}", id);
                     }
                 }
 
