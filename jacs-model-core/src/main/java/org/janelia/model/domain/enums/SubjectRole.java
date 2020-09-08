@@ -1,7 +1,7 @@
 package org.janelia.model.domain.enums;
 
 /**
- * The type of image to show for given sample.
+ * Enumeration of standard roles in the system.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -12,7 +12,7 @@ public enum SubjectRole {
 
     private String role;
 
-    private SubjectRole(String role) {
+    SubjectRole(String role) {
         this.role = role;
     }
 
