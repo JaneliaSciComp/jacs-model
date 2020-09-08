@@ -113,7 +113,6 @@ public class Sample extends AbstractDomainObject implements IsParent {
     private String publishingName;
 
     @SAGEAttribute(cvName="light_imagery", termName="published_externally")
-    @SearchAttribute(key="pubext_b",label="Published Externally")
     private String publishedExternally;
     
     @SAGEAttribute(cvName="light_imagery", termName="slide_code")
