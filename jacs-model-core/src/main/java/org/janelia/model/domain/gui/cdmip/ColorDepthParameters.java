@@ -12,6 +12,8 @@ public class ColorDepthParameters {
 
     private List<String> libraries = new ArrayList<>();
 
+    private List<CDSLibraryParam> advancedLibraries = new ArrayList<>();
+
     private List<Reference> masks = new ArrayList<>();
 
     /** Background threshold for data (0-255) */
@@ -40,6 +42,14 @@ public class ColorDepthParameters {
 
     public void setLibraries(List<String> libraries) {
         this.libraries = libraries;
+    }
+
+    public List<CDSLibraryParam> getAdvancedLibraries() {
+        return advancedLibraries;
+    }
+
+    public void setAdvancedLibraries(List<CDSLibraryParam> advancedLibraries) {
+        this.advancedLibraries = advancedLibraries;
     }
 
     public Integer getDataThreshold() {
