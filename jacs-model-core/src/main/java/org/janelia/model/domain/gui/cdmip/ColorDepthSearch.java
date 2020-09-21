@@ -2,6 +2,7 @@ package org.janelia.model.domain.gui.cdmip;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
@@ -56,8 +57,18 @@ public class ColorDepthSearch extends AbstractDomainObject implements IsParent {
     }
 
     @JsonIgnore
-    public List<String> getLibraries() {
-        return parameters.getLibraries();
+    public List<CDSLibraryParam> getLibraries() {
+        if (parameters.getAdvancedLibraries().isEmpty()) {
+            return parameters.getLibraries().stream()
+                    .map(l -> {
+                        CDSLibraryParam libraryParam = new CDSLibraryParam();
+                        libraryParam.setLibraryName(l);
+                        return libraryParam;
+                    })
+                    .collect(Collectors.toList());
+        } else {
+            return parameters.getAdvancedLibraries();
+        }
     }
 
     @JsonIgnore
