@@ -5,10 +5,10 @@ import org.apache.commons.lang3.StringUtils;
 public class CDSLibraryParam {
 
     private String libraryName;
-    private String searchableImagesLocation;
-    private String gradientImagesLocation;
-    private String zgapMaskImagesLocation;
-    private String viewableImagesLocation;
+    private String searchableVariant;
+    private String gradientVariant;
+    private String zgapMaskVariant;
+    private String viewableVariant;
 
     public String getLibraryName() {
         return libraryName;
@@ -18,47 +18,47 @@ public class CDSLibraryParam {
         this.libraryName = libraryName;
     }
 
-    public boolean hasSearchableImagesLocation() {
-        return StringUtils.isNotBlank(searchableImagesLocation);
+    public boolean hasSearchableVariant() {
+        return StringUtils.isNotBlank(searchableVariant);
     }
 
-    public String getSearchableImagesLocation() {
-        return searchableImagesLocation;
+    public String getSearchableVariant() {
+        return searchableVariant;
     }
 
-    public void setSearchableImagesLocation(String searchableImagesLocation) {
-        this.searchableImagesLocation = searchableImagesLocation;
+    public void setSearchableVariant(String searchableVariant) {
+        this.searchableVariant = searchableVariant;
     }
 
-    public boolean hasGradientImagesLocation() {
-        return StringUtils.isNotBlank(gradientImagesLocation);
+    public boolean hasGradientVariant() {
+        return StringUtils.isNotBlank(gradientVariant);
     }
 
-    public String getGradientImagesLocation() {
-        return gradientImagesLocation;
+    public String getGradientVariant() {
+        return gradientVariant;
     }
 
-    public void setGradientImagesLocation(String gradientImagesLocation) {
-        this.gradientImagesLocation = gradientImagesLocation;
+    public void setGradientVariant(String gradientVariant) {
+        this.gradientVariant = gradientVariant;
     }
 
-    public boolean hasZgapMaskImagesLocation() {
-        return StringUtils.isNotBlank(zgapMaskImagesLocation);
+    public boolean hasZgapMaskVariant() {
+        return StringUtils.isNotBlank(zgapMaskVariant);
     }
 
-    public String getZgapMaskImagesLocation() {
-        return zgapMaskImagesLocation;
+    public String getZgapMaskVariant() {
+        return zgapMaskVariant;
     }
 
-    public void setZgapMaskImagesLocation(String zgapMaskImagesLocation) {
-        this.zgapMaskImagesLocation = zgapMaskImagesLocation;
+    public void setZgapMaskVariant(String zgapMaskVariant) {
+        this.zgapMaskVariant = zgapMaskVariant;
     }
 
-    public String getViewableImagesLocation() {
-        return viewableImagesLocation;
+    public String getViewableVariant() {
+        return viewableVariant;
     }
 
-    public void setViewableImagesLocation(String viewableImagesLocation) {
-        this.viewableImagesLocation = viewableImagesLocation;
+    public void setViewableVariant(String viewableVariant) {
+        this.viewableVariant = viewableVariant;
     }
 }
