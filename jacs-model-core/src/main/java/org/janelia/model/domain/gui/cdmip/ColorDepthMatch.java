@@ -13,6 +13,8 @@ public class ColorDepthMatch {
     private Reference imageRef;
     private Integer score;
     private Double scorePercent;
+    private Long gradientAreaGap;
+    private Long highExpressionArea;
 
     public Reference getImageRef() {
         return imageRef;
@@ -35,6 +37,22 @@ public class ColorDepthMatch {
 
     public void setScorePercent(Double scorePercent) {
         this.scorePercent = scorePercent;
+    }
+
+    public Long getGradientAreaGap() {
+        return gradientAreaGap;
+    }
+
+    public void setGradientAreaGap(Long gradientAreaGap) {
+        this.gradientAreaGap = gradientAreaGap;
+    }
+
+    public Long getHighExpressionArea() {
+        return highExpressionArea;
+    }
+
+    public void setHighExpressionArea(Long highExpressionArea) {
+        this.highExpressionArea = highExpressionArea;
     }
 
     @Override
