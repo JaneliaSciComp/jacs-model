@@ -13,6 +13,8 @@ public class ColorDepthMatch {
     private Reference imageRef;
     private Integer score;
     private Double scorePercent;
+    private Integer matchingPixels;
+    private Double matchingPixelsRatio;
     private Long gradientAreaGap;
     private Long highExpressionArea;
 
@@ -37,6 +39,22 @@ public class ColorDepthMatch {
 
     public void setScorePercent(Double scorePercent) {
         this.scorePercent = scorePercent;
+    }
+
+    public Integer getMatchingPixels() {
+        return matchingPixels;
+    }
+
+    public void setMatchingPixels(Integer matchingPixels) {
+        this.matchingPixels = matchingPixels;
+    }
+
+    public Double getMatchingPixelsRatio() {
+        return matchingPixelsRatio;
+    }
+
+    public void setMatchingPixelsRatio(Double matchingPixelsRatio) {
+        this.matchingPixelsRatio = matchingPixelsRatio;
     }
 
     public Long getGradientAreaGap() {
