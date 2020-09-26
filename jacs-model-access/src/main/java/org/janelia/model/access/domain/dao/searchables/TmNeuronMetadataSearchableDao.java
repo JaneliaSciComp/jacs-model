@@ -1,6 +1,7 @@
 package org.janelia.model.access.domain.dao.searchables;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -10,6 +11,7 @@ import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
+import org.janelia.model.domain.tiledMicroscope.TmOperation;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 
 /**
@@ -93,6 +95,16 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchableDao<T
     @Override
     public TmNeuronMetadata saveNeuronMetadata(TmWorkspace workspace, TmNeuronMetadata neuron, String subjectKey) {
         return tmNeuronMetadataDao.saveNeuronMetadata(workspace, neuron, subjectKey);
+    }
+
+    @Override
+    public void createOperationLog(Long workspaceId, Long neuronId, String operation, Date timestamp, String subjectKey) {
+        tmNeuronMetadataDao.createOperationLog(workspaceId, neuronId, operation, timestamp, subjectKey);
+    }
+
+    @Override
+    public List<TmOperation> getOperations(Long workspaceId, Long neuronId, Date startDate, Date endDate) {
+        return tmNeuronMetadataDao.getOperations(workspaceId, neuronId, startDate, endDate);
     }
 
 }
