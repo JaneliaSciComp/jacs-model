@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -21,6 +22,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.bson.conversions.Bson;
@@ -31,11 +33,7 @@ import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
-import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronData;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.domain.tiledMicroscope.*;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -257,6 +255,37 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         if (isLarge)
             neuron.setNeuronData(pointData);
         return neuron;
+    }
+
+    @Override
+    public void createOperationLog(Long workspaceId, Long neuronId, String operationType, Date timestamp, String subjectKey) {
+        MongoCollection<TmOperation> operationCollection =  mongoDatabase.getCollection("tmOperation", TmOperation.class);
+
+        TmOperation operation = new TmOperation();
+        operation.setUser(subjectKey);
+        operation.setWorkspaceId(workspaceId);
+        operation.setNeuronId(neuronId);
+        operation.setOperation(operationType);
+        operation.setTimestamp(timestamp);
+        operationCollection.insertOne(operation);
+    }
+
+    @Override
+    public List<TmOperation> getOperations(Long workspaceId, Long neuronId, Date startDate, Date endDate) {
+        MongoCollection<TmOperation> operationCollection =  mongoDatabase.getCollection("tmOperation", TmOperation.class);
+        ImmutableList.Builder<Bson> operationFilterBuilder = ImmutableList.builder();
+        operationFilterBuilder.add(Filters.eq("workspaceId", workspaceId));
+        if (neuronId!=null) {
+            operationFilterBuilder.add(Filters.eq("neuronId", neuronId));
+        }
+        if (startDate!=null) {
+            operationFilterBuilder.add(Filters.and(Filters.gte("timestamp",startDate)));
+        }
+        if (endDate!=null) {
+            operationFilterBuilder.add(Filters.and(Filters.lte("timestamp",endDate)));
+        }
+        Bson filter = MongoDaoHelper.createFilterCriteria(operationFilterBuilder.build());
+        return MongoDaoHelper.find(filter, null, 0, 10000, operationCollection, TmOperation.class);
     }
 
     private TmNeuronMetadata saveNeuron(TmNeuronMetadata entity,
