@@ -1,10 +1,12 @@
 package org.janelia.model.access.domain.dao;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
+import org.janelia.model.domain.tiledMicroscope.TmOperation;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 
 /**
@@ -23,4 +25,6 @@ public interface TmNeuronMetadataDao extends DomainObjectDao<TmNeuronMetadata> {
     void updateNeuronTagsForNeurons(TmWorkspace workspace, List<Long> neuronIds, List<String> tags, boolean tagState, String subjectKey);
     Long getNeuronCountsForWorkspace(TmWorkspace workspace, String subjectKey);
     TmNeuronMetadata saveNeuronMetadata(TmWorkspace workspace, TmNeuronMetadata neuron, String subjectKey);
+    void createOperationLog(Long workspaceId, Long neuronId, String operation, Date timestamp, String subjectKey);
+    List<TmOperation> getOperations(Long workspaceId, Long neuronId, Date startDate, Date endDate);
 }
