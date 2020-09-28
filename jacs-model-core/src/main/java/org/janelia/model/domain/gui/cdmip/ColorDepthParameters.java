@@ -1,7 +1,13 @@
 package org.janelia.model.domain.gui.cdmip;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.ImmutableList;
 
 import org.janelia.model.domain.Reference;
 
@@ -10,9 +16,11 @@ import org.janelia.model.domain.Reference;
  */
 public class ColorDepthParameters {
 
-    private List<String> libraries = new ArrayList<>();
+    @JsonIgnore
+    private final Set<String> libraries = new LinkedHashSet<>();
 
-    private List<CDSLibraryParam> advancedLibraries = new ArrayList<>();
+    @JsonIgnore
+    private final Set<CDSTargetParam> cdsTargets = new LinkedHashSet<>();
 
     private List<Reference> masks = new ArrayList<>();
 
@@ -37,19 +45,37 @@ public class ColorDepthParameters {
     private Integer maxResultsPerMask;
 
     public List<String> getLibraries() {
-        return libraries;
+        return ImmutableList.copyOf(libraries);
     }
 
     public void setLibraries(List<String> libraries) {
-        this.libraries = libraries;
+        if (libraries != null) {
+            this.libraries.addAll(libraries);
+        }
     }
 
-    public List<CDSLibraryParam> getAdvancedLibraries() {
-        return advancedLibraries;
+    public List<CDSTargetParam> getCdsTargets() {
+        return ImmutableList.copyOf(cdsTargets);
     }
 
-    public void setAdvancedLibraries(List<CDSLibraryParam> advancedLibraries) {
-        this.advancedLibraries = advancedLibraries;
+    public void setCdsTargets(List<CDSTargetParam> cdsTargets) {
+        if (cdsTargets != null) {
+            this.cdsTargets.addAll(cdsTargets);
+        }
+    }
+
+    public void addCDSTarget(CDSTargetParam cdsTargetParam) {
+        cdsTargets.add(cdsTargetParam);
+    }
+
+    public void removeCDSTarget(CDSTargetParam cdsTargetParam) {
+        libraries.remove(cdsTargetParam.getLibraryName());
+        cdsTargets.remove(cdsTargetParam);
+    }
+
+    public void clearCDSTargets() {
+        libraries.clear();
+        cdsTargets.clear();
     }
 
     public Integer getDataThreshold() {

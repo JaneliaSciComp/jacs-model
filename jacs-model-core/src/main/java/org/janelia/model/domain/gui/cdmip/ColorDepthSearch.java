@@ -57,18 +57,34 @@ public class ColorDepthSearch extends AbstractDomainObject implements IsParent {
     }
 
     @JsonIgnore
-    public List<CDSLibraryParam> getLibraries() {
-        if (parameters.getAdvancedLibraries().isEmpty()) {
+    public List<CDSTargetParam> getCDSTargets() {
+        if (parameters.getCdsTargets().isEmpty()) {
             return parameters.getLibraries().stream()
                     .map(l -> {
-                        CDSLibraryParam libraryParam = new CDSLibraryParam();
+                        CDSTargetParam libraryParam = new CDSTargetParam();
                         libraryParam.setLibraryName(l);
                         return libraryParam;
                     })
                     .collect(Collectors.toList());
         } else {
-            return parameters.getAdvancedLibraries();
+            return parameters.getCdsTargets();
         }
+    }
+
+    public void addCDSTarget(CDSTargetParam cdsTargetParam) {
+        if (cdsTargetParam != null) {
+            parameters.addCDSTarget(cdsTargetParam);
+        }
+    }
+
+    public void removeCDSTarget(CDSTargetParam cdsTargetParam) {
+        if (cdsTargetParam != null) {
+            parameters.removeCDSTarget(cdsTargetParam);
+        }
+    }
+
+    public void clearAllCDSTargets() {
+        parameters.clearCDSTargets();
     }
 
     @JsonIgnore
