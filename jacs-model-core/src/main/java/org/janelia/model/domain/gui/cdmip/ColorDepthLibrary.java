@@ -3,11 +3,16 @@ package org.janelia.model.domain.gui.cdmip;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.AbstractDomainObject;
@@ -29,21 +34,61 @@ import org.janelia.model.domain.support.SearchType;
 @SearchType(key="cdmipLibrary",label="Color Depth Library")
 public class ColorDepthLibrary extends AbstractDomainObject implements Filtering {
 
+    public static List<ColorDepthLibrary> collectLibrariesWithVariants(List<ColorDepthLibrary> libraries) {
+        return librariesWithVariantsStream(libraries, new LinkedHashMap<>(), new LinkedHashSet<>());
+    }
+
+    private static List<ColorDepthLibrary> librariesWithVariantsStream(List<ColorDepthLibrary> libraries,
+                                                                         Map<Reference, ColorDepthLibrary> collectedLibraries,
+                                                                         Set<Reference> collectedVariants) {
+        return libraries.stream()
+                .peek(l -> {
+                    collectedLibraries.put(Reference.createFor(l), l);
+                    if (l.isVariant()) {
+                        collectedVariants.add(Reference.createFor(l));
+                    }
+                })
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        llist -> {
+                            collectedVariants.forEach(variantRef -> {
+                                ColorDepthLibrary libraryVariant = collectedLibraries.get(variantRef);
+                                if (libraryVariant == null) {
+                                    throw new IllegalStateException("Variant " + variantRef + " not found in the collected map");
+                                }
+                                if (collectedLibraries.containsKey(libraryVariant.getParentLibraryRef())) {
+                                    collectedLibraries.get(libraryVariant.getParentLibraryRef()).addLibraryVariant(libraryVariant);
+                                }
+                            });
+                            return llist;
+                        }))
+                ;
+    }
+
     @SearchAttribute(key="identifier_txt",label="Library Identifier")
     private String identifier;
 
-    private String version;
+    /**
+     * Use "version" for JSON property to maintain the backward compatibility.
+     * @return
+     */
+    @JsonProperty("version")
+    private String variant;
 
     @SearchTraversal({})
     private Reference parentLibraryRef;
 
     @SearchTraversal({})
-    private Map<String,Integer> colorDepthCounts = new HashMap<>();
+    private Map<String, Integer> colorDepthCounts = new HashMap<>();
 
     private Set<Reference> sourceReleases;
 
     @JsonIgnore
     private List<Criteria> lazyCriteria;
+
+    @SearchTraversal({})
+    @JsonIgnore
+    private final Set<ColorDepthLibrary> libraryVariants = new LinkedHashSet<>();
 
     public String getIdentifier() {
         return identifier;
@@ -53,16 +98,17 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
         this.identifier = identifier;
     }
 
-    public String getVersion() {
-        return version;
+    public String getVariant() {
+        return variant;
     }
 
-    public void setVersion(String version) {
-        this.version = version;
+    public void setVariant(String variant) {
+        this.variant = variant;
     }
 
-    public boolean hasVersion() {
-        return parentLibraryRef != null && StringUtils.isNotBlank(version);
+    @JsonIgnore
+    public boolean isVariant() {
+        return parentLibraryRef != null && StringUtils.isNotBlank(variant);
     }
 
     public Reference getParentLibraryRef() {
@@ -133,5 +179,16 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
             lazyCriteria.add(libraryIdentifier);
         }
         return lazyCriteria;
+    }
+
+    @JsonIgnore
+    public Set<ColorDepthLibrary> getLibraryVariants() {
+        return libraryVariants;
+    }
+
+    public void addLibraryVariant(ColorDepthLibrary libraryVariant) {
+        if (libraryVariant != null) {
+            this.libraryVariants.add(libraryVariant);
+        }
     }
 }
