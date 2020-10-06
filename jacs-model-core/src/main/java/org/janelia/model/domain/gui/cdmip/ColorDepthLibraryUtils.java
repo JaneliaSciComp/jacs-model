@@ -1,6 +1,7 @@
 package org.janelia.model.domain.gui.cdmip;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -10,6 +11,8 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSet;
 
+import org.apache.commons.lang3.RegExUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.Reference;
 
 public class ColorDepthLibraryUtils {
@@ -58,18 +61,44 @@ public class ColorDepthLibraryUtils {
 
     public static Set<ColorDepthLibrary> getSearchableVariants(ColorDepthLibrary colorDepthLibrary) {
         return colorDepthLibrary.getLibraryVariants().stream()
-                .filter(l -> !isNonSearchableVariant(l.getVariant()))
+                .filter(l -> isSearchableVariant(l.getVariant()))
                 .collect(Collectors.toSet());
     }
 
-    private static boolean isNonSearchableVariant(String variant) {
-        return NON_SEARCHABLE_VARIANTS.contains(variant.toLowerCase());
+    public static boolean isSearchableVariant(String variant) {
+        return StringUtils.isBlank(variant) || !NON_SEARCHABLE_VARIANTS.contains(variant.toLowerCase());
     }
 
-    public static Set<ColorDepthLibrary> selectVariants(ColorDepthLibrary colorDepthLibrary, Set<String> variants) {
-        return colorDepthLibrary.getLibraryVariants().stream()
-                .filter(l -> variants.contains(l.getVariant().toLowerCase()))
-                .collect(Collectors.toSet());
+    /**
+     * Select the matching variants if the library has variants or if it is a variant already return a set
+     * of possible variants.
+     * @param colorDepthLibrary
+     * @param variants
+     * @return
+     */
+    public static Set<ColorDepthLibrary> selectVariantCandidates(ColorDepthLibrary colorDepthLibrary, Set<String> variants) {
+        if (colorDepthLibrary.isVariant()) {
+            // if the library is a variant I would like to get sibling variants
+            if (variants.contains(colorDepthLibrary.getVariant().toLowerCase())) {
+                return Collections.singleton(colorDepthLibrary);
+            } else {
+                return variants.stream()
+                        .map(variant -> {
+                            ColorDepthLibrary variantLibrary = new ColorDepthLibrary();
+                            String variantLibraryId = colorDepthLibrary.getIdentifier().replace(colorDepthLibrary.getVariant(), variant);
+                            variantLibrary.setIdentifier(variantLibraryId);
+                            variantLibrary.setName(variantLibraryId);
+                            variantLibrary.setVariant(variant);
+                            variantLibrary.setParentLibraryRef(colorDepthLibrary.getParentLibraryRef());
+                            return variantLibrary;
+                        })
+                        .collect(Collectors.toSet());
+            }
+        } else {
+            return colorDepthLibrary.getLibraryVariants().stream()
+                    .filter(l -> variants.contains(l.getVariant().toLowerCase()))
+                    .collect(Collectors.toSet());
+        }
     }
 
 }
