@@ -36,6 +36,11 @@ public class DatasetSearchableDao extends AbstractDomainSearchableDao<DataSet> i
     }
 
     @Override
+    public DataSet getDataSetByIdentifier(String datasetIdentifier) {
+        return datasetDao.getDataSetByIdentifier(datasetIdentifier);
+    }
+
+    @Override
     public List<DataSet> getDatasetsByOwnersAndSageSyncFlag(List<String> ownerKeys, Boolean sageSyncFlag) {
         return datasetDao.getDatasetsByOwnersAndSageSyncFlag(ownerKeys, sageSyncFlag);
     }

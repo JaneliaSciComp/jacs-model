@@ -2,9 +2,9 @@ package org.janelia.model.domain.gui.cdmip;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.interfaces.IsParent;
@@ -57,34 +57,28 @@ public class ColorDepthSearch extends AbstractDomainObject implements IsParent {
     }
 
     @JsonIgnore
-    public List<CDSTargetParam> getCDSTargets() {
-        if (parameters.getCdsTargets().isEmpty()) {
-            return parameters.getLibraries().stream()
-                    .map(l -> {
-                        CDSTargetParam libraryParam = new CDSTargetParam();
-                        libraryParam.setLibraryName(l);
-                        return libraryParam;
-                    })
-                    .collect(Collectors.toList());
-        } else {
-            return parameters.getCdsTargets();
-        }
+    public List<String> getCDSTargets() {
+        return parameters.getLibraries();
     }
 
-    public void addCDSTarget(CDSTargetParam cdsTargetParam) {
-        if (cdsTargetParam != null) {
-            parameters.addCDSTarget(cdsTargetParam);
-        }
+    public void addCDSTarget(String cdsTarget) {
+        parameters.addCDSTarget(cdsTarget);
     }
 
-    public void removeCDSTarget(CDSTargetParam cdsTargetParam) {
-        if (cdsTargetParam != null) {
-            parameters.removeCDSTarget(cdsTargetParam);
-        }
+    public void removeCDSTarget(String cdsTarget) {
+        parameters.removeCDSTarget(cdsTarget);
     }
 
     public void clearAllCDSTargets() {
         parameters.clearCDSTargets();
+    }
+
+    public boolean useSegmentation() {
+        return parameters.getUseSegmentation() != null && parameters.getUseSegmentation();
+    }
+
+    public boolean useGradientScores() {
+        return parameters.getUseGradientScores() != null && parameters.getUseGradientScores();
     }
 
     @JsonIgnore

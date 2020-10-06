@@ -91,7 +91,8 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                 }, (c, l) -> 0L)
                 .getContent();
         if (rawCoord == null) {
-            LOG.warn("No {} file found at {}", DEFAULT_TRANSFORM_FILE_NAME, rvl.getBaseStorageLocationURI());
+            LOG.warn("No {} file found at {} ({})", DEFAULT_TRANSFORM_FILE_NAME,
+                    rvl.getBaseStorageLocationURI(), rvl.getContentURIFromRelativePath(DEFAULT_TRANSFORM_FILE_NAME));
             return Optional.empty();
         } else {
             return Optional.of(rawCoord);

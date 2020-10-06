@@ -1,14 +1,9 @@
 package org.janelia.model.domain.gui.cdmip;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.collect.ImmutableList;
-
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.Reference;
 
 /**
@@ -16,11 +11,7 @@ import org.janelia.model.domain.Reference;
  */
 public class ColorDepthParameters {
 
-    @JsonIgnore
-    private final Set<String> libraries = new LinkedHashSet<>();
-
-    @JsonIgnore
-    private final Set<CDSTargetParam> cdsTargets = new LinkedHashSet<>();
+    private List<String> libraries = new ArrayList<>();
 
     private List<Reference> masks = new ArrayList<>();
 
@@ -44,38 +35,33 @@ public class ColorDepthParameters {
     /** Maxmimum number of results to persist per mask */
     private Integer maxResultsPerMask;
 
+    private Boolean useSegmentation;
+
+    private Boolean useGradientScores;
+
     public List<String> getLibraries() {
-        return ImmutableList.copyOf(libraries);
+        return libraries;
     }
 
     public void setLibraries(List<String> libraries) {
-        if (libraries != null) {
-            this.libraries.addAll(libraries);
+        this.libraries = libraries;
+    }
+
+    public void addCDSTarget(String cdsTarget) {
+        if (StringUtils.isNotBlank(cdsTarget)) {
+            if (this.libraries == null) {
+                this.libraries = new ArrayList<>();
+            }
+            this.libraries.add(cdsTarget);
         }
     }
 
-    public List<CDSTargetParam> getCdsTargets() {
-        return ImmutableList.copyOf(cdsTargets);
-    }
-
-    public void setCdsTargets(List<CDSTargetParam> cdsTargets) {
-        if (cdsTargets != null) {
-            this.cdsTargets.addAll(cdsTargets);
-        }
-    }
-
-    public void addCDSTarget(CDSTargetParam cdsTargetParam) {
-        cdsTargets.add(cdsTargetParam);
-    }
-
-    public void removeCDSTarget(CDSTargetParam cdsTargetParam) {
-        libraries.remove(cdsTargetParam.getLibraryName());
-        cdsTargets.remove(cdsTargetParam);
+    public void removeCDSTarget(String cdsTarget) {
+        libraries.remove(cdsTarget);
     }
 
     public void clearCDSTargets() {
         libraries.clear();
-        cdsTargets.clear();
     }
 
     public Integer getDataThreshold() {
@@ -147,4 +133,19 @@ public class ColorDepthParameters {
         masks.add(mask);
     }
 
+    public Boolean getUseSegmentation() {
+        return useSegmentation;
+    }
+
+    public void setUseSegmentation(Boolean useSegmentation) {
+        this.useSegmentation = useSegmentation;
+    }
+
+    public Boolean getUseGradientScores() {
+        return useGradientScores;
+    }
+
+    public void setUseGradientScores(Boolean useGradientScores) {
+        this.useGradientScores = useGradientScores;
+    }
 }
