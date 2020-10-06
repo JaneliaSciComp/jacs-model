@@ -11,6 +11,7 @@ import org.janelia.model.domain.Reference;
 public class ColorDepthMatch {
 
     private Reference imageRef;
+    private Reference matchingImageRef;
     private Integer score;
     private Double scorePercent;
     private Integer matchingPixels;
@@ -25,6 +26,15 @@ public class ColorDepthMatch {
     public void setImageRef(Reference imageRef) {
         this.imageRef = imageRef;
     }
+
+    public Reference getMatchingImageRef() {
+        return matchingImageRef;
+    }
+
+    public void setMatchingImageRef(Reference matchingImageRef) {
+        this.matchingImageRef = matchingImageRef;
+    }
+
     public Integer getScore() {
         return score;
     }
