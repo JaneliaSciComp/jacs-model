@@ -39,6 +39,7 @@ public class DomainConstants {
     public static final String PREFERENCE_CATEGORY_KEYBINDS_ONTOLOGY = "Keybind:Ontology:";
     public static final String PREFERENCE_CATEGORY_SORT_CRITERIA = "SortCriteria";
     public static final String PREFERENCE_CATEGORY_MOUSELIGHT = "MouseLight";
+    public static final String PREFERENCE_CATEGORY_MOUSELIGHT_COLORMODEL = "Mouselight_ColorModel";
     public static final String PREFERENCE_CATEGORY_MOUSELIGHT_TAGS = "MouseLight_Tags";
     public static final String PREFERENCE_CATEGORY_MUST_HAVE_IMAGE = "MustHaveImage";
     public static final String PREFERENCE_CATEGORY_SHOW_VT_LINE_NAMES = "ShowVtLineNames";
