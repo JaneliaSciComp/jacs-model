@@ -1,6 +1,5 @@
 package org.janelia.model.domain.gui.cdmip;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -11,7 +10,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSet;
 
-import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.Reference;
 
@@ -72,6 +70,7 @@ public class ColorDepthLibraryUtils {
     /**
      * Select the matching variants if the library has variants or if it is a variant already return a set
      * of possible variants.
+     *
      * @param colorDepthLibrary
      * @param variants
      * @return
