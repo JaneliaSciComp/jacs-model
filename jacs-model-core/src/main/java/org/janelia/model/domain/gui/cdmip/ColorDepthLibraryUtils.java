@@ -81,15 +81,21 @@ public class ColorDepthLibraryUtils {
             return Collections.singleton(colorDepthLibrary);
         } else {
             return variants.stream()
-                    .map(variant -> {
-                        ColorDepthLibrary variantLibrary = new ColorDepthLibrary();
-                        String variantLibraryId = colorDepthLibrary.getIdentifier().replace(colorDepthLibrary.getVariant(), variant);
-                        variantLibrary.setIdentifier(variantLibraryId);
-                        variantLibrary.setName(variantLibraryId);
-                        variantLibrary.setVariant(variant);
-                        variantLibrary.setParentLibraryRef(colorDepthLibrary.getParentLibraryRef());
-                        return variantLibrary;
-                    })
+                    .map(variant -> colorDepthLibrary.getLibraryVariant(variant)
+                            .orElseGet(() -> {
+                                ColorDepthLibrary variantLibrary = new ColorDepthLibrary();
+                                String variantLibraryId;
+                                if (colorDepthLibrary.isVariant()) {
+                                    variantLibraryId = colorDepthLibrary.getIdentifier().replace(colorDepthLibrary.getVariant(), variant);
+                                } else {
+                                    variantLibraryId = colorDepthLibrary.getIdentifier() + "_" + variant;
+                                }
+                                variantLibrary.setIdentifier(variantLibraryId);
+                                variantLibrary.setName(variantLibraryId);
+                                variantLibrary.setVariant(variant);
+                                variantLibrary.setParentLibraryRef(colorDepthLibrary.getParentLibraryRef());
+                                return variantLibrary;
+                            }))
                     .collect(Collectors.toSet());
         }
     }

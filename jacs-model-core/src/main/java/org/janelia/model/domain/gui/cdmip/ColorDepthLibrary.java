@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -149,6 +150,10 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
     @JsonIgnore
     public Set<ColorDepthLibrary> getLibraryVariants() {
         return libraryVariants;
+    }
+
+    public Optional<ColorDepthLibrary> getLibraryVariant(String variant) {
+        return libraryVariants.stream().filter(cdl -> variant.equals(cdl.getVariant())).findFirst();
     }
 
     public void addLibraryVariant(ColorDepthLibrary libraryVariant) {
