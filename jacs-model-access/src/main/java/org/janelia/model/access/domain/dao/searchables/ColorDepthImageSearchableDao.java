@@ -3,6 +3,7 @@ package org.janelia.model.access.domain.dao.searchables;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,6 +40,11 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchableDao<Co
     @Override
     public Map<String, Integer> countColorDepthMIPsByAlignmentSpaceForLibrary(String library) {
         return colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForLibrary(library);
+    }
+
+    @Override
+    public Optional<ColorDepthImage> findColorDepthImageByPath(String imagePath) {
+        return colorDepthImageDao.findColorDepthImageByPath(imagePath);
     }
 
     @Override

@@ -3,8 +3,10 @@ package org.janelia.model.access.domain.dao.mongo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Spliterator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -107,13 +109,26 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
     }
 
     @Override
+    public Optional<ColorDepthImage> findColorDepthImageByPath(String imagePath) {
+        return MongoDaoHelper.find(
+                createColorDepthMIPsFilter(new ColorDepthImageQuery().withExactFilepaths(Collections.singleton(imagePath))),
+                null,
+                0,
+                -1,
+                mongoCollection,
+                ColorDepthImage.class)
+                .stream()
+                .findFirst();
+    }
+
+    @Override
     public Stream<ColorDepthImage> streamColorDepthMIPs(ColorDepthImageQuery cdmQuery) {
         Spliterator<ColorDepthImage> iterableCursor = MongoDaoHelper.rawFind(
                 createColorDepthMIPsFilter(cdmQuery),
                 MongoDaoHelper.createBsonSortCriteria(new SortCriteria("filepath")),
                 cdmQuery.getOffset(),
                 cdmQuery.getLength(),
-                this.mongoCollection,
+                mongoCollection,
                 ColorDepthImage.class)
                 .noCursorTimeout(true)
                 .spliterator();
