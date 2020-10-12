@@ -77,26 +77,19 @@ public class ColorDepthLibraryUtils {
      * @return
      */
     public static Set<ColorDepthLibrary> selectVariantCandidates(ColorDepthLibrary colorDepthLibrary, Set<String> variants) {
-        if (colorDepthLibrary.isVariant()) {
-            // if the library is a variant I would like to get sibling variants
-            if (variants.contains(colorDepthLibrary.getVariant().toLowerCase())) {
-                return Collections.singleton(colorDepthLibrary);
-            } else {
-                return variants.stream()
-                        .map(variant -> {
-                            ColorDepthLibrary variantLibrary = new ColorDepthLibrary();
-                            String variantLibraryId = colorDepthLibrary.getIdentifier().replace(colorDepthLibrary.getVariant(), variant);
-                            variantLibrary.setIdentifier(variantLibraryId);
-                            variantLibrary.setName(variantLibraryId);
-                            variantLibrary.setVariant(variant);
-                            variantLibrary.setParentLibraryRef(colorDepthLibrary.getParentLibraryRef());
-                            return variantLibrary;
-                        })
-                        .collect(Collectors.toSet());
-            }
+        if (colorDepthLibrary.isVariant() && variants.contains(colorDepthLibrary.getVariant().toLowerCase())) {
+            return Collections.singleton(colorDepthLibrary);
         } else {
-            return colorDepthLibrary.getLibraryVariants().stream()
-                    .filter(l -> variants.contains(l.getVariant().toLowerCase()))
+            return variants.stream()
+                    .map(variant -> {
+                        ColorDepthLibrary variantLibrary = new ColorDepthLibrary();
+                        String variantLibraryId = colorDepthLibrary.getIdentifier().replace(colorDepthLibrary.getVariant(), variant);
+                        variantLibrary.setIdentifier(variantLibraryId);
+                        variantLibrary.setName(variantLibraryId);
+                        variantLibrary.setVariant(variant);
+                        variantLibrary.setParentLibraryRef(colorDepthLibrary.getParentLibraryRef());
+                        return variantLibrary;
+                    })
                     .collect(Collectors.toSet());
         }
     }
