@@ -18,6 +18,7 @@ public class ColorDepthMatch {
     private Double matchingPixelsRatio;
     private Long gradientAreaGap;
     private Long highExpressionArea;
+    private Double normalizedScore;
 
     public Reference getImageRef() {
         return imageRef;
@@ -81,6 +82,14 @@ public class ColorDepthMatch {
 
     public void setHighExpressionArea(Long highExpressionArea) {
         this.highExpressionArea = highExpressionArea;
+    }
+
+    public Double getNormalizedScore() {
+        return normalizedScore;
+    }
+
+    public void setNormalizedScore(Double normalizedScore) {
+        this.normalizedScore = normalizedScore;
     }
 
     @Override
