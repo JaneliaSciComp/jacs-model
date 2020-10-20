@@ -1101,7 +1101,8 @@ public class DomainDAO {
         for (String libraryIdentifier : counts.keySet()) {
             Map<String, Integer> newCounts = counts.get(libraryIdentifier);
             ColorDepthLibrary colorDepthLibrary = getColorDepthLibraryByIdentifier(null, libraryIdentifier);
-            if (colorDepthLibrary.getColorDepthCounts() == null || (newCounts != null && !newCounts.equals(colorDepthLibrary.getColorDepthCounts()))) {
+            if (colorDepthLibrary != null &&
+                    (colorDepthLibrary.getColorDepthCounts() == null || (newCounts != null && !newCounts.equals(colorDepthLibrary.getColorDepthCounts())))) {
                 colorDepthLibrary.setColorDepthCounts(newCounts);
                 save(colorDepthLibrary.getOwnerKey(), colorDepthLibrary);
                 log.info("Updated counts for color depth library: {}", libraryIdentifier);
