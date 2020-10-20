@@ -4,11 +4,11 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableSet;
 
+import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.junit.Assert.assertThat;
 
 public class TimebasedIdentifierGeneratorTest {
     private TimebasedIdentifierGenerator idGenerator;
@@ -21,6 +21,6 @@ public class TimebasedIdentifierGeneratorTest {
     @Test
     public void generateLargeListOfIds() {
         List<Long> idList = idGenerator.generateIdList(16384);
-        assertThat(ImmutableSet.copyOf(idList), hasSize(idList.size()));
+        MatcherAssert.assertThat(ImmutableSet.copyOf(idList), hasSize(idList.size()));
     }
 }
