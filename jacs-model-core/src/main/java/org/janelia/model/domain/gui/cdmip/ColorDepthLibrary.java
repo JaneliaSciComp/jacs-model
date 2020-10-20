@@ -44,6 +44,8 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
     @SearchTraversal({})
     private Reference parentLibraryRef;
 
+    private Boolean deprecated;
+
     @SearchTraversal({})
     private Map<String, Integer> colorDepthCounts = new HashMap<>();
 
@@ -83,6 +85,19 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
 
     public void setParentLibraryRef(Reference parentLibraryRef) {
         this.parentLibraryRef = parentLibraryRef;
+    }
+
+    public Boolean getDeprecated() {
+        return deprecated;
+    }
+
+    public void setDeprecated(Boolean deprecated) {
+        this.deprecated = deprecated;
+    }
+
+    @JsonIgnore
+    public boolean isEnabled() {
+        return deprecated == null || !deprecated;
     }
 
     public Map<String, Integer> getColorDepthCounts() {
