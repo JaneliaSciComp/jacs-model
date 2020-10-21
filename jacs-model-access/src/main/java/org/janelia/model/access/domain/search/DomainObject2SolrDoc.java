@@ -21,19 +21,18 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.solr.common.SolrInputDocument;
+import org.janelia.model.access.domain.nodetools.NodeAncestorsGetter;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainObjectGetter;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
-import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.ontology.DomainAnnotationGetter;
 import org.janelia.model.domain.ontology.SimpleDomainAnnotation;
 import org.janelia.model.domain.searchable.SearchableDocType;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.workspace.Node;
-import org.janelia.model.access.domain.nodetools.NodeAncestorsGetter;
 import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.util.ReflectionHelper;
 import org.janelia.model.util.ReflectionUtils;
@@ -95,12 +94,6 @@ class DomainObject2SolrDoc {
         SolrInputDocument solrDoc = new SolrInputDocument();
         solrDoc.setField("doc_type", SearchableDocType.DOCUMENT.name(), 1.0f);
         solrDoc.setField("class", domainObject.getClass().getName(), 1.0f);
-        if (domainObject instanceof ColorDepthImage) { // !!!!!!!!!!
-            ColorDepthImage cdmip = (ColorDepthImage) domainObject;
-            if (cdmip.getLibraries().contains("flyem_hemibrain_1_1_cdm")) {
-                LOG.info("!!!!!!!!!!!!! INDEX " + cdmip + "," + cdmip.getFilepath());
-            }
-        } // !!!!!!!!!!!!
         solrDoc.setField("collection", DomainUtils.getCollectionName(domainObject), 1.0f);
         solrDoc.setField("ancestor_ids", new ArrayList<>(ancestorIds), 0.2f);
 
