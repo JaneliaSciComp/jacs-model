@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 
@@ -110,5 +112,43 @@ public class ColorDepthImageQuery {
     public ColorDepthImageQuery withLength(int length) {
         this.length = length;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ColorDepthImageQuery that = (ColorDepthImageQuery) o;
+
+        return new EqualsBuilder()
+                .append(offset, that.offset)
+                .append(length, that.length)
+                .append(owner, that.owner)
+                .append(alignmentSpace, that.alignmentSpace)
+                .append(libraryIdentifiers, that.libraryIdentifiers)
+                .append(exactNames, that.exactNames)
+                .append(fuzzyNames, that.fuzzyNames)
+                .append(exactFilepaths, that.exactFilepaths)
+                .append(fuzzyFilepaths, that.fuzzyFilepaths)
+                .append(sampleRefs, that.sampleRefs)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(owner)
+                .append(alignmentSpace)
+                .append(libraryIdentifiers)
+                .append(exactNames)
+                .append(fuzzyNames)
+                .append(exactFilepaths)
+                .append(fuzzyFilepaths)
+                .append(sampleRefs)
+                .append(offset)
+                .append(length)
+                .toHashCode();
     }
 }
