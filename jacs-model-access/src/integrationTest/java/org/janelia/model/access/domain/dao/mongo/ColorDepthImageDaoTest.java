@@ -93,7 +93,6 @@ public class ColorDepthImageDaoTest extends AbstractMongoDaoTest {
             assertEquals(expectedResults.get(l.getIdentifier()), l.getColorDepthCounts());
             assertEquals(expectedResults.get(l.getIdentifier()), colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForLibrary(l.getIdentifier()));
         }
-
     }
 
     private ColorDepthImage createColorDepthImage(String name, Set<String> libraries, String alignmentSpace) {
