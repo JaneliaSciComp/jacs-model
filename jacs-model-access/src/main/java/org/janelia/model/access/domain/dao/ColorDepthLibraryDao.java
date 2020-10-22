@@ -2,11 +2,7 @@ package org.janelia.model.access.domain.dao;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
 
-import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
 
 /**
@@ -14,4 +10,6 @@ import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
  */
 public interface ColorDepthLibraryDao extends DomainObjectDao<ColorDepthLibrary> {
     List<ColorDepthLibrary> getLibraryWithVariants(String libraryIdentifier);
+    List<ColorDepthLibrary> getLibrariesByLibraryIdentifiers(Collection<String> libraryIdentifiers);
+    void updateColorDepthCounts(List<ColorDepthLibrary> libraries);
 }

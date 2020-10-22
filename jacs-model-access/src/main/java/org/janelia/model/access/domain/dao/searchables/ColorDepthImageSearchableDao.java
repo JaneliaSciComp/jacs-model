@@ -2,6 +2,7 @@ package org.janelia.model.access.domain.dao.searchables;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -16,6 +17,7 @@ import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
 
 /**
  * {@link ColorDepthImage} DAO.
@@ -40,6 +42,11 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchableDao<Co
     @Override
     public Map<String, Integer> countColorDepthMIPsByAlignmentSpaceForLibrary(String library) {
         return colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForLibrary(library);
+    }
+
+    @Override
+    public List<ColorDepthLibrary> countColorDepthMIPsByAlignmentSpaceForAllLibraries() {
+        return colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForAllLibraries();
     }
 
     @Override

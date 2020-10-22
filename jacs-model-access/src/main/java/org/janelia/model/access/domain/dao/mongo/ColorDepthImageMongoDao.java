@@ -34,6 +34,7 @@ import org.janelia.model.access.domain.dao.RemoveFromSetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
 import org.janelia.model.util.SortCriteria;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
@@ -41,6 +42,12 @@ import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
  * {@link ColorDepthImage} Mongo DAO.
  */
 public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorDepthImage> implements ColorDepthImageDao {
+    private static class ColorDepthLibraryCount {
+        String library;
+        String alignmentSpace;
+        Integer count;
+    }
+
     @Inject
     ColorDepthImageMongoDao(MongoDatabase mongoDatabase,
                             TimebasedIdentifierGenerator idGenerator,
@@ -65,6 +72,49 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
                 Document.class
         ).into(countsByAligmentSpace);
         return countsByAligmentSpace.stream().collect(Collectors.toMap(d -> d.getString("_id"), d -> d.getInteger("count")));
+    }
+
+    @Override
+    public List<ColorDepthLibrary> countColorDepthMIPsByAlignmentSpaceForAllLibraries() {
+        List<Document> countsByLibraryAndAligmentSpace = new ArrayList<>();
+        mongoCollection.aggregate(
+                Arrays.asList(
+                        Aggregates.unwind("$libraries"),
+                        Aggregates.group(new Document().append("library", "$libraries").append("alignmentSpace", "$alignmentSpace"), Accumulators.sum("count", 1))
+                ),
+                Document.class
+        ).into(countsByLibraryAndAligmentSpace);
+        return new ArrayList<>(
+                countsByLibraryAndAligmentSpace.stream()
+                        .map(d -> {
+                            ColorDepthLibraryCount l = new ColorDepthLibraryCount();
+                            Document id = d.get("_id", Document.class);
+                            l.library = id.getString("library");
+                            l.alignmentSpace = id.getString("alignmentSpace");
+                            l.count = d.getInteger("count");
+                            return l;
+                        })
+                        .collect(Collectors.groupingBy(
+                                l -> l.library,
+                                Collectors.collectingAndThen(
+                                        Collectors.toList(),
+                                        lcList -> {
+                                            Map<String, Integer> alignmentCounts = lcList.stream()
+                                                    .collect(Collectors.groupingBy(
+                                                            lc -> lc.alignmentSpace,
+                                                            Collectors.collectingAndThen(
+                                                                    Collectors.toList(),
+                                                                    aclist -> aclist.stream()
+                                                                            .map(ac -> ac.count)
+                                                                            .reduce(0, (c1, c2) -> c1 + c2))));
+                                            ColorDepthLibrary l = new ColorDepthLibrary();
+                                            l.setIdentifier(lcList.get(0).library);
+                                            l.setColorDepthCounts(alignmentCounts);
+                                            return l;
+                                        }
+                                )))
+                        .values()
+        );
     }
 
     private Bson createColorDepthMIPsFilter(ColorDepthImageQuery cdmQuery) {
