@@ -62,7 +62,3 @@ Currently, this module is attempting to unify the fragmented JACSv1 and JACSv2 m
     * **sage** - Contains the Hibernate-based model for communicating with the SAGE database. In the future, this will be replaced with a SAGE web service.
     * **security** - Contains model classes for the JACS security model.
     * **util** - Useful utilities
-
-## License 
-
-[Janelia Open Source License](https://www.janelia.org/open-science/software-licensing)
