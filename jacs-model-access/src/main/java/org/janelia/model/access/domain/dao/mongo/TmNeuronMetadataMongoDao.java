@@ -2,11 +2,8 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.io.InputStream;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -25,13 +22,12 @@ import com.mongodb.client.model.UpdateOptions;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.DomainDAO;
-import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
-import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
-import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
-import org.janelia.model.access.domain.dao.SetFieldValueHandler;
-import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
+import org.janelia.model.access.domain.dao.*;
+import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.*;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
@@ -47,6 +43,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     private final DomainDAO domainDao;
     private final MongoDatabase mongoDatabase;
     private final DomainUpdateMongoHelper updateHelper;
+    private final TmNeuronBufferDao tmNeuronBufferDao;
 
     @Inject
     private GridFSMongoDao gridFSMongoDao;
@@ -56,11 +53,13 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                              TimebasedIdentifierGenerator idGenerator,
                              DomainPermissionsMongoHelper permissionsHelper,
                              DomainUpdateMongoHelper updateHelper,
-                             DomainDAO domainDao) {
+                             DomainDAO domainDao,
+                             TmNeuronBufferDao tmNeuronBufferDao) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
         this.domainDao = domainDao;
         this.updateHelper = updateHelper;
         this.mongoDatabase = mongoDatabase;
+        this.tmNeuronBufferDao = tmNeuronBufferDao;
     }
 
     @Override
@@ -459,5 +458,21 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     private MongoCollection<TmNeuronMetadata> getNeuronCollection(String collectionName) {
         return mongoDatabase.getCollection(collectionName, TmNeuronMetadata.class);
+    }
+
+    @Override
+    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(TmWorkspace workspace,
+                                                                                                       String subjectKey,
+                                                                                                       long offset, int length) {
+        List<TmNeuronMetadata> workspaceNeurons = getTmNeuronMetadataByWorkspaceId(workspace,subjectKey, offset, length);
+        if (workspaceNeurons.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Map<Long, TmNeuronMetadata> indexedWorkspaceNeurons = DomainUtils.getMapById(workspaceNeurons);
+        Map<Long, InputStream> neuronsPointStreams = tmNeuronBufferDao.streamNeuronPointsByWorkspaceId(indexedWorkspaceNeurons.keySet(), workspace.getId());
+
+        return workspaceNeurons.stream()
+                .map(neuron -> ImmutablePair.of(neuron, neuronsPointStreams.get(neuron.getId())))
+                .collect(Collectors.toList());
     }
 }

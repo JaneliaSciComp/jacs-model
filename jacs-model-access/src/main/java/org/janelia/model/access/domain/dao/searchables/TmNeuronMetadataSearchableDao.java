@@ -1,11 +1,13 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
@@ -105,6 +107,12 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchableDao<T
     @Override
     public List<TmOperation> getOperations(Long workspaceId, Long neuronId, Date startDate, Date endDate) {
         return tmNeuronMetadataDao.getOperations(workspaceId, neuronId, startDate, endDate);
+    }
+
+    @Override
+    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(TmWorkspace workspace,
+                                                                                                       String subjectKey, long offset, int length) {
+        return tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(workspace, subjectKey,offset,length);
     }
 
 }
