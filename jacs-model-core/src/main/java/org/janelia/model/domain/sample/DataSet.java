@@ -37,7 +37,9 @@ public class DataSet extends AbstractDomainObject implements Filtering {
 
     @SearchAttribute(key="sage_synced_b",label="SAGE Synchronized",facet="sage_synced_b")
     private boolean sageSync;
-    
+
+    private boolean distortionCorrectionSupported = true;
+
     private boolean neuronSeparationSupported = true;
     
     private boolean basicPostProcessingSupported = false;
@@ -112,6 +114,14 @@ public class DataSet extends AbstractDomainObject implements Filtering {
 
     public void setSageGrammarPath(String sageGrammarPath) {
         this.sageGrammarPath = sageGrammarPath;
+    }
+
+    public boolean isDistortionCorrectionSupported() {
+        return distortionCorrectionSupported;
+    }
+
+    public void setDistortionCorrectionSupported(boolean distortionCorrectionSupported) {
+        this.distortionCorrectionSupported = distortionCorrectionSupported;
     }
 
     public boolean isNeuronSeparationSupported() {
@@ -195,23 +205,6 @@ public class DataSet extends AbstractDomainObject implements Filtering {
             this.compressionStrategy = new CompressionStrategy();
         }
         compressionStrategy.setSeparation(compressionType);
-    }
-
-    /**
-     * @deprecated Moved to ColorDepthLibrary
-     */
-    @Deprecated
-    public Map<String, Integer> getColorDepthCounts() {
-        return colorDepthCounts;
-    }
-
-    /**
-     * @deprecated Moved to ColorDepthLibrary
-     */
-    @Deprecated
-    public void setColorDepthCounts(Map<String, Integer> colorDepthCounts) {
-        if (colorDepthCounts==null) throw new IllegalArgumentException("Property cannot be null");
-        this.colorDepthCounts = colorDepthCounts;
     }
 
     /* implement Filtering interface */
