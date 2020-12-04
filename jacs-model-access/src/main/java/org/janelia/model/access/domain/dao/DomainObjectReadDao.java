@@ -45,6 +45,16 @@ public interface DomainObjectReadDao<T extends DomainObject> extends ReadDao<T, 
     List<T> findEntitiesReadableBySubjectKey(@Nullable String subjectKey, long offset, int length);
 
     /**
+     * Find domain entities by exact name.
+     */
+    List<T> findEntitiesByExactName(String name);
+
+    /**
+     * Find domain entities that match the given name.
+     */
+    List<T> findEntitiesWithMatchingName(String name);
+
+    /**
      * Stream all records.
      *
      * @return

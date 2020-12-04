@@ -1,5 +1,11 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import javax.inject.Inject;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.mongodb.client.MongoDatabase;
@@ -10,17 +16,12 @@ import com.mongodb.client.model.Updates;
 
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.workspace.Workspace;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
 
 /**
  * {@link Workspace} Mongo DAO.
@@ -59,7 +60,7 @@ public class WorkspaceNodeMongoDao extends AbstractNodeMongoDao<Workspace> imple
 
         Workspace workspace = mongoCollection.findOneAndUpdate(
                 MongoDaoHelper.createFilterCriteria(
-                        Filters.eq("class", Workspace.class.getName()),
+                        MongoDaoHelper.createFilterByClass(Workspace.class),
                         Filters.eq("ownerKey", subjectKey),
                         Filters.eq("name", DomainConstants.NAME_DEFAULT_WORKSPACE)
                 ),
@@ -80,7 +81,7 @@ public class WorkspaceNodeMongoDao extends AbstractNodeMongoDao<Workspace> imple
         }
         return MongoDaoHelper.find(
                 MongoDaoHelper.createFilterCriteria(
-                        Filters.eq("class", Workspace.class.getName()),
+                        MongoDaoHelper.createFilterByClass(Workspace.class),
                         permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey)),
                 null,
                 offset,
@@ -96,7 +97,7 @@ public class WorkspaceNodeMongoDao extends AbstractNodeMongoDao<Workspace> imple
         }
         return MongoDaoHelper.find(
                 MongoDaoHelper.createFilterCriteria(
-                        Filters.eq("class", Workspace.class.getName()),
+                        MongoDaoHelper.createFilterByClass(Workspace.class),
                         Filters.eq("ownerKey", subjectKey)),
                 null,
                 0,
@@ -110,7 +111,7 @@ public class WorkspaceNodeMongoDao extends AbstractNodeMongoDao<Workspace> imple
         Preconditions.checkArgument(StringUtils.isNotBlank(subjectKey));
         return MongoDaoHelper.findFirst(
                 MongoDaoHelper.createFilterCriteria(
-                        Filters.eq("class", Workspace.class.getName()),
+                        MongoDaoHelper.createFilterByClass(Workspace.class),
                         Filters.eq("ownerKey", subjectKey),
                         Filters.eq("name", DomainConstants.NAME_DEFAULT_WORKSPACE)
                 ),

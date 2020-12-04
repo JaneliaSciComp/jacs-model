@@ -48,6 +48,10 @@ class MongoDaoHelper {
         return Filters.eq(attributeName, attributeValue);
     }
 
+    static Bson createRegexAttributeFilter(String attributeName, String regexAttributeValue) {
+        return Filters.regex(attributeName, regexAttributeValue);
+    }
+
     static <I> Bson createFilterById(I id) {
         return Filters.eq("_id", id);
     }

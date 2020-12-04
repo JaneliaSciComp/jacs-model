@@ -105,22 +105,60 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
     }
 
     @Override
+    public List<T> findEntitiesByExactName(String name) {
+        return findEntitiesByExactNameAndClass(name, null, getEntityType());
+    }
+
+    protected <U, V extends DomainObject> List<V> findEntitiesByExactNameAndClass(String name, Class<U> filterClass, Class<V> resultClass) {
+        return find(
+                MongoDaoHelper.createFilterCriteria(
+                        MongoDaoHelper.createAttributeFilter("name", name),
+                        filterClass == null ? null : MongoDaoHelper.createFilterByClass(filterClass)
+                ),
+                null,
+                0,
+                -1,
+                resultClass);
+    }
+
+    @Override
+    public List<T> findEntitiesWithMatchingName(String name) {
+        return findEntitiesWithMatchingNameAndClass(name, null, getEntityType());
+    }
+
+    protected <U, V extends DomainObject> List<V> findEntitiesWithMatchingNameAndClass(String name, Class<U> filterClass, Class<V> resultClass) {
+        return find(
+                MongoDaoHelper.createFilterCriteria(
+                        MongoDaoHelper.createRegexAttributeFilter("name", name),
+                        filterClass == null ? null : MongoDaoHelper.createFilterByClass(filterClass)
+                ),
+                null,
+                0,
+                -1,
+                resultClass);
+    }
+
+    @Override
     public Stream<T> streamAll() {
-        Spliterator<T> iterator = new Spliterator<T>() {
-            Iterator<T> cursor;
+        return streamAllByClass(getEntityType());
+    }
+
+    protected <U extends DomainObject> Stream<U> streamAllByClass(Class<U> domainClass) {
+        Spliterator<U> iterator = new Spliterator<U>() {
+            Iterator<U> cursor;
             {
                 setCursor();
             }
 
             private void setCursor() {
                 cursor = mongoCollection
-                        .find(Filters.eq("class", getEntityType()))
+                        .find(Filters.eq("class", domainClass), domainClass)
                         .noCursorTimeout(true)
                         .iterator();
             }
 
             @Override
-            public boolean tryAdvance(Consumer<? super T> action) {
+            public boolean tryAdvance(Consumer<? super U> action) {
                 if (cursor.hasNext()) {
                     action.accept(cursor.next());
                 }
@@ -128,7 +166,7 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
             }
 
             @Override
-            public Spliterator<T> trySplit() {
+            public Spliterator<U> trySplit() {
                 return null;
             }
 

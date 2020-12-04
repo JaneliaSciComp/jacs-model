@@ -69,6 +69,16 @@ public abstract class AbstractDomainSearchableDao<T extends DomainObject> implem
     }
 
     @Override
+    public List<T> findEntitiesByExactName(String name) {
+        return domainObjectDao.findEntitiesByExactName(name);
+    }
+
+    @Override
+    public List<T> findEntitiesWithMatchingName(String name) {
+        return domainObjectDao.findEntitiesWithMatchingName(name);
+    }
+
+    @Override
     public Stream<T> streamAll() {
         return domainObjectDao.streamAll();
     }
