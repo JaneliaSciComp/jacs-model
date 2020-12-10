@@ -29,8 +29,8 @@ public class LSMImageMongoDao extends ImageMongoDao<LSMImage> implements LSMImag
     }
 
     @Override
-    public List<LSMImage> findEntitiesWithMatchingName(String name) {
-        return findEntitiesWithMatchingNameAndClass(name, LSMImage.class, LSMImage.class);
+    public List<LSMImage> findEntitiesMatchingAnyGivenName(List<String> names) {
+        return findEntitiesMatchingAnyGivenNameAndClass(names, LSMImage.class, LSMImage.class);
     }
 
 }

@@ -50,9 +50,9 @@ public interface DomainObjectReadDao<T extends DomainObject> extends ReadDao<T, 
     List<T> findEntitiesByExactName(String name);
 
     /**
-     * Find domain entities that match the given name.
+     * Find domain entities that match any of the given names. If the given names is empty then it returns an empty list
      */
-    List<T> findEntitiesWithMatchingName(String name);
+    List<T> findEntitiesMatchingAnyGivenName(List<String> names);
 
     /**
      * Stream all records.

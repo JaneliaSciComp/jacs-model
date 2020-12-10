@@ -122,14 +122,18 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
     }
 
     @Override
-    public List<T> findEntitiesWithMatchingName(String name) {
-        return findEntitiesWithMatchingNameAndClass(name, null, getEntityType());
+    public List<T> findEntitiesMatchingAnyGivenName(List<String> names) {
+        if (CollectionUtils.isEmpty(names)) {
+            return Collections.emptyList();
+        }
+        return findEntitiesMatchingAnyGivenNameAndClass(names, null, getEntityType());
     }
 
-    protected <U, V extends DomainObject> List<V> findEntitiesWithMatchingNameAndClass(String name, Class<U> filterClass, Class<V> resultClass) {
+    protected <U, V extends DomainObject> List<V> findEntitiesMatchingAnyGivenNameAndClass(List<String> names,
+                                                                                           Class<U> filterClass, Class<V> resultClass) {
         return find(
                 MongoDaoHelper.createFilterCriteria(
-                        MongoDaoHelper.createRegexAttributeFilter("name", name),
+                        Filters.in("name", names),
                         filterClass == null ? null : MongoDaoHelper.createFilterByClass(filterClass)
                 ),
                 null,
