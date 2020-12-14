@@ -464,6 +464,9 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(TmWorkspace workspace,
                                                                                                        String subjectKey,
                                                                                                        long offset, int length) {
+        if (workspace.getNeuronCollection()==null) {
+            workspace.setNeuronCollection("TmNeuronMetadata");
+        }
         List<TmNeuronMetadata> workspaceNeurons = getTmNeuronMetadataByWorkspaceId(workspace,subjectKey, offset, length);
         if (workspaceNeurons.isEmpty()) {
             return Collections.emptyList();
