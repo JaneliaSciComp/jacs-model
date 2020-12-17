@@ -57,6 +57,10 @@ public class ColorDepthLibraryUtils {
                 ;
     }
 
+    public static boolean hasSearchableVariants(ColorDepthLibrary colorDepthLibrary) {
+        return colorDepthLibrary.getLibraryVariants().stream().anyMatch(l -> isSearchableVariant(l.getVariant()));
+    }
+
     public static Set<ColorDepthLibrary> getSearchableVariants(ColorDepthLibrary colorDepthLibrary) {
         return colorDepthLibrary.getLibraryVariants().stream()
                 .filter(l -> isSearchableVariant(l.getVariant()))
