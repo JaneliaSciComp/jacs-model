@@ -55,11 +55,6 @@ public class ColorDepthImageSearchableDao extends AbstractDomainSearchableDao<Co
     }
 
     @Override
-    public List<ColorDepthImage> listMatchingColorDepthMIPs(ColorDepthImageQuery cdmQuery) {
-        return colorDepthImageDao.listMatchingColorDepthMIPs(cdmQuery);
-    }
-
-    @Override
     public Stream<ColorDepthImage> streamColorDepthMIPs(ColorDepthImageQuery cdmQuery) {
         return colorDepthImageDao.streamColorDepthMIPs(cdmQuery);
     }

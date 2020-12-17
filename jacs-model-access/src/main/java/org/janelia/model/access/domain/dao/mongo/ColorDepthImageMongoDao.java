@@ -172,18 +172,6 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
     }
 
     @Override
-    public List<ColorDepthImage> listMatchingColorDepthMIPs(ColorDepthImageQuery cdmQuery) {
-        return MongoDaoHelper.find(
-                createColorDepthMIPsFilter(cdmQuery),
-                MongoDaoHelper.createBsonSortCriteria(new SortCriteria("filepath")),
-                cdmQuery.getOffset(),
-                cdmQuery.getLength(),
-                mongoCollection,
-                ColorDepthImage.class
-        );
-    }
-
-    @Override
     public Stream<ColorDepthImage> streamColorDepthMIPs(ColorDepthImageQuery cdmQuery) {
         Spliterator<ColorDepthImage> iterableCursor = MongoDaoHelper.rawFind(
                 createColorDepthMIPsFilter(cdmQuery),
