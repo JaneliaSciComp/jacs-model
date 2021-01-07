@@ -17,6 +17,7 @@ public class TmColorModel {
     private boolean gammaSynchronized;
     private boolean whiteSynchronized;
     private List<TmChannelColorModel> channels = new ArrayList<>();
+    private float[] unmixParams;
 
     public TmColorModel() {
     }
@@ -71,5 +72,13 @@ public class TmColorModel {
 
     public void setChannels(List<TmChannelColorModel> channels) {
         this.channels = channels;
+    }
+
+    public float[] getUnmixParams() {
+        return unmixParams;
+    }
+
+    public void setUnmixParams(float[] unmix_params) {
+        this.unmixParams = unmix_params;
     }
 }
