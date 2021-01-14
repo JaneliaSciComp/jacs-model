@@ -103,7 +103,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private String detectionChannel3DetectorGain;
 
     @SAGEAttribute(cvName="light_imagery", termName="driver")
-    @SearchAttribute(key="driver_txt",label="Line type",facet="driver_s")
+    @SearchAttribute(key="driver_txt",label="Line Type",facet="driver_s")
     private String driver;
     
     @SAGEAttribute(cvName="fly", termName="effector")
@@ -324,7 +324,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private String organism;
     
     @SAGEAttribute(cvName="line", termName="genotype")
-    @SearchAttribute(key="genotype_txt",label="Line description")
+    @SearchAttribute(key="genotype_txt",label="Line Description")
     private String genotype;
 
     @SAGEAttribute(cvName="line", termName="flycore_id")
