@@ -103,16 +103,32 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private String detectionChannel3DetectorGain;
 
     @SAGEAttribute(cvName="light_imagery", termName="driver")
-    @SearchAttribute(key="driver_txt",label="Driver",facet="driver_s")
+    @SearchAttribute(key="driver_txt",label="Line type",facet="driver_s")
     private String driver;
     
     @SAGEAttribute(cvName="fly", termName="effector")
     @SearchAttribute(key="effector_txt",label="Effector")
     private String effector;
 
+    @SAGEAttribute(cvName="fly", termName="effector_description")
+    @SearchAttribute(key="effector_desc_txt",label="Effector Description")
+    private String effectorDescription;
+
     @SAGEAttribute(cvName="fly", termName="cross_barcode")
     @SearchAttribute(key="cross_barcode_txt",label="Cross Barcode")
     private Integer crossBarcode;
+
+    @SAGEAttribute(cvName="fly", termName="cross_description")
+    @SearchAttribute(key="cross_desc_txt",label="Cross Description")
+    private String crossDescription;
+
+    @SAGEAttribute(cvName="fly", termName="lab_project")
+    @SearchAttribute(key="lab_project_txt",label="Lab")
+    private String labProject;
+
+    @SAGEAttribute(cvName="fly", termName="lab_member")
+    @SearchAttribute(key="lab_member_txt",label="Lab Member")
+    private String labMember;
 
     @ReprocessOnChange
     @SAGEAttribute(cvName="light_imagery", termName="gender")
@@ -308,7 +324,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private String organism;
     
     @SAGEAttribute(cvName="line", termName="genotype")
-    @SearchAttribute(key="genotype_txt",label="Genotype")
+    @SearchAttribute(key="genotype_txt",label="Line description")
     private String genotype;
 
     @SAGEAttribute(cvName="line", termName="flycore_id")
@@ -355,7 +371,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     @SearchAttribute(key="animal_id_s",label="User's Animal Id")
     private String animalId;
 
-	public Reference getSample() {
+    public Reference getSample() {
         return sampleRef;
     }
 
@@ -364,19 +380,19 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     }
 
     public Boolean getSageSynced() {
-		return sageSynced;
-	}
+        return sageSynced;
+    }
 
-	public void setSageSynced(Boolean sageSynced) {
-		this.sageSynced = sageSynced;
-	}
+    public void setSageSynced(Boolean sageSynced) {
+        this.sageSynced = sageSynced;
+    }
 
     @JsonIgnore
     public boolean isLSMSageSynced() {
         return getSageSynced()!=null && getSageSynced();
     }
     
-	public String getChannelColors() {
+    public String getChannelColors() {
         return channelColors;
     }
 
@@ -544,7 +560,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
         this.driver = driver;
     }
 
-	public String getEffector() {
+    public String getEffector() {
         return effector;
     }
 
@@ -558,6 +574,38 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
 
     public void setCrossBarcode(Integer crossBarcode) {
         this.crossBarcode = crossBarcode;
+    }
+
+    public String getEffectorDescription() {
+        return effectorDescription;
+    }
+
+    public void setEffectorDescription(String effectorDescription) {
+        this.effectorDescription = effectorDescription;
+    }
+
+    public String getCrossDescription() {
+        return crossDescription;
+    }
+
+    public void setCrossDescription(String crossDescription) {
+        this.crossDescription = crossDescription;
+    }
+
+    public String getLabProject() {
+        return labProject;
+    }
+
+    public void setLabProject(String labProject) {
+        this.labProject = labProject;
+    }
+
+    public String getLabMember() {
+        return labMember;
+    }
+
+    public void setLabMember(String labMember) {
+        this.labMember = labMember;
     }
 
     public String getGender() {

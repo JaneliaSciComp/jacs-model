@@ -40,9 +40,33 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="data_set_txt",label="Data Set",facet="data_set_s")
     private String dataSet;
 
+    @SAGEAttribute(cvName="light_imagery", termName="driver")
+    @SearchAttribute(key="driver_txt",label="Line type",facet="driver_s")
+    private String driver;
+
     @SAGEAttribute(cvName="fly", termName="effector")
     @SearchAttribute(key="effector_txt",label="Effector")
     private String effector;
+
+    @SAGEAttribute(cvName="fly", termName="effector_description")
+    @SearchAttribute(key="effector_desc_txt",label="Effector Description")
+    private String effectorDescription;
+
+    @SAGEAttribute(cvName="fly", termName="cross_barcode")
+    @SearchAttribute(key="cross_barcode_txt",label="Cross Barcode")
+    private Integer crossBarcode;
+
+    @SAGEAttribute(cvName="fly", termName="cross_description")
+    @SearchAttribute(key="cross_desc_txt",label="Cross Description")
+    private String crossDescription;
+
+    @SAGEAttribute(cvName="fly", termName="lab_project")
+    @SearchAttribute(key="lab_project_txt",label="Lab")
+    private String labProject;
+
+    @SAGEAttribute(cvName="fly", termName="lab_member")
+    @SearchAttribute(key="lab_member_txt",label="Lab Member")
+    private String labMember;
 
     @SAGEAttribute(cvName="light_imagery", termName="gender")
     @SearchAttribute(key="gender_txt",label="Gender",facet="gender_s")
@@ -57,7 +81,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     private String organism;
 
     @SAGEAttribute(cvName="line", termName="genotype")
-    @SearchAttribute(key="genotype_txt",label="Genotype")
+    @SearchAttribute(key="genotype_txt",label="Line description")
     private String genotype;
 
     @SAGEAttribute(cvName="line", termName="flycore_id")
@@ -91,10 +115,6 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SAGEAttribute(cvName="light_imagery", termName="imaging_project")
     @SearchAttribute(key="img_proj_txt",label="Imaging Project",facet="img_proj_s")
     private String imagingProject;
-    
-    @SAGEAttribute(cvName="light_imagery", termName="driver")
-    @SearchAttribute(key="driver_txt",label="Driver",facet="driver_s")
-    private String driver;
 
     @SAGEAttribute(cvName="light_imagery", termName="family")
     @SearchAttribute(key="family_txt",label="Image Family",facet="family_s")
@@ -118,10 +138,6 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SAGEAttribute(cvName="light_imagery", termName="slide_code")
     @SearchAttribute(key="slide_code_txt",label="Slide Code")
     private String slideCode;
-
-    @SAGEAttribute(cvName="fly", termName="cross_barcode")
-    @SearchAttribute(key="cross_barcode_txt",label="Cross Barcode")
-    private Integer crossBarcode;
 
     @SearchAttribute(key="status_txt",label="Status",facet="status_s")
     private String status;
@@ -265,13 +281,13 @@ public class Sample extends AbstractDomainObject implements IsParent {
     }
 
     @JsonIgnore
-	public List<Reference> getLsmReferences() {
-		List<Reference> refs = new ArrayList<>();
+    public List<Reference> getLsmReferences() {
+        List<Reference> refs = new ArrayList<>();
         for(ObjectiveSample objectiveSample : getObjectiveSamples()) {
             refs.addAll(objectiveSample.getLsmReferences());
         }
-		return Collections.unmodifiableList(refs);
-	}
+        return Collections.unmodifiableList(refs);
+    }
 
     public String getAge() {
         return age;
@@ -295,6 +311,46 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     public void setEffector(String effector) {
         this.effector = effector;
+    }
+
+    public Integer getCrossBarcode() {
+        return crossBarcode;
+    }
+
+    public void setCrossBarcode(Integer crossBarcode) {
+        this.crossBarcode = crossBarcode;
+    }
+
+    public String getEffectorDescription() {
+        return effectorDescription;
+    }
+
+    public void setEffectorDescription(String effectorDescription) {
+        this.effectorDescription = effectorDescription;
+    }
+
+    public String getCrossDescription() {
+        return crossDescription;
+    }
+
+    public void setCrossDescription(String crossDescription) {
+        this.crossDescription = crossDescription;
+    }
+
+    public String getLabProject() {
+        return labProject;
+    }
+
+    public void setLabProject(String labProject) {
+        this.labProject = labProject;
+    }
+
+    public String getLabMember() {
+        return labMember;
+    }
+
+    public void setLabMember(String labMember) {
+        this.labMember = labMember;
     }
 
     public String getGender() {
@@ -335,14 +391,6 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     public void setSlideCode(String slideCode) {
         this.slideCode = slideCode;
-    }
-
-    public Integer getCrossBarcode() {
-        return crossBarcode;
-    }
-
-    public void setCrossBarcode(Integer crossBarcode) {
-        this.crossBarcode = crossBarcode;
     }
 
     public String getMountingProtocol() {
@@ -498,12 +546,12 @@ public class Sample extends AbstractDomainObject implements IsParent {
     }
 
     public Boolean getSageSynced() {
-		return sageSynced;
-	}
+        return sageSynced;
+    }
 
-	public void setSageSynced(Boolean sageSynced) {
-		this.sageSynced = sageSynced;
-	}
+    public void setSageSynced(Boolean sageSynced) {
+        this.sageSynced = sageSynced;
+    }
 
     @JsonIgnore
     public boolean isSampleSageSynced() {
