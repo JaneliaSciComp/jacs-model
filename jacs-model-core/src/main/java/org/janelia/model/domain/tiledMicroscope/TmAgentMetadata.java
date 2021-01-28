@@ -1,8 +1,12 @@
 package org.janelia.model.domain.tiledMicroscope;
 
+import org.janelia.model.domain.AbstractDomainObject;
+import org.janelia.model.domain.support.MongoMapped;
+
 import java.util.Map;
 
-public class TmAgentMapping {
+@MongoMapped(collectionName="tmAgent",label="Tiled Microscope Agent Metadata")
+public class TmAgentMetadata extends AbstractDomainObject {
     Map<String, String> agentIdMapping;
     Long workspaceId;
 
