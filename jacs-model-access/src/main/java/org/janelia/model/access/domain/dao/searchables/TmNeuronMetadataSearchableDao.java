@@ -78,12 +78,6 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchableDao<T
     }
 
     @Override
-    public void bulkMigrateNeuronsInWorkspace(TmWorkspace workspace, Collection<TmNeuronMetadata> neurons,
-                                              String subjectKey) {
-        tmNeuronMetadataDao.bulkMigrateNeuronsInWorkspace(workspace, neurons, subjectKey);
-    }
-
-    @Override
     public void updateNeuronTagsForNeurons(TmWorkspace workspace, List<Long> neuronIds, List<String> tags, boolean tagState,
                                            String subjectKey) {
         tmNeuronMetadataDao.updateNeuronTagsForNeurons(workspace, neuronIds, tags, tagState, subjectKey);
@@ -107,12 +101,6 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchableDao<T
     @Override
     public List<TmOperation> getOperations(Long workspaceId, Long neuronId, Date startDate, Date endDate) {
         return tmNeuronMetadataDao.getOperations(workspaceId, neuronId, startDate, endDate);
-    }
-
-    @Override
-    public List<Pair<TmNeuronMetadata, InputStream>> getTmNeuronsMetadataWithPointStreamsByWorkspaceId(TmWorkspace workspace,
-                                                                                                       String subjectKey, long offset, int length) {
-        return tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(workspace, subjectKey,offset,length);
     }
 
 }

@@ -192,6 +192,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         for (Long geoId : neuronData.getGeoAnnotationMap().keySet()) {
             TmGeoAnnotation geoAnnotation = neuronData.getGeoAnnotationMap().get(geoId);
             geoAnnotation.setNeuronId(getId());
+            geoAnnotation.setModificationDate(geoAnnotation.getCreationDate());
         }
 
     }
