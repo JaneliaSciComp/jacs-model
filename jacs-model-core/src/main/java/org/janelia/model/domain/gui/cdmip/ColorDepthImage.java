@@ -30,6 +30,8 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
     @SearchTraversal({})
     private Reference sampleRef;
 
+    private Reference emBodyRef;
+
     private String anatomicalArea;
 
     private int channelNumber;
@@ -60,6 +62,14 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
 
     public void setSampleRef(Reference sampleRef) {
         this.sampleRef = sampleRef;
+    }
+
+    public Reference getEmBodyRef() {
+        return emBodyRef;
+    }
+
+    public void setEmBodyRef(Reference emBodyRef) {
+        this.emBodyRef = emBodyRef;
     }
 
     public Reference getSourceImageRef() {

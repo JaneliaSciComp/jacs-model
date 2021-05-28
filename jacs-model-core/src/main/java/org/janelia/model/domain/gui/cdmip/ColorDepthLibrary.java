@@ -38,11 +38,14 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
     /**
      * Use "version" for JSON property to maintain the backward compatibility.
      */
+    @SearchAttribute(key="variant_s",label="Variant")
     @JsonProperty("version")
     private String variant;
 
     @SearchTraversal({})
     private Reference parentLibraryRef;
+
+    private Reference emDataSetRef;
 
     private Boolean deprecated;
 
@@ -85,6 +88,14 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
 
     public void setParentLibraryRef(Reference parentLibraryRef) {
         this.parentLibraryRef = parentLibraryRef;
+    }
+
+    public Reference getEmDataSetRef() {
+        return emDataSetRef;
+    }
+
+    public void setEmDataSetRef(Reference emDataSetRef) {
+        this.emDataSetRef = emDataSetRef;
     }
 
     public Boolean getDeprecated() {
