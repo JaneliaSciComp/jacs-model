@@ -76,16 +76,16 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
 
     @Override
     public List<ColorDepthLibrary> countColorDepthMIPsByAlignmentSpaceForAllLibraries() {
-        List<Document> countsByLibraryAndAligmentSpace = new ArrayList<>();
+        List<Document> countsByLibraryAndAlignmentSpace = new ArrayList<>();
         mongoCollection.aggregate(
                 Arrays.asList(
                         Aggregates.unwind("$libraries"),
                         Aggregates.group(new Document().append("library", "$libraries").append("alignmentSpace", "$alignmentSpace"), Accumulators.sum("count", 1))
                 ),
                 Document.class
-        ).into(countsByLibraryAndAligmentSpace);
+        ).into(countsByLibraryAndAlignmentSpace);
         return new ArrayList<>(
-                countsByLibraryAndAligmentSpace.stream()
+                countsByLibraryAndAlignmentSpace.stream()
                         .map(d -> {
                             ColorDepthLibraryCount l = new ColorDepthLibraryCount();
                             Document id = d.get("_id", Document.class);
@@ -106,7 +106,7 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
                                                                     Collectors.toList(),
                                                                     aclist -> aclist.stream()
                                                                             .map(ac -> ac.count)
-                                                                            .reduce(0, (c1, c2) -> c1 + c2))));
+                                                                            .reduce(0, Integer::sum))));
                                             ColorDepthLibrary l = new ColorDepthLibrary();
                                             l.setIdentifier(lcList.get(0).library);
                                             l.setColorDepthCounts(alignmentCounts);

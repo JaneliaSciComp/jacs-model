@@ -43,6 +43,8 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.OrderStatus;
 import org.janelia.model.domain.enums.PipelineStatus;
+import org.janelia.model.domain.flyem.EMBody;
+import org.janelia.model.domain.flyem.EMDataSet;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
@@ -83,6 +85,7 @@ import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.awt.EmbeddedFrame;
 
 import static org.janelia.model.domain.DomainUtils.abbr;
 
@@ -122,6 +125,8 @@ public class DomainDAO {
     private MongoCollection colorDepthResultCollection;
     private MongoCollection colorDepthImageCollection;
     private MongoCollection colorDepthLibraryCollection;
+    private MongoCollection emDataSetCollection;
+    private MongoCollection emBodyCollection;
     private final TimebasedIdentifierGenerator idGenerator;
 
     public DomainDAO(String serverUrl, String databaseName) {
@@ -186,6 +191,8 @@ public class DomainDAO {
         this.colorDepthResultCollection = getCollectionByClass(ColorDepthResult.class);
         this.colorDepthImageCollection = getCollectionByClass(ColorDepthImage.class);
         this.colorDepthLibraryCollection = getCollectionByClass(ColorDepthLibrary.class);
+        this.emDataSetCollection = getCollectionByClass(EMDataSet.class);
+        this.emBodyCollection = getCollectionByClass(EMBody.class);
     }
 
     public com.mongodb.client.MongoCollection<Document> getNativeCollection(String collectionName) {
@@ -2199,6 +2206,16 @@ public class DomainDAO {
                     nUpdates += wr2.getN();
                 }
 
+            } else if (EMDataSet.class.isAssignableFrom(clazz)) {
+
+                for (EMDataSet emDataSet : getDomainObjectsAs(objectRefs, EMDataSet.class)) {
+                    log.trace("Changing permissions on all bodies associated with {}", emDataSet);
+
+                    WriteResult wr1 = emBodyCollection.update("{dataSetRef:#," + updateQueryClause + "}", Reference.createFor(emDataSet), updateQueryParam).multi().with(withClause, readers, writers);
+                    log.trace("Updated permissions on {} bodies", wr1.getN());
+                    nUpdates += wr1.getN();
+                }
+
             } else if (ColorDepthLibrary.class.isAssignableFrom(clazz)) {
 
                 for (ColorDepthLibrary library : getDomainObjectsAs(objectRefs, ColorDepthLibrary.class)) {
@@ -2370,6 +2387,14 @@ public class DomainDAO {
                 updatedDomainObjectsStream = Stream.concat(
                         updatedDomainObjectsStream,
                         streamFindResult(colorDepthResultCollection, ColorDepthResult.class, "{_id:{$in:#}," + queryClause + "}", search.getResults(), queryParam)
+                );
+            }
+        } else if (EMDataSet.class.isAssignableFrom(clazz)) {
+            for (EMDataSet emDataSet : getDomainObjectsAs(objectRefs, EMDataSet.class)) {
+                // add updated color depth images to the updates list
+                updatedDomainObjectsStream = Stream.concat(
+                        updatedDomainObjectsStream,
+                        streamFindResult(emBodyCollection, EMBody.class, "{dataSetRef:#," + queryClause + "}", Reference.createFor(emDataSet), queryParam)
                 );
             }
         } else if (ColorDepthLibrary.class.isAssignableFrom(clazz)) {

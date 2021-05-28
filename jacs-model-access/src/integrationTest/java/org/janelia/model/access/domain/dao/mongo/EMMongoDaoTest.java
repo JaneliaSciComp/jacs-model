@@ -1,9 +1,7 @@
 package org.janelia.model.access.domain.dao.mongo;
 
 import com.google.common.collect.Sets;
-import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
-import org.janelia.model.access.domain.dao.DomainDAOManager;
 import org.janelia.model.access.domain.dao.EmBodyDao;
 import org.janelia.model.access.domain.dao.EmDataSetDao;
 import org.janelia.model.domain.AbstractDomainObject;
@@ -34,10 +32,8 @@ public class EMMongoDaoTest extends AbstractMongoDaoTest {
 
     private static final String testName = "unittester";
     private static final String testUser = "user:"+testName;
-    private static final DomainDAO dao = DomainDAOManager.getInstance().getDao();
 
     private SubjectMongoDao subjectMongoDao;
-
     private EmDataSetDao emDataSetDao;
     private EmBodyDao emBodyDao;
 

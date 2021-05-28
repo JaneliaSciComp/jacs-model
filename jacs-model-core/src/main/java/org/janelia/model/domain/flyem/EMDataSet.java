@@ -35,8 +35,9 @@ public class EMDataSet extends AbstractDomainObject {
         this.published = published;
     }
 
+    @SearchAttribute(key="identifier_txt",label="Identifier")
     @JsonIgnore
     public String getDataSetIdentifier() {
-        return getName()+":"+getVersion();
+        return getName()+":v"+getVersion();
     }
 }
