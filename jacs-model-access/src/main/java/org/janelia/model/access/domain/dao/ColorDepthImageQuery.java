@@ -1,13 +1,9 @@
 package org.janelia.model.access.domain.dao;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.stream.Stream;
-
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+
+import java.util.Collection;
 
 /**
  * Query for color depth mips.

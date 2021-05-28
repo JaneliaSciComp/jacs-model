@@ -9,6 +9,9 @@ import org.janelia.model.access.domain.DomainDAO;
 public class DomainDAOManager {
 
     public static final String DATABASE_HOST = "dev-mongodb";
+    // DO NOT CHANGE THIS
+    // The integration tests (AbstractMongoDaoTest) drop this database after they're done,
+    // so if you point this to a real database you're gonna have a bad time.
     public static final String DATABASE_NAME = "jacs-test";
 
     private static DomainDAOManager instance;
@@ -28,10 +31,6 @@ public class DomainDAOManager {
 
     public DomainDAO getDao() {
         return dao;
-    }
-
-    public void dropTestDatabase() {
-        dao.getMongo().getDatabase(DATABASE_NAME).drop();
     }
 
 }

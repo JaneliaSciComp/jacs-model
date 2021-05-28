@@ -39,6 +39,9 @@ public class AbstractMongoDaoTest {
     }
 
     @AfterClass
+    /**
+     * Drop the database after testing
+     */
     public static void dropTestDatabase() {
         if (testMongoDatabase != null) testMongoDatabase.drop();
     }

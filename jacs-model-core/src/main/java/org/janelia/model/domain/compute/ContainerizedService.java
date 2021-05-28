@@ -14,19 +14,10 @@ import java.util.List;
 @MongoMapped(collectionName="containerizedService",label="Service Definition")
 public class ContainerizedService extends AbstractDomainObject {
 
-    private String name;
     private String version;
     private String description;
     private String harnessClass;
     private List<ContainerizedApp> apps = new ArrayList<>();
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public String getVersion() {
         return version;

@@ -234,10 +234,10 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
     @Override
     public void save(T entity) {
         if (entity.getId() == null) {
-            Date now = new Date();
             entity.setId(createNewId());
-            entity.setCreationDate(now);
-            entity.setUpdatedDate(now);
+            Date now = new Date();
+            if (entity.getCreationDate()==null) entity.setCreationDate(now);
+            if (entity.getUpdatedDate()==null) entity.setUpdatedDate(now);
             mongoCollection.insertOne(entity);
         }
         else {
@@ -245,14 +245,20 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
         }
     }
 
+    /**
+     * @param entities
+     */
     @Override
     public void saveAll(Collection<T> entities) {
         Iterator<Long> idIterator = createNewIds(entities.size()).iterator();
         List<T> toInsert = new ArrayList<>();
-        entities.forEach(e -> {
-            if (e.getId() == null) {
-                e.setId(idIterator.next());
-                toInsert.add(e);
+        entities.forEach(entity -> {
+            if (entity.getId() == null) {
+                entity.setId(idIterator.next());
+                Date now = new Date();
+                if (entity.getCreationDate()==null) entity.setCreationDate(now);
+                if (entity.getUpdatedDate()==null) entity.setUpdatedDate(now);
+                toInsert.add(entity);
             }
             else {
                 throw new IllegalArgumentException("The saveAll() method does not support updates to existing objects");
