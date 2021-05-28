@@ -2,11 +2,10 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import org.janelia.model.access.domain.dao.EntityUtils;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.dao.EntityUtils;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Abstract Mongo DAO.

@@ -1,9 +1,11 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.EmBodyDao;
 import org.janelia.model.access.domain.dao.EmDataSetDao;
+import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainUtils;
@@ -190,4 +192,38 @@ public class EMMongoDaoTest extends AbstractMongoDaoTest {
         }
 
     }
+
+    @Test
+    public void testStreamBodies() {
+
+        for (EMDataSet testDataSet : testDataSets) {
+
+            Set<Long> testIds = testBodies.stream()
+                    .filter(f -> f.getDataSetRef().getTargetId().equals(testDataSet.getId()))
+                    .map(AbstractDomainObject::getId).collect(Collectors.toSet());
+
+            emBodyDao.streamBodiesForDataSet(testDataSet).forEach(body -> {
+                Assert.assertNotEquals("NEW", body.getStatus());
+            });
+
+            Set<Long> ids = emBodyDao.streamBodiesForDataSet(testDataSet)
+                    .map(body -> {
+
+                        emBodyDao.update(body.getId(), ImmutableMap.of(
+                                "status", new SetFieldValueHandler<>("NEW")
+                        ));
+
+                        return body.getId();
+                    })
+                    .collect(Collectors.toSet());
+            Assert.assertEquals(testIds, ids);
+
+            emBodyDao.streamBodiesForDataSet(testDataSet).forEach(body -> {
+                Assert.assertEquals("NEW", body.getStatus());
+            });
+
+        }
+
+    }
+
 }

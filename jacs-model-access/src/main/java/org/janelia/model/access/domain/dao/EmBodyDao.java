@@ -4,6 +4,7 @@ import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.flyem.EMDataSet;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Interface for accessing EM information synchronized from FlyEM neuPrint.
@@ -19,4 +20,10 @@ public interface EmBodyDao extends ReadDao<EMBody, Long>, WriteDao<EMBody, Long>
      */
     List<EMBody> getBodiesForDataSet(EMDataSet emDataSet);
 
+    /**
+     * Stream all of the bodies associated with a given data set.
+     * @param emDataSet
+     * @return
+     */
+    Stream<EMBody> streamBodiesForDataSet(EMDataSet emDataSet);
 }
