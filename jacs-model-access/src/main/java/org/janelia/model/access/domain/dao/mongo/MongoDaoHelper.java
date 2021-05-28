@@ -212,6 +212,15 @@ class MongoDaoHelper {
         }
     }
 
+    static <T, I> long replace(MongoCollection<T> mongoCollection, I entityId, T entity) {
+        if (entityId == null) {
+            return 0;
+        } else {
+            UpdateResult result = mongoCollection.replaceOne(createFilterById(entity), entity);
+            return result.getModifiedCount();
+        }
+    }
+
     static <T, I> long update(MongoCollection<T> mongoCollection, I entityId, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         if (entityId == null) {
             return 0;

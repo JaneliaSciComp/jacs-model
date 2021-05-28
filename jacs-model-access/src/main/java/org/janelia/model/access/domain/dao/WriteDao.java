@@ -13,5 +13,6 @@ public interface WriteDao<T, I> extends Dao<T, I> {
     void delete(T entity);
     void save(T entity);
     void saveAll(Collection<T> entities);
+    void replace(T entity);
     DaoUpdateResult update(I entityId, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate);
 }

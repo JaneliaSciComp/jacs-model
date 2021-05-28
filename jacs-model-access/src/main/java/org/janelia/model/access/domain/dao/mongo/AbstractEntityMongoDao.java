@@ -68,6 +68,11 @@ public abstract class AbstractEntityMongoDao<T extends HasIdentifier>
     }
 
     @Override
+    public void replace(T entity) {
+        MongoDaoHelper.replace(mongoCollection, entity.getId(), entity);
+    }
+
+    @Override
     public DaoUpdateResult update(Long entityId, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         UpdateOptions updateOptions = new UpdateOptions();
         updateOptions.upsert(false);

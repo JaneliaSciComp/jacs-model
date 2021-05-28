@@ -118,6 +118,12 @@ public abstract class AbstractDomainSearchableDao<T extends DomainObject> implem
     }
 
     @Override
+    public void replace(T entity) {
+        domainObjectDao.replace(entity);
+        domainObjectIndexer.indexDocument(entity);
+    }
+
+    @Override
     public DaoUpdateResult update(Long entityId, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         DaoUpdateResult updateResult = domainObjectDao.update(entityId, fieldsToUpdate);
         if (updateResult.getEntitiesAffected() > 0) {
