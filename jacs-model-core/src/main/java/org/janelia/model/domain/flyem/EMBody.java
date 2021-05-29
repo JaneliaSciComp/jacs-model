@@ -94,6 +94,7 @@ public class EMBody extends AbstractDomainObject implements HasFiles {
     }
 
     public void setFiles(Map<FileType, String> files) {
+        if (files==null) throw new IllegalArgumentException("Property cannot be null");
         this.files = files;
     }
 

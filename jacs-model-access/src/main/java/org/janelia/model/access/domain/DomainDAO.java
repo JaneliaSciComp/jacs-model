@@ -85,7 +85,6 @@ import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.awt.EmbeddedFrame;
 
 import static org.janelia.model.domain.DomainUtils.abbr;
 

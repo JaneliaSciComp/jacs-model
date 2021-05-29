@@ -226,4 +226,21 @@ public class EMMongoDaoTest extends AbstractMongoDaoTest {
 
     }
 
+    @Test
+    public void testReplace() {
+
+        for (EMDataSet testDataSet : testDataSets) {
+            emBodyDao.streamBodiesForDataSet(testDataSet).forEach(body -> {
+
+                Assert.assertNotEquals("NEW", body.getStatus());
+
+                body.setStatus("NEW");
+                emBodyDao.replace(body);
+
+                EMBody newBody = emBodyDao.findById(body.getId());
+                Assert.assertEquals("NEW", newBody.getStatus());
+
+            });
+        }
+    }
 }

@@ -212,11 +212,11 @@ class MongoDaoHelper {
         }
     }
 
-    static <T, I> long replace(MongoCollection<T> mongoCollection, T entity) {
+    static <T, I> long replace(MongoCollection<T> mongoCollection, I entityId, T entity) {
         if (entity == null) {
             return 0;
         } else {
-            UpdateResult result = mongoCollection.replaceOne(createFilterById(entity), entity);
+            UpdateResult result = mongoCollection.replaceOne(createFilterById(entityId), entity);
             return result.getModifiedCount();
         }
     }

@@ -69,7 +69,7 @@ public abstract class AbstractEntityMongoDao<T extends HasIdentifier>
 
     @Override
     public void replace(T entity) {
-        MongoDaoHelper.replace(mongoCollection, entity);
+        MongoDaoHelper.replace(mongoCollection, entity.getId(), entity);
     }
 
     @Override
