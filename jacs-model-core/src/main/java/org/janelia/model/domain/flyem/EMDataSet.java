@@ -3,9 +3,15 @@ package org.janelia.model.domain.flyem;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.AbstractDomainObject;
+import org.janelia.model.domain.gui.search.Filtering;
+import org.janelia.model.domain.gui.search.criteria.Criteria;
+import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Data set loaded from FlyEM's neuPrint.
@@ -14,13 +20,16 @@ import org.janelia.model.domain.support.SearchType;
  */
 @MongoMapped(collectionName="emDataSet",label="EM Data Set")
 @SearchType(key="emDataSet",label="EM Data Set")
-public class EMDataSet extends AbstractDomainObject {
+public class EMDataSet extends AbstractDomainObject implements Filtering {
 
     @SearchAttribute(key="version_txt",label="Version")
     private String version;
 
     @SearchAttribute(key="published_b",label="Is Published",facet="published_s")
     private boolean published;
+
+    @JsonIgnore
+    private List<Criteria> lazyCriteria;
 
     public String getVersion() {
         return version;
@@ -49,4 +58,38 @@ public class EMDataSet extends AbstractDomainObject {
         }
         return sb.toString();
     }
+
+    /* implement Filtering interface */
+
+    @JsonIgnore
+    @Override
+    public String getSearchClass() {
+        return EMBody.class.getName();
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean hasCriteria() {
+        return true;
+    }
+
+    @JsonIgnore
+    @Override
+    public String getSearchString() {
+        return null;
+    }
+
+    @JsonIgnore
+    @Override
+    public List<Criteria> getCriteriaList() {
+        if (lazyCriteria==null) {
+            lazyCriteria = new ArrayList<>();
+            FacetCriteria dataSet = new FacetCriteria();
+            dataSet.setAttributeName("dataSetIdentifier");
+            dataSet.getValues().add(getDataSetIdentifier());
+            lazyCriteria.add(dataSet);
+        }
+        return lazyCriteria;
+    }
+
 }
