@@ -38,7 +38,8 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
     private Reference emBodyRef;
 
     // Denormalized from EMBody
-    private String bodyId;
+    @SearchAttribute(key="bodyid_l",label="Body Id")
+    private Long bodyId;
 
     // Denormalized from EMBody
     @SearchAttribute(key="ntype_txt",label="Neuron Cell Type")
@@ -135,11 +136,11 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
         this.publicThumbnailUrl = publicThumbnailUrl;
     }
 
-    public String getBodyId() {
+    public Long getBodyId() {
         return bodyId;
     }
 
-    public void setBodyId(String bodyId) {
+    public void setBodyId(Long bodyId) {
         this.bodyId = bodyId;
     }
 

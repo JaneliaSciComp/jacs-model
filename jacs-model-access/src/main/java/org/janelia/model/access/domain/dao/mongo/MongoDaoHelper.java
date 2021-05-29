@@ -212,8 +212,8 @@ class MongoDaoHelper {
         }
     }
 
-    static <T, I> long replace(MongoCollection<T> mongoCollection, I entityId, T entity) {
-        if (entityId == null) {
+    static <T, I> long replace(MongoCollection<T> mongoCollection, T entity) {
+        if (entity == null) {
             return 0;
         } else {
             UpdateResult result = mongoCollection.replaceOne(createFilterById(entity), entity);

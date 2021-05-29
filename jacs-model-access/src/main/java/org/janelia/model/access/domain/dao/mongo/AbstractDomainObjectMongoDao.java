@@ -269,6 +269,7 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
         }
     }
 
+    // TODO: is this necessary to override? looks the same as super class implementation.
     @Override
     public void delete(T entity) {
         MongoDaoHelper.delete(mongoCollection, entity.getId());
