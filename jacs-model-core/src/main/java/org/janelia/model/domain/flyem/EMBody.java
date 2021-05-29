@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Neuron body loaded from FlyEM's neuPrint.
+ *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MongoMapped(collectionName="emBody",label="EM Body")
@@ -21,10 +23,10 @@ public class EMBody extends AbstractDomainObject implements HasFiles {
 
     private Reference dataSetRef;
 
-    @SearchAttribute(key="dataset_txt",label="Data Set")
+    @SearchAttribute(key="dataset_txt",label="Data Set",facet="data_set_s")
     private String dataSetIdentifier;
 
-    @SearchAttribute(key="status_txt",label="Status")
+    @SearchAttribute(key="status_txt",label="Status",facet="status_s")
     private String status;
 
     @SearchAttribute(key="ntype_txt",label="Neuron Cell Type")
@@ -32,6 +34,9 @@ public class EMBody extends AbstractDomainObject implements HasFiles {
 
     @SearchAttribute(key="ninstance_txt",label="Neuron Instance")
     private String neuronInstance;
+
+    @SearchAttribute(key="voxel_l",label="Num Voxels")
+    private Long voxelSize;
 
     private Map<FileType, String> files = new HashMap<>();
 
@@ -73,6 +78,14 @@ public class EMBody extends AbstractDomainObject implements HasFiles {
 
     public void setNeuronInstance(String neuronInstance) {
         this.neuronInstance = neuronInstance;
+    }
+
+    public Long getVoxelSize() {
+        return voxelSize;
+    }
+
+    public void setVoxelSize(Long voxelSize) {
+        this.voxelSize = voxelSize;
     }
 
     @Override

@@ -27,14 +27,26 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
     @SearchAttribute(key="library_sm",label="Color Depth Library", facet="library_sm")
     private Set<String> libraries = new HashSet<>();
 
+    private String anatomicalArea;
+
     @SearchTraversal({})
     private Reference sampleRef;
 
+    private int channelNumber;
+
+    @SearchTraversal({})
     private Reference emBodyRef;
 
-    private String anatomicalArea;
+    // Denormalized from EMBody
+    private String bodyId;
 
-    private int channelNumber;
+    // Denormalized from EMBody
+    @SearchAttribute(key="ntype_txt",label="Neuron Cell Type")
+    private String neuronType;
+
+    // Denormalized from EMBody
+    @SearchAttribute(key="ninstance_txt",label="Neuron Instance")
+    private String neuronInstance;
 
     private String publicImageUrl;
 
@@ -121,6 +133,30 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
 
     public void setPublicThumbnailUrl(String publicThumbnailUrl) {
         this.publicThumbnailUrl = publicThumbnailUrl;
+    }
+
+    public String getBodyId() {
+        return bodyId;
+    }
+
+    public void setBodyId(String bodyId) {
+        this.bodyId = bodyId;
+    }
+
+    public String getNeuronType() {
+        return neuronType;
+    }
+
+    public void setNeuronType(String neuronType) {
+        this.neuronType = neuronType;
+    }
+
+    public String getNeuronInstance() {
+        return neuronInstance;
+    }
+
+    public void setNeuronInstance(String neuronInstance) {
+        this.neuronInstance = neuronInstance;
     }
 
     @JsonProperty
