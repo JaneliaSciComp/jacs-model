@@ -1,5 +1,6 @@
 package org.janelia.model.domain;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.enums.SubjectRole;
+import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
 import org.janelia.model.domain.gui.search.Filter;
 import org.janelia.model.domain.gui.search.criteria.AttributeValueCriteria;
 import org.janelia.model.domain.interfaces.HasFileGroups;
@@ -51,14 +53,14 @@ public class DomainUtilsTest {
         criteria.setAttributeName("age");
         criteria.setValue("A02");
         filter.addCriteria(criteria);
-        
+
         Filter clone = DomainUtils.cloneFilter(filter);
-        
+
         Assert.assertEquals("New Filter", clone.getName());
         Assert.assertEquals("GMR", clone.getSearchString());
         Assert.assertEquals("Sample", clone.getSearchClass());
         Assert.assertEquals(1, clone.getCriteriaList().size());
-        AttributeValueCriteria clonedCriteria = (AttributeValueCriteria)clone.getCriteriaList().get(0);
+        AttributeValueCriteria clonedCriteria = (AttributeValueCriteria) clone.getCriteriaList().get(0);
         Assert.assertEquals("age", clonedCriteria.getAttributeName());
         Assert.assertEquals("A02", clonedCriteria.getValue());
     }
@@ -75,40 +77,40 @@ public class DomainUtilsTest {
         group2.setFilepath("/group2");
         group2.getFiles().put(FileType.AllMip, "allmip.png");
         group2.getFiles().put(FileType.ReferenceMip, "refmip.png");
-        
+
         LSMSummaryResult result = new LSMSummaryResult();
         result.getGroups().add(group1);
         result.getGroups().add(group2);
-        
-        Multiset<String> names = DomainUtils.get2dTypeNames((HasFileGroups)result);
+
+        Multiset<String> names = DomainUtils.get2dTypeNames((HasFileGroups) result);
         Assert.assertEquals(3, names.elementSet().size());
         Assert.assertEquals(2, names.count("AllMip"));
         Assert.assertEquals(1, names.count("SignalMip"));
         Assert.assertEquals(1, names.count("ReferenceMip"));
     }
-    
+
     @Test
     public void testGetAnnotationsByDomainObjectId() {
 
         List<Annotation> annotations = new ArrayList<>();
-        
+
         Annotation a1 = new Annotation();
         a1.setTarget(Reference.createFor("c1", 1L));
         annotations.add(a1);
-        
+
         Annotation a2 = new Annotation();
         a2.setTarget(Reference.createFor("c1", 1L));
         annotations.add(a2);
-        
+
         Annotation a3 = new Annotation();
         a3.setTarget(Reference.createFor("c1", 2L));
         annotations.add(a3);
-        
+
         Annotation a4 = new Annotation();
         a4.setTarget(Reference.createFor("c2", 3L));
         annotations.add(a4);
 
-        ListMultimap<Long,Annotation> map = DomainUtils.getAnnotationsByDomainObjectId(annotations);
+        ListMultimap<Long, Annotation> map = DomainUtils.getAnnotationsByDomainObjectId(annotations);
         Assert.assertEquals(3, map.keySet().size());
         Assert.assertEquals(Arrays.asList(a1, a2), map.get(1L));
         Assert.assertEquals(Arrays.asList(a3), map.get(2L));
@@ -122,49 +124,50 @@ public class DomainUtilsTest {
         sample.setId(23L);
         sample.setAge("A");
 
-        Assert.assertEquals(23L, DomainUtils.getAttributeValue(sample, "id")); 
+        Assert.assertEquals(23L, DomainUtils.getAttributeValue(sample, "id"));
         Assert.assertEquals("A", DomainUtils.getAttributeValue(sample, "age"));
     }
 
     @Test
-    public void testGetClassNameForSearchType() throws Exception {
+    public void testGetClassNameForSearchType() {
         Assert.assertEquals(Sample.class.getSimpleName(), DomainUtils.getClassNameForSearchType("sample"));
         Assert.assertEquals(LSMImage.class.getSimpleName(), DomainUtils.getClassNameForSearchType("lsmImage"));
+        Assert.assertEquals(ColorDepthLibrary.class.getSimpleName(), DomainUtils.getClassNameForSearchType("cdmipLibrary"));
     }
 
     @Test
-    public void testGetCollectionName() throws Exception {
+    public void testGetCollectionName() {
         Assert.assertEquals("sample", DomainUtils.getCollectionName(Sample.class));
         Assert.assertEquals("image", DomainUtils.getCollectionName(LSMImage.class));
     }
 
     @Test
-    public void testGetCollectionName2() throws Exception {
+    public void testGetCollectionName2() {
         Assert.assertEquals("sample", DomainUtils.getCollectionName(new Sample()));
         Assert.assertEquals("image", DomainUtils.getCollectionName(new LSMImage()));
     }
-    
+
     @Test
-    public void testGetCollectionName3() throws Exception {
+    public void testGetCollectionName3() {
         Assert.assertEquals("sample", DomainUtils.getCollectionName(Sample.class.getSimpleName()));
         Assert.assertEquals("image", DomainUtils.getCollectionName(LSMImage.class.getSimpleName()));
     }
 
     @Test
-    public void testGetCollectionNames() throws Exception {
+    public void testGetCollectionNames() {
         Assert.assertTrue(!DomainUtils.getCollectionNames().isEmpty());
         Assert.assertTrue(DomainUtils.getCollectionNames().contains("sample"));
     }
 
     @Test
-    public void testGetDefault3dImageFilePath() throws Exception {
-        
+    public void testGetDefault3dImageFilePath() {
+
         SampleProcessingResult result = new SampleProcessingResult();
         result.setFilepath("/root");
         result.getFiles().put(FileType.LosslessStack, "my.v3dpbd");
-        
+
         Assert.assertEquals("/root/my.v3dpbd", DomainUtils.getDefault3dImageFilePath(result));
-        
+
         result.getFiles().put(FileType.VisuallyLosslessStack, "my.h5j");
         Assert.assertEquals("/root/my.v3dpbd", DomainUtils.getDefault3dImageFilePath(result));
 
@@ -173,30 +176,30 @@ public class DomainUtilsTest {
     }
 
     @Test
-    public void testGetFilepath() throws Exception {
-        
+    public void testGetFilepath() {
+
         SampleProcessingResult result = new SampleProcessingResult();
         result.setFilepath("/root");
         result.getFiles().put(FileType.LosslessStack, "my.v3dpbd");
 
-        Assert.assertEquals("/root/my.v3dpbd", DomainUtils.getFilepath(result, FileType.LosslessStack));           
+        Assert.assertEquals("/root/my.v3dpbd", DomainUtils.getFilepath(result, FileType.LosslessStack));
     }
 
     @Test
-    public void testGetIds() throws Exception {
-    
+    public void testGetIds() {
+
         Sample d1 = new Sample();
         d1.setId(1L);
         Sample d2 = new Sample();
         d2.setId(2L);
         Sample d3 = new Sample();
         d3.setId(3L);
-        
+
         Assert.assertEquals(Arrays.asList(1L, 2L, 3L), DomainUtils.getIds(Arrays.asList(d1, d2, d3)));
     }
 
     @Test
-    public void testGetMapById() throws Exception {
+    public void testGetMapById() {
 
         Sample d1 = new Sample();
         d1.setId(1L);
@@ -204,8 +207,8 @@ public class DomainUtilsTest {
         d2.setId(2L);
         Sample d3 = new Sample();
         d3.setId(3L);
-        
-        Map<Long,Sample> map = DomainUtils.getMapById(Arrays.asList(d1, d2, d3));
+
+        Map<Long, Sample> map = DomainUtils.getMapById(Arrays.asList(d1, d2, d3));
         Assert.assertEquals(3, map.size());
         Assert.assertEquals(d1, map.get(1L));
         Assert.assertEquals(d2, map.get(2L));
@@ -213,7 +216,7 @@ public class DomainUtilsTest {
     }
 
     @Test
-    public void testGetMapByReference() throws Exception {
+    public void testGetMapByReference() {
 
         Sample d1 = new Sample();
         d1.setId(1L);
@@ -221,27 +224,27 @@ public class DomainUtilsTest {
         d2.setId(2L);
         Sample d3 = new Sample();
         d3.setId(3L);
-        
-        Map<Reference,Sample> map = DomainUtils.getMapByReference(Arrays.asList(d1, d2, d3));
+
+        Map<Reference, Sample> map = DomainUtils.getMapByReference(Arrays.asList(d1, d2, d3));
         Assert.assertEquals(3, map.size());
         Assert.assertEquals(d1, map.get(Reference.createFor(Sample.class.getSimpleName(), 1L)));
         Assert.assertEquals(d2, map.get(Reference.createFor(Sample.class.getSimpleName(), 2L)));
         Assert.assertEquals(d3, map.get(Reference.createFor(Sample.class.getSimpleName(), 3L)));
     }
-    
+
     @Test
-    public void testGetNameFromSubjectKey() throws Exception {
+    public void testGetNameFromSubjectKey() {
         Assert.assertEquals("joe", DomainUtils.getNameFromSubjectKey("user:joe"));
         Assert.assertEquals("workstation_users", DomainUtils.getNameFromSubjectKey("group:workstation_users"));
     }
 
     @Test
-    public void testGetObjectClassByName() throws Exception {
+    public void testGetObjectClassByName() {
         Assert.assertEquals(Sample.class, DomainUtils.getObjectClassByName(Sample.class.getName()));
     }
 
     @Test
-    public void testGetObjectClasses() throws Exception {
+    public void testGetObjectClasses() {
         HashSet<Class<? extends DomainObject>> classes = Sets.newHashSet(DomainUtils.getObjectClasses(Image.class));
         Assert.assertTrue(classes.contains(Image.class));
         Assert.assertTrue(classes.contains(Image2d.class));
@@ -250,16 +253,16 @@ public class DomainUtilsTest {
     }
 
     @Test
-    public void testGetAllObjectClasses() throws Exception {
+    public void testGetAllObjectClasses() {
         Set<Class<? extends DomainObject>> objectClasses = DomainUtils.getObjectClasses(DomainObject.class);
         Assert.assertTrue(objectClasses.contains(TreeNode.class));
         Assert.assertTrue(objectClasses.contains(Workspace.class));
         Assert.assertTrue(objectClasses.contains(Sample.class));
         Assert.assertTrue(objectClasses.contains(NeuronFragment.class));
     }
-    
+
     @Test
-    public void testGetObjectClasses2() throws Exception {
+    public void testGetObjectClasses2() {
         HashSet<Class<? extends DomainObject>> classes = Sets.newHashSet(DomainUtils.getObjectClasses("image"));
         Assert.assertTrue(classes.contains(Image.class));
         Assert.assertTrue(classes.contains(Image2d.class));
@@ -268,7 +271,7 @@ public class DomainUtilsTest {
     }
 
     @Test
-    public void testGetReferences() throws Exception {
+    public void testGetReferences() {
 
         Sample d1 = new Sample();
         d1.setId(1L);
@@ -276,7 +279,7 @@ public class DomainUtilsTest {
         d2.setId(2L);
         Sample d3 = new Sample();
         d3.setId(3L);
-        
+
         List<Reference> refs = DomainUtils.getReferences(Arrays.asList(d1, d2, d3));
         Assert.assertEquals(Reference.createFor(d1), refs.get(0));
         Assert.assertEquals(Reference.createFor(d2), refs.get(1));
@@ -284,21 +287,21 @@ public class DomainUtilsTest {
     }
 
     @Test
-    public void testGetSearchAttributes() throws Exception {
-        
+    public void testGetSearchAttributes() throws InvocationTargetException, IllegalAccessException {
+
         List<DomainObjectAttribute> attrs = DomainUtils.getSearchAttributes(Sample.class);
         Assert.assertFalse(attrs.isEmpty());
 
         DomainObjectAttribute ageAttr = null;
-        for(DomainObjectAttribute attr : attrs) {
+        for (DomainObjectAttribute attr : attrs) {
             if (attr.getName().equals("age")) {
                 ageAttr = attr;
             }
         }
-        
+
         Assert.assertNotNull(ageAttr);
         Assert.assertEquals("Age", ageAttr.getLabel());
-        
+
         Sample sample = new Sample();
         sample.setAge("A");
 
@@ -308,13 +311,13 @@ public class DomainUtilsTest {
     }
 
     @Test
-    public void testGetSearchClasses() throws Exception {
+    public void testGetSearchClasses() {
         Assert.assertFalse(DomainUtils.getSearchClasses().isEmpty());
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testGetSubClasses() throws Exception {
+    public void testGetSubClasses() {
         Set<Class<? extends DomainObject>> subClasses = DomainUtils.getSubClasses(Image.class);
         Assert.assertTrue(subClasses.contains(Image2d.class));
         Assert.assertTrue(subClasses.contains(Image3d.class));
@@ -322,33 +325,33 @@ public class DomainUtilsTest {
     }
 
     @Test
-    public void testGetTypeFromSubjectKey() throws Exception {
+    public void testGetTypeFromSubjectKey() {
         Assert.assertEquals("group", DomainUtils.getTypeFromSubjectKey(SubjectRole.WorkstationUsers.getRole()));
     }
-    
+
     @Test
-    public void testHasReadAccess() throws Exception {
+    public void testHasReadAccess() {
         Sample sample = new Sample();
         sample.getReaders().add("user:joe");
         Assert.assertTrue(DomainUtils.hasReadAccess(sample, "user:joe"));
     }
-    
+
     @Test
-    public void testHasWriteAccess() throws Exception {
+    public void testHasWriteAccess() {
         Sample sample = new Sample();
         sample.getWriters().add("user:joe");
         Assert.assertTrue(DomainUtils.hasWriteAccess(sample, "user:joe"));
     }
 
     @Test
-    public void testIsOwner() throws Exception {
+    public void testIsOwner() {
         Sample sample = new Sample();
         sample.setOwnerKey("user:joe");
         Assert.assertTrue(DomainUtils.isOwner(sample, "user:joe"));
     }
 
     @Test
-    public void testSetFilepath() throws Exception {
+    public void testSetFilepath() {
         SampleProcessingResult result = new SampleProcessingResult();
         result.setFilepath("/root");
         DomainUtils.setFilepath(result, FileType.LosslessStack, "my.v3dpbd");
@@ -356,8 +359,8 @@ public class DomainUtilsTest {
     }
 
     @Test
-    public void testSortSubjects() throws Exception {
-        
+    public void testSortSubjects() {
+
         Subject s1 = new User();
         s1.setKey("user:joe");
         s1.setFullName("Joe User");
@@ -369,11 +372,10 @@ public class DomainUtilsTest {
         Subject s3 = new Group();
         s3.setKey("group:users");
         s3.setFullName("User Group");
-        
+
         List<Subject> subjects = Arrays.asList(s1, s2, s3);
         DomainUtils.sortSubjects(subjects);
-        
+
         Assert.assertEquals(Arrays.asList(s3, s2, s1), subjects);
-    }    
-    
+    }
 }
