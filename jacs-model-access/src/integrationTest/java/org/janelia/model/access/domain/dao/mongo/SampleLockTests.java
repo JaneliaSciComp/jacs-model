@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.model.access.domain.DomainDAO;
-import org.janelia.model.access.domain.dao.DomainDAOManager;
+import org.janelia.model.access.domain.dao.ITestDomainDAOManager;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.sample.SampleLock;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class SampleLockTests extends AbstractMongoDaoTest {
 
-    private static final DomainDAO dao = DomainDAOManager.getInstance().getDao();
+    private static final DomainDAO dao = ITestDomainDAOManager.getInstance().getDao();
 
     private static final String testName = "unittester";
     private static final String testUser = "user:"+testName;

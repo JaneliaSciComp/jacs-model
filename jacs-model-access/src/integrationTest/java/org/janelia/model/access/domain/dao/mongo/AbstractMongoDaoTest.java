@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 
-import org.janelia.model.access.domain.dao.DomainDAOManager;
+import org.janelia.model.access.domain.dao.ITestDomainDAOManager;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoDBHelper;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoModule;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.RegistryHelper;
@@ -21,7 +21,7 @@ public class AbstractMongoDaoTest {
         testObjectMapper = new ObjectMapper().registerModule(new MongoModule());
         testMongoClient = MongoDBHelper.createMongoClient(
                 null,
-                DomainDAOManager.DATABASE_HOST,
+                ITestDomainDAOManager.DATABASE_HOST,
                 null,
                 null,
                 null,
@@ -35,7 +35,7 @@ public class AbstractMongoDaoTest {
                 0,
                 () -> RegistryHelper.createCodecRegistryWithJacsksonEncoder(testObjectMapper)
         );
-        testMongoDatabase = MongoDBHelper.createMongoDatabase(testMongoClient, DomainDAOManager.DATABASE_NAME);
+        testMongoDatabase = MongoDBHelper.createMongoDatabase(testMongoClient, ITestDomainDAOManager.DATABASE_NAME);
     }
 
     @AfterClass

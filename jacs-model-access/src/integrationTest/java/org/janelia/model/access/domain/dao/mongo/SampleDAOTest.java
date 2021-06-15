@@ -3,9 +3,8 @@ package org.janelia.model.access.domain.dao.mongo;
 import java.util.List;
 
 import org.janelia.model.access.domain.DomainDAO;
-import org.janelia.model.access.domain.dao.DomainDAOManager;
+import org.janelia.model.access.domain.dao.ITestDomainDAOManager;
 import org.janelia.model.domain.sample.DataSet;
-import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.User;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.junit.Before;
@@ -22,7 +21,7 @@ public class SampleDAOTest extends AbstractMongoDaoTest {
     private static final String testName = "unittester";
     private static final String testUser = "user:"+testName;
     private static final String testDataSetIdentifier = testUser+"_screen";
-    private static final DomainDAO dao = DomainDAOManager.getInstance().getDao();
+    private static final DomainDAO dao = ITestDomainDAOManager.getInstance().getDao();
 
     private SubjectMongoDao subjectMongoDao;
     private WorkspaceNodeMongoDao workspaceNodeMongoDao;
