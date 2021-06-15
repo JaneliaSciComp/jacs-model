@@ -1,33 +1,17 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 
-import org.bson.Document;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
-import org.janelia.model.access.domain.dao.SetFieldValueHandler;
-import org.janelia.model.access.domain.nodetools.NodeUtils;
-import org.janelia.model.domain.DomainObject;
-import org.janelia.model.domain.DomainUtils;
-import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
-import org.janelia.model.domain.sample.DataSet;
-import org.janelia.model.domain.sample.Sample;
-import org.janelia.model.domain.workspace.Node;
-import org.janelia.model.domain.workspace.TreeNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;

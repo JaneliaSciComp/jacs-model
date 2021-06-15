@@ -34,7 +34,6 @@ public class LineRelease extends AbstractDomainObject implements Node {
     @SearchTraversal({})
     private List<Reference> children = new ArrayList<>();
 
-
     public String getTargetWebsite() {
         return targetWebsite;
     }
