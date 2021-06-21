@@ -49,6 +49,10 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
     @SearchAttribute(key="ninstance_txt",label="Neuron Instance")
     private String neuronInstance;
 
+    // Denormalized from EMBody
+    @SearchAttribute(key="status_txt",label="Status",facet="status_s")
+    private String neuronStatus;
+
     private String publicImageUrl;
 
     private String publicThumbnailUrl;
