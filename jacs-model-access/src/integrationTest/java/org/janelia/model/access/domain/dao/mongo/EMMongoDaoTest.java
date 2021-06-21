@@ -179,7 +179,7 @@ public class EMMongoDaoTest extends AbstractMongoDaoTest {
                     .filter(f -> f.getDataSetRef().getTargetId().equals(testDataSet.getId()))
                     .map(AbstractDomainObject::getId).collect(Collectors.toSet());
 
-            List<EMBody> bodies = emBodyDao.getBodiesForDataSet(testDataSet);
+            List<EMBody> bodies = emBodyDao.getBodiesForDataSet(testDataSet, 0, -1);
             Assert.assertFalse(bodies.isEmpty());
 
             for (EMBody body : bodies) {
@@ -191,6 +191,25 @@ public class EMMongoDaoTest extends AbstractMongoDaoTest {
             Assert.assertEquals(testIds, ids);
         }
 
+    }
+
+    @Test
+    public void getBodiesByName() {
+        for (EMDataSet testDataSet : testDataSets) {
+
+            Set<String> testNames = testBodies.stream()
+                    .filter(f -> f.getDataSetRef().getTargetId().equals(testDataSet.getId()))
+                    .map(AbstractDomainObject::getName)
+                    .collect(Collectors.toSet());
+
+            List<EMBody> bodies = emBodyDao.getBodiesWithNameForDataSet(testDataSet, testNames, 0, -1);
+            Assert.assertFalse(bodies.isEmpty());
+
+            for (EMBody body : bodies) {
+                Assert.assertEquals(testDataSet.getId(), body.getDataSetRef().getTargetId());
+                Assert.assertTrue(testNames.contains(body.getName()));
+            }
+        }
     }
 
     @Test
