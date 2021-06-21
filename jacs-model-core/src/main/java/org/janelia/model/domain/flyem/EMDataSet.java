@@ -1,6 +1,7 @@
 package org.janelia.model.domain.flyem;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.gui.search.Filtering;
@@ -25,8 +26,11 @@ public class EMDataSet extends AbstractDomainObject implements Filtering {
     @SearchAttribute(key="version_txt",label="Version")
     private String version;
 
-    @SearchAttribute(key="published_b",label="Is Published",facet="published_s")
+    @SearchAttribute(key="published_b",label="Is Published",facet="published_b")
     private boolean published;
+
+    @SearchAttribute(key="active_b",label="Is Active",facet="active_b")
+    private boolean active;
 
     @JsonIgnore
     private List<Criteria> lazyCriteria;
@@ -45,6 +49,14 @@ public class EMDataSet extends AbstractDomainObject implements Filtering {
 
     public void setPublished(boolean published) {
         this.published = published;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     @SearchAttribute(key="identifier_txt",label="Identifier")
@@ -84,6 +96,10 @@ public class EMDataSet extends AbstractDomainObject implements Filtering {
     public List<Criteria> getCriteriaList() {
         if (lazyCriteria==null) {
             lazyCriteria = new ArrayList<>();
+            FacetCriteria activeFlag = new FacetCriteria();
+            activeFlag.setAttributeName("active");
+            activeFlag.setValues(Sets.newHashSet("true"));
+            lazyCriteria.add(activeFlag);
             FacetCriteria dataSet = new FacetCriteria();
             dataSet.setAttributeName("dataSetIdentifier");
             dataSet.getValues().add(getDataSetIdentifier());
