@@ -38,6 +38,9 @@ public class EMBody extends AbstractDomainObject implements HasFiles {
     @SearchAttribute(key="voxel_l",label="Num Voxels")
     private Long voxelSize;
 
+    @SearchAttribute(key="status_txt",label="Status Label")
+    private String statusLabel;
+
     private Map<FileType, String> files = new HashMap<>();
 
     public Reference getDataSetRef() {
@@ -106,5 +109,13 @@ public class EMBody extends AbstractDomainObject implements HasFiles {
     @JsonIgnore
     public void setBodyId(Long bodyId) {
         setName(bodyId.toString());
+    }
+
+    public String getStatusLabel() {
+        return statusLabel;
+    }
+
+    public void setStatusLabel(String statusLabel) {
+        this.statusLabel = statusLabel;
     }
 }
