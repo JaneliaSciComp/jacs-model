@@ -35,7 +35,7 @@ public class SampleMongoDao extends AbstractDomainObjectMongoDao<Sample> impleme
         return find(
                 MongoDaoHelper.createFilterCriteria(
                         CollectionUtils.isEmpty(dataSetIds) ? null : Filters.in("dataSet", dataSetIds),
-                        CollectionUtils.isEmpty(sampleNames) ? null : Filters.in("dataSet", sampleNames),
+                        CollectionUtils.isEmpty(sampleNames) ? null : Filters.in("name", sampleNames),
                         CollectionUtils.isEmpty(slideCodes) ? null : Filters.in("slideCode", slideCodes)),
                 null,
                 offset,
