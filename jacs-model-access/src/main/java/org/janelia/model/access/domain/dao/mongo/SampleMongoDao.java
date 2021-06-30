@@ -1,11 +1,13 @@
 package org.janelia.model.access.domain.dao.mongo;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import javax.inject.Inject;
 
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -30,16 +32,25 @@ public class SampleMongoDao extends AbstractDomainObjectMongoDao<Sample> impleme
     public List<Sample> findMatchingSample(Collection<String> dataSetIds,
                                            Collection<String> sampleNames,
                                            Collection<String> slideCodes,
+                                           List<String> includedSampleFields,
+                                           List<String> excludedSampleFields,
                                            long offset,
                                            int length) {
-        return find(
-                MongoDaoHelper.createFilterCriteria(
-                        CollectionUtils.isEmpty(dataSetIds) ? null : Filters.in("dataSet", dataSetIds),
-                        CollectionUtils.isEmpty(sampleNames) ? null : Filters.in("name", sampleNames),
-                        CollectionUtils.isEmpty(slideCodes) ? null : Filters.in("slideCode", slideCodes)),
+        return MongoDaoHelper.findPipeline(
+
+                Collections.singletonList(Aggregates.match(
+                        MongoDaoHelper.createFilterCriteria(
+                                CollectionUtils.isEmpty(dataSetIds) ? null : Filters.in("dataSet", dataSetIds),
+                                CollectionUtils.isEmpty(sampleNames) ? null : Filters.in("name", sampleNames),
+                                CollectionUtils.isEmpty(slideCodes) ? null : Filters.in("slideCode", slideCodes))
+                        )
+                ),
+                includedSampleFields,
+                excludedSampleFields,
                 null,
                 offset,
                 length,
+                mongoCollection,
                 getEntityType());
     }
 }

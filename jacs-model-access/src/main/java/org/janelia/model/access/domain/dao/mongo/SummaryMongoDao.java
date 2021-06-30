@@ -76,6 +76,8 @@ public class SummaryMongoDao extends AbstractMongoDao implements SummaryDao {
         List<Document> diskUsage = MongoDaoHelper.findPipeline(
                 diskUsagePipeline,
                 null,
+                null,
+                null,
                 0,
                 -1,
                 getEntityCollection(DataSet.class),

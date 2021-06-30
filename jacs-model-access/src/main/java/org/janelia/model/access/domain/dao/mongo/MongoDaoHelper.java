@@ -19,6 +19,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
@@ -139,17 +140,40 @@ class MongoDaoHelper {
         return results.sort(sortCriteria);
     }
 
-    static <T, R> List<R> findPipeline(List<Bson> aggregationPipeline, Bson sortCriteria, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
+    static <T, R> List<R> findPipeline(List<Bson> aggregationPipeline,
+                                       List<String> includedFields,
+                                       List<String> excludedFields,
+                                       Bson sortCriteria,
+                                       long offset,
+                                       int length,
+                                       MongoCollection<T> mongoCollection,
+                                       Class<R> resultType) {
         List<R> results = new ArrayList<>();
-        aggregationPipelineIterator(aggregationPipeline, sortCriteria, offset, length, mongoCollection, resultType)
+        aggregationPipelineIterator(aggregationPipeline, includedFields, excludedFields, sortCriteria, offset, length, mongoCollection, resultType)
                 .forEach(results::add);
         return results;
     }
 
-    static <T, R> Iterable<R> aggregationPipelineIterator(List<Bson> aggregationPipeline, Bson sortCriteria, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
+    static <T, R> Iterable<R> aggregationPipelineIterator(List<Bson> aggregationPipeline,
+                                                          List<String> includedFields,
+                                                          List<String> excludedFields,
+                                                          Bson sortCriteria,
+                                                          long offset,
+                                                          int length,
+                                                          MongoCollection<T> mongoCollection,
+                                                          Class<R> resultType) {
         ImmutableList.Builder<Bson> aggregatePipelineBuilder = ImmutableList.builder();
         if (CollectionUtils.isNotEmpty(aggregationPipeline)) {
             aggregatePipelineBuilder.addAll(aggregationPipeline);
+        }
+        if (CollectionUtils.isNotEmpty(includedFields)) {
+            aggregatePipelineBuilder.add(
+                    Aggregates.project(Projections.include(includedFields))
+            );
+        } else if (CollectionUtils.isNotEmpty(excludedFields)) {
+            aggregatePipelineBuilder.add(
+                    Aggregates.project(Projections.exclude(excludedFields))
+            );
         }
         if (sortCriteria != null) {
             aggregatePipelineBuilder.add(Aggregates.sort(sortCriteria));

@@ -80,6 +80,8 @@ public abstract class AbstractNodeMongoDao<T extends Node> extends AbstractDomai
                             )
                     ),
                     null,
+                    null,
+                    null,
                     0,
                     -1,
                     mongoCollection,

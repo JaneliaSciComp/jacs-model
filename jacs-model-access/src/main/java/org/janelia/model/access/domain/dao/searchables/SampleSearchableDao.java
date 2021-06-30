@@ -29,8 +29,10 @@ public class SampleSearchableDao extends AbstractDomainSearchableDao<Sample> imp
     public List<Sample> findMatchingSample(Collection<String> dataSetIds,
                                            Collection<String> sampleNames,
                                            Collection<String> slideCodes,
+                                           List<String> includedSampleFields,
+                                           List<String> excludedSampleFields,
                                            long offset,
                                            int length) {
-        return sampleDao.findMatchingSample(dataSetIds, sampleNames, slideCodes, offset, length);
+        return sampleDao.findMatchingSample(dataSetIds, sampleNames, slideCodes, includedSampleFields, excludedSampleFields, offset, length);
     }
 }

@@ -12,6 +12,7 @@ public interface SampleDao extends DomainObjectDao<Sample> {
     List<Sample> findMatchingSample(Collection<String> dataSetIds,
                                     Collection<String> sampleNames,
                                     Collection<String> slideCodes,
+                                    List<String> includedSampleFields, List<String> excludedSampleFields,
                                     long offset,
                                     int length);
 }
