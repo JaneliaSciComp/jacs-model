@@ -165,4 +165,12 @@ public abstract class OntologyTerm implements HasIdentifier, HasName, Serializab
     public String toString() {
         return name;
     }
+
+    public String createAnnotationName(Annotation annotation) {
+        StringBuilder sb = new StringBuilder(annotation.getKey());
+        if (annotation.getValue() != null) {
+            sb.append(" = ").append(annotation.getValue());
+        }
+        return sb.toString();
+    }
 }

@@ -2,6 +2,7 @@ package org.janelia.model.access.domain.dao.searchables;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -14,6 +15,7 @@ import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ontology.Annotation;
+import org.janelia.model.domain.ontology.OntologyTermReference;
 
 /**
  * {@link Annotation} DAO.
@@ -34,6 +36,20 @@ public class AnnotationSearchableDao extends AbstractDomainSearchableDao<Annotat
     }
 
     @Override
+    public Annotation createAnnotation(String subjectKey, Reference target, OntologyTermReference ontologyTermReference, String value) {
+        Annotation persistedAnnotation = annotationDao.createAnnotation(subjectKey, target, ontologyTermReference, value);
+        indexAnnotationTarget(persistedAnnotation);
+        return persistedAnnotation;
+    }
+
+    @Override
+    public Annotation updateAnnotationValue(String subjectKey, Long annotationId, String value) {
+        Annotation persistedAnnotation = annotationDao.updateAnnotationValue(subjectKey, annotationId, value);
+        indexAnnotationTarget(persistedAnnotation);
+        return persistedAnnotation;
+    }
+
+    @Override
     public List<Annotation> findAnnotationsByTargets(Collection<Reference> references) {
         return annotationDao.findAnnotationsByTargets(references);
     }
@@ -51,7 +67,9 @@ public class AnnotationSearchableDao extends AbstractDomainSearchableDao<Annotat
     }
 
     private void indexAnnotationTarget(Annotation a) {
-        indexAnnotationTarget(a.getTarget());
+        if (a != null) {
+            indexAnnotationTarget(a.getTarget());
+        }
     }
 
     private void indexAnnotationTarget(Reference reference) {
@@ -74,8 +92,8 @@ public class AnnotationSearchableDao extends AbstractDomainSearchableDao<Annotat
         if (CollectionUtils.isNotEmpty(annotations)) {
             super.saveAll(annotations);
             List<? extends DomainObject> annotationTargets = referenceDomainObjectReadDao.findByReferences(annotations.stream()
-                    .map(a -> a.getTarget())
-                    .filter(ar -> ar != null)
+                    .map(Annotation::getTarget)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList())
             );
             domainObjectIndexer.indexDocumentStream(annotationTargets.stream());

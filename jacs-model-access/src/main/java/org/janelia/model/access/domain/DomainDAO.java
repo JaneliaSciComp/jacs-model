@@ -917,46 +917,6 @@ public class DomainDAO {
         throw new IllegalStateException("Error ontology category could not be found");
     }
 
-    public Annotation createAnnotation(String subjectKey, Reference target, OntologyTermReference ontologyTermReference, Object value) throws Exception {
-
-        log.debug("createAnnotation({}, target={}, ontologyTerm={}, value={})", subjectKey, target, ontologyTermReference, value);
-
-        Ontology ontology = getDomainObject(subjectKey, Ontology.class, ontologyTermReference.getOntologyId());
-        OntologyTerm ontologyTerm = ontology.findTerm(ontologyTermReference.getOntologyTermId());
-
-        OntologyTerm keyTerm = ontologyTerm;
-        OntologyTerm valueTerm = null;
-        String keyString = keyTerm.getName();
-        String valueString = value == null ? null : value.toString();
-
-        if (keyTerm instanceof EnumItem) {
-            keyTerm = ontologyTerm.getParent();
-            valueTerm = ontologyTerm;
-            keyString = keyTerm.getName();
-            valueString = valueTerm.getName();
-        }
-
-        final Annotation annotation = new Annotation();
-        annotation.setKey(keyString);
-        annotation.setValue(valueString);
-        annotation.setTarget(target);
-
-        annotation.setKeyTerm(new OntologyTermReference(ontology, keyTerm));
-        if (valueTerm != null) {
-            annotation.setValueTerm(new OntologyTermReference(ontology, valueTerm));
-        }
-
-        String tag = (annotation.getValue() == null ? annotation.getKey()
-                : annotation.getKey() + " = " + annotation.getValue());
-        annotation.setName(tag);
-
-        Annotation savedAnnotation = save(subjectKey, annotation);
-        log.trace("Saved annotation as " + savedAnnotation.getId());
-
-        // TODO: auto-share annotation based on auto-share template (this logic is currently in the client)
-        return savedAnnotation;
-    }
-
     // Data sets
 
     public List<DataSet> getDataSets() {
