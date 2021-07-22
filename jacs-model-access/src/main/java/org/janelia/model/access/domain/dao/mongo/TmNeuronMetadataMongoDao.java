@@ -1,13 +1,5 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -18,18 +10,23 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
-
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.bson.conversions.Bson;
-import org.janelia.model.access.domain.DomainDAO;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.*;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.*;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * {@link TmNeuronMetadata} Mongo DAO.
@@ -37,10 +34,8 @@ import org.slf4j.LoggerFactory;
 public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeuronMetadata> implements TmNeuronMetadataDao {
     private static final Logger LOG = LoggerFactory.getLogger(TmNeuronMetadataMongoDao.class);
 
-    private final DomainDAO domainDao;
     private final MongoDatabase mongoDatabase;
     private final DomainUpdateMongoHelper updateHelper;
-    private final TmNeuronBufferDao tmNeuronBufferDao;
 
     @Inject
     private GridFSMongoDao gridFSMongoDao;
@@ -49,14 +44,10 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     TmNeuronMetadataMongoDao(MongoDatabase mongoDatabase,
                              TimebasedIdentifierGenerator idGenerator,
                              DomainPermissionsMongoHelper permissionsHelper,
-                             DomainUpdateMongoHelper updateHelper,
-                             DomainDAO domainDao,
-                             TmNeuronBufferDao tmNeuronBufferDao) {
+                             DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
-        this.domainDao = domainDao;
         this.updateHelper = updateHelper;
         this.mongoDatabase = mongoDatabase;
-        this.tmNeuronBufferDao = tmNeuronBufferDao;
     }
 
     @Override
@@ -94,7 +85,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     public TmNeuronMetadata getTmNeuronMetadata(String subjectKey, TmWorkspace workspace, Long neuronId) {
         TmNeuronMetadata neuron = MongoDaoHelper.findById(neuronId, getNeuronCollection(workspace.getNeuronCollection()), TmNeuronMetadata.class);
         if (neuron.isLargeNeuron()) {
-            List<TmNeuronMetadata> list = new ArrayList<TmNeuronMetadata>();
+            List<TmNeuronMetadata> list = new ArrayList<>();
             list.add(neuron);
             hydrateLargeNeurons(list);
         }

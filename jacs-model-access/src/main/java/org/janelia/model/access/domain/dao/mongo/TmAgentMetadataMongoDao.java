@@ -4,9 +4,7 @@ import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.TmAgentDao;
-import org.janelia.model.access.domain.dao.TmReviewTaskDao;
 import org.janelia.model.domain.tiledMicroscope.TmAgentMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
 
 import javax.inject.Inject;

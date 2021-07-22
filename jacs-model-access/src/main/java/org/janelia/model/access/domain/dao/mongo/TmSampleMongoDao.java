@@ -2,16 +2,16 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.DomainDAO;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.workspace.TreeNode;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
-import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * {@link TmSample} Mongo DAO.
@@ -35,7 +35,7 @@ public class TmSampleMongoDao extends AbstractDomainObjectMongoDao<TmSample> imp
         try {
             TmSample sample = domainDao.save(subjectKey, tmSample);
             TreeNode folder = domainDao.getOrCreateDefaultTreeNodeFolder(subjectKey, DomainConstants.NAME_TM_SAMPLE_FOLDER);
-            domainDao.addChildren(subjectKey, folder, Arrays.asList(Reference.createFor(sample)));
+            domainDao.addChildren(subjectKey, folder, Collections.singletonList(Reference.createFor(sample)));
             return sample;
         } catch (Exception e) {
             throw new IllegalStateException(e);

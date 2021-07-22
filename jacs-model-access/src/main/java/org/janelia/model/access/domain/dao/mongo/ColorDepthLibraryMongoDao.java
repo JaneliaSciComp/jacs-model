@@ -1,31 +1,22 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import javax.inject.Inject;
-
 import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Accumulators;
-import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.UnwindOptions;
 import com.mongodb.client.model.UpdateOptions;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.ColorDepthLibraryDao;
-import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibraryUtils;
+
+import javax.inject.Inject;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * {@link ColorDepthLibrary} Mongo DAO.

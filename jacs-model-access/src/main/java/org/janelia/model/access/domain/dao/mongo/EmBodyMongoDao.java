@@ -2,20 +2,14 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
-import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
 import org.janelia.model.access.domain.dao.EmBodyDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.flyem.EMDataSet;
-import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
-import org.janelia.model.util.SortCriteria;
 
 import javax.inject.Inject;
-
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.Spliterator;
