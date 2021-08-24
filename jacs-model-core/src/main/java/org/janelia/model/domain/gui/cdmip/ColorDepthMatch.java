@@ -19,6 +19,7 @@ public class ColorDepthMatch {
     private Long gradientAreaGap;
     private Long highExpressionArea;
     private Double normalizedScore;
+    private Boolean mirrored;
 
     public Reference getImageRef() {
         return imageRef;
@@ -90,6 +91,14 @@ public class ColorDepthMatch {
 
     public void setNormalizedScore(Double normalizedScore) {
         this.normalizedScore = normalizedScore;
+    }
+
+    public Boolean getMirrored() {
+        return mirrored;
+    }
+
+    public void setMirrored(Boolean mirrored) {
+        this.mirrored = mirrored;
     }
 
     @Override
