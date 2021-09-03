@@ -18,6 +18,7 @@ public interface ColorDepthImageDao extends DomainObjectDao<ColorDepthImage> {
     Map<String, Integer> countColorDepthMIPsByAlignmentSpaceForLibrary(String library);
     List<ColorDepthLibrary> countColorDepthMIPsByAlignmentSpaceForAllLibraries();
     Optional<ColorDepthImage> findColorDepthImageByPath(String imagePath);
+    List<ColorDepthImage> findColorDepthMIPs(ColorDepthImageQuery cdmQuery);
     Stream<ColorDepthImage> streamColorDepthMIPs(ColorDepthImageQuery cdmQuery);
     void updatePublicUrls(ColorDepthImage cdmi);
     long addLibraryBySampleRefs(String libraryIdentifier,
