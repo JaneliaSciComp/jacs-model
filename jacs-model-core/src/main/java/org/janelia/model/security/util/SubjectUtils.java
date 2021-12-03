@@ -28,6 +28,15 @@ public class SubjectUtils {
         }
     }
 
+    public static boolean subjectIsInAnyGroup(Subject subject, Set<String> groupKeys) {
+        if (subject==null) return false;
+        if (subject instanceof User) {
+            User user = (User)subject;
+            return groupKeys.stream().anyMatch(user::hasGroupRead);
+        }
+        return false;
+    }
+
     public static boolean subjectIsInGroup(Subject subject, String groupKey) {
         if (subject==null) return false;
         if (subject instanceof User) {
