@@ -10,7 +10,7 @@ import java.util.Date;
 
 /**
  * A 3d image stack in LSM format, usually output from a microscope. 
- * 
+ *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @SearchType(key="lsmImage",label="LSM Image")
@@ -21,7 +21,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
 
     @SearchAttribute(key="sage_synced_b",label="Synchronized to SAGE",facet="sage_synced_b")
     private Boolean sageSynced = false;
-    
+
     @SearchAttribute(key="chancolors_txt",label="Channel Colors")
     private String channelColors;
 
@@ -39,13 +39,13 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     @SAGEAttribute(cvName="image_query", termName="create_date")
     @SearchAttribute(key="tmog_dt",label="TMOG Date")
     private Date tmogDate;
-    
+
     @SAGEAttribute(cvName="image_query", termName="id")
     @SearchAttribute(key="sage_id_i",label="SAGE Id")
     private Integer sageId;
 
     @SAGEAttribute(cvName="image_query", termName="line")
-    @SearchAttribute(key="line_txt",label="Line")    
+    @SearchAttribute(key="line_txt",label="Line")
     private String line;
 
     @SAGEAttribute(cvName="light_imagery", termName="publishing_name")
@@ -55,11 +55,11 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     @SAGEAttribute(cvName="light_imagery", termName="published_externally")
     @SearchAttribute(key="pubext_b",label="Published Externally")
     private String publishedExternally;
-    
+
     @SAGEAttribute(cvName="light_imagery", termName="representative")
     @SearchAttribute(key="rep_b",label="Representative image?")
     private Boolean representative;
-    
+
     @SAGEAttribute(cvName="light_imagery", termName="age")
     @SearchAttribute(key="age_txt",label="Age",facet="age_s")
     private String age;
@@ -82,7 +82,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private String bcCorrection2;
 
     @SAGEAttribute(cvName="light_imagery", termName="bits_per_sample")
-    @SearchAttribute(key="bps_s",label="Bits/Sample")
+    @SearchAttribute(key="bps_i",label="Bits/Sample")
     private Integer bitsPerSample;
 
     @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
@@ -105,7 +105,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     @SAGEAttribute(cvName="light_imagery", termName="driver")
     @SearchAttribute(key="driver_txt",label="Line Type",facet="driver_s")
     private String driver;
-    
+
     @SAGEAttribute(cvName="fly", termName="effector")
     @SearchAttribute(key="effector_txt",label="Effector")
     private String effector;
@@ -115,12 +115,20 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     private String effectorDescription;
 
     @SAGEAttribute(cvName="fly", termName="cross_barcode")
-    @SearchAttribute(key="cross_barcode_txt",label="Cross Barcode")
+    @SearchAttribute(key="cross_barcode_i",label="Cross Barcode")
     private Integer crossBarcode;
 
     @SAGEAttribute(cvName="fly", termName="cross_description")
     @SearchAttribute(key="cross_desc_txt",label="Cross Description")
     private String crossDescription;
+
+    @SAGEAttribute(cvName="light_imagery", termName="cross_project")
+    @SearchAttribute(key="cross_proj_txt",label="Cross Project")
+    private String crossProject;
+
+    @SAGEAttribute(cvName="light_imagery", termName="wish_list")
+    @SearchAttribute(key="wish_list_i",label="Cross Wish List Number")
+    private Integer crossWishListNum;
 
     @SAGEAttribute(cvName="fly", termName="lab_project")
     @SearchAttribute(key="lab_project_txt",label="Lab")
@@ -157,7 +165,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     @SAGEAttribute(cvName="light_imagery", termName="heat_shock_minutes")
     @SearchAttribute(key="heat_shock_minutes_txt",label="Heat Shock Age Minutes")
     private String heatShockMinutes;
-    
+
     @SAGEAttribute(cvName="light_imagery", termName="lsm_illumination_channel_1_name")
     @SearchAttribute(key="ic1_name_s",label="Illumination Channel #1 Name")
     private String illuminationChannel1Name;
@@ -318,11 +326,11 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     @SAGEAttribute(cvName="light_imagery", termName="qm")
     @SearchAttribute(key="qm_score_s",label="QM score")
     private String qmScore;
-    
+
     @SAGEAttribute(cvName="line_query", termName="organism")
     @SearchAttribute(key="organism_txt",label="Organism")
     private String organism;
-    
+
     @SAGEAttribute(cvName="line", termName="genotype")
     @SearchAttribute(key="genotype_txt",label="Line Description")
     private String genotype;
@@ -338,7 +346,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     @SAGEAttribute(cvName="line", termName="flycore_lab")
     @SearchAttribute(key="fclab_s",label="Fly Core Lab Id",facet="fclab_s")
     private String flycoreLabId;
-    
+
     @SAGEAttribute(cvName="line", termName="flycore_landing_site")
     @SearchAttribute(key="fclanding_txt",label="Fly Core Landing Site")
     private String flycoreLandingSite;
@@ -346,7 +354,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     @SAGEAttribute(cvName="line", termName="flycore_permission")
     @SearchAttribute(key="fcpermn_txt",label="Fly Core Permission",facet="fcpermn_s")
     private String flycorePermission;
-    
+
     @SAGEAttribute(cvName="line", termName="flycore_project")
     @SearchAttribute(key="fcproj_txt",label="Fly Core Project",facet="fcproj_s")
     private String flycoreProject;
@@ -354,7 +362,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     @SAGEAttribute(cvName="line", termName="flycore_project_subcat")
     @SearchAttribute(key="fcsubcat_txt",label="Fly Core Subcategory")
     private String flycorePSubcategory;
-    
+
     @SAGEAttribute(cvName="line", termName="hide")
     @SearchAttribute(key="linehide_txt",label="Hide Line?",display=false)
     private String lineHide;
@@ -391,7 +399,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     public boolean isLSMSageSynced() {
         return getSageSynced()!=null && getSageSynced();
     }
-    
+
     public String getChannelColors() {
         return channelColors;
     }
@@ -590,6 +598,22 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
 
     public void setCrossDescription(String crossDescription) {
         this.crossDescription = crossDescription;
+    }
+
+    public String getCrossProject() {
+        return crossProject;
+    }
+
+    public void setCrossProject(String crossProject) {
+        this.crossProject = crossProject;
+    }
+
+    public Integer getCrossWishListNum() {
+        return crossWishListNum;
+    }
+
+    public void setCrossWishListNum(Integer crossWishListNum) {
+        this.crossWishListNum = crossWishListNum;
     }
 
     public String getLabProject() {

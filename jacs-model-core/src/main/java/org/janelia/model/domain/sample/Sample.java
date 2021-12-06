@@ -60,6 +60,14 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="cross_desc_txt",label="Cross Description")
     private String crossDescription;
 
+    @SAGEAttribute(cvName="light_imagery", termName="cross_project")
+    @SearchAttribute(key="cross_proj_txt",label="Cross Project")
+    private String crossProject;
+
+    @SAGEAttribute(cvName="light_imagery", termName="wish_list")
+    @SearchAttribute(key="wish_list_i",label="Cross Wish List Number")
+    private Integer crossWishListNum;
+
     @SAGEAttribute(cvName="fly", termName="lab_project")
     @SearchAttribute(key="lab_project_txt",label="Lab")
     private String labProject;
@@ -119,7 +127,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SAGEAttribute(cvName="light_imagery", termName="family")
     @SearchAttribute(key="family_txt",label="Image Family",facet="family_s")
     private String imageFamily;
-    
+
     @SAGEAttribute(cvName="image_query", termName="line")
     @SearchAttribute(key="line_txt",label="Line")
     private String line;
@@ -127,14 +135,14 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SAGEAttribute(cvName="light_imagery", termName="vt_line")
     @SearchAttribute(key="vtline_txt",label="VT Line")
     private String vtLine;
-    
+
     @SAGEAttribute(cvName="light_imagery", termName="publishing_name")
     @SearchAttribute(key="pubname_txt",label="Publishing Name")
     private String publishingName;
 
     @SAGEAttribute(cvName="light_imagery", termName="published_externally")
     private String publishedExternally;
-    
+
     @SAGEAttribute(cvName="light_imagery", termName="slide_code")
     @SearchAttribute(key="slide_code_txt",label="Slide Code")
     private String slideCode;
@@ -153,7 +161,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     @SearchAttribute(key="visited_b",label="Visited")
     private Boolean visited = false;
-    
+
     @SearchAttribute(key="sage_synced_b",label="SAGE Synchronized",facet="sage_synced_b")
     private Boolean sageSynced = false;
 
@@ -169,7 +177,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     private Date completionDate;
 
     private boolean basicPostProcessingSupported = false;
-    
+
     private List<ObjectiveSample> objectiveSamples = new ArrayList<>();
 
     @SearchAttribute(key="blocked_b",label="Blocked")
@@ -225,7 +233,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
         }
         resortObjectiveSamples();
     }
-    
+
     @JsonIgnore
     public void addObjectiveSample(ObjectiveSample objectiveSample) {
         objectiveSample.setParent(this);
@@ -261,7 +269,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
         }
         return null;
     }
-    
+
     @JsonIgnore
     public List<String> getObjectives() {
         List<String> objectives = new ArrayList<>();
@@ -270,7 +278,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
         }
         return objectives;
     }
-    
+
     @JsonIgnore
     public <T extends PipelineResult> List<T> getResultsById(Class<T> resultClass, Long resultEntityId) {
         List<T> results = new ArrayList<>();
@@ -337,6 +345,22 @@ public class Sample extends AbstractDomainObject implements IsParent {
         this.crossDescription = crossDescription;
     }
 
+    public String getCrossProject() {
+        return crossProject;
+    }
+
+    public void setCrossProject(String crossProject) {
+        this.crossProject = crossProject;
+    }
+
+    public Integer getCrossWishListNum() {
+        return crossWishListNum;
+    }
+
+    public void setCrossWishListNum(Integer crossWishListNum) {
+        this.crossWishListNum = crossWishListNum;
+    }
+
     public String getLabProject() {
         return labProject;
     }
@@ -384,7 +408,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     public void setPublishedExternally(String publishedExternally) {
         this.publishedExternally = publishedExternally;
     }
-    
+
     public String getSlideCode() {
         return slideCode;
     }
@@ -657,7 +681,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     public boolean isSampleBlocked() {
         return getBlocked()!=null && getBlocked();
     }
-    
+
     public Boolean getBlocked() {
         return blocked;
     }
@@ -670,11 +694,11 @@ public class Sample extends AbstractDomainObject implements IsParent {
     public boolean isSamplePurged() {
         return purged!=null && purged;
     }
-    
+
     public Boolean getPurged() {
         return purged;
     }
-    
+
     public void setPurged(Boolean purged) {
         this.purged = purged;
     }
