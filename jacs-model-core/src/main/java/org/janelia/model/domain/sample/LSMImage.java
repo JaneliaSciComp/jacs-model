@@ -126,7 +126,7 @@ public class LSMImage extends Image3d implements HasAnatomicalArea {
     @SearchAttribute(key="cross_proj_txt",label="Cross Project")
     private String crossProject;
 
-    @SAGEAttribute(cvName="light_imagery", termName="wish_list")
+    @SAGEAttribute(cvName="fly", termName="wish_list")
     @SearchAttribute(key="wish_list_i",label="Cross Wish List Number")
     private Integer crossWishListNum;
 
