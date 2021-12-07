@@ -164,6 +164,14 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
         this.neuronInstance = neuronInstance;
     }
 
+    public String getNeuronStatus() {
+        return neuronStatus;
+    }
+
+    public void setNeuronStatus(String neuronStatus) {
+        this.neuronStatus = neuronStatus;
+    }
+
     @JsonProperty
     public Sample getSample() {
         return sample;
