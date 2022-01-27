@@ -40,7 +40,7 @@ public class PublishedImageMongoDao extends AbstractDomainObjectMongoDao<Publish
                 );
         if (publishedImages.size() > 1) {
             LOG.warn("More than one PublishedImage detected for slideCode=" + slideCode +
-                    ", alignementSpace=" + alignmentSpace + ", objective=" + objective);
+                    ", alignmentSpace=" + alignmentSpace + ", objective=" + objective);
         } else if (publishedImages.size() == 1) {
             return publishedImages.get(0);
         }
