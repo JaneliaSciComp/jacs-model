@@ -5,6 +5,7 @@ import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.PublishedImageDao;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.sample.PublishedImage;
 import org.junit.After;
 import org.junit.Assert;
@@ -60,6 +61,10 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
     private List<PublishedImage> createTestImages() {
         List<PublishedImage> images = new ArrayList<>();
 
+        // test images; we intend to use VisuallyLosslessStack immediately; I
+        //  threw in the two SkeletonOBJ/SWC in for more testing, even though
+        //  we don't intend to use them at this point in time (early 2022)
+
         PublishedImage image1 = new PublishedImage();
         image1.setLine("line 1");
         image1.setSampleRef(Reference.createFor("Sample#1234"));
@@ -69,10 +74,10 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
         image1.setSlideCode("line-date_1_A1");
         image1.setObjective("40x");
         image1.setAlignmentSpace("JRC2018_Unisex_20x_HR");
-        Map<String, String> imageMap1 = new HashMap<>();
-        imageMap1.put("alignment", "http://s3/images/etc");
-        imageMap1.put("mesh", "http://s3/meshes/etc");
-        image1.setImages(imageMap1);
+        Map<FileType, String> imageMap1 = new HashMap<>();
+        imageMap1.put(FileType.VisuallyLosslessStack, "http://s3/images/etc");
+        imageMap1.put(FileType.SkeletonOBJ, "http://s3/objs/etc");
+        image1.setFiles(imageMap1);
         images.add(image1);
 
         PublishedImage image2 = new PublishedImage();
@@ -84,10 +89,10 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
         image2.setSlideCode("line-date_2_B3");
         image2.setObjective("40x");
         image2.setAlignmentSpace("JRC2018_Unisex_20x_HR");
-        Map<String, String> imageMap2 = new HashMap<>();
-        imageMap2.put("alignment", "http://s3/images/etc2");
-        imageMap2.put("mesh", "http://s3/meshes/etc2");
-        image2.setImages(imageMap1);
+        Map<FileType, String> imageMap2 = new HashMap<>();
+        imageMap2.put(FileType.VisuallyLosslessStack, "http://s3/images/etc2");
+        imageMap2.put(FileType.SkeletonSWC, "http://s3/swcs/etc2");
+        image2.setFiles(imageMap1);
         images.add(image2);
 
         publishedImageDao.saveAll(images);
@@ -105,9 +110,9 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
             Assert.assertEquals(image.getId(), foundImage.getId());
             Assert.assertEquals(image.getSampleRef(), foundImage.getSampleRef());
             Assert.assertEquals(image.getTile(), foundImage.getTile());
-            for (String key: image.getImages().keySet()) {
-                Assert.assertTrue(foundImage.getImages().containsKey(key));
-                Assert.assertEquals(image.getImages().get(key), foundImage.getImages().get(key));
+            for (FileType key: image.getFiles().keySet()) {
+                Assert.assertTrue(foundImage.getFiles().containsKey(key));
+                Assert.assertEquals(image.getFiles().get(key), foundImage.getFiles().get(key));
             }
         }
     }

@@ -2,6 +2,8 @@ package org.janelia.model.domain.sample;
 
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.enums.FileType;
+import org.janelia.model.domain.interfaces.HasFiles;
 import org.janelia.model.domain.support.MongoMapped;
 
 import java.util.HashMap;
@@ -15,7 +17,7 @@ import java.util.Map;
  * @author <a href="mailto:olbrisd@janelia.hhmi.org">Donald J. Olbris</a>
  */
 @MongoMapped(collectionName="publishedImage", label="Published Image")
-public class PublishedImage extends AbstractDomainObject {
+public class PublishedImage extends AbstractDomainObject implements HasFiles {
 
     private Reference sampleRef;
 
@@ -27,7 +29,7 @@ public class PublishedImage extends AbstractDomainObject {
     private String objective;
     private String alignmentSpace;
 
-    private Map<String, String> images = new HashMap<>();
+    private Map<FileType, String> files = new HashMap<>();
 
     public Reference getSampleRef() {
         return sampleRef;
@@ -93,11 +95,13 @@ public class PublishedImage extends AbstractDomainObject {
         this.alignmentSpace = alignmentSpace;
     }
 
-    public Map<String, String> getImages() {
-        return images;
+    @Override
+    public Map<FileType, String> getFiles() {
+        return files;
     }
 
-    public void setImages(Map<String, String> images) {
-        this.images = images;
+    public void setFiles(Map<FileType, String> files) {
+        if (files==null) throw new IllegalArgumentException("Property cannot be null");
+        this.files = files;
     }
 }
