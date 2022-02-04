@@ -1,7 +1,6 @@
 package org.janelia.model.domain.files;
 
 import org.janelia.model.domain.AbstractDomainObject;
-import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
