@@ -33,7 +33,8 @@ import static org.junit.Assert.assertEquals;
 public class TreeNodeMongoDaoTest extends AbstractMongoDaoTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractNodeMongoDao.class);
-    private static final String TEST_OWNER = "user:test";
+    private static final String TEST_NAME = "unittester";
+    private static final String TEST_OWNER = "user:"+ TEST_NAME;
 
     private TreeNodeMongoDao treeNodeMongoDao;
     private DatasetMongoDao datasetMongoDao;
@@ -43,6 +44,7 @@ public class TreeNodeMongoDaoTest extends AbstractMongoDaoTest {
     public void setUp() {
         TimebasedIdentifierGenerator timebasedIdentifierGenerator = new TimebasedIdentifierGenerator(0);
         SubjectMongoDao subjectMongoDao = new SubjectMongoDao(testMongoDatabase, timebasedIdentifierGenerator);
+        subjectMongoDao.createUser(TEST_NAME, null, null);
         this.treeNodeMongoDao = new TreeNodeMongoDao(
                 testMongoDatabase,
                 timebasedIdentifierGenerator,
@@ -273,29 +275,26 @@ public class TreeNodeMongoDaoTest extends AbstractMongoDaoTest {
 
     private DataSet createTestDataSet(String name) {
         DataSet dataSet = new DataSet();
-        dataSet.setOwnerKey(TEST_OWNER);
         dataSet.setName(name);
-        datasetMongoDao.save(dataSet);
+        datasetMongoDao.saveBySubjectKey(dataSet, TEST_OWNER);
         LOG.trace("Saved {}", dataSet);
         return dataSet;
     }
 
     private Sample createTestSample(String name) {
         Sample sample = new Sample();
-        sample.setOwnerKey(TEST_OWNER);
         sample.setName(name);
         sample.setAge("A01");
         sample.setBlocked(false);
-        sampleMongoDao.save(sample);
+        sampleMongoDao.saveBySubjectKey(sample, TEST_OWNER);
         LOG.trace("Saved {}", sample);
         return sample;
     }
 
     private TreeNode createTestNode(String name) {
         TreeNode node = new TreeNode();
-        node.setOwnerKey(TEST_OWNER);
         node.setName(name);
-        treeNodeMongoDao.save(node);
+        treeNodeMongoDao.saveBySubjectKey(node, TEST_OWNER);
         LOG.trace("Saved {}", node);
         return node;
     }

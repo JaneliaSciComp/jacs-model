@@ -10,26 +10,24 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class SyncedPathDaoTest extends AbstractMongoDaoTest {
 
-    private static final String testName = "unittester";
-    private static final String testUser = "user:"+testName;
+    private static final String TEST_NAME = "unittester";
+    private static final String TEST_OWNER = "user:"+ TEST_NAME;
 
     private SubjectMongoDao subjectMongoDao;
     private SyncedPathDao syncedPathDao;
-
-    private List<SyncedPath> testPaths = new ArrayList<>();
-
 
     @Before
     public void setUp() {
         TimebasedIdentifierGenerator timebasedIdentifierGenerator = new TimebasedIdentifierGenerator(0);
         subjectMongoDao = new SubjectMongoDao(testMongoDatabase, timebasedIdentifierGenerator);
+        subjectMongoDao.createUser(TEST_NAME, null, null);
         syncedPathDao = new SyncedPathMongoDao(
                 testMongoDatabase,
                 timebasedIdentifierGenerator,
@@ -40,9 +38,6 @@ public class SyncedPathDaoTest extends AbstractMongoDaoTest {
 
     @After
     public void tearDown() {
-        for (SyncedPath test : testPaths) {
-            //syncedPathDao.delete(test);
-        }
     }
 
     @Test
@@ -52,20 +47,19 @@ public class SyncedPathDaoTest extends AbstractMongoDaoTest {
         syncedRoot.setFilepath("/test/file/path");
         syncedRoot.setExistsInStorage(true);
         syncedRoot.addSyncClass(N5Container.class);
-        syncedPathDao.save(syncedRoot);
-        testPaths.add(syncedRoot);
+        syncedPathDao.saveBySubjectKey(syncedRoot, TEST_OWNER);
 
         N5Container n5 = new N5Container();
         n5.setRootRef(Reference.createFor(syncedRoot));
         n5.setFilepath("/test/file/path/something.n5");
         n5.setExistsInStorage(false);
-        syncedPathDao.save(n5);
-        testPaths.add(n5);
+        syncedPathDao.saveBySubjectKey(n5, TEST_OWNER);
 
-        List<SyncedPath> children = syncedPathDao.getChildren(syncedRoot, 0, 1);
-        SyncedPath savedN5 = children.get(0);
-
+        List<SyncedPath> children = syncedPathDao.getChildren(TEST_OWNER, syncedRoot, 0, 1);
+        assertNotNull(children);
         assertEquals(1, children.size());
+
+        SyncedPath savedN5 = children.get(0);
         assertEquals(n5.getId(), savedN5.getId());
         assertEquals(n5.getFilepath(), savedN5.getFilepath());
         assertEquals(n5.isExistsInStorage(), savedN5.isExistsInStorage());

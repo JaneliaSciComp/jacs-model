@@ -46,7 +46,7 @@ public class ColorDepthImageDaoTest extends AbstractMongoDaoTest {
                 createColorDepthImage("i3", ImmutableSet.of("l1"), "a2"),
                 createColorDepthImage("i4", ImmutableSet.of("l2"), "a2"),
                 createColorDepthImage("i5", ImmutableSet.of("l3"), "a3"))
-                .peek(cdmip -> colorDepthImageDao.save(cdmip))
+                .peek(cdmip -> colorDepthImageDao.saveBySubjectKey(cdmip, TEST_OWNER))
                 .collect(Collectors.toList());
         class CountData {
             String library;
