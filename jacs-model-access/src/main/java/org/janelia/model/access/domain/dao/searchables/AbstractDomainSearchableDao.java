@@ -12,6 +12,7 @@ import org.janelia.model.access.domain.dao.DomainObjectDao;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.DomainObject;
+import org.janelia.model.domain.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +67,16 @@ public abstract class AbstractDomainSearchableDao<T extends DomainObject> implem
     @Override
     public List<T> findEntitiesReadableBySubjectKey(@Nullable String subjectKey, long offset, int length) {
         return domainObjectDao.findEntitiesReadableBySubjectKey(subjectKey, offset, length);
+    }
+
+    @Override
+    public List<T> findEntitiesByForeignKeyReadableBySubjectKey(String subjectKey, String foreignKey, Reference foreignRef) {
+        return findEntitiesByForeignKeyReadableBySubjectKey(subjectKey, foreignKey, foreignRef);
+    }
+
+    @Override
+    public List<T> findEntitiesByForeignKeyReadableBySubjectKey(@Nullable String subjectKey, String foreignKey, Reference foreignRef, long offset, int length) {
+        return findEntitiesByForeignKeyReadableBySubjectKey(subjectKey, foreignKey, foreignRef, offset, length);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.janelia.model.access.domain.dao;
 
 import org.janelia.model.domain.DomainObject;
+import org.janelia.model.domain.Reference;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -43,6 +44,32 @@ public interface DomainObjectReadDao<T extends DomainObject> extends ReadDao<T, 
      * @return
      */
     List<T> findEntitiesReadableBySubjectKey(@Nullable String subjectKey, long offset, int length);
+
+    /**
+     * Find domain entities readable by the provided subjectKey, with a given foreign key. If no subjectKey is provided
+     * it returns all entities with the foreign key.
+     *
+     * @param subjectKey key of authorized subject
+     * @param foreignKey name of the attribute holding a foreign key
+     * @param foreignRef value of the foreign identifier
+     * @return
+     */
+    default List<T> findEntitiesByForeignKeyReadableBySubjectKey(String subjectKey, String foreignKey, Reference foreignRef) {
+        return findEntitiesByForeignKeyReadableBySubjectKey(subjectKey, foreignKey, foreignRef);
+    }
+
+    /**
+     * Find domain entities readable by the provided subjectKey, with a given foreign key, in a paginated way.
+     * If no subjectKey is provided it returns all entities with the foreign key.
+     *
+     * @param subjectKey key of authorized subject
+     * @param foreignKey name of the attribute holding a foreign key
+     * @param foreignRef value of the foreign identifier
+     * @param offset index of first result to return
+     * @param length max number of results to return
+     * @return
+     */
+    List<T> findEntitiesByForeignKeyReadableBySubjectKey(@Nullable String subjectKey, String foreignKey, Reference foreignRef, long offset, int length);
 
     /**
      * Find domain entities by exact name.

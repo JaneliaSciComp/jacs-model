@@ -14,6 +14,6 @@ public interface SyncedPathDao extends DomainObjectDao<SyncedPath> {
      * @param length number of results to return
      * @return children of the given root
      */
-    List<SyncedPath> getChildren(SyncedRoot root, long offset, int length);
+    List<SyncedPath> getChildren(String subjectKey, SyncedRoot root, long offset, int length);
 
 }
