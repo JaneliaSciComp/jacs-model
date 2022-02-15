@@ -9,7 +9,7 @@ import org.janelia.model.domain.support.SearchType;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@SearchType(key="n5Container",label="N5 Container")
-public class N5Container extends NDContainer {
+@SearchType(key="zarrContainer",label="Zarr Container")
+public class ZarrContainer extends NDContainer {
 
 }

@@ -3,12 +3,16 @@ project(":jacs-model-access") {
         api project(":jacs-model-core")
 
         implementation JACKSON_DATABIND_LIB,
-                       JACKSON_DATATYPE_JODA_LIB,
-                       JAVAX_INJECT_API_LIB,
-                       JONGO_LIB,
-                       MONGODB_DRIVER_LIB,
-                       REFLECTIONS_LIB,
-                       SOLR_SEARCH_LIB
+                JACKSON_DATATYPE_JODA_LIB,
+                JAVAX_INJECT_API_LIB,
+                JONGO_LIB,
+                MONGODB_DRIVER_LIB,
+                REFLECTIONS_LIB,
+                SOLR_SEARCH_LIB
+
+        integrationTestImplementation SLF4J_LIB,
+                LOGBACK_CORE_LIB,
+                LOGBACK_CLASSIC_LIB
 
         implementation (HIBERNATE_LIB) {
             exclude group: 'javax.transaction'

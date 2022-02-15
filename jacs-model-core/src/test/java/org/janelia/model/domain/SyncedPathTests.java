@@ -1,5 +1,6 @@
 package org.janelia.model.domain;
 
+import org.janelia.model.domain.files.DiscoveryAgentType;
 import org.janelia.model.domain.files.N5Container;
 import org.janelia.model.domain.files.SyncedRoot;
 import org.junit.Test;
@@ -17,11 +18,11 @@ public class SyncedPathTests {
         SyncedRoot syncedRoot = new SyncedRoot();
         syncedRoot.setFilepath("/test/file/path");
         syncedRoot.setExistsInStorage(true);
-        syncedRoot.addSyncClass(N5Container.class);
+        syncedRoot.addDiscoveryAgent(DiscoveryAgentType.zarrDiscoveryAgent.name());
 
         assertEquals("/test/file/path", syncedRoot.getFilepath());
         assertTrue(syncedRoot.isExistsInStorage());
-        assertEquals(Collections.singleton(N5Container.class), syncedRoot.getSyncClasses());
+        assertEquals(Collections.singletonList(DiscoveryAgentType.zarrDiscoveryAgent.name()), syncedRoot.getDiscoveryAgents());
 
     }
 

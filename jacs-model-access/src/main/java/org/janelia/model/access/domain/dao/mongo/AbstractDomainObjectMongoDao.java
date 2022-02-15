@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
+import org.janelia.model.domain.Reference;
 
 /**
  * Abstract Domain DAO that can handle entity access.
@@ -102,6 +103,23 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
                     -1,
                     getEntityType());
         }
+    }
+
+    @Override
+    public List<T> findEntitiesByForeignKeyReadableBySubjectKey(String subjectKey, String foreignKey, Reference foreignRef) {
+        return findEntitiesByForeignKeyReadableBySubjectKey(subjectKey, foreignKey, foreignRef);
+    }
+
+    @Override
+    public List<T> findEntitiesByForeignKeyReadableBySubjectKey(@Nullable String subjectKey, String foreignKey, Reference foreignRef, long offset, int length) {
+        return find(
+                MongoDaoHelper.createFilterCriteria(
+                        Filters.eq(foreignKey, foreignRef),
+                        permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
+                null,
+                offset,
+                length,
+                getEntityType());
     }
 
     @Override
@@ -233,6 +251,9 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
 
     @Override
     public void save(T entity) {
+        if (entity.getOwnerKey()==null) {
+            throw new IllegalArgumentException("Null ownerKey is not permitted when saving a DomainObject");
+        }
         if (entity.getId() == null) {
             entity.setId(createNewId());
             Date now = new Date();

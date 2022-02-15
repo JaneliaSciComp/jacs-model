@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.interfaces.IsParent;
 import org.janelia.model.domain.support.SearchType;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a synchronized path to a top-level folder that is periodically searched for data sets
@@ -16,24 +16,29 @@ import java.util.Set;
 @SearchType(key="syncedRoot",label="Synchronized Folder")
 public class SyncedRoot extends SyncedPath implements IsParent {
 
-    private Set<Class<? extends SyncedPath>> syncClasses = new HashSet<>();
+    private List<String> discoveryAgents = new ArrayList<>();
 
-    public Set<Class<? extends SyncedPath>> getSyncClasses() {
-        return syncClasses;
+    /**
+     * Returns the names of DiscoveryAgentType representing the agents that are to be used by the synchronization
+     * service when processing this root.
+     * @see DiscoveryAgentType
+     * @return list of agent types
+     */
+    public List<String> getDiscoveryAgents() {
+        return discoveryAgents;
     }
 
-    public void setSyncClasses(Set<Class<? extends SyncedPath>> syncClasses) {
-        if (syncClasses==null) throw new IllegalArgumentException("Property cannot be null");
-        this.syncClasses = syncClasses;
+    public void setDiscoveryAgents(List<String> discoveryAgents) {
+        this.discoveryAgents = discoveryAgents;
     }
 
     @JsonIgnore
-    public void addSyncClass(Class<? extends SyncedPath>syncClass) {
-        syncClasses.add(syncClass);
+    public void addDiscoveryAgent(String discoveryAgent) {
+        discoveryAgents.add(discoveryAgent);
     }
 
     @JsonIgnore
-    public void removeSyncClass(Class<? extends SyncedPath>syncClass) {
-        syncClasses.remove(syncClass);
+    public void removeDiscoveryAgent(String discoveryAgent) {
+        discoveryAgents.remove(discoveryAgent);
     }
 }

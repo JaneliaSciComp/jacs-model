@@ -7,7 +7,7 @@ allprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'idea'
     group = 'org.janelia.jacs-model'
-    version = '2.50.0'
+    version = '2.51.0'
 }
 
 subprojects {
@@ -15,6 +15,14 @@ subprojects {
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
+
+    configurations {
+        provided
+        implementation.extendsFrom(provided)
+        integrationTestCompileOnly.extendsFrom(testCompileOnly)
+        integrationTestImplementation.extendsFrom(testImplementation)
+        integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+    }
 
     afterEvaluate {
         repositories {
@@ -26,14 +34,6 @@ subprojects {
             maven {
                 url "https://nexus.janelia.org/repository/maven-snapshots"
             }
-        }
-
-        configurations {
-            provided
-            implementation.extendsFrom(provided)
-            integrationTestCompileOnly.extendsFrom(testCompileOnly)
-            integrationTestImplementation.extendsFrom(testImplementation)
-            integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
         }
 
         sourceSets {
