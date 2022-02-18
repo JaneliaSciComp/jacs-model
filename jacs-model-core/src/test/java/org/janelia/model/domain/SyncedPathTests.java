@@ -18,11 +18,11 @@ public class SyncedPathTests {
         SyncedRoot syncedRoot = new SyncedRoot();
         syncedRoot.setFilepath("/test/file/path");
         syncedRoot.setExistsInStorage(true);
-        syncedRoot.addDiscoveryAgent(DiscoveryAgentType.zarrDiscoveryAgent.name());
+        syncedRoot.addDiscoveryAgent(DiscoveryAgentType.zarrDiscoveryAgent);
 
         assertEquals("/test/file/path", syncedRoot.getFilepath());
         assertTrue(syncedRoot.isExistsInStorage());
-        assertEquals(Collections.singletonList(DiscoveryAgentType.zarrDiscoveryAgent.name()), syncedRoot.getDiscoveryAgents());
+        assertEquals(Collections.singletonList(DiscoveryAgentType.zarrDiscoveryAgent), syncedRoot.getDiscoveryAgents());
 
     }
 

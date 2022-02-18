@@ -9,6 +9,7 @@ import org.janelia.model.domain.files.SyncedRoot;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SyncedPathMongoDao extends AbstractDomainObjectMongoDao<SyncedPath> implements SyncedPathDao {
 
@@ -18,6 +19,11 @@ public class SyncedPathMongoDao extends AbstractDomainObjectMongoDao<SyncedPath>
                    DomainPermissionsMongoHelper permissionsHelper,
                    DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
+    }
+
+    @Override
+    public List<SyncedRoot> getSyncedRoots(String subjectKey) {
+        return streamAllByClass(SyncedRoot.class).collect(Collectors.toList());
     }
 
     @Override

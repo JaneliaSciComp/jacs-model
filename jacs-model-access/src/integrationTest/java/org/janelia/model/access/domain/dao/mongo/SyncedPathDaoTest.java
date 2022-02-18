@@ -1,8 +1,11 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.SyncedPathDao;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.files.DiscoveryAgentType;
 import org.janelia.model.domain.files.N5Container;
 import org.janelia.model.domain.files.SyncedPath;
 import org.janelia.model.domain.files.SyncedRoot;
@@ -41,12 +44,32 @@ public class SyncedPathDaoTest extends AbstractMongoDaoTest {
     }
 
     @Test
+    public void testGetRoots() {
+
+        SyncedRoot syncedRoot = new SyncedRoot();
+        syncedRoot.setFilepath("/test/file/path");
+        syncedRoot.setExistsInStorage(true);
+        syncedRoot.addDiscoveryAgent(DiscoveryAgentType.n5DiscoveryAgent);
+        syncedPathDao.saveBySubjectKey(syncedRoot, TEST_OWNER);
+
+        SyncedRoot syncedRoot2 = new SyncedRoot();
+        syncedRoot2.setFilepath("/test/file/path");
+        syncedRoot2.setExistsInStorage(true);
+        syncedRoot2.addDiscoveryAgent(DiscoveryAgentType.n5DiscoveryAgent);
+        syncedPathDao.saveBySubjectKey(syncedRoot2, TEST_OWNER);
+
+        List<SyncedRoot> syncedRoots = syncedPathDao.getSyncedRoots(TEST_OWNER);
+        assertEquals(2, syncedRoots.size());
+        assertEquals(Sets.newHashSet(syncedRoot, syncedRoot2), Sets.newHashSet(syncedRoots));
+    }
+
+    @Test
     public void testGetChildren() {
 
         SyncedRoot syncedRoot = new SyncedRoot();
         syncedRoot.setFilepath("/test/file/path");
         syncedRoot.setExistsInStorage(true);
-        syncedRoot.addSyncClass(N5Container.class);
+        syncedRoot.addDiscoveryAgent(DiscoveryAgentType.n5DiscoveryAgent);
         syncedPathDao.saveBySubjectKey(syncedRoot, TEST_OWNER);
 
         N5Container n5 = new N5Container();

@@ -16,24 +16,24 @@ import java.util.List;
 @SearchType(key="syncedRoot",label="Synchronized Folder")
 public class SyncedRoot extends SyncedPath implements IsParent {
 
-    private List<String> discoveryAgents = new ArrayList<>();
+    private List<DiscoveryAgentType> discoveryAgents = new ArrayList<>();
 
     /**
-     * Returns the names of DiscoveryAgentType representing the agents that are to be used by the synchronization
+     * Returns the DiscoveryAgentTypes representing the agents that are to be used by the synchronization
      * service when processing this root.
      * @see DiscoveryAgentType
      * @return list of agent types
      */
-    public List<String> getDiscoveryAgents() {
+    public List<DiscoveryAgentType> getDiscoveryAgents() {
         return discoveryAgents;
     }
 
-    public void setDiscoveryAgents(List<String> discoveryAgents) {
+    public void setDiscoveryAgents(List<DiscoveryAgentType> discoveryAgents) {
         this.discoveryAgents = discoveryAgents;
     }
 
     @JsonIgnore
-    public void addDiscoveryAgent(String discoveryAgent) {
+    public void addDiscoveryAgent(DiscoveryAgentType discoveryAgent) {
         discoveryAgents.add(discoveryAgent);
     }
 
