@@ -8,6 +8,25 @@ import java.util.List;
 public interface SyncedPathDao extends DomainObjectDao<SyncedPath> {
 
     /**
+     * Create the given SyncedRoot. The id should be null.
+     * @param subjectKey subject who will own the SyncedRoot
+     * @param syncedRoot the SyncedRoot attributes to create
+     * @return saved SyncedRoot with id filled in
+     */
+    SyncedRoot createSyncedRoot(String subjectKey, SyncedRoot syncedRoot);
+
+    /**
+     * Remove the given SyncedRoot and all of its SyncedPath children.
+     * @param subjectKey subject with write access to the SyncedRoot
+     * @param syncedRoot the SyncedRoot to delete
+     */
+    void removeSyncedRoot(String subjectKey, SyncedRoot syncedRoot);
+
+    SyncedPath addSyncedPath(String subjectKey, SyncedRoot syncedRoot, SyncedPath syncedPath);
+
+    void removeSyncedPath(String subjectKey, SyncedRoot syncedRoot, SyncedPath syncedPath);
+
+    /**
      * Returns all of the SyncedRoot objects that a user has access to read.
      * @param subjectKey the user or group
      * @return list of top-level synced paths
