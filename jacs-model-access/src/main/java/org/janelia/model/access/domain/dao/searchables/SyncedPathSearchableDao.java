@@ -25,25 +25,25 @@ public class SyncedPathSearchableDao extends AbstractDomainSearchableDao<SyncedP
 
     @Override
     public SyncedRoot createSyncedRoot(String subjectKey, SyncedRoot syncedRoot) {
-        SyncedRoot savedSyncedRoot = createSyncedRoot(subjectKey, syncedRoot);
+        SyncedRoot savedSyncedRoot = syncedPathDao.createSyncedRoot(subjectKey, syncedRoot);
         domainObjectIndexer.indexDocument(savedSyncedRoot);
         return savedSyncedRoot;
     }
 
     @Override
     public void removeSyncedRoot(String subjectKey, SyncedRoot syncedRoot) {
-        removeSyncedRoot(subjectKey, syncedRoot);
+        syncedPathDao.removeSyncedRoot(subjectKey, syncedRoot);
         domainObjectIndexer.removeDocument(syncedRoot.getId());
     }
 
     @Override
     public SyncedPath addSyncedPath(String subjectKey, SyncedRoot syncedRoot, SyncedPath syncedPath) {
-        return addSyncedPath(subjectKey, syncedRoot, syncedPath);
+        return syncedPathDao.addSyncedPath(subjectKey, syncedRoot, syncedPath);
     }
 
     @Override
     public void removeSyncedPath(String subjectKey, SyncedRoot syncedRoot, SyncedPath syncedPath) {
-        removeSyncedPath(subjectKey, syncedRoot, syncedPath);
+        syncedPathDao.removeSyncedPath(subjectKey, syncedRoot, syncedPath);
     }
 
     @Override

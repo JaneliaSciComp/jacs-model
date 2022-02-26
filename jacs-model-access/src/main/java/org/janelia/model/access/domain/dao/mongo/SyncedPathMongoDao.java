@@ -1,8 +1,10 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SyncedPathDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
@@ -67,8 +69,15 @@ public class SyncedPathMongoDao extends AbstractDomainObjectMongoDao<SyncedPath>
 
     private void updateCount(String subjectKey, SyncedRoot syncedRoot) {
         SyncedRoot root = (SyncedRoot)findById(syncedRoot.getId());
-        root.getPaths().setCount(countChildren(subjectKey, syncedRoot));
-        save(syncedRoot);
+        ReverseReference paths = root.getPaths();
+        paths.setCount(countChildren(subjectKey, syncedRoot));
+        long updated = MongoDaoHelper.update(
+                mongoCollection,
+                syncedRoot.getId(),
+                ImmutableMap.of("paths", new SetFieldValueHandler<>(paths)));
+        if (updated != 1) {
+            throw new IllegalStateException("Could not update child count for "+syncedRoot);
+        }
     }
 
     private long countChildren(String subjectKey, SyncedRoot root) {
