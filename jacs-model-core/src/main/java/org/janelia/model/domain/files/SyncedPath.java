@@ -16,7 +16,7 @@ import org.janelia.model.domain.support.SearchType;
 public class SyncedPath extends AbstractDomainObject implements HasSyncStorage {
 
     /** Root path where this path was discovered */
-    @SearchAttribute(key="root_ref",label="Synchronized Folder GUID")
+    @SearchAttribute(key="rootref_s",label="Synchronized Folder GUID")
     private Reference rootRef;
 
     @SearchAttribute(key="filepath_txt",label="Filepath")

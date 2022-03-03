@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.Sets;
 import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.gui.search.Filtering;
+import org.janelia.model.domain.gui.search.criteria.AttributeValueCriteria;
 import org.janelia.model.domain.gui.search.criteria.Criteria;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.interfaces.IsParent;
@@ -98,13 +99,13 @@ public class SyncedRoot extends SyncedPath implements IsParent, Filtering {
     public List<Criteria> getCriteriaList() {
         if (lazyCriteria==null) {
             lazyCriteria = new ArrayList<>();
-            FacetCriteria existsInStorage = new FacetCriteria();
+            AttributeValueCriteria existsInStorage = new AttributeValueCriteria();
             existsInStorage.setAttributeName("existsInStorage");
-            existsInStorage.setValues(Sets.newHashSet("true"));
+            existsInStorage.setValue("true");
             lazyCriteria.add(existsInStorage);
-            FacetCriteria rootRef = new FacetCriteria();
+            AttributeValueCriteria rootRef = new AttributeValueCriteria();
             rootRef.setAttributeName("rootRef");
-            rootRef.getValues().add(toString());
+            rootRef.setValue(toString());
             lazyCriteria.add(rootRef);
         }
         return lazyCriteria;
