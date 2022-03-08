@@ -1,8 +1,11 @@
 package org.janelia.model.domain;
 
+import com.google.common.collect.Sets;
 import org.janelia.model.domain.compartments.CompartmentSet;
+import org.janelia.model.domain.files.N5Container;
 import org.janelia.model.domain.gui.alignment_board.AlignmentBoard;
 import org.janelia.model.domain.gui.alignment_board.AlignmentContext;
+import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
 import org.janelia.model.domain.gui.search.Filter;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.ontology.Ontology;
@@ -58,5 +61,17 @@ public class DomainObjectTests {
         Assert.assertEquals("sample",(new Sample()).getSearchType());
         Assert.assertEquals("treeNode",(new TreeNode()).getSearchType());
         Assert.assertEquals("treeNode",(new Workspace()).getSearchType());
+    }
+
+    @Test
+    public void testGetSearchTypes() {
+        Assert.assertEquals(Sets.newHashSet("dataSet"),(new DataSet()).getSearchTypes());
+        Assert.assertEquals(Sets.newHashSet("filter"),(new Filter()).getSearchTypes());
+        Assert.assertEquals(Sets.newHashSet("image"),(new Image()).getSearchTypes());
+        Assert.assertEquals(Sets.newHashSet("lsmImage","image"),(new LSMImage()).getSearchTypes());
+        Assert.assertEquals(Sets.newHashSet("cdmipMask","image"),(new ColorDepthMask()).getSearchTypes());
+        Assert.assertEquals(Sets.newHashSet("sample"),(new Sample()).getSearchTypes());
+        Assert.assertEquals(Sets.newHashSet("treeNode"),(new TreeNode()).getSearchTypes());
+        Assert.assertEquals(Sets.newHashSet("n5Container","syncedPath"),(new N5Container()).getSearchTypes());
     }
 }

@@ -1,10 +1,7 @@
 package org.janelia.model.domain;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -93,8 +90,8 @@ public abstract class AbstractDomainObject implements DomainObject, Serializable
     
     /**
      * Attempts to find and return a @SearchType.key defined for this object or any of its super types. 
-     * If no @SearchType annotation is defined, this method returns null. 
-     * @return
+     * If no @SearchType annotation is defined, this method returns null.
+     * This field is indexed in SOLR for searching purposes.
      */
     @SearchAttribute(key="search_type",label="Search Type",display=false)
     @JsonIgnore
@@ -109,7 +106,26 @@ public abstract class AbstractDomainObject implements DomainObject, Serializable
         }
         return null;
     }
-    
+
+    /**
+     * Return all @SearchType.key values defined for this object and its super types.
+     * This field is indexed in SOLR for searching purposes.
+     */
+    @SearchAttribute(key="search_type_sm",label="Search Types",display=false)
+    @JsonIgnore
+    public Set<String> getSearchTypes() {
+        Set<String> searchTypes = new HashSet<>();
+        Class<?> clazz = this.getClass();
+        while (clazz!=null) {
+            SearchType searchType = clazz.getAnnotation(SearchType.class);
+            if (searchType!=null) {
+                searchTypes.add(searchType.key());
+            }
+            clazz = clazz.getSuperclass();
+        }
+        return searchTypes;
+    }
+
     @Override
     public Long getId() {
         return id;
