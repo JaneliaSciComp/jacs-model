@@ -22,18 +22,15 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
     private final SolrConnector solrConnector;
     private final DomainObject2SolrDoc domainObject2SolrDocConverter;
     private final int solrBatchSize;
-    private final int solrCommitSize;
 
     public SolrBasedDomainObjectIndexer(SolrServer solrServer,
                                         List<NodeAncestorsGetter<? extends Node>> nodeAncestorsGetters,
                                         DomainAnnotationGetter nodeAnnotationGetter,
                                         DomainObjectGetter objectGetter,
-                                        int solrBatchSize,
-                                        int solrCommitSize) {
+                                        int solrBatchSize) {
         this.solrConnector = new SolrConnector(solrServer);
         this.domainObject2SolrDocConverter = new DomainObject2SolrDoc(nodeAncestorsGetters, nodeAnnotationGetter, objectGetter);
         this.solrBatchSize = solrBatchSize;
-        this.solrCommitSize = solrCommitSize;
     }
 
     @Override
@@ -74,14 +71,13 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
     public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
         return solrConnector.addDocsToIndex(
                 domainObjectStream.map(domainObject2SolrDocConverter::domainObjectToSolrDocument),
-                solrBatchSize,
-                solrCommitSize
+                solrBatchSize
         );
     }
 
     @Override
     public int removeDocumentStream(Stream<Long> docIdsStream) {
-        return solrConnector.removeDocIdsFromIndex(docIdsStream, solrBatchSize, solrCommitSize);
+        return solrConnector.removeDocIdsFromIndex(docIdsStream, solrBatchSize);
     }
 
     @Override
@@ -91,6 +87,6 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
 
     @Override
     public void updateDocsAncestors(Set<Long> docIds, Long ancestorId) {
-        solrConnector.updateDocsAncestors(docIds, ancestorId, solrBatchSize, solrCommitSize);
+        solrConnector.updateDocsAncestors(docIds, ancestorId, solrBatchSize);
     }
 }

@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  */
 class SolrConnector {
     private static final Logger LOG = LoggerFactory.getLogger(SolrConnector.class);
+    private static final int SOLR_COMMIT_WITHIN_MS = 5000;
 
     private final SolrServer solrServer;
 
@@ -69,8 +70,7 @@ class SolrConnector {
             return false;
         }
         try {
-            solrServer.add(solrDoc);
-            commit(false, false);
+            solrServer.add(solrDoc, SOLR_COMMIT_WITHIN_MS);
             return true;
         } catch (Throwable e) {
             LOG.error("Error while adding {} to solr index", solrDoc, e);
@@ -78,15 +78,15 @@ class SolrConnector {
         }
     }
 
-    int addDocsToIndex(Stream<SolrInputDocument> solrDocsStream, int batchSize, int commitSize) {
+    int addDocsToIndex(Stream<SolrInputDocument> solrDocsStream, int batchSize) {
         if (solrServer == null) {
             LOG.debug("SOLR is not configured");
             return 0;
         }
         Stopwatch stopwatch = Stopwatch.createStarted();
-        List<SolrInputDocument> solrDocsBatch = new ArrayList<>();
+        List<SolrInputDocument> solrDocsBatch = Collections.synchronizedList(new ArrayList<>());
         AtomicInteger result = new AtomicInteger(0);
-        AtomicInteger itemsToCommit = new AtomicInteger(0);
+//        AtomicInteger itemsToCommit = new AtomicInteger(0);
         // group documents in batches of given size to send the to solr
         solrDocsStream
                 .forEach(solrDoc -> {
@@ -96,8 +96,8 @@ class SolrConnector {
                         int nDocs = solrDocsBatch.size();
                         if (nDocs >= batchSize) {
                             try {
-                                LOG.debug("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get() + itemsToCommit.get(), stopwatch.elapsed(TimeUnit.SECONDS));
-                                solrServer.add(solrDocsBatch);
+                                LOG.debug("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get(), stopwatch.elapsed(TimeUnit.SECONDS));
+                                solrServer.add(solrDocsBatch, SOLR_COMMIT_WITHIN_MS);
                                 nAdded = nDocs;
                             } catch (Throwable e) {
                                 LOG.error("Error while updating solr index with {} documents", nDocs, e);
@@ -110,7 +110,7 @@ class SolrConnector {
                         }
                     } else {
                         try {
-                            solrServer.add(solrDoc);
+                            solrServer.add(solrDoc, SOLR_COMMIT_WITHIN_MS);
                             nAdded = 1;
                         } catch (Throwable e) {
                             LOG.error("Error while updating solr index for {}", solrDoc, e);
@@ -118,31 +118,31 @@ class SolrConnector {
                         }
                     }
                     if (nAdded > 0) {
-                        int nToCommit = itemsToCommit.addAndGet(nAdded);
+//                        int nToCommit = itemsToCommit.addAndGet(nAdded);
                         result.addAndGet(nAdded);
-                        if (commitSize <= 1 || nToCommit / commitSize > 0) {
-                            if (commit(true, true)) {
-                                itemsToCommit.set(0);
-                            }
-                        }
+//                        if (commitSize <= 1 || nToCommit / commitSize > 0) {
+//                            if (commit(true, true)) {
+//                                itemsToCommit.set(0);
+//                            }
+//                        }
                     }
                 })
                 ;
         if (solrDocsBatch.size() > 0) {
             try {
                 LOG.debug("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get(), stopwatch.elapsed(TimeUnit.SECONDS));
-                solrServer.add(solrDocsBatch);
+                solrServer.add(solrDocsBatch, SOLR_COMMIT_WITHIN_MS);
                 result.addAndGet(solrDocsBatch.size());
-                itemsToCommit.addAndGet(solrDocsBatch.size());
+//                itemsToCommit.addAndGet(solrDocsBatch.size());
             } catch (Throwable e) {
                 LOG.error("Error while updating solr index with {} docs", solrDocsBatch.size(), e);
             } finally {
                 solrDocsBatch.clear();
             }
         }
-        if (itemsToCommit.get() > 0) {
-            commit(true, true);
-        }
+//        if (itemsToCommit.get() > 0) {
+//            commit(true, true);
+//        }
         return result.get();
     }
 
@@ -152,8 +152,8 @@ class SolrConnector {
             return;
         }
         try {
-            solrServer.deleteByQuery("*:*");
-            commit(true, true);
+            solrServer.deleteByQuery("*:*", SOLR_COMMIT_WITHIN_MS);
+//            commit(true, true);
         } catch (Throwable e) {
             throw new IllegalStateException(e);
         }
@@ -165,45 +165,45 @@ class SolrConnector {
             return false;
         }
         try {
-            solrServer.deleteById(id.toString());
-            commit(false, false);
+            solrServer.deleteById(id.toString(), SOLR_COMMIT_WITHIN_MS);
+//            commit(false, false);
             return true;
         } catch (Throwable e) {
             throw new IllegalStateException(e);
         }
     }
 
-    int removeDocIdsFromIndex(Stream<Long> docIdsStream, int batchSize, int commitSize) {
+    int removeDocIdsFromIndex(Stream<Long> docIdsStream, int batchSize) {
         if (solrServer == null) {
             LOG.debug("SOLR is not configured");
             return 0;
         }
         AtomicInteger result = new AtomicInteger(0);
-        AtomicInteger itemsToCommit = new AtomicInteger(0);
+//        AtomicInteger itemsToCommit = new AtomicInteger(0);
         List<Long> remainingIds = docIdsStream
             .reduce(new ArrayList<>(),
                     (ids, id) -> {
-                        removeHandler(ids, id, batchSize, commitSize, result, itemsToCommit);
+                        removeHandler(ids, id, batchSize, result);
                         return ids;
                     },
                     (ids1, ids2) -> {
                         for (Long id : ids2) {
-                            removeHandler(ids1, id, batchSize, commitSize, result, itemsToCommit);
+                            removeHandler(ids1, id, batchSize, result);
                         }
                         return ids1;
                     });
         if (!remainingIds.isEmpty()) {
             int nRemoved = removeDocIds(remainingIds);
             result.addAndGet(nRemoved);
-            itemsToCommit.addAndGet(nRemoved);
+//            itemsToCommit.addAndGet(nRemoved);
         }
-        if (itemsToCommit.get() > 0) {
-            commit(true, true);
-        }
+//        if (itemsToCommit.get() > 0) {
+//            commit(true, true);
+//        }
         return result.get();
     }
 
-    private void removeHandler(List<Long> ids, Long id, int batchSize, int commitSize, AtomicInteger itemsRemoved, AtomicInteger itemsToCommit) {
+    private void removeHandler(List<Long> ids, Long id, int batchSize, AtomicInteger itemsRemoved) {
         int nRemoved;
         if (batchSize > 1) {
             ids.add(id);
@@ -218,19 +218,19 @@ class SolrConnector {
         }
         if (nRemoved > 0) {
             itemsRemoved.addAndGet(nRemoved);
-            int nToCommit = itemsToCommit.addAndGet(nRemoved);
-            if (commitSize <= 1 || nToCommit / commitSize > 0) {
-                if (commit(false, false)) {
-                    itemsToCommit.set(0);
-                }
-            }
+//            int nToCommit = itemsToCommit.addAndGet(nRemoved);
+//            if (commitSize <= 1 || nToCommit / commitSize > 0) {
+//                if (commit(false, false)) {
+//                    itemsToCommit.set(0);
+//                }
+//            }
         }
     }
 
     private int removeDocIds(List<Long> ids) {
         String q = idsToSolrQuery(ids);
         try {
-            solrServer.deleteByQuery(q);
+            solrServer.deleteByQuery(q, SOLR_COMMIT_WITHIN_MS);
             return ids.size();
         } catch (Throwable e) {
             LOG.error("Error trying to delete using query: {}", q, e);
@@ -246,19 +246,19 @@ class SolrConnector {
                 .orElse(null);
     }
 
-    private boolean commit(boolean waitFlush, boolean waitSearcher) {
-        try {
-            LOG.debug("SOLR commit");
-            solrServer.commit(waitFlush, waitSearcher);
-            return true;
-        } catch (Throwable e) {
-            LOG.error("SOLR commit error", e);
-            return false;
-        }
-    }
+//    private boolean commit(boolean waitFlush, boolean waitSearcher) {
+//        try {
+//            LOG.debug("SOLR commit");
+//            solrServer.commit(waitFlush, waitSearcher);
+//            return true;
+//        } catch (Throwable e) {
+//            LOG.error("SOLR commit error", e);
+//            return false;
+//        }
+//    }
 
     @SuppressWarnings("unchecked")
-    void updateDocsAncestors(Set<Long> docIds, Long ancestorId, int batchSize, int commitSize) {
+    void updateDocsAncestors(Set<Long> docIds, Long ancestorId, int batchSize) {
         if (solrServer != null) {
             Stream<SolrInputDocument> solrDocsStream = searchByDocIds(docIds, batchSize)
                     .map(solrDoc -> ClientUtils.toSolrInputDocument(solrDoc))
@@ -274,7 +274,7 @@ class SolrConnector {
                         solrInputDoc.setField("ancestor_ids", ancestorIds, 0.2f);
                         return solrInputDoc;
                     });
-            addDocsToIndex(solrDocsStream, batchSize, commitSize);
+            addDocsToIndex(solrDocsStream, batchSize);
         }
     }
 
