@@ -86,7 +86,6 @@ class SolrConnector {
         Stopwatch stopwatch = Stopwatch.createStarted();
         List<SolrInputDocument> solrDocsBatch = Collections.synchronizedList(new ArrayList<>());
         AtomicInteger result = new AtomicInteger(0);
-//        AtomicInteger itemsToCommit = new AtomicInteger(0);
         // group documents in batches of given size to send the to solr
         solrDocsStream
                 .forEach(solrDoc -> {
@@ -118,13 +117,7 @@ class SolrConnector {
                         }
                     }
                     if (nAdded > 0) {
-//                        int nToCommit = itemsToCommit.addAndGet(nAdded);
                         result.addAndGet(nAdded);
-//                        if (commitSize <= 1 || nToCommit / commitSize > 0) {
-//                            if (commit(true, true)) {
-//                                itemsToCommit.set(0);
-//                            }
-//                        }
                     }
                 })
                 ;
@@ -133,16 +126,12 @@ class SolrConnector {
                 LOG.debug("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get(), stopwatch.elapsed(TimeUnit.SECONDS));
                 solrServer.add(solrDocsBatch, SOLR_COMMIT_WITHIN_MS);
                 result.addAndGet(solrDocsBatch.size());
-//                itemsToCommit.addAndGet(solrDocsBatch.size());
             } catch (Throwable e) {
                 LOG.error("Error while updating solr index with {} docs", solrDocsBatch.size(), e);
             } finally {
                 solrDocsBatch.clear();
             }
         }
-//        if (itemsToCommit.get() > 0) {
-//            commit(true, true);
-//        }
         return result.get();
     }
 
@@ -153,7 +142,6 @@ class SolrConnector {
         }
         try {
             solrServer.deleteByQuery("*:*", SOLR_COMMIT_WITHIN_MS);
-//            commit(true, true);
         } catch (Throwable e) {
             throw new IllegalStateException(e);
         }
@@ -166,7 +154,6 @@ class SolrConnector {
         }
         try {
             solrServer.deleteById(id.toString(), SOLR_COMMIT_WITHIN_MS);
-//            commit(false, false);
             return true;
         } catch (Throwable e) {
             throw new IllegalStateException(e);
@@ -179,7 +166,6 @@ class SolrConnector {
             return 0;
         }
         AtomicInteger result = new AtomicInteger(0);
-//        AtomicInteger itemsToCommit = new AtomicInteger(0);
         List<Long> remainingIds = docIdsStream
             .reduce(new ArrayList<>(),
                     (ids, id) -> {
@@ -195,11 +181,7 @@ class SolrConnector {
         if (!remainingIds.isEmpty()) {
             int nRemoved = removeDocIds(remainingIds);
             result.addAndGet(nRemoved);
-//            itemsToCommit.addAndGet(nRemoved);
         }
-//        if (itemsToCommit.get() > 0) {
-//            commit(true, true);
-//        }
         return result.get();
     }
 
@@ -218,12 +200,6 @@ class SolrConnector {
         }
         if (nRemoved > 0) {
             itemsRemoved.addAndGet(nRemoved);
-//            int nToCommit = itemsToCommit.addAndGet(nRemoved);
-//            if (commitSize <= 1 || nToCommit / commitSize > 0) {
-//                if (commit(false, false)) {
-//                    itemsToCommit.set(0);
-//                }
-//            }
         }
     }
 
@@ -245,17 +221,6 @@ class SolrConnector {
                 .reduce((id1, id2) -> id1 + " OR " + id2)
                 .orElse(null);
     }
-
-//    private boolean commit(boolean waitFlush, boolean waitSearcher) {
-//        try {
-//            LOG.debug("SOLR commit");
-//            solrServer.commit(waitFlush, waitSearcher);
-//            return true;
-//        } catch (Throwable e) {
-//            LOG.error("SOLR commit error", e);
-//            return false;
-//        }
-//    }
 
     @SuppressWarnings("unchecked")
     void updateDocsAncestors(Set<Long> docIds, Long ancestorId, int batchSize) {
