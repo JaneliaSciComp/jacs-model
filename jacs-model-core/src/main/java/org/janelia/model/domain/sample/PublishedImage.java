@@ -24,6 +24,7 @@ public class PublishedImage extends AbstractDomainObject implements HasFiles {
     private String line;
     private String area;
     private String tile;
+    private String originalLine;
     private String releaseName;
     private String slideCode;
     private String objective;
@@ -61,6 +62,14 @@ public class PublishedImage extends AbstractDomainObject implements HasFiles {
 
     public void setTile(String tile) {
         this.tile = tile;
+    }
+
+    public String getOriginalLine() {
+        return originalLine;
+    }
+
+    public void setOriginalLine(String originalLine) {
+        this.originalLine = originalLine;
     }
 
     public String getReleaseName() {

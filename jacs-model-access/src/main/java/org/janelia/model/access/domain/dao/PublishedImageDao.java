@@ -7,4 +7,5 @@ import org.janelia.model.domain.sample.PublishedImage;
  */
 public interface PublishedImageDao extends DomainObjectDao<PublishedImage> {
     PublishedImage getImage(String slideCode, String alignmentSpace, String objective);
+    PublishedImage getGen1Gal4LexAImage(String originalLine, String area);
 }
