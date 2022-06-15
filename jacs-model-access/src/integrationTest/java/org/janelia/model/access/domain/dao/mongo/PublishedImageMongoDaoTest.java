@@ -115,8 +115,8 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
     @Test
     public void testGetImage() {
         for (PublishedImage image: testImages) {
-            PublishedImage foundImage = publishedImageDao.getImage(image.getSlideCode(),
-                image.getAlignmentSpace(), image.getObjective());
+            PublishedImage foundImage = publishedImageDao.getImage(image.getAlignmentSpace(), image.getSlideCode(),
+                    image.getObjective());
             Assert.assertNotNull(foundImage);
             // test a few key attributes
             Assert.assertEquals(image.getId(), foundImage.getId());
@@ -150,8 +150,8 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
     @Test
     public void testNoImage() {
         PublishedImage firstImage = testImages.get(0);
-        PublishedImage foundImage = publishedImageDao.getImage(firstImage.getSlideCode(),
-                firstImage.getAlignmentSpace(), "nonsense objective");
+        PublishedImage foundImage = publishedImageDao.getImage(firstImage.getAlignmentSpace(), firstImage.getSlideCode(),
+                "nonsense objective");
         Assert.assertNull(foundImage);
     }
 

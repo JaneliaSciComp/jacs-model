@@ -27,12 +27,12 @@ public class PublishedImageMongoDao extends AbstractDomainObjectMongoDao<Publish
     }
 
     @Override
-    public PublishedImage getImage(String slideCode, String alignmentSpace, String objective) {
+    public PublishedImage getImage(String alignmentSpace, String slideCode, String objective) {
 
         List<PublishedImage> publishedImages = MongoDaoHelper.find(
                 MongoDaoHelper.createFilterCriteria(
-                        Filters.eq("slideCode", slideCode),
                         Filters.eq("alignmentSpace", alignmentSpace),
+                        Filters.eq("slideCode", slideCode),
                         Filters.eq("objective", objective)
                 ),
                 null,

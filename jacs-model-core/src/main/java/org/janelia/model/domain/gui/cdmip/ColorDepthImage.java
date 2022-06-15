@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
+import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.interfaces.HasAnatomicalArea;
 import org.janelia.model.domain.sample.AlignedImage2d;
 import org.janelia.model.domain.sample.Sample;
@@ -63,6 +64,10 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
     @SearchTraversal({})
     @JsonIgnore
     private Sample sample;
+
+    @SearchTraversal({})
+    @JsonIgnore
+    private EMBody emBody;
 
     public Set<String> getLibraries() {
         return libraries;
@@ -172,6 +177,9 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
         this.neuronStatus = neuronStatus;
     }
 
+    /**
+     * This is enabled for JSON serialization only for the HTTP request
+     */
     @JsonProperty
     public Sample getSample() {
         return sample;
@@ -180,5 +188,18 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
     @JsonIgnore
     void setSample(Sample sample) {
         this.sample = sample;
+    }
+
+    /**
+     * This is enabled for JSON serialization only for the HTTP request
+     */
+    @JsonProperty
+    public EMBody getEmBody() {
+        return emBody;
+    }
+
+    @JsonIgnore
+    public void setEmBody(EMBody emBody) {
+        this.emBody = emBody;
     }
 }
