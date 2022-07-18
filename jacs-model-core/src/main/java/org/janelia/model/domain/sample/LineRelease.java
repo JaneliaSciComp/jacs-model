@@ -23,7 +23,7 @@ public class LineRelease extends AbstractDomainObject implements Node {
 
     /** Valid values for targetWebsite attribute */
     @JsonIgnore
-    public static final String[] TARGET_WEBSITES = {"Split GAL4", "Gen1 MCFO"};
+    public static final String[] TARGET_WEBSITES = {"Split GAL4", "Gen1 MCFO", "FLEW"};
 
     private boolean sageSync;
 
