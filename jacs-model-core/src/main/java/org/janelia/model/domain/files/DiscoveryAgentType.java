@@ -9,7 +9,8 @@ package org.janelia.model.domain.files;
 public enum DiscoveryAgentType {
 
     n5DiscoveryAgent("N5 Containers"),
-    zarrDiscoveryAgent("Zarr Containers");
+    zarrDiscoveryAgent("Zarr Containers"),
+    hortaDiscoveryAgent("Horta Samples");
 
     private final String label;
 
