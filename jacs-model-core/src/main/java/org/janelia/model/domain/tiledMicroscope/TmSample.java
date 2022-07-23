@@ -139,11 +139,8 @@ public class TmSample extends SyncedPath implements HasFiles {
     public String getFilepath() {
         // enforce filepath==LargeVolumeOctree invariant
         String filepath = super.getFilepath();
-        if (filepath==null) {
+        if (filepath==null || !filepath.equals(getLargeVolumeOctreeFilepath())) {
             super.setFilepath(getLargeVolumeOctreeFilepath());
-        }
-        else if (!filepath.equals(getLargeVolumeOctreeFilepath())) {
-            throw new IllegalStateException("Filepath differs from LargeVolumeOctreeFilepath");
         }
         return super.getFilepath();
     }
