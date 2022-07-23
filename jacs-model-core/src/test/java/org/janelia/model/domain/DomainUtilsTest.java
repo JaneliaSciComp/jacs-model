@@ -13,7 +13,9 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.enums.SubjectRole;
+import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
 import org.janelia.model.domain.gui.search.Filter;
 import org.janelia.model.domain.gui.search.criteria.AttributeValueCriteria;
 import org.janelia.model.domain.interfaces.HasFileGroups;
@@ -27,6 +29,7 @@ import org.janelia.model.domain.sample.LSMSummaryResult;
 import org.janelia.model.domain.sample.NeuronFragment;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.sample.SampleProcessingResult;
+import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
@@ -241,6 +244,8 @@ public class DomainUtilsTest {
     @Test
     public void testGetObjectClassByName() {
         Assert.assertEquals(Sample.class, DomainUtils.getObjectClassByName(Sample.class.getName()));
+        Assert.assertEquals(ColorDepthMask.class, DomainUtils.getObjectClassByName(ColorDepthMask.class.getName()));
+        Assert.assertEquals(ColorDepthLibrary.class, DomainUtils.getObjectClassByName(ColorDepthLibrary.class.getName()));
     }
 
     @Test
@@ -377,5 +382,16 @@ public class DomainUtilsTest {
         DomainUtils.sortSubjects(subjects);
 
         Assert.assertEquals(Arrays.asList(s3, s2, s1), subjects);
+    }
+
+    @Test
+    public void testSearchableTypes() {
+        Assert.assertTrue(DomainUtils.isSearcheableType(Sample.class));
+        Assert.assertTrue(DomainUtils.isSearcheableType(Image.class));
+        Assert.assertTrue(DomainUtils.isSearcheableType(LSMImage.class));
+        Assert.assertTrue(DomainUtils.isSearcheableType(TmSample.class));
+        Assert.assertTrue(DomainUtils.isSearcheableType(ColorDepthImage.class));
+        Assert.assertTrue(DomainUtils.isSearcheableType(ColorDepthMask.class));
+        Assert.assertTrue(DomainUtils.isSearcheableType(ColorDepthLibrary.class));
     }
 }

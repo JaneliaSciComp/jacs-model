@@ -78,7 +78,7 @@ public class DomainUtils {
         log.info("Scanning domain object package: {}", DOMAIN_OBJECT_PACKAGE_NAME);
         Reflections reflections = ReflectionsFixer.getReflections(DOMAIN_OBJECT_PACKAGE_NAME, DomainObject.class);
 
-        // Walk through every class annotationed with the @MongoMapped annotation
+        // Walk through every class annotation with the @MongoMapped annotation
         for (Class<?> clazz : reflections.getTypesAnnotatedWith(MongoMapped.class)) {
 
             if (!DomainObject.class.isAssignableFrom(clazz)) {
@@ -98,12 +98,12 @@ public class DomainUtils {
                 log.info("Registering "+nodeClass.getName()+" as mapped class for type '"+collectionName+"'");
 
                 if (typeClasses.containsKey(collectionName)) {
-                    log.warn("Overridding existing class mapping ("+typeClasses.get(collectionName).getName()+") for collection '"+collectionName+"'");
+                    log.warn("Overriding existing class mapping ("+typeClasses.get(collectionName).getName()+") for collection '"+collectionName+"'");
                 }
                 typeClasses.put(collectionName, nodeClass);
 
                 if (simpleToQualifiedNames.containsKey(nodeClass.getSimpleName())) {
-                    log.warn("Overridding existing name mapping "+nodeClass.getSimpleName()+" -> "+nodeClass.getName());
+                    log.warn("Overriding existing name mapping "+nodeClass.getSimpleName()+" -> "+nodeClass.getName());
                 }
                 simpleToQualifiedNames.put(nodeClass.getSimpleName(), nodeClass.getName());
 
