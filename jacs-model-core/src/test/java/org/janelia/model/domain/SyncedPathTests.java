@@ -13,7 +13,7 @@ import static org.junit.Assert.assertTrue;
 public class SyncedPathTests {
 
     @Test
-    public void testSynchedRoot() {
+    public void testSyncedRoot() {
 
         SyncedRoot syncedRoot = new SyncedRoot();
         syncedRoot.setFilepath("/test/file/path");
@@ -35,12 +35,10 @@ public class SyncedPathTests {
         syncedRoot.setId(1L);
 
         N5Container n5 = new N5Container();
-        n5.setRootRef(Reference.createFor(syncedRoot));
         n5.setFilepath("/test/file/path/something.n5");
         n5.setExistsInStorage(true);
 
         assertEquals("/test/file/path/something.n5", n5.getFilepath());
         assertTrue(n5.isExistsInStorage());
-        assertEquals(syncedRoot.getId(), n5.getRootRef().getTargetId());
     }
 }

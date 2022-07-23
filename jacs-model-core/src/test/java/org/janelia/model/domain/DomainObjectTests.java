@@ -3,6 +3,7 @@ package org.janelia.model.domain;
 import com.google.common.collect.Sets;
 import org.janelia.model.domain.compartments.CompartmentSet;
 import org.janelia.model.domain.files.N5Container;
+import org.janelia.model.domain.files.SyncedRoot;
 import org.janelia.model.domain.gui.alignment_board.AlignmentBoard;
 import org.janelia.model.domain.gui.alignment_board.AlignmentContext;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
@@ -72,6 +73,7 @@ public class DomainObjectTests {
         Assert.assertEquals(Sets.newHashSet("cdmipMask","image"),(new ColorDepthMask()).getSearchTypes());
         Assert.assertEquals(Sets.newHashSet("sample"),(new Sample()).getSearchTypes());
         Assert.assertEquals(Sets.newHashSet("treeNode"),(new TreeNode()).getSearchTypes());
-        Assert.assertEquals(Sets.newHashSet("n5Container","syncedPath"),(new N5Container()).getSearchTypes());
+        Assert.assertEquals(Sets.newHashSet("ndContainer", "n5Container"),(new N5Container()).getSearchTypes());
+        Assert.assertEquals(Sets.newHashSet("syncedRoot"),(new SyncedRoot()).getSearchTypes());
     }
 }
