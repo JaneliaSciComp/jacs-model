@@ -78,8 +78,11 @@ public class DomainUtils {
         log.info("Scanning domain object package: {}", DOMAIN_OBJECT_PACKAGE_NAME);
         Reflections reflections = ReflectionsFixer.getReflections(DOMAIN_OBJECT_PACKAGE_NAME, DomainObject.class);
 
+        List<Class<?>> sorted = new ArrayList<>(reflections.getTypesAnnotatedWith(MongoMapped.class));
+        sorted.sort(Comparator.comparing(Class::getName));
+
         // Walk through every class annotation with the @MongoMapped annotation
-        for (Class<?> clazz : reflections.getTypesAnnotatedWith(MongoMapped.class)) {
+        for (Class<?> clazz : sorted) {
 
             if (!DomainObject.class.isAssignableFrom(clazz)) {
                 // This loop only pertains to DomainObjects. Other types of MongoMapped objects are handled separately.
@@ -121,7 +124,7 @@ public class DomainUtils {
                         subClasses.put(nodeClass, subclass);
 
                         if (simpleToQualifiedNames.containsKey(subclass.getSimpleName())) {
-                            log.warn("Overridding existing name mapping "+subclass.getSimpleName()+" -> "+subclass.getName());
+                            log.warn("  Overridding existing name mapping "+subclass.getSimpleName()+" -> "+subclass.getName());
                         }
                         simpleToQualifiedNames.put(subclass.getSimpleName(), subclass.getName());
                     }
