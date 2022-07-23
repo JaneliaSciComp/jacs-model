@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -179,7 +180,14 @@ public class ColorDepthLibrary extends AbstractDomainObject implements Filtering
     }
 
     public Optional<ColorDepthLibrary> getLibraryVariant(String variant) {
-        return libraryVariants.stream().filter(cdl -> variant.equals(cdl.getVariant())).findFirst();
+        // Cannot use lambdas in Workstation
+        //return libraryVariants.stream().filter(cdl -> variant.equals(cdl.getVariant())).findFirst();
+        return libraryVariants.stream().filter(new Predicate<ColorDepthLibrary>() {
+            @Override
+            public boolean test(ColorDepthLibrary cdl) {
+                return variant.equals(cdl.getVariant());
+            }
+        }).findFirst();
     }
 
     public void addLibraryVariant(ColorDepthLibrary libraryVariant) {
