@@ -1,11 +1,11 @@
 package org.janelia.model.access.domain.dao;
 
-import org.janelia.model.domain.files.SyncedPath;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.files.SyncedRoot;
 
 import java.util.List;
 
-public interface SyncedPathDao extends DomainObjectDao<SyncedPath> {
+public interface SyncedRootDao extends DomainObjectDao<SyncedRoot> {
 
     /**
      * Create the given SyncedRoot. The id should be null.
@@ -22,10 +22,6 @@ public interface SyncedPathDao extends DomainObjectDao<SyncedPath> {
      */
     void removeSyncedRoot(String subjectKey, SyncedRoot syncedRoot);
 
-    SyncedPath addSyncedPath(String subjectKey, SyncedRoot syncedRoot, SyncedPath syncedPath);
-
-    void removeSyncedPath(String subjectKey, SyncedRoot syncedRoot, SyncedPath syncedPath);
-
     /**
      * Returns all of the SyncedRoot objects that a user has access to read.
      * @param subjectKey the user or group
@@ -34,12 +30,11 @@ public interface SyncedPathDao extends DomainObjectDao<SyncedPath> {
     List<SyncedRoot> getSyncedRoots(String subjectKey);
 
     /**
-     * Returns all the children SyncedPath which have the given SyncedRoot as their parent.
-     * @param root the root path
-     * @param offset index of first item to return
-     * @param length number of results to return
-     * @return children of the given root
+     * Update the children of the given synced root, by setting a new list into the object.
+     * @param subjectKey the user or group
+     * @param syncedRoot the object to update in the database
+     * @param newChildren new children
+     * @return updated object, or null if nothing was updated
      */
-    List<SyncedPath> getChildren(String subjectKey, SyncedRoot root, long offset, int length);
-
+    SyncedRoot updateChildren(String subjectKey, SyncedRoot syncedRoot, List<Reference> newChildren);
 }

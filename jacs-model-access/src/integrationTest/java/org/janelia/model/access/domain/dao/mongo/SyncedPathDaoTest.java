@@ -1,18 +1,18 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
-import org.janelia.model.access.domain.dao.SyncedPathDao;
+import org.janelia.model.access.domain.dao.NDContainerDao;
+import org.janelia.model.access.domain.dao.SyncedRootDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.files.DiscoveryAgentType;
 import org.janelia.model.domain.files.N5Container;
-import org.janelia.model.domain.files.SyncedPath;
 import org.janelia.model.domain.files.SyncedRoot;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -24,14 +24,21 @@ public class SyncedPathDaoTest extends AbstractMongoDaoTest {
     private static final String TEST_OWNER = "user:"+ TEST_NAME;
 
     private SubjectMongoDao subjectMongoDao;
-    private SyncedPathDao syncedPathDao;
+    private SyncedRootDao syncedRootDao;
+    private NDContainerDao ndContainerDao;
 
     @Before
     public void setUp() {
         TimebasedIdentifierGenerator timebasedIdentifierGenerator = new TimebasedIdentifierGenerator(0);
         subjectMongoDao = new SubjectMongoDao(testMongoDatabase, timebasedIdentifierGenerator);
         subjectMongoDao.createUser(TEST_NAME, null, null);
-        syncedPathDao = new SyncedPathMongoDao(
+        syncedRootDao = new SyncedRootMongoDao(
+                testMongoDatabase,
+                timebasedIdentifierGenerator,
+                new DomainPermissionsMongoHelper(subjectMongoDao),
+                new DomainUpdateMongoHelper(testObjectMapper)) {
+        };
+        ndContainerDao = new NDContainerMongoDao(
                 testMongoDatabase,
                 timebasedIdentifierGenerator,
                 new DomainPermissionsMongoHelper(subjectMongoDao),
@@ -50,15 +57,15 @@ public class SyncedPathDaoTest extends AbstractMongoDaoTest {
         syncedRoot.setFilepath("/test/file/path");
         syncedRoot.setExistsInStorage(true);
         syncedRoot.addDiscoveryAgent(DiscoveryAgentType.n5DiscoveryAgent);
-        syncedPathDao.saveBySubjectKey(syncedRoot, TEST_OWNER);
+        syncedRootDao.saveBySubjectKey(syncedRoot, TEST_OWNER);
 
         SyncedRoot syncedRoot2 = new SyncedRoot();
         syncedRoot2.setFilepath("/test/file/path");
         syncedRoot2.setExistsInStorage(true);
         syncedRoot2.addDiscoveryAgent(DiscoveryAgentType.n5DiscoveryAgent);
-        syncedPathDao.saveBySubjectKey(syncedRoot2, TEST_OWNER);
+        syncedRootDao.saveBySubjectKey(syncedRoot2, TEST_OWNER);
 
-        List<SyncedRoot> syncedRoots = syncedPathDao.getSyncedRoots(TEST_OWNER);
+        List<SyncedRoot> syncedRoots = syncedRootDao.getSyncedRoots(TEST_OWNER);
         assertEquals(2, syncedRoots.size());
         assertEquals(Sets.newHashSet(syncedRoot, syncedRoot2), Sets.newHashSet(syncedRoots));
     }
@@ -70,24 +77,27 @@ public class SyncedPathDaoTest extends AbstractMongoDaoTest {
         syncedRoot.setFilepath("/test/file/path");
         syncedRoot.setExistsInStorage(true);
         syncedRoot.addDiscoveryAgent(DiscoveryAgentType.n5DiscoveryAgent);
-        syncedPathDao.saveBySubjectKey(syncedRoot, TEST_OWNER);
+        syncedRootDao.saveBySubjectKey(syncedRoot, TEST_OWNER);
 
         N5Container n5 = new N5Container();
-        n5.setRootRef(Reference.createFor(syncedRoot));
         n5.setFilepath("/test/file/path/something.n5");
         n5.setExistsInStorage(false);
-        syncedPathDao.saveBySubjectKey(n5, TEST_OWNER);
+        ndContainerDao.saveBySubjectKey(n5, TEST_OWNER);
 
-        List<SyncedPath> children = syncedPathDao.getChildren(TEST_OWNER, syncedRoot, 0, 1);
-        assertNotNull(children);
-        assertEquals(1, children.size());
+        syncedRootDao.updateChildren(TEST_OWNER, syncedRoot, Collections.singletonList(Reference.createFor(n5)));
 
-        SyncedPath savedN5 = children.get(0);
-        assertEquals(n5.getId(), savedN5.getId());
-        assertEquals(n5.getFilepath(), savedN5.getFilepath());
-        assertEquals(n5.isExistsInStorage(), savedN5.isExistsInStorage());
+        SyncedRoot found = null;
+        for(SyncedRoot root : syncedRootDao.getSyncedRoots(TEST_OWNER)) {
+            if (root.getId().equals(syncedRoot.getId())) {
+                found = root;
+                break;
+            }
+        }
 
+        assertNotNull(found);
+        assertEquals(1, found.getChildren().size());
+
+        Reference savedN5Ref = found.getChildren().get(0);
+        assertEquals(n5.getId(), savedN5Ref.getTargetId());
     }
-
-
 }

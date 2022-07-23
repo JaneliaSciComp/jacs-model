@@ -1,14 +1,14 @@
 package org.janelia.model.domain.files;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.collect.Sets;
-import org.janelia.model.domain.ReverseReference;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.search.Filtering;
 import org.janelia.model.domain.gui.search.criteria.AttributeValueCriteria;
 import org.janelia.model.domain.gui.search.criteria.Criteria;
-import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
-import org.janelia.model.domain.interfaces.IsParent;
+import org.janelia.model.domain.support.MongoMapped;
+import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.support.SearchType;
+import org.janelia.model.domain.workspace.Node;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,8 @@ import java.util.List;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @SearchType(key="syncedRoot",label="Synchronized Folder")
-public class SyncedRoot extends SyncedPath implements IsParent, Filtering {
+@MongoMapped(collectionName="syncedRoot",label="Synchronized Folder")
+public class SyncedRoot extends SyncedPath implements Node, Filtering {
 
     /** Depth to search */
     private int depth = 2;
@@ -28,8 +29,8 @@ public class SyncedRoot extends SyncedPath implements IsParent, Filtering {
     /** Agents to use during discovery */
     private List<DiscoveryAgentType> discoveryAgents = new ArrayList<>();
 
-    /** Reference to discovered paths */
-    private ReverseReference paths;
+    @SearchTraversal({})
+    private List<Reference> children = new ArrayList<>();
 
     @JsonIgnore
     private List<Criteria> lazyCriteria;
@@ -66,12 +67,17 @@ public class SyncedRoot extends SyncedPath implements IsParent, Filtering {
         discoveryAgents.remove(discoveryAgent);
     }
 
-    public ReverseReference getPaths() {
-        return paths;
+    /* implement Node interface */
+
+    @Override
+    public List<Reference> getChildren() {
+        return children;
     }
 
-    public void setPaths(ReverseReference paths) {
-        this.paths = paths;
+    @Override
+    public void setChildren(List<Reference> children) {
+        if (children==null) throw new IllegalArgumentException("Property cannot be null");
+        this.children = children;
     }
 
     /* implement Filtering interface */

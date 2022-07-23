@@ -2,22 +2,22 @@ package org.janelia.model.access.domain.dao.searchables;
 
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
-import org.janelia.model.access.domain.dao.SyncedPathDao;
+import org.janelia.model.access.domain.dao.SyncedRootDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
-import org.janelia.model.domain.files.SyncedPath;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.files.SyncedRoot;
 
 import javax.inject.Inject;
 import java.util.List;
 
 @AsyncIndex
-public class SyncedPathSearchableDao extends AbstractDomainSearchableDao<SyncedPath> implements SyncedPathDao {
+public class SyncedPathSearchableDao extends AbstractDomainSearchableDao<SyncedRoot> implements SyncedRootDao {
 
-    private final SyncedPathDao syncedPathDao;
+    private final SyncedRootDao syncedPathDao;
 
     @Inject
-    public SyncedPathSearchableDao(SyncedPathDao syncedPathDao,
-                                   DomainObjectDao<SyncedPath> domainObjectDao,
+    public SyncedPathSearchableDao(SyncedRootDao syncedPathDao,
+                                   DomainObjectDao<SyncedRoot> domainObjectDao,
                                    @AsyncIndex DomainObjectIndexer domainObjectIndexer) {
         super(domainObjectDao, domainObjectIndexer);
         this.syncedPathDao = syncedPathDao;
@@ -37,22 +37,14 @@ public class SyncedPathSearchableDao extends AbstractDomainSearchableDao<SyncedP
     }
 
     @Override
-    public SyncedPath addSyncedPath(String subjectKey, SyncedRoot syncedRoot, SyncedPath syncedPath) {
-        return syncedPathDao.addSyncedPath(subjectKey, syncedRoot, syncedPath);
-    }
-
-    @Override
-    public void removeSyncedPath(String subjectKey, SyncedRoot syncedRoot, SyncedPath syncedPath) {
-        syncedPathDao.removeSyncedPath(subjectKey, syncedRoot, syncedPath);
-    }
-
-    @Override
     public List<SyncedRoot> getSyncedRoots(String subjectKey) {
         return syncedPathDao.getSyncedRoots(subjectKey);
     }
 
     @Override
-    public List<SyncedPath> getChildren(String subjectKey, SyncedRoot root, long offset, int length) {
-        return syncedPathDao.getChildren(subjectKey, root, offset, length);
+    public SyncedRoot updateChildren(String subjectKey, SyncedRoot syncedRoot, List<Reference> newChildren) {
+        SyncedRoot updated = updateChildren(subjectKey, syncedRoot, newChildren);
+        domainObjectIndexer.indexDocument(updated);
+        return updated;
     }
 }
