@@ -1,13 +1,5 @@
 package org.janelia.model.access.domain.dao.searchables;
 
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-
-import javax.inject.Inject;
-
-import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
@@ -15,6 +7,10 @@ import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmOperation;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+
+import javax.inject.Inject;
+import java.util.Date;
+import java.util.List;
 
 /**
  * {@link TmNeuronMetadata} DAO.
@@ -103,4 +99,8 @@ public class TmNeuronMetadataSearchableDao extends AbstractDomainSearchableDao<T
         return tmNeuronMetadataDao.getOperations(workspaceId, neuronId, startDate, endDate);
     }
 
+    @Override
+    public long deleteNeuronsForWorkspace(TmWorkspace workspace, String subjectKey) {
+        return tmNeuronMetadataDao.deleteNeuronsForWorkspace(workspace, subjectKey);
+    }
 }

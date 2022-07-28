@@ -17,6 +17,9 @@ public class SyncedPath extends AbstractDomainObject implements HasSyncStorage {
     @SearchAttribute(key="exists_b",label="Exists in Storage")
     private boolean existsInStorage = true;
 
+    /** True if this object should be synchronized automatically, e.g. by the SyncedRootProcessor */
+    private boolean autoSynchronized = false;
+
     @Override
     public String getFilepath() {
         return filepath;
@@ -35,5 +38,13 @@ public class SyncedPath extends AbstractDomainObject implements HasSyncStorage {
     @Override
     public void setExistsInStorage(boolean existsInStorage) {
         this.existsInStorage = existsInStorage;
+    }
+
+    public boolean isAutoSynchronized() {
+        return autoSynchronized;
+    }
+
+    public void setAutoSynchronized(boolean autoSynchronize) {
+        this.autoSynchronized = autoSynchronize;
     }
 }

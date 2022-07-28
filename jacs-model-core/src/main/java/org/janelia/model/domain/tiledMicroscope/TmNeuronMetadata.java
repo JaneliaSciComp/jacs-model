@@ -1,17 +1,16 @@
 package org.janelia.model.domain.tiledMicroscope;
 
-import java.awt.Color;
-import java.util.*;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Joiner;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.NotCacheable;
-import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.util.ColorUtils;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Joiner;
+import java.awt.*;
+import java.util.List;
+import java.util.*;
 
 /**
  * Metadata for a tiled microscope neuron in a TmWorkspace. The actual neuron point data
@@ -27,12 +26,10 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     private Boolean largeNeuron;
     private Boolean visible;
 
-    @SearchAttribute(key = "color_s", label = "Color")
     private String colorHex;
 
     private Set<String> tags = new HashSet<>();
 
-    // A reference that is used to keep things associated in memory, but persisted separately
     private TmNeuronData neuronData = new TmNeuronData();
 
     @JsonIgnore
@@ -45,6 +42,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     }
 
     public TmNeuronMetadata(TmWorkspace workspace, String name) {
+        this();
         setName(name);
         this.workspaceRef = Reference.createFor(workspace);
         this.neuronData = new TmNeuronData();
@@ -57,13 +55,9 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         copy.setVisible(neuron.isVisible());
         copy.setColorHex(neuron.getColorHex());
         copy.setOwnerKey(neuron.getOwnerKey());
-        copy.setTags(new HashSet<String>(neuron.getTags()));
+        copy.setTags(new HashSet<>(neuron.getTags()));
         copy.setNeuronData(neuron.getNeuronData());
         return copy;
-    }
-
-    public void updateEdges() {
-
     }
 
     public void merge(TmNeuronMetadata neuron) {
@@ -71,7 +65,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         this.setWorkspaceRef(neuron.getWorkspaceRef());
         this.setVisible(neuron.isVisible());
         this.setColorHex(neuron.getColorHex());
-        this.setTags(new HashSet<String>(neuron.getTags()));
+        this.setTags(new HashSet<>(neuron.getTags()));
         this.setNeuronData(neuron.getNeuronData());
     }
 
@@ -98,37 +92,31 @@ public class TmNeuronMetadata extends AbstractDomainObject {
         this.synced = synced;
     }
 
-    @SearchAttribute(key = "workspace_id_l", label = "Workspace GUID")
     @JsonIgnore
     public Long getWorkspaceId() {
         return workspaceRef == null ? null : workspaceRef.getTargetId();
     }
 
-    @SearchAttribute(key = "tags_s", label = "Tags")
     @JsonIgnore
     public String getTagDelimitedList() {
         return tags == null ? null : Joiner.on(",").join(tags);
     }
 
-    @SearchAttribute(key = "anno_count_i", label = "Number of Anchors")
     @JsonIgnore
     public Integer getAnnotationCount() {
         return neuronData == null ? null : neuronData.getGeoAnnotationMap().size();
     }
 
-    @SearchAttribute(key = "root_count_i", label = "Number of Roots")
     @JsonIgnore
     public Integer getRootCount() {
         return neuronData == null ? null : neuronData.getRootAnnotationIds().size();
     }
 
-    @SearchAttribute(key = "text_anno_count_i", label = "Number of Notes")
     @JsonIgnore
     public Integer getTextAnnotationCount() {
         return neuronData == null ? null : neuronData.getStructuredTextAnnotationMap().size();
     }
 
-    @SearchAttribute(key = "visible_b", label = "Visibility")
     @JsonIgnore
     public Boolean getVisibility() {
         return visible;

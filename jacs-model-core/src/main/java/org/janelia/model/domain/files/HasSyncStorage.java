@@ -19,4 +19,14 @@ public interface HasSyncStorage extends HasFilepath {
     boolean isExistsInStorage();
 
     void setExistsInStorage(boolean exists);
+
+    /**
+     * If this flag is true, the object will be synchronized to a corresponding SyncedRoot. If false, we assume
+     * that the object is user managed.
+     *
+     * @return true if the object should be synchronized to the filesystem
+     */
+    boolean isAutoSynchronized();
+
+    void setAutoSynchronized(boolean autoSynchronized);
 }
