@@ -15,7 +15,6 @@ import org.janelia.model.domain.files.SyncedRoot;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class SyncedRootMongoDao extends AbstractDomainObjectMongoDao<SyncedRoot> implements SyncedRootDao {
 
@@ -29,7 +28,7 @@ public class SyncedRootMongoDao extends AbstractDomainObjectMongoDao<SyncedRoot>
 
     @Override
     public SyncedRoot createSyncedRoot(String subjectKey, SyncedRoot syncedRoot) {
-        return (SyncedRoot)saveBySubjectKey(syncedRoot, subjectKey);
+        return saveBySubjectKey(syncedRoot, subjectKey);
     }
 
     @Override
@@ -39,7 +38,13 @@ public class SyncedRootMongoDao extends AbstractDomainObjectMongoDao<SyncedRoot>
 
     @Override
     public List<SyncedRoot> getSyncedRoots(String subjectKey) {
-        return streamAllByClass(SyncedRoot.class).collect(Collectors.toList());
+        return MongoDaoHelper.find(
+                permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey),
+                null,
+                0,
+                -1,
+                mongoCollection,
+                SyncedRoot.class);
     }
 
     @Override
