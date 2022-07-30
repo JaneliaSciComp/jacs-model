@@ -18,7 +18,7 @@ import java.util.*;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName = "tmNeuron", label = "Tiled Microscope Neuron")
+@MongoMapped(collectionName = "tmNeuron", label = "Horta Neuron Fragment")
 @NotCacheable
 public class TmNeuronMetadata extends AbstractDomainObject {
 

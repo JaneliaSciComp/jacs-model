@@ -22,8 +22,8 @@ import java.util.Set;
  * for making these neurons searchable with metadata in SOLR, without impacting system performance with
  * indexing of many tiny fragments, which do not need to be searched by name.
  */
-@SearchType(key="tmMappedNeuron",label="Tiled Microscope Mapped Neuron")
-@MongoMapped(collectionName="tmMappedNeuron",label="Tiled Microscope Mapped Neuron")
+@SearchType(key="tmMappedNeuron",label="Horta Neuron")
+@MongoMapped(collectionName="tmMappedNeuron",label="Horta Neuron")
 public class TmMappedNeuron extends AbstractDomainObject {
 
     public enum DatabaseName {

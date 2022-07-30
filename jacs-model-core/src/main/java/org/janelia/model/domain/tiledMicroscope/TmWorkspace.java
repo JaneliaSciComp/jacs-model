@@ -16,8 +16,8 @@ import java.util.List;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@SearchType(key="tmWorkspace",label="Tiled Microscope Workspace")
-@MongoMapped(collectionName="tmWorkspace",label="Tiled Microscope Workspace")
+@SearchType(key="tmWorkspace",label="Horta Workspace")
+@MongoMapped(collectionName="tmWorkspace",label="Horta Workspace")
 public class TmWorkspace extends AbstractDomainObject {
 
     private Reference sampleRef;

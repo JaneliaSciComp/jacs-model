@@ -18,8 +18,8 @@ import java.util.Map;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@SearchType(key="tmSample",label="Tiled Microscope Sample")
-@MongoMapped(collectionName="tmSample",label="Tiled Microscope Sample")
+@SearchType(key="tmSample",label="Horta Sample")
+@MongoMapped(collectionName="tmSample",label="Horta Sample")
 public class TmSample extends SyncedPath implements HasFiles {
 
     private Map<FileType, String> files = new HashMap<>();
