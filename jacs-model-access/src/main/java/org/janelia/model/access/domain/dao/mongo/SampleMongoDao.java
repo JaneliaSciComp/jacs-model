@@ -27,13 +27,15 @@ public class SampleMongoDao extends AbstractDomainObjectMongoDao<Sample> impleme
     }
 
     @Override
-    public List<Sample> findMatchingSample(Collection<String> dataSetIds,
+    public List<Sample> findMatchingSample(Collection<Long> ids,
+                                           Collection<String> dataSetIds,
                                            Collection<String> sampleNames,
                                            Collection<String> slideCodes,
                                            long offset,
                                            int length) {
         return find(
                 MongoDaoHelper.createFilterCriteria(
+                        CollectionUtils.isEmpty(ids) ? null : MongoDaoHelper.createFilterByIds(ids),
                         CollectionUtils.isEmpty(dataSetIds) ? null : Filters.in("dataSet", dataSetIds),
                         CollectionUtils.isEmpty(sampleNames) ? null : Filters.in("name", sampleNames),
                         CollectionUtils.isEmpty(slideCodes) ? null : Filters.in("slideCode", slideCodes)),

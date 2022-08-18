@@ -26,11 +26,12 @@ public class SampleSearchableDao extends AbstractDomainSearchableDao<Sample> imp
     }
 
     @Override
-    public List<Sample> findMatchingSample(Collection<String> dataSetIds,
+    public List<Sample> findMatchingSample(Collection<Long> ids,
+                                           Collection<String> dataSetIds,
                                            Collection<String> sampleNames,
                                            Collection<String> slideCodes,
                                            long offset,
                                            int length) {
-        return sampleDao.findMatchingSample(dataSetIds, sampleNames, slideCodes, offset, length);
+        return sampleDao.findMatchingSample(ids, dataSetIds, sampleNames, slideCodes, offset, length);
     }
 }

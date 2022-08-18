@@ -66,7 +66,7 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
         image1.setSampleRef(Reference.createFor("Sample#1234"));
         image1.setArea("brain");
         image1.setTile("tile 1");
-        image1.setReleaseName("release 1");
+        image1.setReleaseName("Gen1 GAL4");
         image1.setSlideCode("line-date_1_A1");
         image1.setOriginalLine("original-line-1");
         image1.setObjective("40x");
@@ -81,7 +81,7 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
         image2.setSampleRef(Reference.createFor("Sample#5678"));
         image2.setArea("brain");
         image2.setTile("tile 2");
-        image2.setReleaseName("release 2");
+        image2.setReleaseName("Gen1 GAL4");
         image2.setSlideCode("line-date_2_B3");
         image2.setOriginalLine("original-line-2");
         image2.setObjective("40x");
@@ -96,7 +96,7 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
         image3.setSampleRef(Reference.createFor("Sample#1357"));
         image3.setArea("brain");
         image3.setTile("tile 3");
-        image3.setReleaseName("release 3");
+        image3.setReleaseName("Gen1 LexA");
         image3.setSlideCode("line-date_3_C5");
         image3.setOriginalLine("original-line-3");
         image3.setObjective("40x");
