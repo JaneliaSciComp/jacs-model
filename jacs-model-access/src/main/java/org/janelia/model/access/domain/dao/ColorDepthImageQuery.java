@@ -12,6 +12,7 @@ public class ColorDepthImageQuery {
     private String owner;
     private String alignmentSpace;
     private Collection<String> libraryIdentifiers;
+    private Collection<Long> ids;
     private Collection<String> exactNames;
     private Collection<String> fuzzyNames;
     private Collection<String> exactFilepaths;
@@ -44,6 +45,15 @@ public class ColorDepthImageQuery {
 
     public ColorDepthImageQuery withLibraryIdentifiers(Collection<String> libraryIdentifiers) {
         this.libraryIdentifiers = libraryIdentifiers;
+        return this;
+    }
+
+    public Collection<Long> getIds() {
+        return ids;
+    }
+
+    public ColorDepthImageQuery withIds(Collection<Long> ids) {
+        this.ids = ids;
         return this;
     }
 

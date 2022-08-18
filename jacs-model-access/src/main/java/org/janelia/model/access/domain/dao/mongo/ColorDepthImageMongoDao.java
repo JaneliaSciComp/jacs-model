@@ -128,6 +128,9 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
         if (CollectionUtils.isNotEmpty(cdmQuery.getLibraryIdentifiers())) {
             cdmFiltersBuilder.add(Filters.in("libraries", cdmQuery.getLibraryIdentifiers()));
         }
+        if (CollectionUtils.isNotEmpty(cdmQuery.getIds())) {
+            cdmFiltersBuilder.add(MongoDaoHelper.createFilterByIds(cdmQuery.getIds()));
+        }
         if (CollectionUtils.isNotEmpty(cdmQuery.getExactNames())) {
             cdmFiltersBuilder.add(Filters.in("name", cdmQuery.getExactNames()));
         }
