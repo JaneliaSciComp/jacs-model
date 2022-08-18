@@ -27,7 +27,7 @@ public class EMDataSet extends AbstractDomainObject implements Filtering {
     private String version;
 
     @SearchAttribute(key="gender_txt",label="Gender",facet="gender_s")
-    private Boolean gender;
+    private String gender;
 
     @SearchAttribute(key="published_b",label="Is Published",facet="published_b")
     private boolean published;
@@ -46,11 +46,11 @@ public class EMDataSet extends AbstractDomainObject implements Filtering {
         this.version = version;
     }
 
-    public Boolean getGender() {
+    public String getGender() {
         return gender;
     }
 
-    public void setGender(Boolean gender) {
+    public void setGender(String gender) {
         this.gender = gender;
     }
 
