@@ -6,7 +6,7 @@
 
 Run the unit tests:
 ```
-/gradlew test
+./gradlew test
 ```
 
 Build the jar:
