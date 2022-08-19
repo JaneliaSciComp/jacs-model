@@ -32,6 +32,7 @@ import java.util.Map;
  * {@link TmNeuronMetadata} Mongo DAO.
  */
 public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeuronMetadata> implements TmNeuronMetadataDao {
+
     private static final Logger LOG = LoggerFactory.getLogger(TmNeuronMetadataMongoDao.class);
 
     private final MongoDatabase mongoDatabase;
@@ -114,7 +115,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 getNeuronCollection(workspace.getNeuronCollection()));
         hydrateLargeNeurons(neuronList);
 
-        LOG.info("BATCH TIME {} ms", stopWatch.getTime());
+        LOG.trace("BATCH TIME {} ms", stopWatch.getTime());
         stopWatch.stop();
         return neuronList;
     }
@@ -136,7 +137,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                         getNeuronCollection(workspace.getNeuronCollection()),
                         TmNeuronMetadata.class
                 );
-        LOG.info("BATCH TIME {} ms", stopWatch.getTime());
+        LOG.trace("BATCH TIME {} ms", stopWatch.getTime());
         stopWatch.stop();
         return neuronList;
     }
