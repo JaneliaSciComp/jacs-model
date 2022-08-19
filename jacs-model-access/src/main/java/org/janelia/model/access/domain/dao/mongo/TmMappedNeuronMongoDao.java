@@ -36,6 +36,7 @@ public class TmMappedNeuronMongoDao extends AbstractDomainObjectMongoDao<TmMappe
 
     @Override
     public long deleteNeuronsForWorkspace(TmWorkspace workspace, String subjectKey) {
+        // TODO: this should remove the deleted documents from the search index
         return MongoDaoHelper.deleteMatchingRecords(mongoCollection,
                 Filters.and(MongoDaoHelper.createFilterCriteria(
                         Filters.eq("workspaceRef", Reference.createFor(workspace))
