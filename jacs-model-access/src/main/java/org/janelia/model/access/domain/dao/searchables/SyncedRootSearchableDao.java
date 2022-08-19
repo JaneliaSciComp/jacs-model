@@ -11,12 +11,12 @@ import javax.inject.Inject;
 import java.util.List;
 
 @AsyncIndex
-public class SyncedPathSearchableDao extends AbstractDomainSearchableDao<SyncedRoot> implements SyncedRootDao {
+public class SyncedRootSearchableDao extends AbstractDomainSearchableDao<SyncedRoot> implements SyncedRootDao {
 
     private final SyncedRootDao syncedPathDao;
 
     @Inject
-    public SyncedPathSearchableDao(SyncedRootDao syncedPathDao,
+    public SyncedRootSearchableDao(SyncedRootDao syncedPathDao,
                                    DomainObjectDao<SyncedRoot> domainObjectDao,
                                    @AsyncIndex DomainObjectIndexer domainObjectIndexer) {
         super(domainObjectDao, domainObjectIndexer);
