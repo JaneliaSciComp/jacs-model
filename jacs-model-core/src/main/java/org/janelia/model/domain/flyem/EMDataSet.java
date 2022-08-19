@@ -26,7 +26,7 @@ public class EMDataSet extends AbstractDomainObject implements Filtering {
     @SearchAttribute(key="version_txt",label="Version")
     private String version;
 
-    @SearchAttribute(key="gender_txt",label="Gender",facet="gender_s")
+    @SearchAttribute(key="gender_s",label="Gender",facet="gender_s")
     private String gender;
 
     @SearchAttribute(key="published_b",label="Is Published",facet="published_b")
