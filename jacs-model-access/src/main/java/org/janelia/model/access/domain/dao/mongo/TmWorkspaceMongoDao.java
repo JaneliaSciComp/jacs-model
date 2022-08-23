@@ -15,6 +15,7 @@ import com.mongodb.client.model.Filters;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.domain.DomainDAO;
+import org.janelia.model.access.domain.dao.TmMappedNeuronDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.DomainConstants;
@@ -35,9 +36,10 @@ import org.slf4j.LoggerFactory;
 public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspace> implements TmWorkspaceDao {
     private static final Logger LOG = LoggerFactory.getLogger(TmWorkspaceMongoDao.class);
 
+    private final MongoDatabase mongoDatabase;
     private final DomainDAO domainDao;
     private final TmNeuronMetadataDao tmNeuronMetadataDao;
-    private final MongoDatabase mongoDatabase;
+    private final TmMappedNeuronDao tmMappedNeuronDao;
 
     @Inject
     TmWorkspaceMongoDao(MongoDatabase mongoDatabase,
@@ -45,11 +47,13 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                         DomainPermissionsMongoHelper permissionsHelper,
                         DomainUpdateMongoHelper updateHelper,
                         DomainDAO domainDao,
-                        TmNeuronMetadataDao tmNeuronMetadataDao) {
+                        TmNeuronMetadataDao tmNeuronMetadataDao,
+                        TmMappedNeuronDao tmMappedNeuronDao) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
         this.mongoDatabase = mongoDatabase;
         this.domainDao = domainDao;
         this.tmNeuronMetadataDao = tmNeuronMetadataDao;
+        this.tmMappedNeuronDao = tmMappedNeuronDao;
     }
 
     @Override
@@ -179,4 +183,44 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
         }
     }
 
+    /**
+     * Deep deletion of a TmWorkspace. First deletes mapped neurons and
+     * neuron metadata. If those succeed, only then delete the workspace.
+     * @param id id of a TmWorkspace
+     * @param subjectKey subject key of user
+     * @return total number of records deleted
+     */
+    @Override
+    public long deleteByIdAndSubjectKey(Long id, String subjectKey) {
+        TmWorkspace workspace = findById(id);
+        if (workspace == null) {
+            throw new IllegalArgumentException("Workspace with this id not found: "+id);
+        }
+        return delete(workspace, subjectKey);
+    }
+
+    /**
+     * Deep deletion of a TmWorkspace. First deletes mapped neurons and
+     * neuron metadata. If those succeed, only then delete the workspace.
+     * @param workspace the TmWorkspace to delete
+     * @param subjectKey subject key of user
+     * @return total number of records deleted
+     */
+    public long delete(TmWorkspace workspace, String subjectKey) {
+        int n = 0;
+        try {
+            n += tmMappedNeuronDao.deleteNeuronsForWorkspace(workspace, subjectKey);
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Error deleting mapped neurons for workspace "+workspace, e);
+        }
+        try {
+            n += tmNeuronMetadataDao.deleteNeuronsForWorkspace(workspace, subjectKey);
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Error deleting neuron metadata for workspace "+workspace, e);
+        }
+        n += super.deleteByIdAndSubjectKey(workspace.getId(), subjectKey);
+        return n;
+    }
 }
