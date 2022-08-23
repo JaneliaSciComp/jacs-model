@@ -1,18 +1,22 @@
 package org.janelia.model.domain.tiledMicroscope;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
+import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.support.SearchType;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * RawTile microscope workspace for annotating a TmSample.
+ * Workspace for annotating a sample in Horta.
+ *
+ * Always linked to imagery (TmSample). May contain neuron fragments (TmNeuronMetadata) and may be linked to a
+ * collection of published neurons (TmMappedNeuron).
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -21,6 +25,9 @@ import java.util.List;
 public class TmWorkspace extends AbstractDomainObject {
 
     private Reference sampleRef;
+
+    @SearchTraversal({TmWorkspace.class})
+    private ReverseReference mappedNeurons;
 
     private boolean autoTracing;
     private boolean autoPointRefinement;
@@ -48,6 +55,7 @@ public class TmWorkspace extends AbstractDomainObject {
         copy.setColorModel(workspace.getColorModel());
         copy.setColorModel3d(workspace.getColorModel3d());
         copy.setSampleRef(workspace.getSampleRef());
+        copy.setMappedNeurons(workspace.getMappedNeurons());
         return copy;
     }
     
@@ -63,6 +71,18 @@ public class TmWorkspace extends AbstractDomainObject {
 
     public void setSampleRef(Reference sampleRef) {
         this.sampleRef = sampleRef;
+    }
+
+    public ReverseReference getMappedNeurons() {
+        return mappedNeurons;
+    }
+
+    public void setMappedNeurons(ReverseReference mappedNeurons) {
+        this.mappedNeurons = mappedNeurons;
+    }
+
+    public void setObjectMeshList(List<TmObjectMesh> objectMeshList) {
+        this.objectMeshList = objectMeshList;
     }
 
     public boolean isAutoTracing() {

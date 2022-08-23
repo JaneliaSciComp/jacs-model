@@ -38,6 +38,9 @@ public class TmMappedNeuron extends AbstractDomainObject {
     private Reference workspaceRef;
 
     @SearchTraversal({})
+    private Long workspaceId;
+
+    @SearchTraversal({})
     private Set<Reference> neuronRefs = new HashSet<>();
 
     private Map<DatabaseName, String> dbXrefs = new HashMap<>();
@@ -59,6 +62,14 @@ public class TmMappedNeuron extends AbstractDomainObject {
 
     public void setWorkspaceRef(Reference workspaceRef) {
         this.workspaceRef = workspaceRef;
+    }
+
+    public Long getWorkspaceId() {
+        return workspaceId;
+    }
+
+    public void setWorkspaceId(Long workspaceId) {
+        this.workspaceId = workspaceId;
     }
 
     public void addNeuronRef(Reference ref) {

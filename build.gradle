@@ -7,7 +7,7 @@ allprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'idea'
     group = 'org.janelia.jacs-model'
-    version = '2.62.3'
+    version = '2.63.2'
 }
 
 subprojects {
