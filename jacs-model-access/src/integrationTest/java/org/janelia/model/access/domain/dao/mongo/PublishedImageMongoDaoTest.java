@@ -1,8 +1,12 @@
 package org.janelia.model.access.domain.dao.mongo;
 
 import com.google.common.collect.Sets;
+
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.PublishedImageDao;
+import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
@@ -15,9 +19,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
 
@@ -29,7 +41,7 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
     private SubjectMongoDao subjectMongoDao;
     private PublishedImageDao publishedImageDao;
 
-    private List<PublishedImage> testImages = new ArrayList<>();
+    private Map<Long, PublishedImage> testImages = new HashMap<>();
 
     @Before
     public void setUp() {
@@ -42,14 +54,12 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
                 new DomainUpdateMongoHelper(testObjectMapper)) {
 
         };
-        testImages.addAll(createTestImages());
+        testImages.putAll(createTestImages());
     }
 
     @After
     public void tearDown() {
-        for (PublishedImage image: testImages) {
-            publishedImageDao.delete(image);
-        }
+        testImages.forEach((id, img) -> publishedImageDao.delete(img));
     }
 
     private void setOwnership(DomainObject domainObject) {
@@ -58,7 +68,7 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
         domainObject.setWriters(Sets.newHashSet(testUser));
     }
 
-    private List<PublishedImage> createTestImages() {
+    private Map<Long, PublishedImage> createTestImages() {
         List<PublishedImage> images = new ArrayList<>();
 
         PublishedImage image1 = new PublishedImage();
@@ -109,50 +119,66 @@ public class PublishedImageMongoDaoTest extends AbstractMongoDaoTest {
 
         publishedImageDao.saveAll(images);
         LOG.trace("Created test images");
-        return images;
+        return images.stream().collect(Collectors.toMap(AbstractDomainObject::getId, i -> i));
     }
 
     @Test
     public void testGetImage() {
-        for (PublishedImage image: testImages) {
-            PublishedImage foundImage = publishedImageDao.getImage(image.getSlideCode(),
-                image.getAlignmentSpace(), image.getObjective());
-            Assert.assertNotNull(foundImage);
+        Map<Pair<String, String>, List<PublishedImage>> testImagesByAlignmentSpaceAndObjective =
+                testImages.values().stream().collect(Collectors.groupingBy(
+                        i -> ImmutablePair.of(i.getAlignmentSpace(), i.getObjective()),
+                        Collectors.toList()
+                ));
+
+        testImagesByAlignmentSpaceAndObjective.forEach((asAndObjective, testImagesSubset) -> {
+            Set<String> testSlideCodes = testImagesSubset.stream().map(PublishedImage::getSlideCode).collect(Collectors.toSet());
+            List<PublishedImage> foundImages = publishedImageDao.getImages(asAndObjective.getLeft(), testSlideCodes, asAndObjective.getRight());
+            assertEquals(testImagesSubset.size(), foundImages.size());
+            compareImages(testImagesSubset, foundImages);
+        });
+    }
+
+    private void compareImages(Collection<PublishedImage> referenceImages, Collection<PublishedImage> toCheck) {
+        Map<Long, PublishedImage> indexedReferenceImages = referenceImages.stream().collect(Collectors.toMap(AbstractDomainObject::getId, i -> i));
+        toCheck.forEach(foundImage -> {
+            PublishedImage image = indexedReferenceImages.get(foundImage.getId());
+            assertNotNull(image);
             // test a few key attributes
-            Assert.assertEquals(image.getId(), foundImage.getId());
-            Assert.assertEquals(image.getSampleRef(), foundImage.getSampleRef());
-            Assert.assertEquals(image.getTile(), foundImage.getTile());
-            Assert.assertEquals(image.getOriginalLine(), foundImage.getOriginalLine());
+            assertEquals(image.getId(), foundImage.getId());
+            assertEquals(image.getSampleRef(), foundImage.getSampleRef());
+            assertEquals(image.getTile(), foundImage.getTile());
+            assertEquals(image.getOriginalLine(), foundImage.getOriginalLine());
             for (FileType key: image.getFiles().keySet()) {
-                Assert.assertTrue(foundImage.getFiles().containsKey(key));
-                Assert.assertEquals(image.getFiles().get(key), foundImage.getFiles().get(key));
+                assertTrue(foundImage.getFiles().containsKey(key));
+                assertEquals(image.getFiles().get(key), foundImage.getFiles().get(key));
             }
-        }
+        });
     }
 
     @Test
     public void testGetGen1GAL3LexAImage() {
-        for (PublishedImage image: testImages) {
-            PublishedImage foundImage = publishedImageDao.getGen1Gal4LexAImage(image.getOriginalLine(), image.getArea());
-            Assert.assertNotNull(foundImage);
-            // test a few key attributes
-            Assert.assertEquals(image.getId(), foundImage.getId());
-            Assert.assertEquals(image.getSampleRef(), foundImage.getSampleRef());
-            Assert.assertEquals(image.getTile(), foundImage.getTile());
-            Assert.assertEquals(image.getOriginalLine(), foundImage.getOriginalLine());
-            for (FileType key: image.getFiles().keySet()) {
-                Assert.assertTrue(foundImage.getFiles().containsKey(key));
-                Assert.assertEquals(image.getFiles().get(key), foundImage.getFiles().get(key));
-            }
-        }
+        Map<String, List<PublishedImage>> testImagesByAnatomicalArea =
+                testImages.values().stream().collect(Collectors.groupingBy(
+                        PublishedImage::getArea,
+                        Collectors.toList()
+                ));
+        testImagesByAnatomicalArea.forEach((area, testImagesSubset) -> {
+            Set<String> testLines = testImagesSubset.stream().map(PublishedImage::getOriginalLine).collect(Collectors.toSet());
+            List<PublishedImage> foundImages = publishedImageDao.getGen1Gal4LexAImages(area, testLines);
+            assertEquals(testImagesSubset.size(), foundImages.size());
+            compareImages(testImagesSubset, foundImages);
+        });
     }
 
     @Test
-    public void testNoImage() {
-        PublishedImage firstImage = testImages.get(0);
-        PublishedImage foundImage = publishedImageDao.getImage(firstImage.getSlideCode(),
-                firstImage.getAlignmentSpace(), "nonsense objective");
-        Assert.assertNull(foundImage);
+    public void testNoImageFoundWithBadObjective() {
+        PublishedImage firstImage = testImages.values().stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("There should always be some data"));
+        List<PublishedImage> foundImages = publishedImageDao.getImages(
+                firstImage.getAlignmentSpace(),
+                Collections.singleton(firstImage.getSlideCode()),
+                "bad objective");
+        assertTrue(foundImages.isEmpty());
     }
 
 }
