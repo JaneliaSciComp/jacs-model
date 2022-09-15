@@ -1,5 +1,6 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,16 +62,16 @@ public class ReferenceDomainObjectReadMongoDao extends AbstractMongoDao implemen
     }
 
     @Override
-    public List<? extends DomainObject> findByReferences(List<Reference> entityReferences) {
+    public List<? extends DomainObject> findByReferences(Collection<Reference> entityReferences) {
         return findByReferencesAndSubjectCriteria(entityReferences, null);
     }
 
     @Override
-    public List<? extends DomainObject> findByReferencesAndSubjectKey(List<Reference> entityReferences, String subjectKey) {
+    public List<? extends DomainObject> findByReferencesAndSubjectKey(Collection<Reference> entityReferences, String subjectKey) {
         return findByReferencesAndSubjectCriteria(entityReferences, permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey));
     }
 
-    private List<? extends DomainObject> findByReferencesAndSubjectCriteria(List<Reference> entityReferences, Bson subjectFilter) {
+    private List<? extends DomainObject> findByReferencesAndSubjectCriteria(Collection<Reference> entityReferences, Bson subjectFilter) {
         Map<Class<? extends DomainObject>, Set<Reference>> entityCollectionMapping = entityReferences.stream()
                 .collect(Collectors.groupingBy(
                         ref -> DomainUtils.getObjectClassByName(ref.getTargetClassName()),
