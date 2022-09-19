@@ -35,6 +35,8 @@ public class EMDataSet extends AbstractDomainObject implements Filtering {
     @SearchAttribute(key="active_b",label="Is Active",facet="active_b")
     private boolean active;
 
+    private String anatomicalArea;
+
     @JsonIgnore
     private List<Criteria> lazyCriteria;
 
@@ -117,5 +119,13 @@ public class EMDataSet extends AbstractDomainObject implements Filtering {
             lazyCriteria.add(dataSet);
         }
         return lazyCriteria;
+    }
+
+    public String getAnatomicalArea() {
+        return anatomicalArea;
+    }
+
+    public void setAnatomicalArea(String anatomicalArea) {
+        this.anatomicalArea = anatomicalArea;
     }
 }
