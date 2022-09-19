@@ -1,12 +1,14 @@
 package org.janelia.model.domain.flyem;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasFiles;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
+import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.support.SearchType;
 
 import java.util.HashMap;
@@ -40,6 +42,11 @@ public class EMBody extends AbstractDomainObject implements HasFiles {
 
     @SearchAttribute(key="status_txt",label="Status Label")
     private String statusLabel;
+
+    // emDataSet property is serializable but not deserializable
+    @SearchTraversal({})
+    @JsonIgnore
+    private EMDataSet emDataSet;
 
     private Map<FileType, String> files = new HashMap<>();
 
@@ -117,5 +124,15 @@ public class EMBody extends AbstractDomainObject implements HasFiles {
 
     public void setStatusLabel(String statusLabel) {
         this.statusLabel = statusLabel;
+    }
+
+    @JsonProperty
+    public EMDataSet getEmDataSet() {
+        return emDataSet;
+    }
+
+    @JsonIgnore
+    public void setEmDataSet(EMDataSet emDataSet) {
+        this.emDataSet = emDataSet;
     }
 }

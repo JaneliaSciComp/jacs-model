@@ -118,5 +118,4 @@ public class EMDataSet extends AbstractDomainObject implements Filtering {
         }
         return lazyCriteria;
     }
-
 }
