@@ -37,6 +37,8 @@ public class EMDataSet extends AbstractDomainObject implements Filtering {
 
     private String anatomicalArea;
 
+    private String uuid;
+
     @JsonIgnore
     private List<Criteria> lazyCriteria;
 
@@ -127,5 +129,13 @@ public class EMDataSet extends AbstractDomainObject implements Filtering {
 
     public void setAnatomicalArea(String anatomicalArea) {
         this.anatomicalArea = anatomicalArea;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 }
