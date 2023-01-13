@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/JaneliaSciComp/jacs-model.svg?style=svg)](https://circleci.com/gh/JaneliaSciComp/jacs-model)
 
-## Build
+## Build 
 
 Run the unit tests:
 ```
