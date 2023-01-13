@@ -50,8 +50,6 @@ sudo keytool -importcert -alias JaneliaWildcard -file cert.crt -keystore /Librar
 
 This module contains common domain models and DAOs which can be used to access data stored in the JACS databases.
 
-Currently, this module is attempting to unify the fragmented JACSv1 and JACSv2 models. It mainly contains models from v1, which will be shared between v1 and v2 until all functionality from v1 can be migrated to v2. 
-
 ## Contents
 
 * **org.janelia.model**
