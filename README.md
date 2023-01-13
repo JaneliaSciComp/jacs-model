@@ -29,9 +29,7 @@ There is also a publish script that takes username and password as positional ar
 ./publish.sh [<username> [<password>]]
 ```
 
-
 If you have the properties mavenRepoUser and mavenRepoPassword already defined in ${HOME}/.gradle/gradle.properties then you don't have to specify them in the command line.
-
 
 Note: If the publish fails with a 'sun.security.validator.ValidatorException: PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target' exception you will have to add Janelia wildcard certificate to your Java trusted store and then kill all running gradle daemons.
 
