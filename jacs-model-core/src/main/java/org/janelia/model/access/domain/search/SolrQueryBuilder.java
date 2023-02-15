@@ -174,7 +174,7 @@ public class SolrQueryBuilder {
         query.addField("score");
 
         if (sortField != null) {
-            query.setSortField(sortField, ascending ? ORDER.asc : ORDER.desc);
+            query.addSort(sortField, ascending ? ORDER.asc : ORDER.desc);
         }
 
         boolean entityTypeFiltered = false;
@@ -239,7 +239,7 @@ public class SolrQueryBuilder {
         if (queryParams.getSortField() != null) {
             String[] sortParams = queryParams.getSortField().split(" ");
             ORDER sortOrder = (sortParams[1].equals("asc") ? ORDER.asc : ORDER.desc);
-            query.setSortField(sortParams[0], sortOrder);
+            query.addSort(sortParams[0], sortOrder);
         }
         query.setFilterQueries(queryParams.getFilterQueries());
         String[] facetFields = queryParams.getFacetField();

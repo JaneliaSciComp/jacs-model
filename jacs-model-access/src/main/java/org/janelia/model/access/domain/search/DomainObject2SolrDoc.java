@@ -92,10 +92,10 @@ class DomainObject2SolrDoc {
     @SuppressWarnings("unchecked")
     private SolrInputDocument createSolrDoc(DomainObject domainObject, Set<Long> ancestorIds) {
         SolrInputDocument solrDoc = new SolrInputDocument();
-        solrDoc.setField("doc_type", SearchableDocType.DOCUMENT.name(), 1.0f);
-        solrDoc.setField("class", domainObject.getClass().getName(), 1.0f);
-        solrDoc.setField("collection", DomainUtils.getCollectionName(domainObject), 1.0f);
-        solrDoc.setField("ancestor_ids", new ArrayList<>(ancestorIds), 0.2f);
+        solrDoc.setField("doc_type", SearchableDocType.DOCUMENT.name());
+        solrDoc.setField("class", domainObject.getClass().getName());
+        solrDoc.setField("collection", DomainUtils.getCollectionName(domainObject));
+        solrDoc.setField("ancestor_ids", new ArrayList<>(ancestorIds));
 
         Map<String, Object> attrs = new HashMap<>();
 
@@ -132,18 +132,16 @@ class DomainObject2SolrDoc {
                     }
                 });
 
-        attrs.forEach((k, v) -> {
-            solrDoc.addField(k, v, 1.0f);
-        });
+        attrs.forEach(solrDoc::addField);
 
         FullTextIndexableValues fullTextIndexableValues = getFullTextIndexedValues(domainObject);
-        solrDoc.setField("fulltext_mt", new HashSet<>(fullTextIndexableValues.fulltextIndexedFields.values()), 0.8f);
+        solrDoc.setField("fulltext_mt", new HashSet<>(fullTextIndexableValues.fulltextIndexedFields.values()));
 
         fullTextIndexableValues.refAnnotationsMap.values().stream()
                 .flatMap(refAnnotations -> refAnnotations.stream())
                 .flatMap(sda -> sda.getSubjects().stream().map(s -> ImmutablePair.of(SubjectUtils.getSubjectName(s), sda.getTag())))
                 .forEach(subjectTagPair -> {
-                    solrDoc.addField(subjectTagPair.getLeft() + "_annotations", subjectTagPair.getRight(), 1.0f);
+                    solrDoc.addField(subjectTagPair.getLeft() + "_annotations", subjectTagPair.getRight());
                 });
 
         return solrDoc;

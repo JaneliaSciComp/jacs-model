@@ -1,5 +1,5 @@
 plugins {
-    id "com.github.hierynomus.license" version "0.15.0"
+    id "com.github.hierynomus.license" version "0.16.1"
 }
 
 allprojects {
@@ -7,7 +7,7 @@ allprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'idea'
     group = 'org.janelia.jacs-model'
-    version = '2.68.0'
+    version = '2.69.0-SNAPSHOT'
 }
 
 subprojects {

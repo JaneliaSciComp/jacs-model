@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.janelia.model.domain.DomainObject;
@@ -23,12 +23,12 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
     private final DomainObject2SolrDoc domainObject2SolrDocConverter;
     private final int solrBatchSize;
 
-    public SolrBasedDomainObjectIndexer(SolrServer solrServer,
+    public SolrBasedDomainObjectIndexer(SolrClient solrClient,
                                         List<NodeAncestorsGetter<? extends Node>> nodeAncestorsGetters,
                                         DomainAnnotationGetter nodeAnnotationGetter,
                                         DomainObjectGetter objectGetter,
                                         int solrBatchSize) {
-        this.solrConnector = new SolrConnector(solrServer);
+        this.solrConnector = new SolrConnector(solrClient);
         this.domainObject2SolrDocConverter = new DomainObject2SolrDoc(nodeAncestorsGetters, nodeAnnotationGetter, objectGetter);
         this.solrBatchSize = solrBatchSize;
     }

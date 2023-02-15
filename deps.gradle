@@ -28,7 +28,7 @@ dependencies {
         HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
 
         // search
-        SOLR_VERSION = "3.6.2"
+        SOLR_VERSION = "8.11.2"
         SOLR_SEARCH_LIB = "org.apache.solr:solr-solrj:${SOLR_VERSION}"
         
         // apache commons

@@ -1,5 +1,16 @@
 package org.janelia.model.domain.tiledMicroscope;
 
+import java.awt.Color;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Joiner;
 import org.janelia.model.domain.AbstractDomainObject;
@@ -7,10 +18,6 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.NotCacheable;
 import org.janelia.model.util.ColorUtils;
-
-import java.awt.*;
-import java.util.List;
-import java.util.*;
 
 /**
  * Metadata for a tiled microscope neuron in a TmWorkspace. The actual neuron point data
