@@ -1,4 +1,24 @@
 project(":jacs-model-access") {
+
+    configurations {
+        integrationTestCompileOnly.extendsFrom(testCompileOnly)
+        integrationTestImplementation.extendsFrom(testImplementation)
+        integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+    }
+
+    sourceSets {
+        integrationTest {
+            java {
+                compileClasspath += main.output + test.output
+                runtimeClasspath += main.output + test.output
+                srcDir file('src/integrationTest/java')
+            }
+            resources {
+                srcDir file('src/integrationTest/resources')
+            }
+        }
+    }
+
     dependencies {
         api project(":jacs-model-core")
 
@@ -18,4 +38,10 @@ project(":jacs-model-access") {
             exclude group: 'javax.transaction'
         }
     }
+
+    tasks.register('integrationTest', Test) {
+        testClassesDirs += sourceSets.integrationTest.output.classesDirs
+        classpath = sourceSets.integrationTest.runtimeClasspath
+    }
+
 }
