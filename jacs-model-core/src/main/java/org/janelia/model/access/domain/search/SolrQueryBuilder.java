@@ -235,6 +235,7 @@ public class SolrQueryBuilder {
 
     public static SolrQuery deSerializeSolrQuery(DocumentSearchParams queryParams) {
         SolrQuery query = new SolrQuery();
+        query.add("q.op", "OR"); // this is no longer in the schema so set it explicitly
         query.setQuery(queryParams.getQuery());
         if (queryParams.getSortField() != null) {
             String[] sortParams = queryParams.getSortField().split(" ");

@@ -19,6 +19,15 @@ project(":jacs-model-access") {
         }
     }
 
+    compileIntegrationTestJava {
+        doFirst {
+            options.compilerArgs = [
+                    '-Xlint:deprecation',
+                    '-Xlint:unchecked'
+            ]
+        }
+    }
+
     dependencies {
         api project(":jacs-model-core")
 

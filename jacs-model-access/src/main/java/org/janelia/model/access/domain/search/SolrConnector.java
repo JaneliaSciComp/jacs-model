@@ -36,6 +36,23 @@ class SolrConnector {
     private static final Logger LOG = LoggerFactory.getLogger(SolrConnector.class);
     private static final int SOLR_COMMIT_WITHIN_MS = 5000;
 
+    private static SolrInputDocument toSolrInputDocument(SolrDocument solrDocument) {
+        SolrInputDocument solrInputDocument = new SolrInputDocument();
+
+        for (String name : solrDocument.getFieldNames()) {
+            solrInputDocument.addField(name, solrDocument.getFieldValue(name));
+        }
+
+        //Don't forget children documents
+        if (solrDocument.getChildDocuments() != null) {
+            for (SolrDocument childDocument : solrDocument.getChildDocuments()) {
+                //You can add paranoic check against infinite loop childDocument == solrDocument
+                solrInputDocument.addChildDocument(toSolrInputDocument(childDocument));
+            }
+        }
+        return solrInputDocument;
+    }
+
     private final SolrClient solrClient;
 
     SolrConnector(@Nullable SolrClient solrClient) {
@@ -242,23 +259,6 @@ class SolrConnector {
                     });
             addDocsToIndex(solrDocsStream, batchSize);
         }
-    }
-
-    public static SolrInputDocument toSolrInputDocument(SolrDocument solrDocument) {
-        SolrInputDocument solrInputDocument = new SolrInputDocument();
-
-        for (String name : solrDocument.getFieldNames()) {
-            solrInputDocument.addField(name, solrDocument.getFieldValue(name));
-        }
-
-        //Don't forget children documents
-        if(solrDocument.getChildDocuments() != null) {
-            for(SolrDocument childDocument : solrDocument.getChildDocuments()) {
-                //You can add paranoic check against infinite loop childDocument == solrDocument
-                solrInputDocument.addChildDocument(toSolrInputDocument(childDocument));
-            }
-        }
-        return solrInputDocument;
     }
 
     private Stream<SolrDocument> searchByDocIds(Set<Long> solrDocIds, int batchSize) {
