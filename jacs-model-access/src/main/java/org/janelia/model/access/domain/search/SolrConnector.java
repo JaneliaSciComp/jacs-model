@@ -102,7 +102,7 @@ class SolrConnector {
             LOG.debug("SOLR is not configured");
             return 0;
         }
-        Stopwatch stopwatch = Stopwatch.createStarted();
+        long startTime = System.currentTimeMillis();
         List<SolrInputDocument> solrDocsBatch = Collections.synchronizedList(new ArrayList<>());
         AtomicInteger result = new AtomicInteger(0);
         AtomicInteger queuedDocs = new AtomicInteger(0);
@@ -118,13 +118,7 @@ class SolrConnector {
                                 solrDocsBatch.clear();
                                 queuedDocs.set(0);
                             }
-                            try {
-                                LOG.debug("    Adding {} docs (+ {} in {}s)", toAdd.size(), result.get(), stopwatch.elapsed(TimeUnit.SECONDS));
-                                solrClient.add(toAdd, SOLR_COMMIT_WITHIN_MS);
-                                result.addAndGet(toAdd.size());
-                            } catch (Throwable e) {
-                                LOG.error("Error while updating solr index with {} documents", toAdd.size(), e);
-                            }
+                            result.addAndGet(indexDocs(toAdd, result.get(), startTime));
                         }
                     } else {
                         try {
@@ -136,18 +130,20 @@ class SolrConnector {
                     }
                 })
                 ;
-        if (solrDocsBatch.size() > 0) {
+        result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime));
+        return result.get();
+    }
+
+    private int indexDocs(Collection<SolrInputDocument> docs, int currentDocs, long startTime) {
+        if (!docs.isEmpty()) {
             try {
-                LOG.debug("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get(), stopwatch.elapsed(TimeUnit.SECONDS));
-                solrClient.add(solrDocsBatch, SOLR_COMMIT_WITHIN_MS);
-                result.addAndGet(solrDocsBatch.size());
+                LOG.debug("    Adding {} docs (+ {} in {}s)", docs.size(), currentDocs, (System.currentTimeMillis() - startTime) / 1000.);
+                solrClient.add(docs, SOLR_COMMIT_WITHIN_MS);
             } catch (Throwable e) {
-                LOG.error("Error while updating solr index with {} docs", solrDocsBatch.size(), e);
-            } finally {
-                solrDocsBatch.clear();
+                LOG.error("Error while updating solr index with {} documents", docs.size(), e);
             }
         }
-        return result.get();
+        return docs.size();
     }
 
     void clearIndex() {

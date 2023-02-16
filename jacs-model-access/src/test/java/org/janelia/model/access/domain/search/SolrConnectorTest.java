@@ -47,15 +47,7 @@ public class SolrConnectorTest {
     @Test
     public void indexDocumentStream() throws Exception {
         List<SolrInputDocument> testSolrDocs = createTestDocsForIndexing();
-        IndexingTestData[] testData = new IndexingTestData[] {
-                new IndexingTestData(-2, 0, testSolrDocs.size()),
-                new IndexingTestData(0, 10, 2),
-                new IndexingTestData(1, testSolrDocs.size() + 1, 1),
-                new IndexingTestData(4, 0, 3),
-                new IndexingTestData(5, 5, 3),
-                new IndexingTestData(testSolrDocs.size(), 1, 1),
-                new IndexingTestData(testSolrDocs.size() + 1, 100, 1)
-        };
+        IndexingTestData[] testData = createIndexingChecks(testSolrDocs.size());
         SolrClient testSolrClient = Mockito.mock(SolrClient.class);
         SolrConnector solrConnector = createSolrConnector(testSolrClient);
         for (IndexingTestData td : testData) {
@@ -80,15 +72,7 @@ public class SolrConnectorTest {
     @Test
     public void indexParallelDocumentStream() throws Exception {
         List<SolrInputDocument> testSolrDocs = createTestDocsForIndexing();
-        IndexingTestData[] testData = new IndexingTestData[] {
-                new IndexingTestData(-2, 0, testSolrDocs.size()),
-                new IndexingTestData(0, 10, 2),
-                new IndexingTestData(1, testSolrDocs.size() + 1, 1),
-                new IndexingTestData(4, 0, 3),
-                new IndexingTestData(5, 5, 3),
-                new IndexingTestData(testSolrDocs.size(), 1, 1),
-                new IndexingTestData(testSolrDocs.size() + 1, 100, 1)
-        };
+        IndexingTestData[] testData = createIndexingChecks(testSolrDocs.size());
         SolrClient testSolrClient = Mockito.mock(SolrClient.class);
         SolrConnector solrConnector = createSolrConnector(testSolrClient);
         for (IndexingTestData td : testData) {
@@ -125,6 +109,18 @@ public class SolrConnectorTest {
                 createTestSolrDoc("11"),
                 createTestSolrDoc("12")
         );
+    }
+
+    private IndexingTestData[] createIndexingChecks(int nTestDocs) {
+        return new IndexingTestData[] {
+                new IndexingTestData(-2, 0, nTestDocs),
+                new IndexingTestData(0, 10, 2),
+                new IndexingTestData(1, nTestDocs + 1, 1),
+                new IndexingTestData(4, 0, 3),
+                new IndexingTestData(5, 5, 3),
+                new IndexingTestData(nTestDocs, 1, 1),
+                new IndexingTestData(nTestDocs + 1, 100, 1)
+        };
     }
 
     @Test
