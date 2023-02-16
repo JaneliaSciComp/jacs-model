@@ -6,15 +6,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.solr.client.solrj.SolrClient;
@@ -105,19 +104,21 @@ class SolrConnector {
         long startTime = System.currentTimeMillis();
         List<SolrInputDocument> solrDocsBatch = Collections.synchronizedList(new ArrayList<>());
         AtomicInteger result = new AtomicInteger(0);
-        AtomicInteger queuedDocs = new AtomicInteger(0);
         // group documents in batches of given size to send the to solr
         solrDocsStream
                 .forEach(solrDoc -> {
                     if (batchSize > 1) {
-                        solrDocsBatch.add(solrDoc);
-                        if (queuedDocs.incrementAndGet() >= batchSize) {
-                            List<SolrInputDocument> toAdd;
-                            synchronized (solrDocsBatch) {
+                        List<SolrInputDocument> toAdd;
+                        synchronized (solrDocsBatch) {
+                            solrDocsBatch.add(solrDoc);
+                            if (solrDocsBatch.size() >= batchSize) {
                                 toAdd = new ArrayList<>(solrDocsBatch);
                                 solrDocsBatch.clear();
-                                queuedDocs.set(0);
+                            } else {
+                                toAdd = null;
                             }
+                        }
+                        if (toAdd != null) {
                             result.addAndGet(indexDocs(toAdd, result.get(), startTime));
                         }
                     } else {
@@ -130,8 +131,7 @@ class SolrConnector {
                     }
                 })
                 ;
-        result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime));
-        return result.get();
+        return result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime));
     }
 
     private int indexDocs(Collection<SolrInputDocument> docs, int currentDocs, long startTime) {
@@ -263,8 +263,8 @@ class SolrConnector {
                         .collect(Collectors.groupingBy(docId -> counter.getAndIncrement() / batchSize)).values()
                     : Collections.singleton(ImmutableList.copyOf(solrDocIds));
             return solrDocIdsPartitions.stream()
-                    .map(partition -> idsToSolrQuery(partition))
-                    .filter(queryStr -> queryStr != null)
+                    .map(this::idsToSolrQuery)
+                    .filter(Objects::nonNull)
                     .map(SolrQuery::new)
                     .map(this::search)
                     .flatMap(queryResponse -> queryResponse.getResults().stream())
