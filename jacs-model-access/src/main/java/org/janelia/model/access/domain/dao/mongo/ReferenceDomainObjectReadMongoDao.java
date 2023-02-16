@@ -4,10 +4,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Spliterator;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
@@ -80,7 +84,7 @@ public class ReferenceDomainObjectReadMongoDao extends AbstractMongoDao implemen
         return entityCollectionMapping.entrySet().stream()
                 .flatMap(collectionRefEntry -> MongoDaoHelper.find(
                         MongoDaoHelper.createFilterCriteria(
-                                MongoDaoHelper.createFilterByIds(collectionRefEntry.getValue().stream().map(ref -> ref.getTargetId()).collect(Collectors.toSet())),
+                                MongoDaoHelper.createFilterByIds(collectionRefEntry.getValue().stream().map(Reference::getTargetId).collect(Collectors.toSet())),
                                 subjectFilter),
                         null,
                         0,
@@ -98,6 +102,16 @@ public class ReferenceDomainObjectReadMongoDao extends AbstractMongoDao implemen
     @Override
     public List<? extends DomainObject> findByReverseReferenceAndSubjectKey(ReverseReference reverseEntityReference, String subjectKey) {
         return findByReverseReferenceAndSubjectCriteria(reverseEntityReference, permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey));
+    }
+
+    @Override
+    public <T extends DomainObject> Stream<T> streamAllDomainObjects(Class<T> domainClass) {
+        String collectionName = DomainUtils.getCollectionName(domainClass);
+        MongoCollection<T> collection = mongoDatabase.getCollection(collectionName, domainClass);
+        Spliterator<T> spliterator = collection
+                .find(MongoDaoHelper.createFilterByClass(domainClass), domainClass)
+                .spliterator();
+        return StreamSupport.stream(spliterator, false);
     }
 
     private List<? extends DomainObject> findByReverseReferenceAndSubjectCriteria(ReverseReference reverseEntityReference, Bson subjectFilter) {

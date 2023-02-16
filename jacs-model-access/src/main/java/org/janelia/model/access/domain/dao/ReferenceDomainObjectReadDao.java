@@ -6,6 +6,7 @@ import org.janelia.model.domain.ReverseReference;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Interface for reading domain objects by their reference.
@@ -36,4 +37,13 @@ public interface ReferenceDomainObjectReadDao {
     List<? extends DomainObject> findByReverseReference(ReverseReference reverseEntityReference);
 
     List<? extends DomainObject> findByReverseReferenceAndSubjectKey(ReverseReference reverseEntityReference, String subjectKey);
+
+    /**
+     * Stream all domain objects of the given class without checking any access permissions.
+     *
+     * @param domainClass
+     * @return
+     * @param <T>
+     */
+    <T extends DomainObject> Stream<T> streamAllDomainObjects(Class<T> domainClass);
 }
