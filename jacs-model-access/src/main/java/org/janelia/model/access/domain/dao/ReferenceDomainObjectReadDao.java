@@ -42,8 +42,9 @@ public interface ReferenceDomainObjectReadDao {
      * Stream all domain objects of the given class without checking any access permissions.
      *
      * @param domainClass
+     * @param parallel if true the returned stream is a parallel stream
      * @return
      * @param <T>
      */
-    <T extends DomainObject> Stream<T> streamAllDomainObjects(Class<T> domainClass);
+    <T extends DomainObject> Stream<T> streamAllDomainObjects(Class<T> domainClass, boolean parallel);
 }

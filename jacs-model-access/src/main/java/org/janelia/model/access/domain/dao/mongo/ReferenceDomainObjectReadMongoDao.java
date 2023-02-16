@@ -105,13 +105,13 @@ public class ReferenceDomainObjectReadMongoDao extends AbstractMongoDao implemen
     }
 
     @Override
-    public <T extends DomainObject> Stream<T> streamAllDomainObjects(Class<T> domainClass) {
+    public <T extends DomainObject> Stream<T> streamAllDomainObjects(Class<T> domainClass, boolean parallel) {
         String collectionName = DomainUtils.getCollectionName(domainClass);
         MongoCollection<T> collection = mongoDatabase.getCollection(collectionName, domainClass);
         Spliterator<T> spliterator = collection
                 .find(MongoDaoHelper.createFilterByClass(domainClass), domainClass)
                 .spliterator();
-        return StreamSupport.stream(spliterator, false);
+        return StreamSupport.stream(spliterator, parallel);
     }
 
     private List<? extends DomainObject> findByReverseReferenceAndSubjectCriteria(ReverseReference reverseEntityReference, Bson subjectFilter) {
