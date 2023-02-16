@@ -109,6 +109,7 @@ class SolrConnector {
                 .forEach(solrDoc -> {
                     if (batchSize > 1) {
                         List<SolrInputDocument> toAdd;
+                        int currentResultsCount;
                         synchronized (solrDocsBatch) {
                             solrDocsBatch.add(solrDoc);
                             if (solrDocsBatch.size() >= batchSize) {
@@ -117,9 +118,10 @@ class SolrConnector {
                             } else {
                                 toAdd = null;
                             }
+                            currentResultsCount = result.get();
                         }
                         if (toAdd != null) {
-                            result.addAndGet(indexDocs(toAdd, result.get(), startTime));
+                            result.addAndGet(indexDocs(toAdd, currentResultsCount, startTime));
                         }
                     } else {
                         try {
