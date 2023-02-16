@@ -32,45 +32,33 @@ import static org.mockito.Mockito.times;
 
 public class SolrConnectorTest {
 
+    class IndexingTestData {
+        private final int batchSize;
+        private final int commitSize;
+        private final int expectedCommits;
+
+        private IndexingTestData(int batchSize, int commitSize, int expectedCommits) {
+            this.batchSize = batchSize;
+            this.commitSize = commitSize;
+            this.expectedCommits = expectedCommits;
+        }
+    }
+
     @Test
     public void indexDocumentStream() throws Exception {
-        class TestData {
-            private final int batchSize;
-            private final int commitSize;
-            private final int expectedCommits;
-
-            private TestData(int batchSize, int commitSize, int expectedCommits) {
-                this.batchSize = batchSize;
-                this.commitSize = commitSize;
-                this.expectedCommits = expectedCommits;
-            }
-        }
-        List<SolrInputDocument> testSolrDocs = Arrays.asList(
-                createTestSolrDoc("1"),
-                createTestSolrDoc("2"),
-                createTestSolrDoc("3"),
-                createTestSolrDoc("4"),
-                createTestSolrDoc("5"),
-                createTestSolrDoc("6"),
-                createTestSolrDoc("7"),
-                createTestSolrDoc("8"),
-                createTestSolrDoc("9"),
-                createTestSolrDoc("10"),
-                createTestSolrDoc("11"),
-                createTestSolrDoc("12")
-        );
-        TestData[] testData = new TestData[] {
-                new TestData(-2, 0, testSolrDocs.size()),
-                new TestData(0, 10, 2),
-                new TestData(1, testSolrDocs.size() + 1, 1),
-                new TestData(4, 0, 3),
-                new TestData(5, 5, 3),
-                new TestData(testSolrDocs.size(), 1, 1),
-                new TestData(testSolrDocs.size() + 1, 100, 1)
+        List<SolrInputDocument> testSolrDocs = createTestDocsForIndexing();
+        IndexingTestData[] testData = new IndexingTestData[] {
+                new IndexingTestData(-2, 0, testSolrDocs.size()),
+                new IndexingTestData(0, 10, 2),
+                new IndexingTestData(1, testSolrDocs.size() + 1, 1),
+                new IndexingTestData(4, 0, 3),
+                new IndexingTestData(5, 5, 3),
+                new IndexingTestData(testSolrDocs.size(), 1, 1),
+                new IndexingTestData(testSolrDocs.size() + 1, 100, 1)
         };
         SolrClient testSolrClient = Mockito.mock(SolrClient.class);
         SolrConnector solrConnector = createSolrConnector(testSolrClient);
-        for (TestData td : testData) {
+        for (IndexingTestData td : testData) {
             solrConnector.addDocsToIndex(testSolrDocs.stream(), td.batchSize);
             int batchSize = Math.max(1, td.batchSize);
             int nInvocations;
@@ -87,6 +75,56 @@ public class SolrConnectorTest {
             Mockito.verify(testSolrClient, never()).commit(true, true);
             Mockito.reset(testSolrClient);
         }
+    }
+
+    @Test
+    public void indexParallelDocumentStream() throws Exception {
+        List<SolrInputDocument> testSolrDocs = createTestDocsForIndexing();
+        IndexingTestData[] testData = new IndexingTestData[] {
+                new IndexingTestData(-2, 0, testSolrDocs.size()),
+                new IndexingTestData(0, 10, 2),
+                new IndexingTestData(1, testSolrDocs.size() + 1, 1),
+                new IndexingTestData(4, 0, 3),
+                new IndexingTestData(5, 5, 3),
+                new IndexingTestData(testSolrDocs.size(), 1, 1),
+                new IndexingTestData(testSolrDocs.size() + 1, 100, 1)
+        };
+        SolrClient testSolrClient = Mockito.mock(SolrClient.class);
+        SolrConnector solrConnector = createSolrConnector(testSolrClient);
+        for (IndexingTestData td : testData) {
+            solrConnector.addDocsToIndex(testSolrDocs.parallelStream(), td.batchSize);
+            int batchSize = Math.max(1, td.batchSize);
+            int nInvocations;
+            if (batchSize == 1 || testSolrDocs.size() % batchSize == 0) {
+                nInvocations = testSolrDocs.size() / batchSize;
+            } else {
+                nInvocations = testSolrDocs.size() / batchSize + 1;
+            }
+            if (batchSize == 1) {
+                Mockito.verify(testSolrClient, times(nInvocations)).add(any(SolrInputDocument.class), anyInt());
+            } else {
+                Mockito.verify(testSolrClient, times(nInvocations)).add(anyList(), anyInt());
+            }
+            Mockito.verify(testSolrClient, never()).commit(true, true);
+            Mockito.reset(testSolrClient);
+        }
+    }
+
+    private List<SolrInputDocument> createTestDocsForIndexing() {
+        return Arrays.asList(
+                createTestSolrDoc("1"),
+                createTestSolrDoc("2"),
+                createTestSolrDoc("3"),
+                createTestSolrDoc("4"),
+                createTestSolrDoc("5"),
+                createTestSolrDoc("6"),
+                createTestSolrDoc("7"),
+                createTestSolrDoc("8"),
+                createTestSolrDoc("9"),
+                createTestSolrDoc("10"),
+                createTestSolrDoc("11"),
+                createTestSolrDoc("12")
+        );
     }
 
     @Test

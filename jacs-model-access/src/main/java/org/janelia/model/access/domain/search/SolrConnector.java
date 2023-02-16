@@ -105,38 +105,34 @@ class SolrConnector {
         Stopwatch stopwatch = Stopwatch.createStarted();
         List<SolrInputDocument> solrDocsBatch = Collections.synchronizedList(new ArrayList<>());
         AtomicInteger result = new AtomicInteger(0);
+        AtomicInteger queuedDocs = new AtomicInteger(0);
         // group documents in batches of given size to send the to solr
         solrDocsStream
                 .forEach(solrDoc -> {
-                    int nAdded;
                     if (batchSize > 1) {
                         solrDocsBatch.add(solrDoc);
-                        int nDocs = solrDocsBatch.size();
-                        if (nDocs >= batchSize) {
-                            try {
-                                LOG.debug("    Adding {} docs (+ {} in {}s)", solrDocsBatch.size(), result.get(), stopwatch.elapsed(TimeUnit.SECONDS));
-                                solrClient.add(solrDocsBatch, SOLR_COMMIT_WITHIN_MS);
-                                nAdded = nDocs;
-                            } catch (Throwable e) {
-                                LOG.error("Error while updating solr index with {} documents", nDocs, e);
-                                nAdded = 0;
-                            } finally {
+                        if (queuedDocs.incrementAndGet() >= batchSize) {
+                            List<SolrInputDocument> toAdd;
+                            synchronized (solrDocsBatch) {
+                                toAdd = new ArrayList<>(solrDocsBatch);
                                 solrDocsBatch.clear();
+                                queuedDocs.set(0);
                             }
-                        } else {
-                            nAdded = 0;
+                            try {
+                                LOG.debug("    Adding {} docs (+ {} in {}s)", toAdd.size(), result.get(), stopwatch.elapsed(TimeUnit.SECONDS));
+                                solrClient.add(toAdd, SOLR_COMMIT_WITHIN_MS);
+                                result.addAndGet(toAdd.size());
+                            } catch (Throwable e) {
+                                LOG.error("Error while updating solr index with {} documents", toAdd.size(), e);
+                            }
                         }
                     } else {
                         try {
                             solrClient.add(solrDoc, SOLR_COMMIT_WITHIN_MS);
-                            nAdded = 1;
+                            result.incrementAndGet();
                         } catch (Throwable e) {
                             LOG.error("Error while updating solr index for {}", solrDoc, e);
-                            nAdded = 0;
                         }
-                    }
-                    if (nAdded > 0) {
-                        result.addAndGet(nAdded);
                     }
                 })
                 ;
