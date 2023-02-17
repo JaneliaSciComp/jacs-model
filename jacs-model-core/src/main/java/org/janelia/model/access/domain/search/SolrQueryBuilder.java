@@ -227,7 +227,8 @@ public class SolrQueryBuilder {
 
     public static DocumentSearchParams serializeSolrQuery(SolrQuery query) {
         DocumentSearchParams queryParams = new DocumentSearchParams();
-        query.forEach(k_vs -> queryParams.addParam(k_vs.getKey(), k_vs.getValue()));
+        queryParams.setDefaultQueryOperator(query.get("q.op"));
+        queryParams.setDefaultSearchField(query.get("df"));
         queryParams.setQuery(query.getQuery());
         queryParams.setSortField(query.getSortField());
         queryParams.setFilterQueries(query.getFilterQueries());
@@ -239,7 +240,12 @@ public class SolrQueryBuilder {
 
     public static SolrQuery deSerializeSolrQuery(DocumentSearchParams queryParams) {
         SolrQuery query = new SolrQuery();
-        queryParams.getSearchParams().forEach(query::setParam);
+        if (queryParams.hasDefaultQueryOperator()) {
+            query.set("q.op", queryParams.getDefaultQueryOperator());
+        }
+        if (queryParams.hasDefaultSearchField()) {
+            query.set("df", queryParams.getDefaultSearchField());
+        }
         query.setQuery(queryParams.getQuery());
         if (queryParams.getSortField() != null) {
             String[] sortParams = queryParams.getSortField().split(" ");

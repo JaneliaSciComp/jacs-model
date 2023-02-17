@@ -13,7 +13,8 @@ import org.apache.commons.lang.StringUtils;
  */
 public class DocumentSearchParams {
 
-    private Map<String, String[]> searchParams = new HashMap<>();
+    private String defaultQueryOperator;
+    private String defaultSearchField;
     private String query;
     private String sortField;
     private String[] filterQueries;
@@ -29,18 +30,28 @@ public class DocumentSearchParams {
         fields.add("score");
     }
 
-    public Map<String, String[]> getSearchParams() {
-        return searchParams;
+    public String getDefaultQueryOperator() {
+        return defaultQueryOperator;
     }
 
-    public void setSearchParams(Map<String, String[]> searchParams) {
-        this.searchParams = searchParams;
+    public void setDefaultQueryOperator(String defaultQueryOperator) {
+        this.defaultQueryOperator = defaultQueryOperator;
     }
 
-    public void addParam(String name, String[] vals) {
-        if (StringUtils.isNotBlank(name)) {
-            searchParams.put(name, vals);
-        }
+    public boolean hasDefaultQueryOperator() {
+        return StringUtils.isNotBlank(defaultQueryOperator);
+    }
+
+    public String getDefaultSearchField() {
+        return defaultSearchField;
+    }
+
+    public void setDefaultSearchField(String defaultSearchField) {
+        this.defaultSearchField = defaultSearchField;
+    }
+
+    public boolean hasDefaultSearchField() {
+        return StringUtils.isNotBlank(defaultSearchField);
     }
 
     public String getQuery() {
