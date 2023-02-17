@@ -65,7 +65,7 @@ public class Ontology extends OntologyTerm implements DomainObject {
 
     /**
      * For use by Solr.
-     * @see org.janelia.model.domain.AbstractDomainObject.getSubjectNames()
+     * @see org.janelia.model.domain.AbstractDomainObject getSubjectNames
      */
     @SearchAttribute(key="subjects",label="Subjects",display=false)
     @JsonIgnore
