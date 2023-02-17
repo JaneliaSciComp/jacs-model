@@ -191,7 +191,7 @@ public class SolrQueryBuilder {
 
         query.addFilterQuery("+doc_type:" + SearchableDocType.DOCUMENT.name());
         if (!entityTypeFiltered) {
-            query.addFilterQuery("-type:Ontology*");
+            query.addFilterQuery("-type_label:Ontology*");
         }
 
         for (String facet : facets) {
