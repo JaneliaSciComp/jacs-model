@@ -2,13 +2,18 @@ package org.janelia.model.access.domain.search;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Created by schauderd on 2/4/16.
  */
 public class DocumentSearchParams {
 
+    private Map<String, String[]> searchParams = new HashMap<>();
     private String query;
     private String sortField;
     private String[] filterQueries;
@@ -22,6 +27,20 @@ public class DocumentSearchParams {
     public DocumentSearchParams() {
         facetMinCount = 1;
         fields.add("score");
+    }
+
+    public Map<String, String[]> getSearchParams() {
+        return searchParams;
+    }
+
+    public void setSearchParams(Map<String, String[]> searchParams) {
+        this.searchParams = searchParams;
+    }
+
+    public void addParam(String name, String[] vals) {
+        if (StringUtils.isNotBlank(name)) {
+            searchParams.put(name, vals);
+        }
     }
 
     public String getQuery() {

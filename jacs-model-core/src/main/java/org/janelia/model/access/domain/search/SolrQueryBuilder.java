@@ -171,8 +171,8 @@ public class SolrQueryBuilder {
 
         SolrQuery query = new SolrQuery();
         // the default OP and the defaultSearchField used to be defined in the schema in 3.5 but that is no longer the case
-        query.add("q.op", "OR");
-        query.add("df", "text");
+        query.setParam("q.op", "OR");
+        query.setParam("df", "text");
         query.setQuery(qs.toString());
         query.addField("score");
 
@@ -227,6 +227,7 @@ public class SolrQueryBuilder {
 
     public static DocumentSearchParams serializeSolrQuery(SolrQuery query) {
         DocumentSearchParams queryParams = new DocumentSearchParams();
+        query.forEach(k_vs -> queryParams.addParam(k_vs.getKey(), k_vs.getValue()));
         queryParams.setQuery(query.getQuery());
         queryParams.setSortField(query.getSortField());
         queryParams.setFilterQueries(query.getFilterQueries());
@@ -238,6 +239,7 @@ public class SolrQueryBuilder {
 
     public static SolrQuery deSerializeSolrQuery(DocumentSearchParams queryParams) {
         SolrQuery query = new SolrQuery();
+        queryParams.getSearchParams().forEach(query::setParam);
         query.setQuery(queryParams.getQuery());
         if (queryParams.getSortField() != null) {
             String[] sortParams = queryParams.getSortField().split(" ");
