@@ -236,15 +236,15 @@ public class SolrQueryBuilder {
     public static SolrQuery deSerializeSolrQuery(DocumentSearchParams queryParams) {
         SolrQuery query = new SolrQuery();
         query.setQuery(queryParams.getQuery());
-        // the default OP used to be defined in the schema in 3.5 but that is no longer the case
-        // I don't know if we have to add q.op explicitly or not
-        query.add("q.op", "OR"); // this is no longer in the schema so set it explicitly
         if (queryParams.getSortField() != null) {
             String[] sortParams = queryParams.getSortField().split(" ");
             ORDER sortOrder = (sortParams[1].equals("asc") ? ORDER.asc : ORDER.desc);
             query.addSort(sortParams[0], sortOrder);
         }
         query.setFilterQueries(queryParams.getFilterQueries());
+        // the default OP used to be defined in the schema in 3.5 but that is no longer the case
+        // I don't know if we have to add q.op explicitly or not
+        query.add("q.op", "OR"); // this is no longer in the schema so set it explicitly
         String[] facetFields = queryParams.getFacetField();
         if (facetFields != null) {
             for (String facetField : facetFields) {
