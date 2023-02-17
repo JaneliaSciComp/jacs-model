@@ -170,6 +170,9 @@ public class SolrQueryBuilder {
         }
 
         SolrQuery query = new SolrQuery();
+        // the default OP and the defaultSearchField used to be defined in the schema in 3.5 but that is no longer the case
+        query.add("q.op", "OR");
+        query.add("df", "text");
         query.setQuery(qs.toString());
         query.addField("score");
 
@@ -242,10 +245,6 @@ public class SolrQueryBuilder {
             query.addSort(sortParams[0], sortOrder);
         }
         query.setFilterQueries(queryParams.getFilterQueries());
-        // the default OP and the defaultSearchField used to be defined in the schema in 3.5 but that is no longer the case
-        query.add("q.op", "OR"); // this is no longer in the schema so set it explicitly
-        // default search field ('df') is needed otherwise queries that used to work with 3.5 no longer work
-        query.add("df", "text");
         String[] facetFields = queryParams.getFacetField();
         if (facetFields != null) {
             for (String facetField : facetFields) {
