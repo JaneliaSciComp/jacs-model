@@ -9,10 +9,9 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
-
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
@@ -24,24 +23,20 @@ import org.mockito.Mockito;
 
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 public class SolrConnectorTest {
 
-    class IndexingTestData {
-        private final int batchSize;
-        private final int commitSize;
-        private final int expectedCommits;
+    static class IndexingTestData {
+        final int batchSize;
+        final int expectedInvocations;
 
-        private IndexingTestData(int batchSize, int commitSize, int expectedCommits) {
+        private IndexingTestData(int batchSize, int expectedInvocations) {
             this.batchSize = batchSize;
-            this.commitSize = commitSize;
-            this.expectedCommits = expectedCommits;
+            this.expectedInvocations = expectedInvocations;
         }
     }
 
@@ -114,13 +109,13 @@ public class SolrConnectorTest {
 
     private IndexingTestData[] createIndexingChecks(int nTestDocs) {
         return new IndexingTestData[] {
-                new IndexingTestData(-2, 0, nTestDocs),
-                new IndexingTestData(0, 10, 2),
-                new IndexingTestData(1, nTestDocs + 1, 1),
-                new IndexingTestData(4, 0, 3),
-                new IndexingTestData(5, 5, 3),
-                new IndexingTestData(nTestDocs, 1, 1),
-                new IndexingTestData(nTestDocs + 1, 100, 1)
+                new IndexingTestData(-2, nTestDocs),
+                new IndexingTestData(0, 2),
+                new IndexingTestData(1, 1),
+                new IndexingTestData(4, 3),
+                new IndexingTestData(5, 3),
+                new IndexingTestData(nTestDocs, 1),
+                new IndexingTestData(nTestDocs + 1, 1)
         };
     }
 

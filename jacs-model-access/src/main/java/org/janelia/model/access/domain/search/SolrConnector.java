@@ -101,39 +101,34 @@ class SolrConnector {
             LOG.debug("SOLR is not configured");
             return 0;
         }
-        long startTime = System.currentTimeMillis();
+        ThreadLocal<Long> timestamp = ThreadLocal.withInitial(System::currentTimeMillis);
         List<SolrInputDocument> solrDocsBatch = Collections.synchronizedList(new ArrayList<>());
         AtomicInteger result = new AtomicInteger(0);
-        // group documents in batches of given size to send the to solr
-        solrDocsStream
-                .forEach(solrDoc -> {
-                    if (batchSize > 1) {
-                        List<SolrInputDocument> toAdd;
-                        int currentResultsCount;
-                        synchronized (solrDocsBatch) {
-                            solrDocsBatch.add(solrDoc);
-                            if (solrDocsBatch.size() >= batchSize) {
-                                toAdd = new ArrayList<>(solrDocsBatch);
-                                solrDocsBatch.clear();
-                            } else {
-                                toAdd = null;
-                            }
-                            currentResultsCount = result.get();
-                        }
-                        if (toAdd != null) {
-                            result.addAndGet(indexDocs(toAdd, currentResultsCount, startTime));
-                        }
-                    } else {
-                        try {
-                            solrClient.add(solrDoc);
-                            result.incrementAndGet();
-                        } catch (Throwable e) {
-                            LOG.error("Error while updating solr index for {}", solrDoc, e);
+        int nDocs = solrDocsStream.map((solrDoc) -> {
+                if (batchSize > 1) {
+                    synchronized (solrDocsBatch) {
+                        solrDocsBatch.add(solrDoc);
+                        if (solrDocsBatch.size() >= batchSize) {
+                            result.addAndGet(indexDocs(solrDocsBatch, result.get(), timestamp.get()));
+                            solrDocsBatch.clear();
+                            timestamp.set(System.currentTimeMillis());
                         }
                     }
-                })
-                ;
-        int nResults = result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime));
+                } else {
+                    try {
+                        solrClient.add(solrDoc);
+                        result.incrementAndGet();
+                    } catch (Throwable e) {
+                        LOG.error("Error while updating solr index for {}", solrDoc, e);
+                    }
+                }
+                return 1;
+        }).reduce(0, Integer::sum);
+
+        int nResults = result.updateAndGet(v -> indexDocs(solrDocsBatch, result.get(), timestamp.get()));
+        if (nResults != nDocs) {
+            LOG.warn("Number of processed documents {} does not match indexed documnents {}", nDocs, nResults);
+        }
         try {
             solrClient.commit(true, true);
         } catch (Exception e) {
