@@ -125,7 +125,7 @@ class SolrConnector {
                         }
                     } else {
                         try {
-                            solrClient.add(solrDoc, SOLR_COMMIT_WITHIN_MS);
+                            solrClient.add(solrDoc);
                             result.incrementAndGet();
                         } catch (Throwable e) {
                             LOG.error("Error while updating solr index for {}", solrDoc, e);
@@ -133,19 +133,28 @@ class SolrConnector {
                     }
                 })
                 ;
-        return result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime));
+        int nResults = result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime));
+        try {
+            solrClient.commit(true, true);
+        } catch (Exception e) {
+            LOG.error("SOLR exception while trying to commit after adding {} docs", nResults, e);
+        }
+        return nResults;
     }
 
     private int indexDocs(Collection<SolrInputDocument> docs, int currentDocs, long startTime) {
-        if (!docs.isEmpty()) {
+        if (CollectionUtils.isNotEmpty(docs)) {
             try {
                 LOG.debug("    Adding {} docs (+ {} in {}s)", docs.size(), currentDocs, (System.currentTimeMillis() - startTime) / 1000.);
-                solrClient.add(docs, SOLR_COMMIT_WITHIN_MS);
+                solrClient.add(docs);
+                return docs.size();
             } catch (Throwable e) {
                 LOG.error("Error while updating solr index with {} documents", docs.size(), e);
             }
+            return 0;
+        } else {
+            return 0;
         }
-        return docs.size();
     }
 
     void clearIndex() {

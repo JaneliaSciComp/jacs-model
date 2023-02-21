@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
@@ -60,11 +61,11 @@ public class SolrConnectorTest {
                 nInvocations = testSolrDocs.size() / batchSize + 1;
             }
             if (batchSize == 1) {
-                Mockito.verify(testSolrClient, times(nInvocations)).add(any(SolrInputDocument.class), anyInt());
+                Mockito.verify(testSolrClient, times(nInvocations)).add(any(SolrInputDocument.class));
             } else {
-                Mockito.verify(testSolrClient, times(nInvocations)).add(anyList(), anyInt());
+                Mockito.verify(testSolrClient, times(nInvocations)).add(anyList());
             }
-            Mockito.verify(testSolrClient, never()).commit(true, true);
+            Mockito.verify(testSolrClient, times(1)).commit(true, true);
             Mockito.reset(testSolrClient);
         }
     }
@@ -85,11 +86,11 @@ public class SolrConnectorTest {
                 nInvocations = testSolrDocs.size() / batchSize + 1;
             }
             if (batchSize == 1) {
-                Mockito.verify(testSolrClient, times(nInvocations)).add(any(SolrInputDocument.class), anyInt());
+                Mockito.verify(testSolrClient, times(nInvocations)).add(any(SolrInputDocument.class));
             } else {
-                Mockito.verify(testSolrClient, times(nInvocations)).add(anyList(), anyInt());
+                Mockito.verify(testSolrClient, times(nInvocations)).add(anyList());
             }
-            Mockito.verify(testSolrClient, never()).commit(true, true);
+            Mockito.verify(testSolrClient, times(1)).commit(true, true);
             Mockito.reset(testSolrClient);
         }
     }
@@ -186,9 +187,9 @@ public class SolrConnectorTest {
                     nInvocations = td.descendantIds.size() / batchSize + 1;
                 }
                 if (batchSize == 1) {
-                    Mockito.verify(testSolrClient, times(nInvocations)).add(any(SolrInputDocument.class), anyInt());
+                    Mockito.verify(testSolrClient, times(nInvocations)).add(any(SolrInputDocument.class));
                 } else {
-                    Mockito.verify(testSolrClient, times(nInvocations)).add(anyList(), anyInt());
+                    Mockito.verify(testSolrClient, times(nInvocations)).add(anyList());
                 }
             }
             Mockito.reset(testSolrClient);
