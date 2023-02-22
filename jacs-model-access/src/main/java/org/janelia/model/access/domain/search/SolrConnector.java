@@ -101,7 +101,7 @@ class SolrConnector {
             LOG.debug("SOLR is not configured");
             return 0;
         }
-        ThreadLocal<Long> timestamp = ThreadLocal.withInitial(System::currentTimeMillis);
+        long startTime = System.currentTimeMillis();
         List<SolrInputDocument> solrDocsBatch = Collections.synchronizedList(new ArrayList<>());
         AtomicInteger result = new AtomicInteger(0);
         int nDocs = solrDocsStream.map((solrDoc) -> {
@@ -109,14 +109,13 @@ class SolrConnector {
                     synchronized (solrDocsBatch) {
                         solrDocsBatch.add(solrDoc);
                         if (solrDocsBatch.size() >= batchSize) {
-                            result.addAndGet(indexDocs(solrDocsBatch, result.get(), timestamp.get()));
+                            result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime));
                             solrDocsBatch.clear();
-                            timestamp.set(System.currentTimeMillis());
                         }
                     }
                 } else {
                     try {
-                        solrClient.add(solrDoc);
+                        solrClient.add(solrDoc, SOLR_COMMIT_WITHIN_MS);
                         result.incrementAndGet();
                     } catch (Throwable e) {
                         LOG.error("Error while updating solr index for {}", solrDoc, e);
@@ -125,14 +124,9 @@ class SolrConnector {
                 return 1;
         }).reduce(0, Integer::sum);
 
-        int nResults = result.updateAndGet(v -> indexDocs(solrDocsBatch, result.get(), timestamp.get()));
+        int nResults = result.updateAndGet(v -> indexDocs(solrDocsBatch, result.get(), startTime));
         if (nResults != nDocs) {
             LOG.warn("Number of processed documents {} does not match indexed documnents {}", nDocs, nResults);
-        }
-        try {
-            solrClient.commit(true, true);
-        } catch (Exception e) {
-            LOG.error("SOLR exception while trying to commit after adding {} docs", nResults, e);
         }
         return nResults;
     }
@@ -140,8 +134,10 @@ class SolrConnector {
     private int indexDocs(Collection<SolrInputDocument> docs, int currentDocs, long startTime) {
         if (CollectionUtils.isNotEmpty(docs)) {
             try {
-                LOG.debug("    Adding {} docs (+ {} in {}s)", docs.size(), currentDocs, (System.currentTimeMillis() - startTime) / 1000.);
-                solrClient.add(docs);
+                long opStartTime = System.currentTimeMillis();
+                LOG.debug("    Adding {} docs (+ {}, elapsed time: {}s)", docs.size(), currentDocs, (System.currentTimeMillis() - startTime) / 1000.);
+                solrClient.add(docs, SOLR_COMMIT_WITHIN_MS);
+                LOG.debug("    Added {} docs (+ {} in {}s)", docs.size(), currentDocs, (System.currentTimeMillis() - opStartTime) / 1000.);
                 return docs.size();
             } catch (Throwable e) {
                 LOG.error("Error while updating solr index with {} documents", docs.size(), e);
