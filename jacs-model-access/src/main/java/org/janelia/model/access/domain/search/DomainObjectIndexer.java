@@ -13,4 +13,5 @@ public interface  DomainObjectIndexer {
     int removeDocumentStream(Stream<Long> docIdsStream);
     void removeIndex();
     void updateDocsAncestors(Set<Long> docIds, Long ancestorId);
+    void commitChanges();
 }

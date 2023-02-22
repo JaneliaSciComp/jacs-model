@@ -155,6 +155,7 @@ class SolrConnector {
             return;
         }
         try {
+            LOG.info("Clear index");
             solrClient.deleteByQuery("*:*", solrAutoCommitMillis);
         } catch (Throwable e) {
             throw new IllegalStateException(e);
@@ -275,4 +276,13 @@ class SolrConnector {
         }
     }
 
+    void commitChanges() {
+        if (solrClient != null) {
+            try {
+                solrClient.commit();
+            } catch (Exception e) {
+                LOG.warn("Failed to commit the latest changes", e);
+            }
+        }
+    }
 }

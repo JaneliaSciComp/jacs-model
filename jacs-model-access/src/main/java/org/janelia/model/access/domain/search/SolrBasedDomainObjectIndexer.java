@@ -90,4 +90,9 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
     public void updateDocsAncestors(Set<Long> docIds, Long ancestorId) {
         solrConnector.updateDocsAncestors(docIds, ancestorId, solrBatchSize);
     }
+
+    @Override
+    public void commitChanges() {
+        solrConnector.commitChanges();
+    }
 }
