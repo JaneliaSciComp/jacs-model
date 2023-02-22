@@ -125,9 +125,11 @@ class SolrConnector {
                 return 1;
         }).reduce(0, Integer::sum);
 
-        int nResults = result.updateAndGet(v -> indexDocs(solrDocsBatch, result.get(), startTime));
+        int nResults = result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime));
         if (nResults != nDocs) {
             LOG.warn("Number of processed documents {} does not match indexed documnents {}", nDocs, nResults);
+        } else {
+            LOG.info("Indexed {} streamed documents", nResults);
         }
         return nResults;
     }
