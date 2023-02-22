@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
  */
 class SolrConnector {
     private static final Logger LOG = LoggerFactory.getLogger(SolrConnector.class);
-    private static final int SOLR_COMMIT_WITHIN_MS = 5000;
 
     private static SolrInputDocument toSolrInputDocument(SolrDocument solrDocument) {
         SolrInputDocument solrInputDocument = new SolrInputDocument();
@@ -53,9 +52,11 @@ class SolrConnector {
     }
 
     private final SolrClient solrClient;
+    private final int solrAutoCommitMillis;
 
-    SolrConnector(@Nullable SolrClient solrClient) {
+    SolrConnector(@Nullable SolrClient solrClient, int solrAutoCommitMillis) {
         this.solrClient = solrClient;
+        this.solrAutoCommitMillis = solrAutoCommitMillis;
     }
 
     /**
@@ -88,7 +89,7 @@ class SolrConnector {
             return false;
         }
         try {
-            solrClient.add(solrDoc, SOLR_COMMIT_WITHIN_MS);
+            solrClient.add(solrDoc, solrAutoCommitMillis);
             return true;
         } catch (Throwable e) {
             LOG.error("Error while adding {} to solr index", solrDoc, e);
@@ -115,7 +116,7 @@ class SolrConnector {
                     }
                 } else {
                     try {
-                        solrClient.add(solrDoc, SOLR_COMMIT_WITHIN_MS);
+                        solrClient.add(solrDoc, solrAutoCommitMillis);
                         result.incrementAndGet();
                     } catch (Throwable e) {
                         LOG.error("Error while updating solr index for {}", solrDoc, e);
@@ -136,7 +137,7 @@ class SolrConnector {
             try {
                 long opStartTime = System.currentTimeMillis();
                 LOG.debug("    Adding {} docs (+ {}, elapsed time: {}s)", docs.size(), currentDocs, (System.currentTimeMillis() - startTime) / 1000.);
-                solrClient.add(docs, SOLR_COMMIT_WITHIN_MS);
+                solrClient.add(docs, solrAutoCommitMillis);
                 LOG.debug("    Added {} docs (+ {} in {}s)", docs.size(), currentDocs, (System.currentTimeMillis() - opStartTime) / 1000.);
                 return docs.size();
             } catch (Throwable e) {
@@ -154,7 +155,7 @@ class SolrConnector {
             return;
         }
         try {
-            solrClient.deleteByQuery("*:*", SOLR_COMMIT_WITHIN_MS);
+            solrClient.deleteByQuery("*:*", solrAutoCommitMillis);
         } catch (Throwable e) {
             throw new IllegalStateException(e);
         }
@@ -166,7 +167,7 @@ class SolrConnector {
             return false;
         }
         try {
-            solrClient.deleteById(id.toString(), SOLR_COMMIT_WITHIN_MS);
+            solrClient.deleteById(id.toString(), solrAutoCommitMillis);
             return true;
         } catch (Throwable e) {
             throw new IllegalStateException(e);
@@ -219,7 +220,7 @@ class SolrConnector {
     private int removeDocIds(List<Long> ids) {
         String q = idsToSolrQuery(ids);
         try {
-            solrClient.deleteByQuery(q, SOLR_COMMIT_WITHIN_MS);
+            solrClient.deleteByQuery(q, solrAutoCommitMillis);
             return ids.size();
         } catch (Throwable e) {
             LOG.error("Error trying to delete using query: {}", q, e);

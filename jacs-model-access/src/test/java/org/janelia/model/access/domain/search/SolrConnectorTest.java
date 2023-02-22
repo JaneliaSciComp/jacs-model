@@ -193,8 +193,9 @@ public class SolrConnectorTest {
     }
 
     private SolrConnector createSolrConnector(SolrClient testSolrClient) {
-        return new SolrConnector(testSolrClient);
+        return new SolrConnector(testSolrClient, -1);
     }
+
     private SolrInputDocument createTestSolrDoc(String id) {
         SolrInputDocument solrDoc = new SolrInputDocument();
         solrDoc.setField("id", id);
