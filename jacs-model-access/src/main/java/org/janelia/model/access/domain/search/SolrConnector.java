@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,6 +26,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.SolrInputField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * A SOLR connector.
@@ -97,7 +99,7 @@ class SolrConnector {
         }
     }
 
-    int addDocsToIndex(Stream<SolrInputDocument> solrDocsStream, int batchSize) {
+    int addDocsToIndex(Stream<SolrInputDocument> solrDocsStream, int batchSize, Map<String, String> mdcContext) {
         if (solrClient == null) {
             LOG.debug("SOLR is not configured");
             return 0;
@@ -110,7 +112,7 @@ class SolrConnector {
                     synchronized (solrDocsBatch) {
                         solrDocsBatch.add(solrDoc);
                         if (solrDocsBatch.size() >= batchSize) {
-                            result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime));
+                            result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime, mdcContext));
                             solrDocsBatch.clear();
                         }
                     }
@@ -125,7 +127,7 @@ class SolrConnector {
                 return 1;
         }).reduce(0, Integer::sum);
 
-        int nResults = result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime));
+        int nResults = result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime, mdcContext));
         if (nResults != nDocs) {
             LOG.warn("Number of processed documents {} does not match indexed documnents {}", nDocs, nResults);
         } else {
@@ -134,8 +136,9 @@ class SolrConnector {
         return nResults;
     }
 
-    private int indexDocs(Collection<SolrInputDocument> docs, int currentDocs, long startTime) {
+    private int indexDocs(Collection<SolrInputDocument> docs, int currentDocs, long startTime, Map<String, String> mdcContext) {
         if (CollectionUtils.isNotEmpty(docs)) {
+            MDC.setContextMap(mdcContext);
             try {
                 long opStartTime = System.currentTimeMillis();
                 LOG.debug("    Adding {} docs (+ {}, elapsed time: {}s)", docs.size(), currentDocs, (System.currentTimeMillis() - startTime) / 1000.);
@@ -242,6 +245,7 @@ class SolrConnector {
     @SuppressWarnings("unchecked")
     void updateDocsAncestors(Set<Long> docIds, Long ancestorId, int batchSize) {
         if (solrClient != null) {
+            Map<String, String> mdcContext = MDC.getCopyOfContextMap();
             Stream<SolrInputDocument> solrDocsStream = searchByDocIds(docIds, batchSize)
                     .map(SolrConnector::toSolrInputDocument)
                     .peek(solrInputDoc -> {
@@ -255,7 +259,7 @@ class SolrConnector {
                         ancestorIds.add(ancestorId);
                         solrInputDoc.addField("ancestor_ids", ancestorIds);
                     });
-            addDocsToIndex(solrDocsStream, batchSize);
+            addDocsToIndex(solrDocsStream, batchSize, mdcContext);
         }
     }
 

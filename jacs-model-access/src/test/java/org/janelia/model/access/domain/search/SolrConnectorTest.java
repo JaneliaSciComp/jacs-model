@@ -20,6 +20,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.slf4j.MDC;
 
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -48,7 +49,7 @@ public class SolrConnectorTest {
         SolrClient testSolrClient = Mockito.mock(SolrClient.class);
         SolrConnector solrConnector = createSolrConnector(testSolrClient);
         for (IndexingTestData td : testData) {
-            solrConnector.addDocsToIndex(testSolrDocs.stream(), td.batchSize);
+            solrConnector.addDocsToIndex(testSolrDocs.stream(), td.batchSize, MDC.getCopyOfContextMap());
             int batchSize = Math.max(1, td.batchSize);
             int nInvocations;
             if (batchSize == 1 || testSolrDocs.size() % batchSize == 0) {
@@ -73,7 +74,7 @@ public class SolrConnectorTest {
         SolrClient testSolrClient = Mockito.mock(SolrClient.class);
         SolrConnector solrConnector = createSolrConnector(testSolrClient);
         for (IndexingTestData td : testData) {
-            solrConnector.addDocsToIndex(testSolrDocs.parallelStream(), td.batchSize);
+            solrConnector.addDocsToIndex(testSolrDocs.parallelStream(), td.batchSize, MDC.getCopyOfContextMap());
             int batchSize = Math.max(1, td.batchSize);
             int nInvocations;
             if (batchSize == 1 || testSolrDocs.size() % batchSize == 0) {

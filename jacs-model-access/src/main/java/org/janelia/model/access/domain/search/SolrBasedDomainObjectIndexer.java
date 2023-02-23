@@ -16,6 +16,7 @@ import org.janelia.model.domain.DomainObjectGetter;
 import org.janelia.model.domain.ontology.DomainAnnotationGetter;
 import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.access.domain.nodetools.NodeAncestorsGetter;
+import org.slf4j.MDC;
 
 public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
 
@@ -70,9 +71,11 @@ public class SolrBasedDomainObjectIndexer implements DomainObjectIndexer {
 
     @Override
     public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
+        Map<String, String> mdcContext = MDC.getCopyOfContextMap();
         return solrConnector.addDocsToIndex(
                 domainObjectStream.map(domainObject2SolrDocConverter::domainObjectToSolrDocument),
-                solrBatchSize
+                solrBatchSize,
+                mdcContext
         );
     }
 
