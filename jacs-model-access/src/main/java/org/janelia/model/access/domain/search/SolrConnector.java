@@ -109,12 +109,14 @@ class SolrConnector {
         AtomicInteger result = new AtomicInteger(0);
         int nDocs = solrDocsStream.map((solrDoc) -> {
                 if (batchSize > 1) {
-                    synchronized (solrDocsBatch) {
-                        solrDocsBatch.add(solrDoc);
-                        if (solrDocsBatch.size() >= batchSize) {
-                            result.addAndGet(indexDocs(solrDocsBatch, result.get(), startTime, mdcContext));
+                    solrDocsBatch.add(solrDoc);
+                    if (solrDocsBatch.size() >= batchSize) {
+                        List<SolrInputDocument> toAdd;
+                        synchronized (solrDocsBatch) {
+                            toAdd = new ArrayList<>(solrDocsBatch);
                             solrDocsBatch.clear();
                         }
+                        result.addAndGet(indexDocs(toAdd, result.get(), startTime, mdcContext));
                     }
                 } else {
                     try {
