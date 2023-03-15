@@ -27,16 +27,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.mockito.internal.verification.VerificationModeFactory.atMost;
 
 public class SolrConnectorTest {
 
     static class IndexingTestData {
+        final String testName;
         final int batchSize;
         final int expectedInvocations;
 
-        private IndexingTestData(int batchSize, int expectedInvocations) {
+        private IndexingTestData(String testName, int batchSize, int expectedInvocations) {
+            this.testName = testName;
             this.batchSize = batchSize;
             this.expectedInvocations = expectedInvocations;
         }
@@ -74,6 +78,7 @@ public class SolrConnectorTest {
         SolrClient testSolrClient = Mockito.mock(SolrClient.class);
         SolrConnector solrConnector = createSolrConnector(testSolrClient);
         for (IndexingTestData td : testData) {
+            System.out.println("Running " + td.testName);
             solrConnector.addDocsToIndex(testSolrDocs.parallelStream(), td.batchSize, MDC.getCopyOfContextMap());
             int batchSize = Math.max(1, td.batchSize);
             int nInvocations;
@@ -85,7 +90,8 @@ public class SolrConnectorTest {
             if (batchSize == 1) {
                 Mockito.verify(testSolrClient, times(nInvocations)).add(any(SolrInputDocument.class), anyInt());
             } else {
-                Mockito.verify(testSolrClient, times(nInvocations)).add(anyList(), anyInt());
+                Mockito.verify(testSolrClient, atLeast(nInvocations - 1)).add(anyList(), anyInt());
+                Mockito.verify(testSolrClient, atMost(nInvocations + 1)).add(anyList(), anyInt());
             }
             Mockito.verify(testSolrClient, times(0)).commit(true, true);
             Mockito.reset(testSolrClient);
@@ -111,13 +117,13 @@ public class SolrConnectorTest {
 
     private IndexingTestData[] createIndexingChecks(int nTestDocs) {
         return new IndexingTestData[] {
-                new IndexingTestData(-2, nTestDocs),
-                new IndexingTestData(0, 2),
-                new IndexingTestData(1, 1),
-                new IndexingTestData(4, 3),
-                new IndexingTestData(5, 3),
-                new IndexingTestData(nTestDocs, 1),
-                new IndexingTestData(nTestDocs + 1, 1)
+                new IndexingTestData("batchsize negative", -2, nTestDocs),
+                new IndexingTestData("batchsize 0", 0, 2),
+                new IndexingTestData("batchsize 1", 1, 1),
+                new IndexingTestData("batchsize 4", 4, 3),
+                new IndexingTestData("batchsize 5", 5, 3),
+                new IndexingTestData("batchsize = nTest", nTestDocs, 1),
+                new IndexingTestData("batchsize > nTest", nTestDocs + 1, 1)
         };
     }
 

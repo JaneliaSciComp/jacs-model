@@ -1,5 +1,8 @@
 package org.janelia.model.access.domain;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -13,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -20,6 +24,7 @@ import java.util.stream.StreamSupport;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.mongodb.BasicDBList;
@@ -83,6 +88,8 @@ import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.JacksonMapper;
+import org.reflections.ReflectionUtils;
+import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -2247,8 +2254,7 @@ public class DomainDAO {
                                     ColorDepthLibrary.class.getName(), Collections.singletonList(colorDepthLibrary.getId()),
                                     readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
                         }
-                    }
-                    else {
+                    } else {
                         log.warn("Could not find writeable DataSet#{}", id);
                     }
                 }
@@ -2399,14 +2405,14 @@ public class DomainDAO {
             List<String> sampleRefs = sampleIds.stream().map(id -> "Sample#" + id).collect(Collectors.toList());
 
             updatedDomainObjectsStream = Stream.of(
-                    updatedDomainObjectsStream,
-                    streamFindResult(sampleCollection.find("{_id:{$in:#}," + queryClause + "}", sampleIds, queryParam), Sample.class),
-                    streamFindResult(fragmentCollection.find("{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam), NeuronFragment.class),
-                    streamFindResult(imageCollection.find("{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam), Image.class),
-                    dataSets.stream()
-                            .map(ds -> getColorDepthLibraryByIdentifier(ds.getOwnerKey(), ds.getIdentifier()))
-                            .filter(Objects::nonNull)
-                            .flatMap(cdl -> collectPermissionChanges(subjectKey, ColorDepthLibrary.class.getName(), Collections.singletonList(cdl.getId()), allowWriters, visited)))
+                            updatedDomainObjectsStream,
+                            streamFindResult(sampleCollection.find("{_id:{$in:#}," + queryClause + "}", sampleIds, queryParam), Sample.class),
+                            streamFindResult(fragmentCollection.find("{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam), NeuronFragment.class),
+                            streamFindResult(imageCollection.find("{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam), Image.class),
+                            dataSets.stream()
+                                    .map(ds -> getColorDepthLibraryByIdentifier(ds.getOwnerKey(), ds.getIdentifier()))
+                                    .filter(Objects::nonNull)
+                                    .flatMap(cdl -> collectPermissionChanges(subjectKey, ColorDepthLibrary.class.getName(), Collections.singletonList(cdl.getId()), allowWriters, visited)))
                     .flatMap(s -> s)
             ;
         } else if ("tmWorkspace".equals(collectionName)) {
@@ -2533,11 +2539,48 @@ public class DomainDAO {
     }
 
     // Copy and pasted from ReflectionUtils in shared module
+    @SuppressWarnings("unchecked")
     private void set(Object obj, String attributeName, Object value) throws Exception {
-        Class<?>[] argTypes = {value.getClass()};
         Object[] argValues = {value};
         String methodName = getAccessor("set", attributeName);
-        obj.getClass().getMethod(methodName, argTypes).invoke(obj, argValues);
+
+        Set<Method> accessors = ReflectionUtils.getAllMethods(obj.getClass(),
+                ReflectionUtils.withName(methodName),
+                createParametersPredicate(value));
+        accessors.stream().findFirst()
+                .map(m -> {
+                    try {
+                        m.invoke(obj, argValues);
+                        return true; // need to return some non-null result otherwise the orElse will get called
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException(e);
+                    }
+                })
+                .orElseThrow(() -> new IllegalArgumentException("Method " + methodName + " not found for " + obj.getClass()));
+    }
+
+    private static final Map<Class<?>, Class<?>> WRAPPER_TYPE_MAP = ImmutableMap.<Class<?>, Class<?>>builder()
+            .put(Integer.class, int.class)
+            .put(Byte.class, byte.class)
+            .put(Character.class, char.class)
+            .put(Boolean.class, boolean.class)
+            .put(Double.class, double.class)
+            .put(Float.class, float.class)
+            .put(Long.class, long.class)
+            .put(Short.class, short.class)
+            .put(Void.class, void.class)
+            .build();
+
+    private Predicate<Member> createParametersPredicate(Object parameterValue) {
+        if (WRAPPER_TYPE_MAP.containsKey(parameterValue.getClass())) {
+            // this is needed because a method that takes a primitive will not be matched for the corresponding boxed type
+            // e.g. boolean.isAssignableFrom(Boolean.class) == false and Boolean.isAssignableFrom(boolean.class) == false
+            return ReflectionUtils.withParametersAssignableTo(parameterValue.getClass()).or(
+                    ReflectionUtils.withParametersAssignableTo(WRAPPER_TYPE_MAP.get(parameterValue.getClass()))
+            );
+        } else {
+            return ReflectionUtils.withParametersAssignableTo(parameterValue.getClass());
+        }
     }
 
     // Copy and pasted from ReflectionUtils in shared module

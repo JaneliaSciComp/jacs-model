@@ -17,7 +17,7 @@ dependencies {
         PROTOSTUFF_RUNTIME_LIB = "io.protostuff:protostuff-runtime:${PROTOSTUFF_VERSION}"
 
         // utilities
-        REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
+        REFLECTIONS_LIB = "org.reflections:reflections:0.10.2"
         GUAVA_LIB = "com.google.guava:guava:28.1-jre"
 
         // database

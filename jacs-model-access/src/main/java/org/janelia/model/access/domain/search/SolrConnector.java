@@ -140,7 +140,7 @@ class SolrConnector {
 
     private int indexDocs(Collection<SolrInputDocument> docs, int currentDocs, long startTime, Map<String, String> mdcContext) {
         if (CollectionUtils.isNotEmpty(docs)) {
-            MDC.setContextMap(mdcContext);
+            if (mdcContext != null) MDC.setContextMap(mdcContext);
             try {
                 long opStartTime = System.currentTimeMillis();
                 LOG.debug("    Adding {} docs (+ {}, elapsed time: {}s)", docs.size(), currentDocs, (System.currentTimeMillis() - startTime) / 1000.);
@@ -150,10 +150,8 @@ class SolrConnector {
             } catch (Throwable e) {
                 LOG.error("Error while updating solr index with {} documents", docs.size(), e);
             }
-            return 0;
-        } else {
-            return 0;
         }
+        return 0;
     }
 
     void clearIndex() {
