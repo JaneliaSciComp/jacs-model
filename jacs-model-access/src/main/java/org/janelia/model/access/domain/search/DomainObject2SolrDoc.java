@@ -135,7 +135,7 @@ class DomainObject2SolrDoc {
         attrs.forEach(solrDoc::addField);
 
         FullTextIndexableValues fullTextIndexableValues = getFullTextIndexedValues(domainObject);
-        solrDoc.setField("fulltext_mt", new HashSet<>(fullTextIndexableValues.fulltextIndexedFields.values()));
+        fullTextIndexableValues.fulltextIndexedFields.values().forEach(v -> solrDoc.addField("fulltext_mt", v));
 
         fullTextIndexableValues.refAnnotationsMap.values().stream()
                 .flatMap(refAnnotations -> refAnnotations.stream())
