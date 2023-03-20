@@ -171,7 +171,7 @@ public class SolrQueryBuilder {
 
         SolrQuery query = new SolrQuery();
         // the default OP and the defaultSearchField used to be defined in the schema in 3.5 but that is no longer the case
-        query.setParam("q.op", "OR");
+        query.setParam("q.op", "AND");
         query.setParam("df", "text");
         query.setQuery(qs.toString());
         query.addField("score");
