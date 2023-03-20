@@ -315,9 +315,9 @@ class MongoDaoHelper {
                         } else if (collStatsResults.get("size") instanceof Integer) {
                             sizeCollection = ((Integer) collStatsResults.get("size")).doubleValue();
                         } else {
-                            sizeCollection = (double)collStatsResults.get("size");
+                            sizeCollection = ((Number)collStatsResults.get("size")).doubleValue();
                         }
-                        if (sizeCollection<cappedSize) {
+                        if (sizeCollection < cappedSize) {
                             return name;
                         }
                     }

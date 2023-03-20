@@ -54,9 +54,9 @@ public class TmSampleDAOTest extends AbstractMongoDaoTest {
         return tmSampleMongoDao.createTmSample(u.getKey(), tmSample);
     }
 
-    private void removeTestData(TmSample tmSample) throws Exception {
+    private void removeTestData(TmSample tmSample) {
         if (tmSample != null) {
-            tmSampleMongoDao.removeTmSample(tmSample.getOwnerKey(), tmSample.getId());
+            tmSampleMongoDao.delete(tmSample);
         }
         subjectMongoDao.removeSubjectByKey(testUser);
     }

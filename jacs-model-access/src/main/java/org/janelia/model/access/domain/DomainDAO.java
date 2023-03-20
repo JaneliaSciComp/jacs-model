@@ -1,6 +1,5 @@
 package org.janelia.model.access.domain;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -36,7 +35,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 import com.mongodb.WriteResult;
 import com.mongodb.client.MongoDatabase;
-
+import org.apache.commons.lang.StringUtils;
 import org.bson.Document;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoDBHelper;
 import org.janelia.model.domain.DomainConstants;
@@ -59,10 +58,8 @@ import org.janelia.model.domain.gui.search.Filter;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.ontology.Category;
-import org.janelia.model.domain.ontology.EnumItem;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
-import org.janelia.model.domain.ontology.OntologyTermReference;
 import org.janelia.model.domain.orders.IntakeOrder;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.Image;
@@ -89,7 +86,6 @@ import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.JacksonMapper;
 import org.reflections.ReflectionUtils;
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,14 +132,14 @@ public class DomainDAO {
     private final TimebasedIdentifierGenerator idGenerator;
 
     public DomainDAO(String serverUrl, String databaseName) {
-        this(serverUrl, databaseName, null, null);
+        this(serverUrl, databaseName, databaseName, null, null);
     }
 
-    public DomainDAO(String serverUrl, String databaseName, String username, String password) {
+    public DomainDAO(String serverUrl, String authDatabaseName, String databaseName, String username, String password) {
         MongoClient mongoClient = MongoDBHelper.createLegacyMongoClient(
                 null,
                 serverUrl,
-                databaseName,
+                StringUtils.defaultIfBlank(authDatabaseName, databaseName),
                 username,
                 password,
                 false,
