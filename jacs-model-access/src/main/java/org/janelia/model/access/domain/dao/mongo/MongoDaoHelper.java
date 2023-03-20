@@ -23,7 +23,6 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -309,12 +308,16 @@ class MongoDaoHelper {
                String name = nameIter.next();
                if (name.startsWith(prefix)) {
                     Document collStatsResults = db.runCommand(new Document("collStats", name));
-                    if (collStatsResults!=null) {
+                    if (collStatsResults != null) {
                         double sizeCollection;
-                        if (collStatsResults.get("size") instanceof Integer)
-                            sizeCollection = ((Integer)collStatsResults.get("size")).doubleValue();
-                        else sizeCollection = (double)collStatsResults.get("size");
-                        if (sizeCollection<cappedSize) {
+                        if (collStatsResults.get("size") instanceof Long) {
+                            sizeCollection = ((Long)collStatsResults.get("size")).doubleValue();
+                        } else if (collStatsResults.get("size") instanceof Integer) {
+                            sizeCollection = ((Integer) collStatsResults.get("size")).doubleValue();
+                        } else {
+                            sizeCollection = ((Number)collStatsResults.get("size")).doubleValue();
+                        }
+                        if (sizeCollection < cappedSize) {
                             return name;
                         }
                     }
@@ -323,7 +326,7 @@ class MongoDaoHelper {
 
             // create new collection and indices if we make it here
             String newCollectionName = prefix + "_" + dao.createNewId();
-            MongoCollection newCollection = db.getCollection(newCollectionName, domainClass);
+            MongoCollection<T> newCollection = db.getCollection(newCollectionName, domainClass);
             ListIndexesIterable<Document> indices = db.getCollection(prefix, domainClass).listIndexes();
             indices.iterator().forEachRemaining(
                     doc -> {
@@ -333,8 +336,8 @@ class MongoDaoHelper {
 
             return newCollectionName;
         } catch (Exception e) {
-            throw new RuntimeException("Problems retrieving a suitable collection for class" +
-                    domainClass.toString() + "of size " + cappedSize);
+            throw new IllegalStateException("Problems retrieving a suitable collection for class " +
+                    domainClass.toString() + " of size " + cappedSize, e);
         }
     }
 }
