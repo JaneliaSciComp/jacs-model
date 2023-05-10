@@ -72,6 +72,7 @@ public enum FileType {
     // Tiled microscope data for MouseLight
     LargeVolumeOctree("Large Volume Octree", false, false, false),
     LargeVolumeKTX("Large Volume KTX", false, false, false),
+    LargeVolumeZarr("Large Volume Zarr", false, false, false),
     TwoPhotonAcquisition("Two Photon Acquisition", false, false, false),
     CompressedAcquisition("Compressed Acquisition", false, false, false),
 
