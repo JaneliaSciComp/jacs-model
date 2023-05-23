@@ -72,12 +72,9 @@ public enum FileType {
     // Tiled microscope data for MouseLight
     LargeVolumeOctree("Large Volume Octree", false, false, false),
     LargeVolumeKTX("Large Volume KTX", false, false, false),
+    LargeVolumeZarr("Large Volume Zarr", false, false, false),
     TwoPhotonAcquisition("Two Photon Acquisition", false, false, false),
     CompressedAcquisition("Compressed Acquisition", false, false, false),
-
-    // Skeleton files
-    SkeletonSWC("Skeleton SWC", false, false, false),
-    SkeletonOBJ("Skeleton OBJ", false, false, false),
 
     // Legacy files
     Unclassified2d("2D Image", true, false, false),
@@ -148,3 +145,4 @@ public enum FileType {
         return isVirtual;
     }
 }
+
