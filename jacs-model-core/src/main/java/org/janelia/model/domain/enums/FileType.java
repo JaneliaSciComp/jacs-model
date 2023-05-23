@@ -76,6 +76,10 @@ public enum FileType {
     TwoPhotonAcquisition("Two Photon Acquisition", false, false, false),
     CompressedAcquisition("Compressed Acquisition", false, false, false),
 
+    // Skeleton files
+    SkeletonSWC("Skeleton SWC", false, false, false),
+    SkeletonOBJ("Skeleton OBJ", false, false, false),
+
     // Legacy files
     Unclassified2d("2D Image", true, false, false),
     Unclassified3d("3D Image", false, true, false),
