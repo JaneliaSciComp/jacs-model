@@ -67,6 +67,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                 MongoDaoHelper.createBsonSortCriteria(
                         new SortCriteria("ownerKey"),
                         new SortCriteria("_id")),
+                null,
                 0,
                 -1,
                 mongoCollection,
@@ -81,6 +82,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                 MongoDaoHelper.createFilterCriteria(
                         permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
                 MongoDaoHelper.createBsonSortCriteria(new SortCriteria("_id")),
+                null,
                 0,
                 -1,
                 mongoCollection,

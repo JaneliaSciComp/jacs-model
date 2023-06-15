@@ -3,6 +3,8 @@ package org.janelia.model.access.domain.dao.mongo;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.CollationStrength;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import org.apache.commons.collections4.CollectionUtils;
@@ -205,18 +207,25 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
 
     @Override
     public List<User> findAllUsers() {
-        return find(Filters.regex("key", "^user:"), null, 0, -1, User.class);
+        return find(Filters.regex("key", "^user:"), null, null, 0, -1, User.class);
     }
 
     @Override
     public List<Group> findAllGroups() {
-        return find(Filters.regex("key", "^group:"), null, 0, -1, Group.class);
+        return find(Filters.regex("key", "^group:"), null, null, 0, -1, Group.class);
     }
 
     @Override
     public Subject findSubjectByKey(String key) {
         if (StringUtils.isNotBlank(key)) {
-            List<Subject> subjects = find(Filters.eq("key", key), null, 0, -1, getEntityType());
+            List<Subject> subjects = find(
+                    Filters.eq("key", key),
+                    null,
+                    Collation.builder()
+                            .locale("en")
+                            .collationStrength(CollationStrength.PRIMARY)
+                            .build(),
+                    0, -1, getEntityType());
             if (CollectionUtils.isNotEmpty(subjects)) {
                 return subjects.get(0);
             } else {
@@ -230,7 +239,13 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     @Override
     public Subject findSubjectByName(String name) {
         if (StringUtils.isNotBlank(name)) {
-            List<Subject> subjects = find(Filters.eq("name", name), null, 0, -1, getEntityType());
+            List<Subject> subjects = find(Filters.eq("name", name), null,
+                    Collation.builder()
+                            .locale("en")
+                            .collationStrength(CollationStrength.PRIMARY)
+                            .build(),
+                    0, -1,
+                    getEntityType());
             if (CollectionUtils.isNotEmpty(subjects)) {
                 return subjects.get(0);
             } else {
@@ -247,6 +262,10 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
             List<Subject> subjects = find(
                     Filters.or(Filters.eq("key", nameOrKey), Filters.eq("name", nameOrKey)),
                     null,
+                    Collation.builder()
+                            .locale("en")
+                            .collationStrength(CollationStrength.PRIMARY)
+                            .build(),
                     0,
                     -1,
                     getEntityType());
@@ -269,6 +288,10 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
                             Filters.eq("class", Group.class.getName())
                     ),
                     null,
+                    Collation.builder()
+                            .locale("en")
+                            .collationStrength(CollationStrength.PRIMARY)
+                            .build(),
                     0,
                     -1,
                     Group.class);
@@ -291,6 +314,10 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
                             Filters.eq("class", User.class.getName())
                     ),
                     null,
+                    Collation.builder()
+                            .locale("en")
+                            .collationStrength(CollationStrength.PRIMARY)
+                            .build(),
                     0,
                     -1,
                     User.class);
@@ -331,6 +358,10 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
         return MongoDaoHelper.find(
                 Filters.eq("userGroupRoles.groupKey", groupKey),
                 null,
+                Collation.builder()
+                        .locale("en")
+                        .collationStrength(CollationStrength.PRIMARY)
+                        .build(),
                 0,
                 -1,
                 mongoCollection,

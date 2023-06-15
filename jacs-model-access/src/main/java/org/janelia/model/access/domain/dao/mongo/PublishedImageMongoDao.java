@@ -41,6 +41,7 @@ public class PublishedImageMongoDao extends AbstractDomainObjectMongoDao<Publish
                             Filters.eq("objective", objective)
                     ),
                     null,
+                    null,
                     0,
                     -1,
                     mongoCollection,
@@ -62,6 +63,7 @@ public class PublishedImageMongoDao extends AbstractDomainObjectMongoDao<Publish
                             Filters.in("originalLine", lines),
                             Filters.in("releaseName", gal4LexAReleases)
                     ),
+                    null,
                     null,
                     0,
                     -1,

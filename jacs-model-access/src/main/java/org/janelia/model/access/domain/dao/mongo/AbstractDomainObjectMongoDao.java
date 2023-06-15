@@ -39,7 +39,11 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
     @Override
     public List<T> findOwnedEntitiesBySubjectKey(String subjectKey, long offset, int length) {
         if (StringUtils.isNotBlank(subjectKey)) {
-            return find(Filters.eq("ownerKey", subjectKey), null, offset, length, getEntityType());
+            return find(Filters.eq("ownerKey", subjectKey),
+                    null,
+                    null,
+                    offset, length,
+                    getEntityType());
         } else {
             return Collections.emptyList();
         }
@@ -52,11 +56,12 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
                     MongoDaoHelper.createFilterCriteria(
                             permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
                     null,
+                    null,
                     0,
                     -1,
                     getEntityType());
         } else {
-            return find(null, null, offset, length, getEntityType());
+            return find(null, null, null, offset, length, getEntityType());
         }
     }
 
@@ -69,6 +74,7 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
                     MongoDaoHelper.createFilterCriteria(
                             MongoDaoHelper.createFilterById(id),
                             permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
+                    null,
                     null,
                     0,
                     -1,
@@ -91,6 +97,7 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
                             MongoDaoHelper.createFilterByIds(ids),
                             permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
                     null,
+                    null,
                     0,
                     -1,
                     getEntityType());
@@ -109,6 +116,7 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
                         Filters.eq(foreignKey, foreignRef),
                         permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
                 null,
+                null,
                 offset,
                 length,
                 getEntityType());
@@ -125,6 +133,7 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
                         MongoDaoHelper.createAttributeFilter("name", name),
                         filterClass == null ? null : MongoDaoHelper.createFilterByClass(filterClass)
                 ),
+                null,
                 null,
                 0,
                 -1,
@@ -146,6 +155,7 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
                         Filters.in("name", names),
                         filterClass == null ? null : MongoDaoHelper.createFilterByClass(filterClass)
                 ),
+                null,
                 null,
                 0,
                 -1,

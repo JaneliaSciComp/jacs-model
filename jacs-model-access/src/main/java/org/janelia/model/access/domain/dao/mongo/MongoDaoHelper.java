@@ -18,6 +18,7 @@ import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
@@ -70,6 +71,7 @@ class MongoDaoHelper {
             List<R> entityDocs = find(
                     Filters.eq("_id", id),
                     null,
+                    null,
                     0,
                     2,
                     mongoCollection,
@@ -93,21 +95,25 @@ class MongoDaoHelper {
 
     static <I, T, R> List<R> findByIds(Collection<I> ids, MongoCollection<T> mongoCollection, Class<R> documentType) {
         if (CollectionUtils.isNotEmpty(ids)) {
-            return find(createFilterByIds(ids), null, 0, 0, mongoCollection, documentType);
+            return find(createFilterByIds(ids), null, null, 0, 0, mongoCollection, documentType);
         } else {
             return Collections.emptyList();
         }
     }
 
-    static <T, R> R findFirst(Bson queryFilter, MongoCollection<T> mongoCollection, Class<R> resultType) {
-        return findFirst(queryFilter, null, mongoCollection, resultType);
+    static <T, R> R findFirst(Bson queryFilter, Collation collation, MongoCollection<T> mongoCollection, Class<R> resultType) {
+        return findFirst(queryFilter, null, collation, mongoCollection, resultType);
     }
 
-    static <T, R> R findFirst(Bson queryFilter, Bson sortCriteria, MongoCollection<T> mongoCollection, Class<R> resultType) {
-        return find(queryFilter, sortCriteria, 0, 2, mongoCollection, resultType).stream().findFirst().orElse(null);
+    static <T, R> R findFirst(Bson queryFilter, Bson sortCriteria, Collation collation, MongoCollection<T> mongoCollection, Class<R> resultType) {
+        return find(queryFilter, sortCriteria, collation, 0, 2, mongoCollection, resultType).stream().findFirst().orElse(null);
     }
 
-    static <T, R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
+    static <T, R> List<R> find(Bson queryFilter, Bson sortCriteria,
+                               Collation collation,
+                               long offset, int length,
+                               MongoCollection<T> mongoCollection,
+                               Class<R> resultType) {
         List<R> entityDocs = new ArrayList<>();
         FindIterable<R> results = mongoCollection.find(resultType);
         if (queryFilter != null) {
@@ -120,6 +126,7 @@ class MongoDaoHelper {
             results = results.limit(length);
         }
         return results
+                .collation(collation)
                 .sort(sortCriteria)
                 .into(entityDocs);
     }

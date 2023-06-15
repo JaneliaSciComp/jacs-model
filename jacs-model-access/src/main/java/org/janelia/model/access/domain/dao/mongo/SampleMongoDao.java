@@ -40,6 +40,7 @@ public class SampleMongoDao extends AbstractDomainObjectMongoDao<Sample> impleme
                         CollectionUtils.isEmpty(sampleNames) ? null : Filters.in("name", sampleNames),
                         CollectionUtils.isEmpty(slideCodes) ? null : Filters.in("slideCode", slideCodes)),
                 null,
+                null,
                 offset,
                 length,
                 getEntityType());

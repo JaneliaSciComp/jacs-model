@@ -35,6 +35,7 @@ public class LineReleaseMongoDao extends AbstractNodeMongoDao<LineRelease> imple
                 MongoDaoHelper.createFilterCriteria(
                         Filters.in("targetWebsite", publishingSites)),
                 null,
+                null,
                 0,
                 -1,
                 getEntityType());
@@ -48,6 +49,7 @@ public class LineReleaseMongoDao extends AbstractNodeMongoDao<LineRelease> imple
         return find(
                 MongoDaoHelper.createFilterCriteria(
                         Filters.in("name", names)),
+                null,
                 null,
                 0,
                 -1,

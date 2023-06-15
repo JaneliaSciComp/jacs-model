@@ -31,6 +31,7 @@ public class EmDataSetMongoDao extends AbstractDomainObjectMongoDao<EMDataSet> i
         return MongoDaoHelper.find(
                 Filters.eq("name", name),
                 null,
+                null,
                 0,
                 -1,
                 mongoCollection,
@@ -45,6 +46,7 @@ public class EmDataSetMongoDao extends AbstractDomainObjectMongoDao<EMDataSet> i
                         Filters.eq("name", name),
                         Filters.eq("version", version)
                 ),
+                null,
                 null,
                 0,
                 -1,
