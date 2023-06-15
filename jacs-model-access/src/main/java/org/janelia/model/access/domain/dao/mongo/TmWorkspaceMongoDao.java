@@ -91,14 +91,13 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     public TmWorkspace createTmWorkspace(String subjectKey, TmWorkspace tmWorkspace) {
         try {
             // find a suitable collection to store this workspace's neurons
-            boolean isViable = false;
             String collectionName = MongoDaoHelper.findOrCreateCappedCollection (this, mongoDatabase,
                     "tmNeuron", 20000000000L, TmNeuronMetadata.class);
             tmWorkspace.setNeuronCollection(collectionName);
 
             TmWorkspace workspace = domainDao.save(subjectKey, tmWorkspace);
             TreeNode folder = domainDao.getOrCreateDefaultTreeNodeFolder(subjectKey, DomainConstants.NAME_TM_WORKSPACE_FOLDER);
-            domainDao.addChildren(subjectKey, folder, Arrays.asList(Reference.createFor(workspace)));
+            domainDao.addChildren(subjectKey, folder, Collections.singletonList(Reference.createFor(workspace)));
             return workspace;
         } catch (Exception e) {
             throw new IllegalStateException(e);
