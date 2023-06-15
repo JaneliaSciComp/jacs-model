@@ -22,8 +22,17 @@ class DomainPermissionsMongoHelper {
         this.subjectDao = subjectDao;
     }
 
+    Set<String> retrieveSubjectReadGroups(String subjectKey) {
+        return subjectDao.getReaderSetByKey(subjectKey);
+
+    }
+
+    Set<String> retrieveSubjectWriteGroups(String subjectKey) {
+        return subjectDao.getWriterSetByKey(subjectKey);
+    }
+
     Bson createReadPermissionFilterForSubjectKey(String subjectKey) {
-        Set<String> readers = subjectDao.getReaderSetByKey(subjectKey);
+        Set<String> readers = retrieveSubjectReadGroups(subjectKey);
         if (CollectionUtils.isEmpty(readers)) {
             // only include entities that have no reader restrictions
             return Filters.and(
@@ -46,7 +55,7 @@ class DomainPermissionsMongoHelper {
     }
 
     Bson createSameGroupReadPermissionFilterForSubjectKey(String subjectKey) {
-        Set<String> readers = subjectDao.getReaderSetByKey(subjectKey);
+        Set<String> readers = retrieveSubjectReadGroups(subjectKey);
         if (CollectionUtils.isEmpty(readers)) {
             // only include entities that have no reader restrictions
             return Filters.or(
@@ -62,7 +71,7 @@ class DomainPermissionsMongoHelper {
     }
 
     Bson createWritePermissionFilterForSubjectKey(String subjectKey) {
-        Set<String> writers = subjectDao.getWriterSetByKey(subjectKey);
+        Set<String> writers = retrieveSubjectWriteGroups(subjectKey);
         if (CollectionUtils.isEmpty(writers)) {
             // only include entities that have no reader restrictions
             return Filters.or(

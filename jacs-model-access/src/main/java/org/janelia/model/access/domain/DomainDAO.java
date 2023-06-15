@@ -31,7 +31,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 import com.mongodb.WriteResult;
 import com.mongodb.client.MongoDatabase;
-
+import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoDBHelper;
 import org.janelia.model.domain.DomainConstants;
@@ -54,10 +54,8 @@ import org.janelia.model.domain.gui.search.Filter;
 import org.janelia.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.ontology.Category;
-import org.janelia.model.domain.ontology.EnumItem;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
-import org.janelia.model.domain.ontology.OntologyTermReference;
 import org.janelia.model.domain.orders.IntakeOrder;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.Image;
@@ -129,14 +127,14 @@ public class DomainDAO {
     private final TimebasedIdentifierGenerator idGenerator;
 
     public DomainDAO(String serverUrl, String databaseName) {
-        this(serverUrl, databaseName, null, null);
+        this(serverUrl, databaseName, databaseName, null, null);
     }
 
-    public DomainDAO(String serverUrl, String databaseName, String username, String password) {
+    public DomainDAO(String serverUrl, String authDatabaseName, String databaseName, String username, String password) {
         MongoClient mongoClient = MongoDBHelper.createLegacyMongoClient(
                 null,
                 serverUrl,
-                databaseName,
+                StringUtils.defaultIfBlank(authDatabaseName, databaseName),
                 username,
                 password,
                 false,
@@ -2247,8 +2245,7 @@ public class DomainDAO {
                                     ColorDepthLibrary.class.getName(), Collections.singletonList(colorDepthLibrary.getId()),
                                     readers, writers, grant, forceChildUpdates, allowWriters, false, visited);
                         }
-                    }
-                    else {
+                    } else {
                         log.warn("Could not find writeable DataSet#{}", id);
                     }
                 }

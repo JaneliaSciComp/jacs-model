@@ -1,13 +1,14 @@
 plugins {
-    id "com.github.hierynomus.license" version "0.15.0"
+    id 'com.github.hierynomus.license' version '0.16.1'
 }
 
 allprojects {
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
     apply plugin: 'idea'
+
     group = 'org.janelia.jacs-model'
-    version = '2.70.1'
+    version = '2.71.0'
 }
 
 subprojects {
@@ -19,9 +20,6 @@ subprojects {
     configurations {
         provided
         implementation.extendsFrom(provided)
-        integrationTestCompileOnly.extendsFrom(testCompileOnly)
-        integrationTestImplementation.extendsFrom(testImplementation)
-        integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
     }
 
     afterEvaluate {
@@ -33,19 +31,6 @@ subprojects {
             }
             maven {
                 url "https://nexus.janelia.org/repository/maven-snapshots"
-            }
-        }
-
-        sourceSets {
-            integrationTest {
-                java {
-                    compileClasspath += main.output + test.output
-                    runtimeClasspath += main.output + test.output
-                    srcDir file('src/integrationTest/java')
-                }
-                resources {
-                    srcDir file('src/integrationTest/resources')
-                }
             }
         }
 
@@ -67,15 +52,6 @@ subprojects {
             }
         }
 
-        compileIntegrationTestJava {
-            doFirst {
-                options.compilerArgs = [
-                        '-Xlint:deprecation',
-                        '-Xlint:unchecked'
-                ]
-            }
-        }
-
         idea {
             module {
                 downloadSources = true
@@ -83,16 +59,11 @@ subprojects {
             }
         }
 
-        task integrationTest(type: Test) {
-            testClassesDirs += sourceSets.integrationTest.output.classesDirs
-            classpath = sourceSets.integrationTest.runtimeClasspath
-        }
-
     }
 
-    task sourceJar(type: Jar) {
+    tasks.register('sourceJar', Jar) {
         from sourceSets.main.allJava
-        archiveClassifier = 'sources'
+        archiveClassifier.set('sources')
     }
 
     publishing {
@@ -135,10 +106,10 @@ downloadLicenses {
     dependencyConfiguration = 'compile'
 }
 
-task updateWrapper(type: Wrapper) {
-    gradleVersion = "5.5.1"
+tasks.register('updateWrapper', Wrapper) {
+    gradleVersion = "8.1.1"
 }
 
-task version {
+tasks.register('version') {
     println project.version
 }

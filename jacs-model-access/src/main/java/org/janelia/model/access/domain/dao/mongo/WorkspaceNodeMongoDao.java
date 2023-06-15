@@ -68,7 +68,7 @@ public class WorkspaceNodeMongoDao extends AbstractNodeMongoDao<Workspace> imple
                 updateOptions
         );
         if (workspace==null) {
-            throw new RuntimeException("Error creating default workspace for "+subjectKey);
+            throw new IllegalStateException("Error creating default workspace for "+subjectKey);
         }
         log.info("Created {} for {}", workspace, subjectKey);
         return workspace;

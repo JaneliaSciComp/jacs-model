@@ -21,10 +21,10 @@ public class AbstractMongoDaoTest {
         testMongoClient = MongoDBHelper.createMongoClient(
                 null,
                 ITestDomainDAOManager.DATABASE_HOST,
-                null,
-                null,
-                null,
-                null,
+                ITestDomainDAOManager.AUTH_DATABASE_NAME,
+                ITestDomainDAOManager.DATABASE_USER,
+                ITestDomainDAOManager.DATABASE_PASSWORD,
+                ITestDomainDAOManager.REPLICA_SET,
                 false,
                 0, // use default
                 0, // use default

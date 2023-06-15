@@ -10,6 +10,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.bson.conversions.Bson;
@@ -17,6 +18,7 @@ import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.*;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.*;
+import org.janelia.model.security.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * {@link TmNeuronMetadata} Mongo DAO.
@@ -55,6 +58,14 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     public TmNeuronMetadata createTmNeuronInWorkspace(String subjectKey, TmNeuronMetadata neuronMetadata, TmWorkspace workspace) {
         String neuronOwnerKey;
         String collection = workspace.getNeuronCollection();
+        // check permissions
+        Set<String> subjectWriteGroups = permissionsHelper.retrieveSubjectWriteGroups(subjectKey);
+        if (!subjectKey.equals(workspace.getOwnerKey()) &&
+                !subjectWriteGroups.contains(Subject.ADMIN_KEY) &&
+                !CollectionUtils.containsAny(workspace.getWriters(), subjectWriteGroups)) {
+            // the current subject is neither an owner nor an allowed writer to the current workspace
+            throw new SecurityException(subjectKey + " is not allowed to write to workspace " + workspace.getName());
+        }
         // Inherit from parent only if not existing already
         if (!subjectKey.equals(neuronMetadata.getOwnerKey())) {
             neuronOwnerKey = neuronMetadata.getOwnerKey();
