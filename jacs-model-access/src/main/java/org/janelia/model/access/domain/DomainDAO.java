@@ -2252,22 +2252,24 @@ public class DomainDAO {
 
             } else if ("tmWorkspace".equals(collectionName)) {
 
-                log.trace("Changing permissions on the TmSamples associated with the TmWorkspaces: {}", loggedIdsParam);
-
                 List<Long> sampleIds = new ArrayList<>();
-                for (TmWorkspace workspace : tmWorkspaceCollection.find("{_id:{$in:#}}", ids).projection("{class:1,sampleRef:1}").as(TmWorkspace.class)) {
+                List<String> workspaceRefs = DomainUtils.getRefStrings(objectRefs);
+                log.trace("Changing permissions on the TmNeurons associated with the TmWorkspaces: {}", workspaceRefs);
+
+                for (TmWorkspace workspace : tmWorkspaceCollection.find("{_id:{$in:#}}", ids).as(TmWorkspace.class)) {
+                    log.info("Changing permissions on the TmSamples associated with the TmWorkspaces: {}", loggedIdsParam);
                     sampleIds.add(workspace.getSampleId());
+                     log.info("Workspace neuron collection is {}", workspace.getNeuronCollection());
+                    String workspaceNeuronCollectionName = workspace.getNeuronCollection();
+                    MongoCollection workspaceNeuronCollection = getCollectionByName(workspaceNeuronCollectionName);
+                    WriteResult wr2 = workspaceNeuronCollection.update("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
+                    log.info("Updated permissions on {} TmNeurons", wr2.getN());
+                    nUpdates += wr2.getN();
                 }
 
                 WriteResult wr1 = tmSampleCollection.update("{_id:{$in:#}," + updateQueryClause + "}", sampleIds, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} TmSamples", wr1.getN());
                 nUpdates += wr1.getN();
-
-                List<String> workspaceRefs = DomainUtils.getRefStrings(objectRefs);
-                log.trace("Changing permissions on the TmNeurons associated with the TmWorkspaces: {}", workspaceRefs);
-                WriteResult wr2 = tmNeuronCollection.update("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
-                log.trace("Updated permissions on {} TmNeurons", wr2.getN());
-                nUpdates += wr2.getN();
 
                 WriteResult wr3 = tmReviewTaskCollection.update("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
                 log.trace("Updated permissions on {} TmReviewTask", wr3.getN());
@@ -2396,14 +2398,14 @@ public class DomainDAO {
             List<String> sampleRefs = sampleIds.stream().map(id -> "Sample#" + id).collect(Collectors.toList());
 
             updatedDomainObjectsStream = Stream.of(
-                    updatedDomainObjectsStream,
-                    streamFindResult(sampleCollection.find("{_id:{$in:#}," + queryClause + "}", sampleIds, queryParam), Sample.class),
-                    streamFindResult(fragmentCollection.find("{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam), NeuronFragment.class),
-                    streamFindResult(imageCollection.find("{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam), Image.class),
-                    dataSets.stream()
-                            .map(ds -> getColorDepthLibraryByIdentifier(ds.getOwnerKey(), ds.getIdentifier()))
-                            .filter(Objects::nonNull)
-                            .flatMap(cdl -> collectPermissionChanges(subjectKey, ColorDepthLibrary.class.getName(), Collections.singletonList(cdl.getId()), allowWriters, visited)))
+                            updatedDomainObjectsStream,
+                            streamFindResult(sampleCollection.find("{_id:{$in:#}," + queryClause + "}", sampleIds, queryParam), Sample.class),
+                            streamFindResult(fragmentCollection.find("{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam), NeuronFragment.class),
+                            streamFindResult(imageCollection.find("{sampleRef:{$in:#}," + queryClause + "}", sampleRefs, queryParam), Image.class),
+                            dataSets.stream()
+                                    .map(ds -> getColorDepthLibraryByIdentifier(ds.getOwnerKey(), ds.getIdentifier()))
+                                    .filter(Objects::nonNull)
+                                    .flatMap(cdl -> collectPermissionChanges(subjectKey, ColorDepthLibrary.class.getName(), Collections.singletonList(cdl.getId()), allowWriters, visited)))
                     .flatMap(s -> s)
             ;
         } else if ("tmWorkspace".equals(collectionName)) {
