@@ -2256,14 +2256,14 @@ public class DomainDAO {
                 List<String> workspaceRefs = DomainUtils.getRefStrings(objectRefs);
                 log.trace("Changing permissions on the TmNeurons associated with the TmWorkspaces: {}", workspaceRefs);
 
-                for (TmWorkspace workspace : tmWorkspaceCollection.find("{_id:{$in:#}}", ids).projection("{class:1,sampleRef:1,neuronCollection:1}").as(TmWorkspace.class)) {
-                    log.trace("Changing permissions on the TmSamples associated with the TmWorkspaces: {}", loggedIdsParam);
+                for (TmWorkspace workspace : tmWorkspaceCollection.find("{_id:{$in:#}}", ids).as(TmWorkspace.class)) {
+                    log.info("Changing permissions on the TmSamples associated with the TmWorkspaces: {}", loggedIdsParam);
                     sampleIds.add(workspace.getSampleId());
-
+                     log.info("Workspace neuron collection is {}", workspace.getNeuronCollection());
                     String workspaceNeuronCollectionName = workspace.getNeuronCollection();
                     MongoCollection workspaceNeuronCollection = getCollectionByName(workspaceNeuronCollectionName);
                     WriteResult wr2 = workspaceNeuronCollection.update("{workspaceRef:{$in:#}," + updateQueryClause + "}", workspaceRefs, updateQueryParam).multi().with(withClause, readers, writers);
-                    log.trace("Updated permissions on {} TmNeurons", wr2.getN());
+                    log.info("Updated permissions on {} TmNeurons", wr2.getN());
                     nUpdates += wr2.getN();
                 }
 
