@@ -34,7 +34,6 @@ public class EmBodyMongoDao extends AbstractDomainObjectMongoDao<EMBody> impleme
         return MongoDaoHelper.find(
                 Filters.eq("dataSetRef", Reference.createFor(emDataSet)),
                 null,
-                null,
                 offset,
                 length,
                 mongoCollection,
@@ -50,7 +49,6 @@ public class EmBodyMongoDao extends AbstractDomainObjectMongoDao<EMBody> impleme
                         Filters.eq("dataSetRef", Reference.createFor(emDataSet)),
                         CollectionUtils.isEmpty(selectedNames) ? null : Filters.in("name", selectedNames)
                 ),
-                null,
                 null,
                 offset,
                 length,

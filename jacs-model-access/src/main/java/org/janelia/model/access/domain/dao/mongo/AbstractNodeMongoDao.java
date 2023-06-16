@@ -56,7 +56,6 @@ public abstract class AbstractNodeMongoDao<T extends Node> extends AbstractDomai
                         Filters.eq("children", nodeReference)
                 ),
                 null,
-                null,
                 0,
                 -1,
                 mongoCollection,

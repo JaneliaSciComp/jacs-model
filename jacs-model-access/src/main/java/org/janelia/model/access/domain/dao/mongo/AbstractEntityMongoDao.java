@@ -2,7 +2,6 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.UpdateOptions;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bson.conversions.Bson;
@@ -46,11 +45,11 @@ public abstract class AbstractEntityMongoDao<T extends HasIdentifier>
 
     @Override
     public List<T> findAll(long offset, int length) {
-        return find(null, null, null, offset, length, getEntityType());
+        return find(null, null, offset, length, getEntityType());
     }
 
-    <R> List<R> find(Bson queryFilter, Bson sortCriteria, Collation collation, long offset, int length, Class<R> resultType) {
-        return MongoDaoHelper.find(queryFilter, sortCriteria, collation, offset, length, mongoCollection, resultType);
+    <R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType) {
+        return MongoDaoHelper.find(queryFilter, sortCriteria, offset, length, mongoCollection, resultType);
     }
 
     void insertNewEntity(T entity) {

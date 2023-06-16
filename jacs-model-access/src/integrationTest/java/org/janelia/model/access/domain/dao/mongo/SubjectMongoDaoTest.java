@@ -106,6 +106,34 @@ public class SubjectMongoDaoTest extends AbstractMongoDaoTest {
     }
 
     @Test
+    public void caseInsensitiveUserGetter() {
+        class TestData {
+            final String uname;
+            final String fullName;
+            final String[] searchStrings;
+
+            TestData(String uname, String fullName, String[] searchStrings) {
+                this.uname = uname;
+                this.fullName = fullName;
+                this.searchStrings = searchStrings;
+            }
+        }
+        TestData[] testData = new TestData[] {
+                new TestData("user1", "FullUser1", new String[]{"user1", "USer1"}),
+                new TestData("User2", "FullUser2", new String[]{"user2", "uSEr2"})
+        };
+        for (TestData td : testData) {
+            User testUser = subjectMongoDao.createUser(td.uname, td.fullName, null);
+            assertEquals(td.uname.toLowerCase(), testUser.getName());
+            for (String searchedUsername : td.searchStrings) {
+                Subject foundUser = subjectMongoDao.findSubjectByName(searchedUsername);
+                assertNotNull("No user found for " + searchedUsername, foundUser);
+                assertEquals(foundUser.getId(), testUser.getId());
+            }
+        }
+    }
+
+    @Test
     public void testGroupGetters() throws Exception {
         subjectMongoDao.createGroup(testGroup, testGroupFullName, null);
         Subject subject = subjectMongoDao.findSubjectByNameOrKey(testGroup);

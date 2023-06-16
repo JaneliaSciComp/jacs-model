@@ -39,7 +39,6 @@ public class DatasetMongoDao extends AbstractDomainObjectMongoDao<DataSet> imple
                         permissionsHelper.createReadPermissionFilterForSubjectKey(groupKey)
                 ),
                 null,
-                null,
                 0,
                 -1,
                 DataSet.class
@@ -68,7 +67,6 @@ public class DatasetMongoDao extends AbstractDomainObjectMongoDao<DataSet> imple
                         Filters.eq("identifier", datasetIdentifier)
                 ),
                 null,
-                null,
                 0,
                 1,
                 DataSet.class
@@ -83,7 +81,6 @@ public class DatasetMongoDao extends AbstractDomainObjectMongoDao<DataSet> imple
                         sageSyncFlag != null && sageSyncFlag
                                 ? Filters.eq("sageSync", true)
                                 : Filters.or(Filters.eq("sageSync", false), Filters.exists("sageSync", false))),
-                null,
                 null,
                 0,
                 -1,

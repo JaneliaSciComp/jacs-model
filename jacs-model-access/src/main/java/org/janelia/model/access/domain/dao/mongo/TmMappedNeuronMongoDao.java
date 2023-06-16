@@ -28,7 +28,6 @@ public class TmMappedNeuronMongoDao extends AbstractDomainObjectMongoDao<TmMappe
                         Filters.eq("workspaceRef", Reference.createFor(workspace))
                 ),
                 null,
-                null,
                 0,
                 1,
                 TmMappedNeuron.class

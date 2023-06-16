@@ -47,7 +47,6 @@ public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> imp
                 MongoDaoHelper.createBsonSortCriteria(
                         new SortCriteria("ownerKey"),
                         new SortCriteria("_id")),
-                null,
                 offset,
                 length,
                 mongoCollection,

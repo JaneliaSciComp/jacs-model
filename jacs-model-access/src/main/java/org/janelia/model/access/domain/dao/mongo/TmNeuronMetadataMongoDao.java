@@ -8,7 +8,6 @@ import com.google.common.collect.ImmutableSet;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import org.apache.commons.collections4.CollectionUtils;
@@ -105,9 +104,9 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         return neuron;
     }
 
-    <R> List<R> find(Bson queryFilter, Bson sortCriteria, Collation collation, long offset, int length, Class<R> resultType,
+    <R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType,
                      MongoCollection<TmNeuronMetadata> neuronCollection) {
-        return MongoDaoHelper.find(queryFilter, sortCriteria, collation, offset, length, neuronCollection, resultType);
+        return MongoDaoHelper.find(queryFilter, sortCriteria, offset, length, neuronCollection, resultType);
     }
 
     @Override
@@ -120,7 +119,6 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 MongoDaoHelper.createFilterCriteria(
                         Filters.eq("workspaceRef", workspaceRef),
                         permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey)),
-                null,
                 null,
                 offset,
                 length,
@@ -286,7 +284,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
             operationFilterBuilder.add(Filters.and(Filters.lte("timestamp",endDate)));
         }
         Bson filter = MongoDaoHelper.createFilterCriteria(operationFilterBuilder.build());
-        return MongoDaoHelper.find(filter, null, null, 0, 10000, operationCollection, TmOperation.class);
+        return MongoDaoHelper.find(filter, null, 0, 10000, operationCollection, TmOperation.class);
     }
 
     private TmNeuronMetadata saveNeuron(TmNeuronMetadata entity,

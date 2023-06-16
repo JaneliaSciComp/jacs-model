@@ -84,7 +84,6 @@ public class WorkspaceNodeMongoDao extends AbstractNodeMongoDao<Workspace> imple
                         MongoDaoHelper.createFilterByClass(Workspace.class),
                         permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey)),
                 null,
-                null,
                 offset,
                 length,
                 mongoCollection,
@@ -100,7 +99,6 @@ public class WorkspaceNodeMongoDao extends AbstractNodeMongoDao<Workspace> imple
                 MongoDaoHelper.createFilterCriteria(
                         MongoDaoHelper.createFilterByClass(Workspace.class),
                         Filters.eq("ownerKey", subjectKey)),
-                null,
                 null,
                 0,
                 -1,

@@ -40,8 +40,9 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     public User createUser(String name, String fullName, String email) {
         log.debug("createUser(name={}, fullName={}, email={})", name, fullName, email);
         User newSubject = new User();
-        newSubject.setName(name);
-        newSubject.setKey("user:" + name);
+        String uname = name.toLowerCase();
+        newSubject.setName(uname);
+        newSubject.setKey("user:" + uname);
         newSubject.setFullName(fullName);
         newSubject.setEmail(email);
         save(newSubject);
@@ -85,6 +86,13 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     public void save(Subject entity) {
         if (entity.getId() == null) {
             entity.setId(createNewId());
+            // force the key and name to lower case
+            if (StringUtils.isNotBlank(entity.getKey())) {
+                entity.setKey(entity.getKey().toLowerCase());
+            }
+            if (StringUtils.isNotBlank(entity.getName())) {
+                entity.setName(entity.getName().toLowerCase());
+            }
             insertNewEntity(entity);
         } else {
             throw new IllegalArgumentException("Cannot save object which already has an id");
@@ -133,11 +141,11 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     }
 
     @Override
-    public void removeUserFromGroup(String userNameOrKey, String groupNameOrKey) {
+    public void removeUserFromGroup(String userNameOrKey, String groupKey) {
         User u = findUserByNameOrKey(userNameOrKey);
         Preconditions.checkArgument(u != null, "No user found for " + userNameOrKey);
         Set<UserGroupRole> userGroupRoles = u.getUserGroupRoles().stream()
-                .filter(ugr -> !StringUtils.equals(ugr.getGroupKey(), groupNameOrKey))
+                .filter(ugr -> !StringUtils.equalsIgnoreCase(ugr.getGroupKey(), groupKey))
                 .collect(Collectors.toSet());
         if (userGroupRoles.size() != u.getUserGroupRoles().size()) {
             updateUserGroupRoles(u, userGroupRoles);
@@ -146,9 +154,11 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
 
     @Override
     public void removeSubjectByKey(String key) {
-        MongoDaoHelper.deleteMatchingRecords(
-                mongoCollection,
-                MongoDaoHelper.createAttributeFilter("key", key));
+        if (StringUtils.isNotBlank(key)) {
+            MongoDaoHelper.deleteMatchingRecords(
+                    mongoCollection,
+                    MongoDaoHelper.createAttributeFilter("key", key.toLowerCase()));
+        }
     }
 
     @Override
@@ -174,8 +184,9 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     @Override
     public Group createGroup(String name, String fullName, String ldapName) {
         Group newGroup = new Group();
-        newGroup.setName(name);
-        newGroup.setKey("group:"+name);
+        String gname = name.toLowerCase();
+        newGroup.setName(gname);
+        newGroup.setKey("group:"+gname);
         newGroup.setLdapGroupName(ldapName);
         newGroup.setFullName(fullName);
         save(newGroup);
@@ -207,24 +218,21 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
 
     @Override
     public List<User> findAllUsers() {
-        return find(Filters.regex("key", "^user:"), null, null, 0, -1, User.class);
+        return find(Filters.regex("key", "^user:"), null, 0, -1, User.class);
     }
 
     @Override
     public List<Group> findAllGroups() {
-        return find(Filters.regex("key", "^group:"), null, null, 0, -1, Group.class);
+        return find(Filters.regex("key", "^group:"), null, 0, -1, Group.class);
     }
 
     @Override
     public Subject findSubjectByKey(String key) {
         if (StringUtils.isNotBlank(key)) {
+            String searchedKey = key.toLowerCase();
             List<Subject> subjects = find(
-                    Filters.eq("key", key),
+                    Filters.eq("key", searchedKey),
                     null,
-                    Collation.builder()
-                            .locale("en")
-                            .collationStrength(CollationStrength.PRIMARY)
-                            .build(),
                     0, -1, getEntityType());
             if (CollectionUtils.isNotEmpty(subjects)) {
                 return subjects.get(0);
@@ -239,11 +247,9 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     @Override
     public Subject findSubjectByName(String name) {
         if (StringUtils.isNotBlank(name)) {
-            List<Subject> subjects = find(Filters.eq("name", name), null,
-                    Collation.builder()
-                            .locale("en")
-                            .collationStrength(CollationStrength.PRIMARY)
-                            .build(),
+            String searchedName = name.toLowerCase();
+            List<Subject> subjects = find(Filters.eq("name", searchedName),
+                    null,
                     0, -1,
                     getEntityType());
             if (CollectionUtils.isNotEmpty(subjects)) {
@@ -259,13 +265,12 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     @Override
     public Subject findSubjectByNameOrKey(String nameOrKey) {
         if (StringUtils.isNotBlank(nameOrKey)) {
+            String searchedNameOrKey = nameOrKey.toLowerCase();
             List<Subject> subjects = find(
-                    Filters.or(Filters.eq("key", nameOrKey), Filters.eq("name", nameOrKey)),
+                    Filters.or(
+                            Filters.eq("key", searchedNameOrKey),
+                            Filters.eq("name", searchedNameOrKey)),
                     null,
-                    Collation.builder()
-                            .locale("en")
-                            .collationStrength(CollationStrength.PRIMARY)
-                            .build(),
                     0,
                     -1,
                     getEntityType());
@@ -282,16 +287,13 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     @Override
     public Group findGroupByNameOrKey(String groupNameOrKey) {
         if (StringUtils.isNotBlank(groupNameOrKey)) {
+            String searchedName = groupNameOrKey.toLowerCase();
             List<Group> groups = find(
                     Filters.and(
-                            Filters.or(Filters.eq("key", groupNameOrKey), Filters.eq("name", groupNameOrKey)),
+                            Filters.or(Filters.eq("key", searchedName), Filters.eq("name", searchedName)),
                             Filters.eq("class", Group.class.getName())
                     ),
                     null,
-                    Collation.builder()
-                            .locale("en")
-                            .collationStrength(CollationStrength.PRIMARY)
-                            .build(),
                     0,
                     -1,
                     Group.class);
@@ -308,16 +310,15 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
     @Override
     public User findUserByNameOrKey(String userNameOrKey) {
         if (StringUtils.isNotBlank(userNameOrKey)) {
+            String searchedNameOrKey = userNameOrKey.toLowerCase();
             List<User> users = find(
                     Filters.and(
-                            Filters.or(Filters.eq("key", userNameOrKey), Filters.eq("name", userNameOrKey)),
+                            Filters.or(
+                                    Filters.eq("key", searchedNameOrKey),
+                                    Filters.eq("name", searchedNameOrKey)),
                             Filters.eq("class", User.class.getName())
                     ),
                     null,
-                    Collation.builder()
-                            .locale("en")
-                            .collationStrength(CollationStrength.PRIMARY)
-                            .build(),
                     0,
                     -1,
                     User.class);
@@ -358,10 +359,6 @@ public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements 
         return MongoDaoHelper.find(
                 Filters.eq("userGroupRoles.groupKey", groupKey),
                 null,
-                Collation.builder()
-                        .locale("en")
-                        .collationStrength(CollationStrength.PRIMARY)
-                        .build(),
                 0,
                 -1,
                 mongoCollection,

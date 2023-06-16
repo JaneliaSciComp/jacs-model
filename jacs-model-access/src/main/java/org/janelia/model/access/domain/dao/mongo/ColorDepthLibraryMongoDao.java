@@ -38,7 +38,6 @@ public class ColorDepthLibraryMongoDao extends AbstractDomainObjectMongoDao<Colo
         return ColorDepthLibraryUtils.collectLibrariesWithVariants(MongoDaoHelper.find(
                 Filters.regex("identifier", libraryIdentifier),
                 null,
-                null,
                 0,
                 -1,
                 mongoCollection,
@@ -53,7 +52,6 @@ public class ColorDepthLibraryMongoDao extends AbstractDomainObjectMongoDao<Colo
         }
         return MongoDaoHelper.find(
                 Filters.in("identifier", libraryIdentifiers),
-                null,
                 null,
                 0,
                 -1,

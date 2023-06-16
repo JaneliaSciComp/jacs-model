@@ -34,7 +34,6 @@ public class TmAgentMetadataMongoDao extends AbstractDomainObjectMongoDao<TmAgen
                         MongoDaoHelper.createAttributeFilter("workspaceId", workspaceId)
                 ),
                 null,
-                null,
                 0,
                 -1,
                 TmAgentMetadata.class);

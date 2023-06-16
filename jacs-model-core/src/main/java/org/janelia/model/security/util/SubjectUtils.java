@@ -19,12 +19,12 @@ public class SubjectUtils {
         if (subjectNameOrKey.contains(":")) {
             String[] s = subjectNameOrKey.split(":");
             if (s.length>1) {
-                return s[1];
+                return s[1].toLowerCase();
             } else {
                 return "";
             }
         } else {
-            return subjectNameOrKey;
+            return subjectNameOrKey.toLowerCase();
         }
     }
 

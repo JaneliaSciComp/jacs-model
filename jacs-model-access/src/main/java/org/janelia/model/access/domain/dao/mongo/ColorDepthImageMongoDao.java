@@ -166,7 +166,6 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
         return MongoDaoHelper.find(
                 createColorDepthMIPsFilter(new ColorDepthImageQuery().withExactFilepaths(Collections.singleton(imagePath))),
                 null,
-                null,
                 0,
                 -1,
                 mongoCollection,

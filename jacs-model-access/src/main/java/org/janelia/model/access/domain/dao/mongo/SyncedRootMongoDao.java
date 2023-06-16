@@ -41,7 +41,6 @@ public class SyncedRootMongoDao extends AbstractDomainObjectMongoDao<SyncedRoot>
         return MongoDaoHelper.find(
                 permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey),
                 null,
-                null,
                 0,
                 -1,
                 mongoCollection,

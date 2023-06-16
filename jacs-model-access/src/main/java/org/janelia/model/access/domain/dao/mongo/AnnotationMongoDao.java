@@ -128,7 +128,6 @@ public class AnnotationMongoDao extends AbstractDomainObjectMongoDao<Annotation>
                     MongoDaoHelper.createFilterCriteria(
                             Filters.in("target", references.stream().filter(Objects::nonNull).map(Reference::toString).collect(Collectors.toSet()))),
                     null,
-                    null,
                     0,
                     -1,
                     getEntityType());
@@ -144,7 +143,6 @@ public class AnnotationMongoDao extends AbstractDomainObjectMongoDao<Annotation>
                     MongoDaoHelper.createFilterCriteria(
                             Filters.in("target", references.stream().filter(Objects::nonNull).map(Reference::toString).collect(Collectors.toSet())),
                             permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
-                    null,
                     null,
                     0,
                     -1,
