@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -25,11 +27,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * {@link TmNeuronMetadata} Mongo DAO.
@@ -308,11 +306,14 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
             mongoCollection.insertOne(entity);
         } else {
             entity.setUpdatedDate(now);
-            mongoCollection.updateOne(
+            UpdateResult updateResult = mongoCollection.updateOne(
                     Filters.and(MongoDaoHelper.createFilterById(entity.getId()),
                             permissionsHelper.createWritePermissionFilterForSubjectKey(subjectKey)),
                     updateHelper.getEntityUpdates(entity)
             );
+            if (updateResult.getMatchedCount() == 0) {
+                throw new MongoException("Could not update "+entity+". Object was not matched.");
+            }
         }
         return entity;
     }
@@ -332,7 +333,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         Map<String, EntityFieldValueHandler<?>> updates = updatesBuilder.build();
         UpdateOptions updateOptions = new UpdateOptions();
         updateOptions.upsert(false);
-        MongoDaoHelper.updateMany(
+        DaoUpdateResult daoUpdateResult = MongoDaoHelper.updateMany(
                 mongoCollection,
                 MongoDaoHelper.createFilterCriteria(
                         ImmutableList.of(
@@ -341,6 +342,11 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 ),
                 updates,
                 updateOptions);
+        long desired = bulkNeuronStyleUpdate.getNeuronIds().size();
+        long found = daoUpdateResult.getEntitiesFound();
+        if (desired != found) {
+            throw new MongoException("Update neuron styles failed. Tried to update "+desired+" neurons, but only found "+found);
+        }
     }
 
     @Override
@@ -370,7 +376,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         Map<String, EntityFieldValueHandler<?>> updates = updatesBuilder.build();
         UpdateOptions updateOptions = new UpdateOptions();
         updateOptions.upsert(false);
-        MongoDaoHelper.updateMany(
+        DaoUpdateResult daoUpdateResult = MongoDaoHelper.updateMany(
                 getNeuronCollection(workspace.getNeuronCollection()),
                 MongoDaoHelper.createFilterCriteria(
                         ImmutableList.of(
@@ -379,6 +385,11 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 ),
                 updates,
                 updateOptions);
+        long desired = neuronIds.size();
+        long found = daoUpdateResult.getEntitiesFound();
+        if (desired != found) {
+            throw new MongoException("Update neuron tags failed. Tried to update "+desired+" neurons, but only found "+found);
+        }
     }
 
     @Override
