@@ -2256,7 +2256,7 @@ public class DomainDAO {
                 List<String> workspaceRefs = DomainUtils.getRefStrings(objectRefs);
                 log.trace("Changing permissions on the TmNeurons associated with the TmWorkspaces: {}", workspaceRefs);
 
-                for (TmWorkspace workspace : tmWorkspaceCollection.find("{_id:{$in:#}}", ids).projection("{class:1,sampleRef:1}").as(TmWorkspace.class)) {
+                for (TmWorkspace workspace : tmWorkspaceCollection.find("{_id:{$in:#}}", ids).projection("{class:1,sampleRef:1,neuronCollection:1}").as(TmWorkspace.class)) {
                     log.trace("Changing permissions on the TmSamples associated with the TmWorkspaces: {}", loggedIdsParam);
                     sampleIds.add(workspace.getSampleId());
 
