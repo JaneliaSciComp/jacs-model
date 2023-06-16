@@ -8,7 +8,7 @@ allprojects {
     apply plugin: 'idea'
 
     group = 'org.janelia.jacs-model'
-    version = '2.72.0'
+    version = '2.73.0'
 }
 
 subprojects {
