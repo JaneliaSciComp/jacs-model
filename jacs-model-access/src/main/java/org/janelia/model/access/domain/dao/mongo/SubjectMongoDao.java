@@ -3,8 +3,6 @@ package org.janelia.model.access.domain.dao.mongo;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.CollationStrength;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import org.apache.commons.collections4.CollectionUtils;
