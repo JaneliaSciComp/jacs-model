@@ -1,5 +1,6 @@
 package org.janelia.model.access.domain.dao;
 
+import org.janelia.model.access.domain.dao.mongo.TmNeuronMetadataMongoDao;
 import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmOperation;
@@ -14,8 +15,8 @@ import java.util.List;
 public interface TmNeuronMetadataDao extends DomainObjectDao<TmNeuronMetadata> {
     TmNeuronMetadata createTmNeuronInWorkspace(String subjectKey, TmNeuronMetadata neuronMetadata, TmWorkspace workspace);
     TmNeuronMetadata getTmNeuronMetadata (String subjectKey, TmWorkspace workspace, Long neuronId);
-    List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(TmWorkspace workspace, String subjectKey, long offset, int length);
-    Iterable<TmNeuronMetadata> streamWorkspaceNeurons(TmWorkspace workspace, String subjectKey, long offset, int length);
+    List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(TmWorkspace workspace, String subjectKey, long offset, int length, boolean nofrags);
+    Iterable<TmNeuronMetadata> streamWorkspaceNeurons(TmWorkspace workspace, String subjectKey, long offset, int length, boolean nofrags);
     List<TmNeuronMetadata> getTmNeuronMetadataByNeuronIds(TmWorkspace workspace, List<Long> neuronList);
     boolean removeTmNeuron(Long neuronId, boolean isLarge, TmWorkspace workspace, String subjectKey);
     void updateNeuronStyles(BulkNeuronStyleUpdate bulkNeuronStyleUpdate, TmWorkspace workspace, String subjectKey);

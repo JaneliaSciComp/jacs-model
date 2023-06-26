@@ -111,12 +111,16 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     @Override
     public List<TmNeuronMetadata> getTmNeuronMetadataByWorkspaceId(TmWorkspace workspace, String subjectKey,
-                                                                   long offset, int length) {
+                                                                   long offset, int length, boolean nofrags) {
         String workspaceRef = "TmWorkspace#" + workspace.getId();
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         List<TmNeuronMetadata> neuronList = find(
                 MongoDaoHelper.createFilterCriteria(
+                        !nofrags ? null : Filters.or(
+                                Filters.exists("fragment", false),
+                                Filters.eq("filter", false)
+                        ),
                         Filters.eq("workspaceRef", workspaceRef),
                         permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey)),
                 null,
@@ -133,13 +137,17 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     @Override
     public Iterable<TmNeuronMetadata> streamWorkspaceNeurons(TmWorkspace workspace, String subjectKey,
-                                                             long offset, int length) {
+                                                             long offset, int length, boolean nofrags) {
         String workspaceRef = "TmWorkspace#" + workspace.getId();
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         FindIterable<TmNeuronMetadata> neuronList =
                 MongoDaoHelper.rawFind(
                         MongoDaoHelper.createFilterCriteria(
+                                !nofrags ? null : Filters.or(
+                                        Filters.exists("fragment", false),
+                                        Filters.eq("filter", false)
+                                ),
                                 Filters.eq("workspaceRef", workspaceRef),
                                 permissionsHelper.createSameGroupReadPermissionFilterForSubjectKey(subjectKey)),
                         null,
