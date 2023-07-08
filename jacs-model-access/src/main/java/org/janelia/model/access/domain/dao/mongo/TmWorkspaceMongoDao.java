@@ -1,5 +1,6 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
@@ -20,10 +22,7 @@ import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmSample;
-import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.domain.tiledMicroscope.*;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.util.SortCriteria;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
@@ -40,6 +39,9 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     private final DomainDAO domainDao;
     private final TmNeuronMetadataDao tmNeuronMetadataDao;
     private final TmMappedNeuronDao tmMappedNeuronDao;
+
+    @Inject
+    private GridFSMongoDao gridFSMongoDao;
 
     @Inject
     TmWorkspaceMongoDao(MongoDatabase mongoDatabase,
@@ -101,6 +103,18 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
             return workspace;
         } catch (Exception e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    @Override
+    public void saveWorkspaceBoundingBoxes(TmWorkspace workspace, List<BoundingBox3d> boundingBoxes) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            byte[] binaryData = mapper.writeValueAsBytes(boundingBoxes);
+            gridFSMongoDao.updateDataBlock(new ByteArrayInputStream(binaryData), workspace.getId().toString());
+        } catch (Exception e) {
+            LOG.error ("Problem saving precomputed fragment bounding boxes to GridFS",e);
+            throw new RuntimeException("Problem saving fragment bounding boxes to GridFS");
         }
     }
 
