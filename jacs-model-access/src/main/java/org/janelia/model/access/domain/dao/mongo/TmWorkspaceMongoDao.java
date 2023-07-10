@@ -1,16 +1,15 @@
 package org.janelia.model.access.domain.dao.mongo;
 
 import java.io.ByteArrayInputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Spliterator;
+import java.io.ByteArrayOutputStream;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -115,6 +114,20 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
         } catch (Exception e) {
             LOG.error ("Problem saving precomputed fragment bounding boxes to GridFS",e);
             throw new RuntimeException("Problem saving fragment bounding boxes to GridFS");
+        }
+    }
+
+    @Override
+    public List<BoundingBox3d> getWorkspaceBoundingBoxes(Long workspaceId) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            ByteArrayOutputStream boundingBoxBytes = new ByteArrayOutputStream();
+            gridFSMongoDao.downloadDataBlock(boundingBoxBytes, workspaceId.toString());
+            List<BoundingBox3d> boundingBoxes = mapper.readValue(boundingBoxBytes.toByteArray(), new TypeReference<List<BoundingBox3d>>(){});
+            return boundingBoxes;
+        } catch (Exception e) {
+            LOG.error ("Problem fetching fragment bounding boxes from GridFS",e);
+            throw new RuntimeException("Problem fetching fragment bounding boxes from GridFS");
         }
     }
 

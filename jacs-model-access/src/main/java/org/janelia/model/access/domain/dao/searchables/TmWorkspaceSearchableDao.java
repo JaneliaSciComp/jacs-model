@@ -60,4 +60,9 @@ public class TmWorkspaceSearchableDao extends AbstractDomainSearchableDao<TmWork
     public void saveWorkspaceBoundingBoxes(TmWorkspace workspace, List<BoundingBox3d> boundingBoxes) {
         tmWorkspaceDao.saveWorkspaceBoundingBoxes(workspace, boundingBoxes);
     }
+
+    @Override
+    public List<BoundingBox3d> getWorkspaceBoundingBoxes(Long workspaceId) {
+        return tmWorkspaceDao.getWorkspaceBoundingBoxes(workspaceId);
+    }
 }

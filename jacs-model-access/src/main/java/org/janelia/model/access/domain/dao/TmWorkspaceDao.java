@@ -15,5 +15,6 @@ public interface TmWorkspaceDao extends DomainObjectDao<TmWorkspace> {
     TmWorkspace copyTmWorkspace(String subjectKey, TmWorkspace existingWorkspace, String newName, String assignOwner);
     TmWorkspace updateTmWorkspace(String subjectKey, TmWorkspace tmWorkspace);
     void saveWorkspaceBoundingBoxes(TmWorkspace workspace, List<BoundingBox3d> boundingBoxes);
+    List<BoundingBox3d> getWorkspaceBoundingBoxes(Long workspaceId);
 
 }
