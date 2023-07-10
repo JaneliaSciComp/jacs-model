@@ -4,6 +4,8 @@ public class BoundingBox3d
 {
     protected double[] min = new double[3];
     protected double[] max = new double[3];
+    private Long domainId;
+
     public enum Unit {
         Micrometer
     }
@@ -48,9 +50,17 @@ public class BoundingBox3d
         return max[0] - min[0];
     }
 
+    public Long getDomainId() {
+        return domainId;
+    }
+
+    public void setDomainId(Long domainId) {
+        this.domainId = domainId;
+    }
+
     @Override
     public String toString() {
-        return "BoundingBox: [" + min.toString() + ", "+ max.toString() + "]";
+        return "BoundingBox: [" + min.toString() + ", "+ max.toString() + ", domainID:" + domainId + "]";
     }
 
 }
