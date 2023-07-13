@@ -25,7 +25,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     private Reference workspaceRef;
     private Boolean largeNeuron;
     private Boolean visible;
-
+    private Boolean fragment;
     private String colorHex;
 
     private Set<String> tags = new HashSet<>();
@@ -391,5 +391,13 @@ public class TmNeuronMetadata extends AbstractDomainObject {
 
     public void setLargeNeuron(Boolean largeNeuron) {
         this.largeNeuron = largeNeuron;
+    }
+
+    public Boolean isFragment() {
+        return fragment;
+    }
+
+    public void setFragment(Boolean fragment) {
+        this.fragment = fragment;
     }
 }
