@@ -394,7 +394,7 @@ public class TmNeuronMetadata extends AbstractDomainObject {
     }
 
     public Boolean isFragment() {
-        return fragment;
+        return fragment == null || fragment;
     }
 
     public void setFragment(Boolean fragment) {
