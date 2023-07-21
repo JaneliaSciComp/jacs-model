@@ -1,15 +1,16 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Spliterator;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
@@ -20,10 +21,7 @@ import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmSample;
-import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.domain.tiledMicroscope.*;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.util.SortCriteria;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
@@ -40,6 +38,9 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     private final DomainDAO domainDao;
     private final TmNeuronMetadataDao tmNeuronMetadataDao;
     private final TmMappedNeuronDao tmMappedNeuronDao;
+
+    @Inject
+    private GridFSMongoDao gridFSMongoDao;
 
     @Inject
     TmWorkspaceMongoDao(MongoDatabase mongoDatabase,
@@ -105,6 +106,32 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     }
 
     @Override
+    public void saveWorkspaceBoundingBoxes(TmWorkspace workspace, List<BoundingBox3d> boundingBoxes) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            byte[] binaryData = mapper.writeValueAsBytes(boundingBoxes);
+            gridFSMongoDao.updateDataBlock(new ByteArrayInputStream(binaryData), workspace.getId().toString());
+        } catch (Exception e) {
+            LOG.error ("Problem saving precomputed fragment bounding boxes to GridFS",e);
+            throw new RuntimeException("Problem saving fragment bounding boxes to GridFS");
+        }
+    }
+
+    @Override
+    public List<BoundingBox3d> getWorkspaceBoundingBoxes(Long workspaceId) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            ByteArrayOutputStream boundingBoxBytes = new ByteArrayOutputStream();
+            gridFSMongoDao.downloadDataBlock(boundingBoxBytes, workspaceId.toString());
+            List<BoundingBox3d> boundingBoxes = mapper.readValue(boundingBoxBytes.toByteArray(), new TypeReference<List<BoundingBox3d>>(){});
+            return boundingBoxes;
+        } catch (Exception e) {
+            LOG.error ("Problem fetching fragment bounding boxes from GridFS",e);
+            throw new RuntimeException("Problem fetching fragment bounding boxes from GridFS");
+        }
+    }
+
+    @Override
     public TmWorkspace copyTmWorkspace(String subjectKey, TmWorkspace existingWorkspace, String newName, String assignOwner) {
         // Create a copy of the workspace object with the new name
         TmWorkspace workspaceCopy = createTmWorkspace(subjectKey, TmWorkspace.copy(existingWorkspace).rename(newName));
@@ -116,7 +143,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                 @Override
                 public boolean tryAdvance(Consumer<? super Stream<TmNeuronMetadata>> action) {
                     List<TmNeuronMetadata> tmNeurons = tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(existingWorkspace,
-                            subjectKey, offset, defaultLength);
+                            subjectKey, offset, defaultLength, false);
                     long lastEntryOffset = offset + tmNeurons.size();
                     LOG.info("Retrieved {} neurons ({} - {})", tmNeurons.size(), offset, lastEntryOffset);
                     if (tmNeurons.isEmpty()) {

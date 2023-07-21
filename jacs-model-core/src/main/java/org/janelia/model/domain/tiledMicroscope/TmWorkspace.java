@@ -31,6 +31,7 @@ public class TmWorkspace extends AbstractDomainObject {
 
     private boolean autoTracing;
     private boolean autoPointRefinement;
+    private boolean containsFragments;
 
     @SearchAttribute(key="swcpath_txt",label="Original SWC Path")
     private String originalSWCPath;
@@ -41,10 +42,12 @@ public class TmWorkspace extends AbstractDomainObject {
     private List<TmObjectMesh> objectMeshList;
 
     public TmWorkspace() {
+        containsFragments = false;
     }
 
     public TmWorkspace(String name, Long sampleID) {
         setName(name);
+        containsFragments = false;
         this.sampleRef = Reference.createFor("TmSample", sampleID);
     }
     
@@ -148,6 +151,14 @@ public class TmWorkspace extends AbstractDomainObject {
     public TmWorkspace rename(String newName) {
         this.setName(newName);
         return this;
+    }
+
+    public boolean isContainsFragments() {
+        return containsFragments;
+    }
+
+    public void setContainsFragments(boolean containsFragments) {
+        this.containsFragments = containsFragments;
     }
 
     public String getNeuronCollection() {

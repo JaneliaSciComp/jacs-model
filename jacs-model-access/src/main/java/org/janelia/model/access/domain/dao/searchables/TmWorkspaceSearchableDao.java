@@ -7,6 +7,7 @@ import javax.inject.Inject;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
+import org.janelia.model.domain.tiledMicroscope.BoundingBox3d;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 
 /**
@@ -53,5 +54,15 @@ public class TmWorkspaceSearchableDao extends AbstractDomainSearchableDao<TmWork
         TmWorkspace updatedTmWorkspace = tmWorkspaceDao.updateTmWorkspace(subjectKey, tmWorkspace);
         domainObjectIndexer.indexDocument(updatedTmWorkspace);
         return updatedTmWorkspace;
+    }
+
+    @Override
+    public void saveWorkspaceBoundingBoxes(TmWorkspace workspace, List<BoundingBox3d> boundingBoxes) {
+        tmWorkspaceDao.saveWorkspaceBoundingBoxes(workspace, boundingBoxes);
+    }
+
+    @Override
+    public List<BoundingBox3d> getWorkspaceBoundingBoxes(Long workspaceId) {
+        return tmWorkspaceDao.getWorkspaceBoundingBoxes(workspaceId);
     }
 }
