@@ -81,7 +81,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 neuronMetadata.setNeuronData(null);
                 neuronMetadata.setLargeNeuron(true);
             }
-            persistedNeuronMetadata = saveNeuron(neuronMetadata,collection, neuronOwnerKey, false);
+            persistedNeuronMetadata = saveNeuron(neuronMetadata,collection, neuronOwnerKey, true);
             if (isLarge) {
                 saveLargeNeuronPointData(persistedNeuronMetadata.getId(), pointData);
             }
@@ -142,7 +142,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         FindIterable<TmNeuronMetadata> neuronList =
                 MongoDaoHelper.rawFind(
                         MongoDaoHelper.createFilterCriteria(
-                                !nofrags ? null : Filters.or(
+                                nofrags ? null : Filters.or(
                                         Filters.exists("fragment", false),
                                         Filters.eq("fragment", false)
                                 ),
