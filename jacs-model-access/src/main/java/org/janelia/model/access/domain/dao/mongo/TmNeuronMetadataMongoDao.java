@@ -299,7 +299,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
         Date now = new Date();
         if (entity.getId() == null || forceCreate) {
-            if (!forceCreate)
+            if (entity.getId()==null)
                 entity.setId(createNewId());
             if (entity.getNeuronData()!=null) {
                 for (TmGeoAnnotation anno : entity.getRootAnnotations()) {
