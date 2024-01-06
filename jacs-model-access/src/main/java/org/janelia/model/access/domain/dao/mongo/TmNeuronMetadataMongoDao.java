@@ -81,7 +81,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 neuronMetadata.setNeuronData(null);
                 neuronMetadata.setLargeNeuron(true);
             }
-            persistedNeuronMetadata = saveNeuron(neuronMetadata,collection, neuronOwnerKey, true);
+            persistedNeuronMetadata = forceCreateNeuron(neuronMetadata,collection, neuronOwnerKey);
             if (isLarge) {
                 saveLargeNeuronPointData(persistedNeuronMetadata.getId(), pointData);
             }
@@ -246,16 +246,16 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
             if (!neuron.isLargeNeuron()) {
                 removeTmNeuron(neuron.getId(), isLarge, workspace, subjectKey);
                 neuron.setLargeNeuron(true);
-                saveNeuron(neuron, workspace.getNeuronCollection(), subjectKey, true);
+                forceCreateNeuron(neuron, workspace.getNeuronCollection(), subjectKey);
             } else {
-                saveNeuron(neuron, workspace.getNeuronCollection(), subjectKey, false);
+                saveNeuron(neuron, workspace.getNeuronCollection(), subjectKey);
             }
             saveLargeNeuronPointData(neuron.getId(), pointData);
         } else {
             if (neuron.isLargeNeuron())
                 removeLargeNeuronPointData(neuron.getId());
             neuron.setLargeNeuron(isLarge);
-            saveNeuron(neuron, workspace.getNeuronCollection(), subjectKey, false);
+            saveNeuron(neuron, workspace.getNeuronCollection(), subjectKey);
         }
         if (isLarge)
             neuron.setNeuronData(pointData);
@@ -293,14 +293,35 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         return MongoDaoHelper.find(filter, null, 0, 10000, operationCollection, TmOperation.class);
     }
 
-    private TmNeuronMetadata saveNeuron(TmNeuronMetadata entity,
-                                       String collectionName, String subjectKey, boolean forceCreate) {
+    private TmNeuronMetadata forceCreateNeuron(TmNeuronMetadata entity,
+                                        String collectionName, String subjectKey) {
         MongoCollection<TmNeuronMetadata> mongoCollection =  getNeuronCollection(collectionName);
 
         Date now = new Date();
-        if (entity.getId() == null || forceCreate) {
-            if (entity.getId()==null)
-                entity.setId(createNewId());
+        if (entity.getId()==null)
+            entity.setId(createNewId());
+        if (entity.getNeuronData()!=null) {
+            for (TmGeoAnnotation anno : entity.getRootAnnotations()) {
+                anno.setParentId(entity.getId());
+            }
+        }
+        entity.setOwnerKey(subjectKey);
+        entity.getReaders().add(subjectKey);
+        entity.getWriters().add(subjectKey);
+        entity.setCreationDate(now);
+        entity.setUpdatedDate(now);
+        mongoCollection.insertOne(entity);
+
+        return entity;
+    }
+
+    private TmNeuronMetadata saveNeuron(TmNeuronMetadata entity,
+                                       String collectionName, String subjectKey) {
+        MongoCollection<TmNeuronMetadata> mongoCollection =  getNeuronCollection(collectionName);
+
+        Date now = new Date();
+        if (entity.getId() == null) {
+            entity.setId(createNewId());
             if (entity.getNeuronData()!=null) {
                 for (TmGeoAnnotation anno : entity.getRootAnnotations()) {
                     anno.setParentId(entity.getId());
