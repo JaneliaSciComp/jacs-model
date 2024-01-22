@@ -81,9 +81,11 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 neuronMetadata.setNeuronData(null);
                 neuronMetadata.setLargeNeuron(true);
             }
-            if (neuronMetadata.getId()!=null)
-                persistedNeuronMetadata = createNeuronWithExistingId(neuronMetadata,collection, neuronOwnerKey);
-            else
+            if (neuronMetadata.getId()!=null) {
+                LOG.info("Recreating existing neuron with id {} of class type {}",
+                        neuronMetadata.getId(), neuronMetadata.getId().getClass());
+                persistedNeuronMetadata = createNeuronWithExistingId(neuronMetadata, collection, neuronOwnerKey);
+            } else
                 persistedNeuronMetadata = saveNeuron(neuronMetadata,collection, neuronOwnerKey, false);
             if (isLarge) {
                 saveLargeNeuronPointData(persistedNeuronMetadata.getId(), pointData);
