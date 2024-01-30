@@ -82,13 +82,18 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 neuronMetadata.setLargeNeuron(true);
             }
             LOG.info("creating neuron");
-            persistedNeuronMetadata =
-                    saveNeuron(neuronMetadata, workspace.getNeuronCollection(), subjectKey, false);
+            if (neuronMetadata.getId()!=null) {
+                LOG.info("Recreating existing neuron with id {} of class type {}",
+                        neuronMetadata.getId(), neuronMetadata.getId().getClass());
+                persistedNeuronMetadata = createNeuronWithExistingId(neuronMetadata, collection, neuronOwnerKey);
+            } else
+                persistedNeuronMetadata = saveNeuron(neuronMetadata,collection, neuronOwnerKey, false);
             if (isLarge) {
                 saveLargeNeuronPointData(persistedNeuronMetadata.getId(), pointData);
             }
             return persistedNeuronMetadata;
         } catch (Exception e) {
+            e.printStackTrace();
             throw new IllegalStateException(e);
         }
     }
@@ -293,6 +298,26 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         }
         Bson filter = MongoDaoHelper.createFilterCriteria(operationFilterBuilder.build());
         return MongoDaoHelper.find(filter, null, 0, 10000, operationCollection, TmOperation.class);
+    }
+
+    private TmNeuronMetadata createNeuronWithExistingId(TmNeuronMetadata entity,
+                                                        String collectionName, String subjectKey) {
+        LOG.info("TRACE1");
+        MongoCollection<TmNeuronMetadata> mongoCollection =  getNeuronCollection(collectionName);
+
+        Date now = new Date();
+        LOG.info("TRACE2");
+        for (TmGeoAnnotation anno : entity.getRootAnnotations()) {
+            anno.setParentId(entity.getId());
+        }
+        LOG.info("TRACE3");
+        entity.setOwnerKey(subjectKey);
+        entity.getReaders().add(subjectKey);
+        entity.getWriters().add(subjectKey);
+        entity.setCreationDate(now);
+        entity.setUpdatedDate(now);
+        mongoCollection.insertOne(entity);
+        return entity;
     }
 
     private TmNeuronMetadata saveNeuron(TmNeuronMetadata entity,
