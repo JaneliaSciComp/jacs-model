@@ -1,5 +1,7 @@
 package org.janelia.model.domain.gui.cdmip;
 
+import java.util.Set;
+
 import com.google.common.base.Preconditions;
 
 import org.janelia.model.domain.Reference;
@@ -35,6 +37,11 @@ public class ColorDepthImageWithNeuronsBuilder {
                 Preconditions.checkState(colorDepthImage.getEmBodyRef().equals(Reference.createFor(emBody)));
             }
         }
+        return this;
+    }
+
+    public ColorDepthImageWithNeuronsBuilder withReleaseNames(Set<String> releaseNames) {
+        colorDepthImage.setReleaseNames(releaseNames);
         return this;
     }
 

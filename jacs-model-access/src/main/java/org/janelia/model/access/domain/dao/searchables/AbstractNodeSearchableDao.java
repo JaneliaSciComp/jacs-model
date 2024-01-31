@@ -1,5 +1,6 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.janelia.model.access.domain.dao.NodeDao;
@@ -24,6 +25,11 @@ public class AbstractNodeSearchableDao<T extends Node> extends AbstractDomainSea
     @Override
     public List<? extends Node> getNodeDirectAncestors(Reference nodeReference) {
         return nodeDao.getNodeDirectAncestors(nodeReference);
+    }
+
+    @Override
+    public List<? extends Node> getNodeDirectAncestorsForCollection(Collection<Reference> nodeReferences) {
+        return nodeDao.getNodeDirectAncestorsForCollection(nodeReferences);
     }
 
     @Override

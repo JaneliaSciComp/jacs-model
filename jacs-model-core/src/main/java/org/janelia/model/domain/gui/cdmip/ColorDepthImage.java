@@ -69,6 +69,9 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
     @JsonIgnore
     private EMBody emBody;
 
+    @JsonIgnore
+    private Set<String> releaseNames;
+
     public Set<String> getLibraries() {
         return libraries;
     }
@@ -195,5 +198,15 @@ public class ColorDepthImage extends AlignedImage2d implements HasAnatomicalArea
     @JsonIgnore
     void setEmBody(EMBody emBody) {
         this.emBody = emBody;
+    }
+
+    @JsonProperty
+    public Set<String> getReleaseNames() {
+        return releaseNames;
+    }
+
+    @JsonIgnore
+    void setReleaseNames(Set<String> releaseNames) {
+        this.releaseNames = releaseNames;
     }
 }

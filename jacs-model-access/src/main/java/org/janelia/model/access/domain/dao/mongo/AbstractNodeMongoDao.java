@@ -20,6 +20,7 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -55,6 +56,20 @@ public abstract class AbstractNodeMongoDao<T extends Node> extends AbstractDomai
                 Filters.and(
                         Filters.eq("children", nodeReference)
                 ),
+                null,
+                0,
+                -1,
+                mongoCollection,
+                Node.class);
+    }
+
+    @Override
+    public List<? extends Node> getNodeDirectAncestorsForCollection(Collection<Reference> nodeReferences) {
+        if (CollectionUtils.isEmpty(nodeReferences)) {
+            return Collections.emptyList();
+        }
+        return MongoDaoHelper.find(
+                Filters.in("children", nodeReferences),
                 null,
                 0,
                 -1,
