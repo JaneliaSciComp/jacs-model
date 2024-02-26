@@ -1,5 +1,9 @@
 package org.janelia.model.domain.flyem;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.janelia.model.domain.AbstractDomainObject;
@@ -10,9 +14,6 @@ import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.support.SearchType;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Neuron body loaded from FlyEM's neuPrint.
@@ -36,6 +37,8 @@ public class EMBody extends AbstractDomainObject implements HasFiles {
 
     @SearchAttribute(key="ninstance_txt",label="Neuron Instance")
     private String neuronInstance;
+
+    private List<String> terms;
 
     @SearchAttribute(key="voxel_l",label="Num Voxels")
     private Long voxelSize;
@@ -88,6 +91,14 @@ public class EMBody extends AbstractDomainObject implements HasFiles {
 
     public void setNeuronInstance(String neuronInstance) {
         this.neuronInstance = neuronInstance;
+    }
+
+    public List<String> getTerms() {
+        return terms;
+    }
+
+    public void setTerms(List<String> terms) {
+        this.terms = terms;
     }
 
     public Long getVoxelSize() {
