@@ -3,7 +3,7 @@ import java.util.Date;
 
 public class TmOperation {
     public enum Activity {
-        LOAD_TILE, ANNOTATE_NEURON, LOAD_WORKSPACE
+        LOAD_KTX_TILE, LOAD_ZARR_TILE, ANNOTATE_NEURON, LOAD_WORKSPACE
     }
     private Long workspaceId;
     private Long neuronId;
