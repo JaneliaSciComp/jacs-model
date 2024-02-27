@@ -2,12 +2,32 @@ package org.janelia.model.domain.tiledMicroscope;
 import java.util.Date;
 
 public class TmOperation {
+    public enum Activity {
+        LOAD_TILE, ANNOTATE_NEURON, LOAD_WORKSPACE
+    }
     private Long workspaceId;
     private Long neuronId;
     private String user;
-    private String operation;
+    private Activity activity;
     private Date timestamp;
+    private Long elapsedTime;
     public TmOperation() {
+    }
+    
+    public Activity getActivity() {
+        return activity;
+    }
+
+    public void setActivity(Activity activity) {
+        this.activity = activity;
+    }
+
+    public Long getElapsedTime() {
+        return elapsedTime;
+    }
+
+    public void setElapsedTime(Long elapsedTime) {
+        this.elapsedTime = elapsedTime;
     }
 
     public void setWorkspaceId(Long workspaceId) {
@@ -20,10 +40,6 @@ public class TmOperation {
 
     public void setUser(String user) {
         this.user = user;
-    }
-
-    public void setOperation(String operation) {
-        this.operation = operation;
     }
 
     public void setTimestamp(Date timestamp) {
@@ -40,10 +56,6 @@ public class TmOperation {
 
     public String getUser() {
         return user;
-    }
-
-    public String getOperation() {
-        return operation;
     }
 
     public Date getTimestamp() {

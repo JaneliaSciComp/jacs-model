@@ -270,15 +270,20 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     }
 
     @Override
-    public void createOperationLog(Long workspaceId, Long neuronId, String operationType, Date timestamp, String subjectKey) {
+    public void createOperationLog(Long workspaceId, Long neuronId, TmOperation.Activity operationType, Date timestamp, Long elapsedTime,
+                                   String subjectKey) {
         MongoCollection<TmOperation> operationCollection =  mongoDatabase.getCollection("tmOperation", TmOperation.class);
 
         TmOperation operation = new TmOperation();
         operation.setUser(subjectKey);
         operation.setWorkspaceId(workspaceId);
-        operation.setNeuronId(neuronId);
-        operation.setOperation(operationType);
-        operation.setTimestamp(timestamp);
+        if (neuronId!=null)
+            operation.setNeuronId(neuronId);
+        operation.setActivity(operationType);
+        if (timestamp!=null)
+            operation.setTimestamp(timestamp);
+        else
+            operation.setElapsedTime(elapsedTime);
         operationCollection.insertOne(operation);
     }
 
