@@ -8,6 +8,7 @@ import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.support.SearchType;
+import org.janelia.model.security.Subject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,7 @@ public class TmWorkspace extends AbstractDomainObject {
     private TmColorModel colorModel3d;
     private String neuronCollection;
     private List<TmObjectMesh> objectMeshList;
+    private Subject tracingGroup;
 
     public TmWorkspace() {
         containsFragments = false;
@@ -159,6 +161,14 @@ public class TmWorkspace extends AbstractDomainObject {
 
     public void setContainsFragments(boolean containsFragments) {
         this.containsFragments = containsFragments;
+    }
+
+    public Subject getTracingGroup() {
+        return tracingGroup;
+    }
+
+    public void setTracingGroup(Subject tracingGroup) {
+        this.tracingGroup = tracingGroup;
     }
 
     public String getNeuronCollection() {
