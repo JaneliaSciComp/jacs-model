@@ -5,6 +5,7 @@ public class TmOperation {
     public enum Activity {
         LOAD_KTX_TILE, LOAD_ZARR_TILE, ANNOTATE_NEURON, LOAD_WORKSPACE
     }
+    private Long sampleId;
     private Long workspaceId;
     private Long neuronId;
     private String user;
@@ -20,6 +21,14 @@ public class TmOperation {
 
     public void setActivity(Activity activity) {
         this.activity = activity;
+    }
+
+    public Long getSampleId() {
+        return sampleId;
+    }
+
+    public void setSampleId(Long sampleId) {
+        this.sampleId = sampleId;
     }
 
     public Long getElapsedTime() {
