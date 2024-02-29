@@ -60,7 +60,9 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         Set<String> subjectWriteGroups = permissionsHelper.retrieveSubjectWriteGroups(subjectKey);
         if (!subjectKey.equals(workspace.getOwnerKey()) &&
                 !subjectWriteGroups.contains(Subject.ADMIN_KEY) &&
-                !CollectionUtils.containsAny(workspace.getWriters(), subjectWriteGroups)) {
+                !CollectionUtils.containsAny(workspace.getWriters(), subjectWriteGroups) &&
+                !workspace.getWriters().contains(subjectKey)
+        ) {
             // the current subject is neither an owner nor an allowed writer to the current workspace
             throw new SecurityException(subjectKey + " is not allowed to write to workspace " + workspace.getName());
         }
