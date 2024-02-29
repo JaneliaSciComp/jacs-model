@@ -41,7 +41,7 @@ public class TmWorkspace extends AbstractDomainObject {
     private TmColorModel colorModel3d;
     private String neuronCollection;
     private List<TmObjectMesh> objectMeshList;
-    private Subject tracingGroup;
+    private String tracingGroup;
 
     public TmWorkspace() {
         containsFragments = false;
@@ -163,12 +163,12 @@ public class TmWorkspace extends AbstractDomainObject {
         this.containsFragments = containsFragments;
     }
 
-    public Subject getTracingGroup() {
+    public String getTracingGroup() {
         return tracingGroup;
     }
 
-    public void setTracingGroup(Subject tracingGroup) {
-        this.tracingGroup = tracingGroup;
+    public void setTracingGroup(String tracingGroupKey) {
+        this.tracingGroup = tracingGroupKey;
     }
 
     public String getNeuronCollection() {
