@@ -285,10 +285,8 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         if (neuronId!=null)
             operation.setNeuronId(neuronId);
         operation.setActivity(operationType);
-        if (timestamp!=null)
-            operation.setTimestamp(timestamp);
-        else
-            operation.setElapsedTime(elapsedTime);
+        operation.setTimestamp(new Date());
+        operation.setElapsedTime(elapsedTime);
         operationCollection.insertOne(operation);
     }
 
