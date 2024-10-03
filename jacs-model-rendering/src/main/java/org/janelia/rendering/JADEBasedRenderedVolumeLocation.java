@@ -170,7 +170,8 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                             }
                         }
                     }, (bytes, l) -> {
-                        if (bytes.length != l) {
+                        // if l is -1 the content-length was not set so in that case we take the bytes as they are
+                        if (l != -1 && bytes.length != l) {
                             LOG.error("Error reading texture bytes for {}[{}]:{}. Number of bytes read from the stream ({}) must match the size ({})",
                                     Paths.get(getBaseDataStoragePath(), imageRelativePath),
                                     channelImageNames.stream().reduce((c1, c2) -> c1 + "," + c2).orElse(""),
@@ -178,7 +179,7 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                                     bytes.length, l);
                             throw new IllegalStateException("Expected to read " + l + " bytes, but only read " + bytes.length);
                         }
-                        return l;
+                        return (long) bytes.length;
                     });
         } finally {
             LOG.info("Opened content for reading texture bytes for {}[{}]:{} in {} ms",
@@ -212,11 +213,12 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                         }
                     }
                 }, (bytes, l) -> {
-                    if (bytes.length != l) {
+                    // if l is -1 the content-length was not set so in that case we take the bytes as they are
+                    if (l != -1 && bytes.length != l) {
                         LOG.error("Number of bytes read from the stream ({}) must match the size ({})", bytes.length, l);
                         throw new IllegalStateException("Expected to read " + l + " bytes, but only read " + bytes.length);
                     }
-                    return l;
+                    return (long) bytes.length;
                 });
     }
 
