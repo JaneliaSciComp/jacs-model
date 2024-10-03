@@ -1,6 +1,7 @@
 package org.janelia.rendering;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RenderedImageInfo {
@@ -21,5 +22,13 @@ public class RenderedImageInfo {
         this.sz = sz;
         this.cmPixelSize = cmPixelSize;
         this.sRGBspace = sRGBspace;
+    }
+
+    /**
+     * @return the number of bytes per pixel. If the bits per pixel is < 8 the return value may be < 1.
+     */
+    @JsonIgnore
+    public double getBytesPerPixel() {
+        return cmPixelSize / 8.;
     }
 }
