@@ -81,7 +81,15 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                 List<ContentEntry> storageCotent = response.readEntity(new GenericType<List<ContentEntry>>(){});
                 result = storageCotent.stream()
                         .filter(ce -> StringUtils.isNotBlank(ce.nodeRelativePath))
-                        .filter(ce -> Paths.get(ce.nodeRelativePath).getNameCount() == detailLevel)
+                        .filter(ce -> {
+                            String imageRelativePath;
+                            if (ce.nodeRelativePath.startsWith(getBaseDataStoragePath())) {
+                                imageRelativePath = ce.nodeRelativePath.substring(getBaseDataStoragePath().length());
+                            } else {
+                                imageRelativePath = ce.nodeRelativePath;
+                            }
+                            return Paths.get(imageRelativePath).getNameCount() == detailLevel;
+                        })
                         .filter(ce -> !ce.collectionFlag)
                         .filter(ce -> "image/tiff".equals(ce.mimeType))
                         .map(ce -> URI.create(ce.nodeAccessURL))

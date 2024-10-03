@@ -8,7 +8,7 @@ allprojects {
     apply plugin: 'idea'
 
     group = 'org.janelia.jacs-model'
-    version = '2.98'
+    version = '2.99'
 }
 
 subprojects {
@@ -107,7 +107,7 @@ downloadLicenses {
 }
 
 tasks.register('updateWrapper', Wrapper) {
-    gradleVersion = "8.1.1"
+    gradleVersion = "8.10"
 }
 
 tasks.register('version') {
