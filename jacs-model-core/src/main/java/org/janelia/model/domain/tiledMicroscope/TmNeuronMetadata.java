@@ -366,7 +366,8 @@ public class TmNeuronMetadata extends AbstractDomainObject {
             subtreeList.add(ann);
             List<TmGeoAnnotation> childList = getChildrenOf(ann);
             for (TmGeoAnnotation child : childList) {
-                stack.addFirst(child);
+                if (child!=null)
+                   stack.addFirst(child);
             }
         }
         return subtreeList;
