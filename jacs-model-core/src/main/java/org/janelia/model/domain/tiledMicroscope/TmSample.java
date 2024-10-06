@@ -114,6 +114,12 @@ public class TmSample extends SyncedPath implements HasFiles {
     }
 
     @JsonIgnore
+    @SearchAttribute(key="path_zarr_txt",label="OME Zarr Filepath")
+    public String getLargeVolumeZarrFilepath() {
+        return files.get(FileType.LargeVolumeZarr);
+    }
+
+    @JsonIgnore
     public String setLargeVolumeOctreeFilepath(String filepath) {
         super.setFilepath(filepath);
         return files.put(FileType.LargeVolumeOctree, filepath);
@@ -133,6 +139,11 @@ public class TmSample extends SyncedPath implements HasFiles {
             files.remove(FileType.CompressedAcquisition);
             return files.put(FileType.TwoPhotonAcquisition, filepath);
         }
+    }
+
+    @JsonIgnore
+    public String setLargeVolumeZarrFilepath(String filepath) {
+        return files.put(FileType.LargeVolumeZarr, filepath);
     }
 
     @Override
