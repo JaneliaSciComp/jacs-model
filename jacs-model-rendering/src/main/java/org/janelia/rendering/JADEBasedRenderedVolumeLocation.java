@@ -143,13 +143,14 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
     @Override
     public Streamable<byte[]> readTiffPageAsTexturedBytes(String imageRelativePath, List<String> channelImageNames, int pageNumber) {
         long startTime = System.currentTimeMillis();
+        URI imageLocation = URI.create(getBaseDataStoragePath()).resolve(imageRelativePath);
         try {
             return openContentStreamFromRelativePathToVolumeRoot(
                     imageRelativePath,
                     ImmutableMultimap.<String, String>builder()
                         .put("filterType", "TIFF_MERGE_BANDS")
                         .put("z", String.valueOf(pageNumber))
-                        .putAll("selectedEntries", channelImageNames.stream().map(Paths::get).map(p -> p.getFileName()).map(p -> p.toString()).collect(Collectors.toList()))
+                        .putAll("selectedEntries", channelImageNames.stream().map(this::fileNameFromChannelImagePath).collect(Collectors.toList()))
                         .put("entryPattern", "")
                         .put("maxDepth", String.valueOf(1))
                         .build())
@@ -158,7 +159,7 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                             return ByteStreams.toByteArray(textureStream);
                         } catch (IOException e) {
                             LOG.error("Error reading texture bytes for {}[{}]:{}.",
-                                    Paths.get(getBaseDataStoragePath(), imageRelativePath),
+                                    imageLocation,
                                     channelImageNames.stream().reduce((c1, c2) -> c1 + "," + c2).orElse(""),
                                     pageNumber,
                                     e);
@@ -173,7 +174,7 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                         // if l is -1 the content-length was not set so in that case we take the bytes as they are
                         if (l != -1 && bytes.length != l) {
                             LOG.error("Error reading texture bytes for {}[{}]:{}. Number of bytes read from the stream ({}) must match the size ({})",
-                                    Paths.get(getBaseDataStoragePath(), imageRelativePath),
+                                    imageLocation,
                                     channelImageNames.stream().reduce((c1, c2) -> c1 + "," + c2).orElse(""),
                                     pageNumber,
                                     bytes.length, l);
@@ -183,10 +184,23 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                     });
         } finally {
             LOG.info("Opened content for reading texture bytes for {}[{}]:{} in {} ms",
-                    Paths.get(getBaseDataStoragePath(), imageRelativePath),
+                    imageLocation,
                     channelImageNames.stream().reduce((c1, c2) -> c1 + "," + c2).orElse(""),
                     pageNumber,
                     System.currentTimeMillis() - startTime);
+        }
+    }
+
+    private String fileNameFromChannelImagePath(String channelImagePath) {
+        if (StringUtils.isBlank(channelImagePath)) {
+            return "";
+        } else {
+            int separatorIndex = channelImagePath.lastIndexOf('/');
+            if (separatorIndex != -1) {
+                return channelImagePath.substring(separatorIndex + 1);
+            } else {
+                return channelImagePath;
+            }
         }
     }
 
