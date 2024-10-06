@@ -143,6 +143,7 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
     @Override
     public Streamable<byte[]> readTiffPageAsTexturedBytes(String imageRelativePath, List<String> channelImageNames, int pageNumber) {
         long startTime = System.currentTimeMillis();
+        // the imageRelativePath may be a path for filesystem storage or an URI for S3 storage
         URI imageLocation = URI.create(getBaseDataStoragePath()).resolve(imageRelativePath);
         try {
             return openContentStreamFromRelativePathToVolumeRoot(
