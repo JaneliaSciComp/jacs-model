@@ -1,6 +1,7 @@
 package org.janelia.model.domain.tiledMicroscope;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.files.SyncedPath;
 import org.janelia.model.domain.interfaces.HasFiles;
@@ -23,6 +24,8 @@ import java.util.Map;
 public class TmSample extends SyncedPath implements HasFiles {
 
     private Map<FileType, String> files = new HashMap<>();
+
+    private Map<String, Object> sampleStorageOptions = new HashMap<>();
 
     @SearchAttribute(key="micron_to_vox_txt",label="Micron to Voxel Matrix")
     private String micronToVoxMatrix;
@@ -178,6 +181,23 @@ public class TmSample extends SyncedPath implements HasFiles {
         this.files = files;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Map<String, Object> getSampleStorageOptions() {
+        return sampleStorageOptions;
+    }
+
+    void setSampleStorageOptions(Map<String, Object> sampleStorageOptions) {
+        this.sampleStorageOptions = sampleStorageOptions;
+    }
+
+    public TmSample setStorageOption(String key, Object value) {
+        if (value != null) {
+            sampleStorageOptions.put(key, value);
+        } else {
+            sampleStorageOptions.remove(key);
+        }
+        return this;
+    }
     /**
      * @deprecated Use isExistsInStorage instead.
      */

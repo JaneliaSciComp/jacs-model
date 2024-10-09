@@ -55,12 +55,21 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
         Date lastModified;
     }
 
-    public JADEBasedRenderedVolumeLocation(String jadeConnectionURI, String jadeBaseDataStorageURI, String renderedVolumePath, String authToken, String storageServiceApiKey, HttpClientProvider httpClientProvider) {
-        super(jadeConnectionURI, jadeBaseDataStorageURI, renderedVolumePath, authToken, storageServiceApiKey, httpClientProvider);
+    public JADEBasedRenderedVolumeLocation(String jadeConnectionURI, String jadeBaseDataStorageURI,
+                                           String renderedVolumePath, String authToken, String storageServiceApiKey,
+                                           StorageOptions storageOptions,
+                                           HttpClientProvider httpClientProvider) {
+        super(jadeConnectionURI, jadeBaseDataStorageURI, renderedVolumePath, authToken, storageServiceApiKey, storageOptions, httpClientProvider);
     }
 
     public JADEBasedRenderedVolumeLocation(JADEBasedDataLocation jadeBasedDataLocation) {
-        super(jadeBasedDataLocation.jadeConnectionURI, jadeBasedDataLocation.jadeBaseDataStorageURI, jadeBasedDataLocation.baseDataStoragePath, jadeBasedDataLocation.authToken, jadeBasedDataLocation.storageServiceApiKey, jadeBasedDataLocation.httpClientProvider);
+        super(jadeBasedDataLocation.jadeConnectionURI,
+                jadeBasedDataLocation.jadeBaseDataStorageURI,
+                jadeBasedDataLocation.baseDataStoragePath,
+                jadeBasedDataLocation.authToken,
+                jadeBasedDataLocation.storageServiceApiKey,
+                jadeBasedDataLocation.storageOptions,
+                jadeBasedDataLocation.httpClientProvider);
     }
 
     @Override
@@ -74,7 +83,7 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                     .queryParam("depth", detailLevel)
                     ;
             LOG.debug("List images from URI {}, volume path {}, level {} using {}", getDataStorageURI(), getBaseDataStoragePath(), level, target.getUri());
-            Response response = createRequestWithCredentials(target, MediaType.APPLICATION_JSON).get();
+            Response response = createRequestWithCredentials(target, MediaType.APPLICATION_JSON, storageOptions).get();
             int responseStatus = response.getStatus();
             List<URI> result;
             if (responseStatus == Response.Status.OK.getStatusCode()) {
@@ -110,7 +119,7 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
 
     @Nullable
     @Override
-    public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
+    public RenderedImageInfo readTileImageInfo(String tileRelativePath, StorageOptions storageOptions) {
         long startTime = System.currentTimeMillis();
         ClientProxy httpClient = getHttpClient();
         try {
@@ -120,7 +129,10 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                     .path(tileRelativePath.replace('\\', '/'))
                     ;
             LOG.debug("Read tile imageInfo from URI {}, volume path {}, tile path {} using {}", getDataStorageURI(), getBaseDataStoragePath(), tileRelativePath, target.getUri());
-            Response response = createRequestWithCredentials(target, MediaType.APPLICATION_JSON).get();
+            Response response = createRequestWithCredentials(
+                    target,
+                    MediaType.APPLICATION_JSON,
+                    StorageOptions.combine(this.storageOptions, storageOptions)).get();
             int responseStatus = response.getStatus();
             RenderedImageInfo renderedImageInfo;
             if (responseStatus == Response.Status.OK.getStatusCode()) {
@@ -141,7 +153,7 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
     }
 
     @Override
-    public Streamable<byte[]> readTiffPageAsTexturedBytes(String imageRelativePath, List<String> channelImageNames, int pageNumber) {
+    public Streamable<byte[]> readTiffPageAsTexturedBytes(String imageRelativePath, List<String> channelImageNames, int pageNumber, StorageOptions storageOptions) {
         long startTime = System.currentTimeMillis();
         // the imageRelativePath may be a path for filesystem storage or an URI for S3 storage
         URI imageLocation = URI.create(getBaseDataStoragePath()).resolve(imageRelativePath);
@@ -154,7 +166,8 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                         .putAll("selectedEntries", channelImageNames.stream().map(this::fileNameFromChannelImagePath).collect(Collectors.toList()))
                         .put("entryPattern", "")
                         .put("maxDepth", String.valueOf(1))
-                        .build())
+                        .build(),
+                    StorageOptions.combine(this.storageOptions, storageOptions))
                     .consume(textureStream -> {
                         try {
                             return ByteStreams.toByteArray(textureStream);
@@ -206,7 +219,7 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
     }
 
     @Override
-    public Streamable<byte[]> readTiffImageROIPixels(String imagePath, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
+    public Streamable<byte[]> readTiffImageROIPixels(String imagePath, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz, StorageOptions storageOptions) {
         return openContentStreamFromAbsolutePath(
                 imagePath,
                 ImmutableMultimap.<String, String>builder()
@@ -217,7 +230,8 @@ public class JADEBasedRenderedVolumeLocation extends JADEBasedDataLocation imple
                         .put("dimX", String.valueOf(dimx))
                         .put("dimY", String.valueOf(dimy))
                         .put("dimZ", String.valueOf(dimz))
-                        .build())
+                        .build(),
+                StorageOptions.combine(this.storageOptions, storageOptions))
                 .consume(imageStream -> {
                     try {
                         return ImageUtils.loadImagePixelBytesFromTiffStream(imageStream, xCenter, yCenter, zCenter, dimx, dimy, dimz);

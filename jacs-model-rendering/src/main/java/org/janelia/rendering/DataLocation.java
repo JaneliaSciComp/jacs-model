@@ -51,26 +51,26 @@ public interface DataLocation {
      * @param relativePath
      * @return
      */
-    Streamable<InputStream> getContentFromRelativePath(String relativePath);
+    Streamable<InputStream> getContentFromRelativePath(String relativePath, StorageOptions storageOptions);
 
     /**
      * Stream content from absolute path.
      * @param absolutePath
      * @return
      */
-    Streamable<InputStream> getContentFromAbsolutePath(String absolutePath);
+    Streamable<InputStream> getContentFromAbsolutePath(String absolutePath, StorageOptions storageOptions);
 
     /**
      * Check if content exists at relative path.
      * @param relativePath
      * @return
      */
-    boolean checkContentAtRelativePath(String relativePath);
+    boolean checkContentAtRelativePath(String relativePath, StorageOptions storageOptions);
 
     /**
      * Check if content exists at absolute path.
      * @param absolutePath
      * @return
      */
-    boolean checkContentAtAbsolutePath(String absolutePath);
+    boolean checkContentAtAbsolutePath(String absolutePath, StorageOptions storageOptions);
 }

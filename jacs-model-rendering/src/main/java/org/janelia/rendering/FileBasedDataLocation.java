@@ -65,12 +65,12 @@ public class FileBasedDataLocation implements DataLocation {
     }
 
     @Override
-    public Streamable<InputStream> getContentFromRelativePath(String relativePath) {
+    public Streamable<InputStream> getContentFromRelativePath(String relativePath, StorageOptions storageOptions) {
         return openContentStream(getLocationPathFromRelativePath(relativePath), defaultPathHandler());
     }
 
     @Override
-    public Streamable<InputStream> getContentFromAbsolutePath(String absolutePath) {
+    public Streamable<InputStream> getContentFromAbsolutePath(String absolutePath, StorageOptions storageOptions) {
         Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
         return openContentStream(getLocationPathFromAbsolutePath(absolutePath), defaultPathHandler());
     }
@@ -99,12 +99,12 @@ public class FileBasedDataLocation implements DataLocation {
     }
 
     @Override
-    public boolean checkContentAtRelativePath(String relativePath) {
+    public boolean checkContentAtRelativePath(String relativePath, StorageOptions storageOptions) {
         return Files.exists(getLocationPathFromRelativePath(relativePath));
     }
 
     @Override
-    public boolean checkContentAtAbsolutePath(String absolutePath) {
+    public boolean checkContentAtAbsolutePath(String absolutePath, StorageOptions storageOptions) {
         Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
         return Files.exists(getLocationPathFromAbsolutePath(absolutePath));
     }

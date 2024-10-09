@@ -29,15 +29,19 @@ public class JADEBasedDataLocation implements DataLocation {
     final String baseDataStoragePath;
     final String authToken;
     final String storageServiceApiKey;
+    final StorageOptions storageOptions;
     final HttpClientProvider httpClientProvider;
 
-    public JADEBasedDataLocation(String jadeConnectionURI, String jadeBaseDataStorageURI, String baseDataStoragePath, String authToken, String storageServiceApiKey, HttpClientProvider httpClientProvider) {
+    public JADEBasedDataLocation(String jadeConnectionURI, String jadeBaseDataStorageURI, String baseDataStoragePath, String authToken, String storageServiceApiKey,
+                                 StorageOptions storageOptions,
+                                 HttpClientProvider httpClientProvider) {
         Preconditions.checkArgument(StringUtils.isNotBlank(jadeConnectionURI));
         this.jadeConnectionURI = jadeConnectionURI;
         this.jadeBaseDataStorageURI = jadeBaseDataStorageURI;
         this.baseDataStoragePath = StringUtils.replace(StringUtils.defaultIfBlank(baseDataStoragePath, ""), "\\", "/");
         this.authToken = authToken;
         this.storageServiceApiKey = storageServiceApiKey;
+        this.storageOptions = storageOptions;
         this.httpClientProvider = httpClientProvider;
     }
 
@@ -93,22 +97,22 @@ public class JADEBasedDataLocation implements DataLocation {
     }
 
     @Override
-    public Streamable<InputStream> getContentFromRelativePath(String relativePath) {
-        return openContentStreamFromRelativePathToVolumeRoot(relativePath, ImmutableMultimap.of());
+    public Streamable<InputStream> getContentFromRelativePath(String relativePath, StorageOptions storageOptions) {
+        return openContentStreamFromRelativePathToVolumeRoot(relativePath, ImmutableMultimap.of(), storageOptions);
     }
 
     @Override
-    public Streamable<InputStream> getContentFromAbsolutePath(String absolutePath) {
+    public Streamable<InputStream> getContentFromAbsolutePath(String absolutePath, StorageOptions storageOptions) {
         long startTime = System.currentTimeMillis();
         try {
             Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
-            return openContentStreamFromAbsolutePath(absolutePath, ImmutableMultimap.of());
+            return openContentStreamFromAbsolutePath(absolutePath, ImmutableMultimap.of(), storageOptions);
         } finally {
             LOG.info("Opened content bytes for streaming of {} in {} ms", absolutePath, System.currentTimeMillis() - startTime);
         }
     }
 
-    Streamable<InputStream> openContentStreamFromRelativePathToVolumeRoot(String contentRelativePath, Multimap<String, String> queryParams) {
+    Streamable<InputStream> openContentStreamFromRelativePathToVolumeRoot(String contentRelativePath, Multimap<String, String> queryParams, StorageOptions storageOptions) {
         ClientProxy httpClient = getHttpClient();
         try {
             WebTarget target = httpClient.target(jadeBaseDataStorageURI)
@@ -117,7 +121,7 @@ public class JADEBasedDataLocation implements DataLocation {
                     .path(contentRelativePath.replace('\\', '/'))
                     ;
             LOG.debug("Open stream from URI {}, volume path {}, relative path {} using {}", jadeBaseDataStorageURI, baseDataStoragePath, contentRelativePath, target.getUri());
-            return openContentStream(target, queryParams);
+            return openContentStream(target, queryParams, storageOptions);
         } catch (Exception e) {
             LOG.debug("Error opening the stream from URI {}, volume path {}, relative path {}", jadeBaseDataStorageURI, baseDataStoragePath, contentRelativePath, e);
             throw new IllegalStateException(e);
@@ -126,7 +130,7 @@ public class JADEBasedDataLocation implements DataLocation {
         }
     }
 
-    Streamable<InputStream> openContentStreamFromAbsolutePath(String contentAbsolutePath, Multimap<String, String> queryParams) {
+    Streamable<InputStream> openContentStreamFromAbsolutePath(String contentAbsolutePath, Multimap<String, String> queryParams, StorageOptions storageOptions) {
         ClientProxy httpClient = getHttpClient();
         try {
             WebTarget target = httpClient.target(jadeConnectionURI)
@@ -134,7 +138,7 @@ public class JADEBasedDataLocation implements DataLocation {
                     .path(contentAbsolutePath.replace('\\', '/'))
                     ;
             LOG.debug("Open stream from URI {}, base path {}, data path {} using {}", jadeConnectionURI, baseDataStoragePath, contentAbsolutePath, target.getUri());
-            return openContentStream(target, queryParams);
+            return openContentStream(target, queryParams, storageOptions);
         } catch (Exception e) {
             LOG.debug("Error opening the stream from URI {}, base path {}, data path {}", jadeConnectionURI, baseDataStoragePath, contentAbsolutePath, e);
             throw new IllegalStateException(e);
@@ -143,13 +147,13 @@ public class JADEBasedDataLocation implements DataLocation {
         }
     }
 
-    private Streamable<InputStream> openContentStream(WebTarget endpoint, Multimap<String, String> queryParams) {
+    private Streamable<InputStream> openContentStream(WebTarget endpoint, Multimap<String, String> queryParams, StorageOptions storageOptions) {
         try {
             for (Map.Entry<String, String> qe : queryParams.entries()) {
                 endpoint = endpoint.queryParam(qe.getKey(), qe.getValue());
             }
             LOG.debug("Open stream from {}", endpoint.getUri());
-            Response response = createRequestWithCredentials(endpoint, MediaType.APPLICATION_OCTET_STREAM).get();
+            Response response = createRequestWithCredentials(endpoint, MediaType.APPLICATION_OCTET_STREAM, storageOptions).get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 InputStream is = response.readEntity(InputStream.class);
@@ -166,12 +170,12 @@ public class JADEBasedDataLocation implements DataLocation {
     }
 
     @Override
-    public boolean checkContentAtRelativePath(String relativePath) {
-        return checkContentAtRelativePathToVolumeRoot(relativePath);
+    public boolean checkContentAtRelativePath(String relativePath, StorageOptions storageOptions) {
+        return checkContentAtRelativePathToVolumeRoot(relativePath, storageOptions);
     }
 
     @Override
-    public boolean checkContentAtAbsolutePath(String absolutePath) {
+    public boolean checkContentAtAbsolutePath(String absolutePath, StorageOptions storageOptions) {
         Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
         ClientProxy httpClient = getHttpClient();
         try {
@@ -180,7 +184,7 @@ public class JADEBasedDataLocation implements DataLocation {
                     .path(absolutePath.replace('\\', '/'))
                     ;
             LOG.debug("Open stream from URI {}, base path {}, data path {} using {}", jadeConnectionURI, baseDataStoragePath, absolutePath, target.getUri());
-            return checkContent(target);
+            return checkContent(target, storageOptions);
         } catch (Exception e) {
             LOG.debug("Error opening the stream from URI {}, base path {}, data path {}", jadeConnectionURI, baseDataStoragePath, absolutePath, e);
             throw new IllegalStateException(e);
@@ -189,7 +193,7 @@ public class JADEBasedDataLocation implements DataLocation {
         }
     }
 
-    private boolean checkContentAtRelativePathToVolumeRoot(String contentRelativePath) {
+    private boolean checkContentAtRelativePathToVolumeRoot(String contentRelativePath, StorageOptions storageOptions) {
         ClientProxy httpClient = getHttpClient();
         try {
             WebTarget target = httpClient.target(jadeBaseDataStorageURI)
@@ -198,7 +202,7 @@ public class JADEBasedDataLocation implements DataLocation {
                     .path(contentRelativePath.replace('\\', '/'))
                     ;
             LOG.debug("Check content from URI {}, base path {}, relative path {} using {}", jadeBaseDataStorageURI, baseDataStoragePath, contentRelativePath, target.getUri());
-            return checkContent(target);
+            return checkContent(target, storageOptions);
         } catch (Exception e) {
             LOG.debug("Error checking content from URI {}, base path {}, relative path {}", jadeBaseDataStorageURI, baseDataStoragePath, contentRelativePath, e);
             throw new IllegalStateException(e);
@@ -207,10 +211,10 @@ public class JADEBasedDataLocation implements DataLocation {
         }
     }
 
-    private boolean checkContent(WebTarget endpoint) {
+    private boolean checkContent(WebTarget endpoint, StorageOptions storageOptions) {
         try {
             LOG.debug("Check content from {}", endpoint.getUri());
-            Response response = createRequestWithCredentials(endpoint, null).head();
+            Response response = createRequestWithCredentials(endpoint, null, storageOptions).head();
             int responseStatus = response.getStatus();
             response.close();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
@@ -226,34 +230,16 @@ public class JADEBasedDataLocation implements DataLocation {
     }
 
 
-    Invocation.Builder createRequestWithCredentials(WebTarget webTarget, String mediaType) {
-        Invocation.Builder requestInvocationBuilder;
+    Invocation.Builder createRequestWithCredentials(WebTarget webTarget, String mediaType, StorageOptions storageOptions) {
+        Invocation.Builder requestInvocationBuilder = StringUtils.isNotBlank(mediaType) ? webTarget.request(mediaType) : webTarget.request();
+
         if (StringUtils.isNotBlank(authToken)) {
-            if (StringUtils.isNotBlank(mediaType)) {
-                requestInvocationBuilder = webTarget.request(mediaType).header(
-                        "Authorization",
-                        "Bearer " + authToken);
-            } else {
-                requestInvocationBuilder = webTarget.request().header(
-                        "Authorization",
-                        "Bearer " + authToken);
-            }
+            requestInvocationBuilder.header("Authorization", "Bearer " + authToken);
         } else if (StringUtils.isNotBlank(storageServiceApiKey)) {
-            if (StringUtils.isNotBlank(mediaType)) {
-                requestInvocationBuilder = webTarget.request(mediaType).header(
-                        "Authorization",
-                        "APIKEY " + storageServiceApiKey);
-            } else {
-                requestInvocationBuilder = webTarget.request().header(
-                        "Authorization",
-                        "APIKEY " + storageServiceApiKey);
-            }
-        } else {
-            if (StringUtils.isNotBlank(mediaType)) {
-                requestInvocationBuilder = webTarget.request(mediaType);
-            } else {
-                requestInvocationBuilder = webTarget.request();
-            }
+            requestInvocationBuilder.header("Authorization", "APIKEY " + storageServiceApiKey);
+        }
+        for (String storageAttribute : storageOptions.getAttributeNames()) {
+            requestInvocationBuilder.header(storageAttribute, storageOptions.getAttributeValue(storageAttribute));
         }
         return requestInvocationBuilder;
     }
