@@ -31,10 +31,10 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     private static final Logger LOG = LoggerFactory.getLogger(RenderedVolumeLoaderImpl.class);
 
     @Override
-    public Optional<RenderedVolumeMetadata> loadVolume(RenderedVolumeLocation rvl, StorageOptions storageOptions) {
+    public Optional<RenderedVolumeMetadata> loadVolume(RenderedVolumeLocation rvl) {
         LOG.debug("Load volume from {}", rvl.getBaseStorageLocationURI());
-        return loadVolumeSizeAndCoord(rvl, storageOptions)
-                .flatMap(coord -> loadTileInfo(rvl, storageOptions)
+        return loadVolumeSizeAndCoord(rvl)
+                .flatMap(coord -> loadTileInfo(rvl)
                         .map(tileInfos -> {
                             int scaleFactor = (int) coord.getScaleFactor();
                             int[] tileVolumeDims = Arrays.stream(tileInfos)
@@ -62,7 +62,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     @Override
-    public Streamable<byte[]> loadSlice(RenderedVolumeLocation rvl, RenderedVolumeMetadata renderedVolumeMetada, TileKey tileKey, StorageOptions storageOptions) {
+    public Streamable<byte[]> loadSlice(RenderedVolumeLocation rvl, RenderedVolumeMetadata renderedVolumeMetada, TileKey tileKey) {
         return renderedVolumeMetada.getTileInfo(tileKey.getSliceAxis())
                 .flatMap(tileInfo -> renderedVolumeMetada.getRelativeTilePath(tileKey)
                         .map(tileRelativePath -> {
@@ -70,14 +70,14 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
                                     .mapToObj(channel -> TileInfo.getImageNameForChannel(tileKey.getSliceAxis(), channel))
                                     .collect(Collectors.toList());
                             LOG.trace("Retrieve imagefiles {} for tile {} from {} and {}", chanelImageNames, tileKey, rvl.getBaseStorageLocationURI(), tileRelativePath);
-                            return rvl.readTiffPageAsTexturedBytes(tileRelativePath, chanelImageNames, tileKey.getSliceIndex(), storageOptions);
+                            return rvl.readTiffPageAsTexturedBytes(tileRelativePath, chanelImageNames, tileKey.getSliceIndex());
                         }))
                 .orElse(Streamable.empty())
                 ;
     }
 
-    private Optional<RawCoord> loadVolumeSizeAndCoord(RenderedVolumeLocation rvl, StorageOptions storageOptions) {
-        RawCoord rawCoord = rvl.getContentFromRelativePath(DEFAULT_TRANSFORM_FILE_NAME, storageOptions)
+    private Optional<RawCoord> loadVolumeSizeAndCoord(RenderedVolumeLocation rvl) {
+        RawCoord rawCoord = rvl.getContentFromRelativePath(DEFAULT_TRANSFORM_FILE_NAME)
                 .consume(transformStream -> {
                     try {
                         return parseTransformStream(transformStream);
@@ -144,7 +144,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
         }
     }
 
-    private Optional<TileInfo[]> loadTileInfo(RenderedVolumeLocation rvl, StorageOptions storageOptions) {
+    private Optional<TileInfo[]> loadTileInfo(RenderedVolumeLocation rvl) {
         try {
             Map<Coordinate, List<String>> channelTilesByOrthoProjection = rvl.listImageUris(0).stream()
                     .map(tileUri -> {
@@ -180,7 +180,7 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
             TileInfo[] tileInfos = new TileInfo[3];
             for (Coordinate coord : Coordinate.values()) {
                 if (channelTilesByOrthoProjection.get(coord) != null) {
-                    RenderedImageInfo imageInfo = rvl.readTileImageInfo(channelTilesByOrthoProjection.get(coord).get(0), storageOptions);
+                    RenderedImageInfo imageInfo = rvl.readTileImageInfo(channelTilesByOrthoProjection.get(coord).get(0));
                     tileInfos[coord.index()] = new TileInfo(
                             coord,
                             channelTilesByOrthoProjection.get(coord).size(),
@@ -198,11 +198,11 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     @Override
-    public Optional<RawImage> findClosestRawImageFromVoxelCoord(RenderedVolumeLocation rvl, int xVoxel, int yVoxel, int zVoxel, StorageOptions storageOptions) {
-        return loadVolume(rvl, storageOptions)
+    public Optional<RawImage> findClosestRawImageFromVoxelCoord(RenderedVolumeLocation rvl, int xVoxel, int yVoxel, int zVoxel) {
+        return loadVolume(rvl)
                 .flatMap(rv -> {
                     Double[] stageCoordInNanos = convertToMicroscopeCoordInNanos(new int[]{xVoxel, yVoxel, zVoxel}, rv.getOriginVoxel(), rv.getMicromsPerVoxel());
-                    return loadVolumeRawImageTiles(rvl, storageOptions).stream()
+                    return loadVolumeRawImageTiles(rvl).stream()
                             .min((t1, t2) -> {
                                 Double d1 = squaredMetricDistance(t1.getCenterInNanos(), stageCoordInNanos);
                                 Double d2 = squaredMetricDistance(t2.getCenterInNanos(), stageCoordInNanos);
@@ -227,16 +227,15 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     public Streamable<byte[]> loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
                                                                 RawImage rawImage,
                                                                 int channel, int xCenter, int yCenter, int zCenter,
-                                                                int dimx, int dimy, int dimz,
-                                                                StorageOptions storageOptions) {
+                                                                int dimx, int dimy, int dimz) {
         String rawImagePath = rawImage.getRawImagePath(channel, null);
-        return rvl.readTiffImageROIPixels(rawImagePath, xCenter, yCenter, zCenter, dimx, dimy, dimz, storageOptions);
+        return rvl.readTiffImageROIPixels(rawImagePath, xCenter, yCenter, zCenter, dimx, dimy, dimz);
     }
 
     @Override
-    public List<RawImage> loadVolumeRawImageTiles(RenderedVolumeLocation rvl, StorageOptions storageOptions) {
+    public List<RawImage> loadVolumeRawImageTiles(RenderedVolumeLocation rvl) {
         try {
-            RawVolData rawVolData = loadRawVolumeData(rvl, storageOptions);
+            RawVolData rawVolData = loadRawVolumeData(rvl);
             if (rawVolData == null) {
                 LOG.warn("No rawimages info ({}) found at {}", DEFAULT_TILED_VOL_BASE_FILE_NAME, rvl.getBaseStorageLocationURI());
                 return Collections.emptyList();
@@ -278,8 +277,8 @@ public class RenderedVolumeLoaderImpl implements RenderedVolumeLoader {
     }
 
     @Override
-    public RawVolData loadRawVolumeData(RenderedVolumeLocation rvl, StorageOptions storageOptions) {
-        return rvl.getContentFromRelativePath(DEFAULT_TILED_VOL_BASE_FILE_NAME,storageOptions)
+    public RawVolData loadRawVolumeData(RenderedVolumeLocation rvl) {
+        return rvl.getContentFromRelativePath(DEFAULT_TILED_VOL_BASE_FILE_NAME)
                 .consume(tileBaseStream -> {
                     try {
                         return new RawVolReader().readRawVolData(tileBaseStream);

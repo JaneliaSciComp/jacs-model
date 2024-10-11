@@ -89,8 +89,8 @@ public class FileBasedRenderedVolumeLocation extends FileBasedDataLocation imple
 
     @Nullable
     @Override
-    public RenderedImageInfo readTileImageInfo(String tileRelativePath, StorageOptions storageOptions) {
-        return getContentFromRelativePath(tileRelativePath, storageOptions)
+    public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
+        return getContentFromRelativePath(tileRelativePath)
                 .consume(tiffStream -> {
                     try {
                         return ImageUtils.loadImageInfoFromTiffStream(tiffStream);
@@ -105,7 +105,7 @@ public class FileBasedRenderedVolumeLocation extends FileBasedDataLocation imple
     }
 
     @Override
-    public Streamable<byte[]> readTiffPageAsTexturedBytes(String imageRelativePath, List<String> channelImageNames, int pageNumber, StorageOptions storageOptions) {
+    public Streamable<byte[]> readTiffPageAsTexturedBytes(String imageRelativePath, List<String> channelImageNames, int pageNumber) {
         byte[] imageTextureBytes = ImageUtils.bandMergedTextureBytesFromImageStreams(
                 channelImageNames.stream()
                         .map(channelImageName -> Paths.get(getBaseDataStoragePath(), imageRelativePath, channelImageName))
@@ -128,8 +128,8 @@ public class FileBasedRenderedVolumeLocation extends FileBasedDataLocation imple
     }
 
     @Override
-    public Streamable<byte[]> readTiffImageROIPixels(String imagePath, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz, StorageOptions storageOptions) {
-        return getContentFromAbsolutePath(imagePath, storageOptions)
+    public Streamable<byte[]> readTiffImageROIPixels(String imagePath, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz) {
+        return getContentFromAbsolutePath(imagePath)
                 .consume(imageStream -> {
                     try {
                         return ImageUtils.loadImagePixelBytesFromTiffStream(imageStream, xCenter, yCenter, zCenter, dimx, dimy, dimz);

@@ -15,20 +15,19 @@ public interface RenderedVolumeLoader {
      */
     String DEFAULT_TILED_VOL_BASE_FILE_NAME = "tilebase.cache.yml";
 
-    Optional<RenderedVolumeMetadata> loadVolume(RenderedVolumeLocation rvl, StorageOptions storageOptions);
+    Optional<RenderedVolumeMetadata> loadVolume(RenderedVolumeLocation rvl);
 
-    Streamable<byte[]> loadSlice(RenderedVolumeLocation rvl, RenderedVolumeMetadata renderedVolumeMetadata, TileKey tileKey, StorageOptions storageOptions);
+    Streamable<byte[]> loadSlice(RenderedVolumeLocation rvl, RenderedVolumeMetadata renderedVolumeMetadata, TileKey tileKey);
 
-    Optional<RawImage> findClosestRawImageFromVoxelCoord(RenderedVolumeLocation rvl, int xVoxel, int yVoxel, int zVoxel, StorageOptions storageOptions);
+    Optional<RawImage> findClosestRawImageFromVoxelCoord(RenderedVolumeLocation rvl, int xVoxel, int yVoxel, int zVoxel);
 
     Streamable<byte[]> loadRawImageContentFromVoxelCoord(RenderedVolumeLocation rvl,
                                                          RawImage rawImage,
                                                          int channel,
                                                          int xVoxel, int yVoxel, int zVoxel,
-                                                         int dimx, int dimy, int dimz,
-                                                         StorageOptions storageOptions);
+                                                         int dimx, int dimy, int dimz);
 
-    List<RawImage> loadVolumeRawImageTiles(RenderedVolumeLocation rvl, StorageOptions storageOptions);
+    List<RawImage> loadVolumeRawImageTiles(RenderedVolumeLocation rvl);
 
-    RawVolData loadRawVolumeData(RenderedVolumeLocation rvl, StorageOptions storageOptions);
+    RawVolData loadRawVolumeData(RenderedVolumeLocation rvl);
 }

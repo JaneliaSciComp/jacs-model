@@ -16,17 +16,16 @@ public interface RenderedVolumeLocation extends DataLocation {
      * @param tileRelativePath
      * @return
      */
-    @Nullable RenderedImageInfo readTileImageInfo(String tileRelativePath, StorageOptions storageOptions);
+    @Nullable RenderedImageInfo readTileImageInfo(String tileRelativePath);
 
     /**
      * Read tile image as texture bytes.
      */
-    Streamable<byte[]> readTiffPageAsTexturedBytes(String imageRelativePath, List<String> channelImageNames, int pageNumber, StorageOptions storageOptions);
+    Streamable<byte[]> readTiffPageAsTexturedBytes(String imageRelativePath, List<String> channelImageNames, int pageNumber);
 
     /**
      * Read ROI from the raw image.
      * @return
      */
-    Streamable<byte[]> readTiffImageROIPixels(String imagePath, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz, StorageOptions storageOptions);
-
+    Streamable<byte[]> readTiffImageROIPixels(String imagePath, int xCenter, int yCenter, int zCenter, int dimx, int dimy, int dimz);
 }

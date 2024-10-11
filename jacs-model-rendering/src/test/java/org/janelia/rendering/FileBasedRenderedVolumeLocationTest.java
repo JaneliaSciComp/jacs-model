@@ -50,16 +50,15 @@ public class FileBasedRenderedVolumeLocationTest {
                 this.imageNames = imageNames;
             }
         }
-        StorageOptions storageOptions = new StorageOptions();
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "default.0.tif", "default.1.tif", "default.2.tif");
-        RenderedImageInfo originalImageInfo = testVolumeLocation.readTileImageInfo("default.0.tif", storageOptions);
+        RenderedImageInfo originalImageInfo = testVolumeLocation.readTileImageInfo("default.0.tif");
         TestData[] testData = new TestData[]{
                 new TestData(Arrays.asList("default.0.tif")),
                 new TestData(Arrays.asList("default.0.tif", "default.1.tif")),
                 new TestData(Arrays.asList("default.0.tif", "default.1.tif", "default.2.tif"))
         };
         for (TestData td : testData) {
-            byte[] imageBytes = testVolumeLocation.readTiffPageAsTexturedBytes("", td.imageNames, 10, storageOptions).getContent();
+            byte[] imageBytes = testVolumeLocation.readTiffPageAsTexturedBytes("", td.imageNames, 10).getContent();
             ByteBuffer byteBuffer = ByteBuffer.wrap(imageBytes);
             int mipmapLevel = byteBuffer.getInt();
             int width = byteBuffer.getInt();
