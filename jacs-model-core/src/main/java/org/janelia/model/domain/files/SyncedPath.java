@@ -1,5 +1,10 @@
 package org.janelia.model.domain.files;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.support.SearchAttribute;
 
@@ -19,6 +24,8 @@ public class SyncedPath extends AbstractDomainObject implements HasSyncStorage {
 
     /** True if this object should be synchronized automatically, e.g. by the SyncedRootProcessor */
     private boolean autoSynchronized = false;
+
+    private Map<String, Object> storageAttributes = new HashMap<>();
 
     @Override
     public String getFilepath() {
@@ -47,4 +54,24 @@ public class SyncedPath extends AbstractDomainObject implements HasSyncStorage {
     public void setAutoSynchronized(boolean autoSynchronize) {
         this.autoSynchronized = autoSynchronize;
     }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Map<String, Object> getStorageAttributes() {
+        return Collections.unmodifiableMap(storageAttributes);
+    }
+
+    public void setStorageAttributes(Map<String, Object> storageAttributes) {
+        if (storageAttributes != null) {
+            this.storageAttributes.putAll(storageAttributes);
+        }
+    }
+
+    public void setStorageAttribute(String attrName, Object attrValue) {
+        if (attrValue != null) {
+            storageAttributes.put(attrName, attrValue);
+        } else {
+            storageAttributes.remove(attrName);
+        }
+    }
+
 }
