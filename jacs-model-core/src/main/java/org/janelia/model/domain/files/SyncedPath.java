@@ -66,6 +66,10 @@ public class SyncedPath extends AbstractDomainObject implements HasSyncStorage {
         }
     }
 
+    public String getStorageAttributeValueAsString(String key) {
+        return (String) storageAttributes.get(key);
+    }
+
     public void setStorageAttribute(String attrName, Object attrValue) {
         if (attrValue != null) {
             storageAttributes.put(attrName, attrValue);
