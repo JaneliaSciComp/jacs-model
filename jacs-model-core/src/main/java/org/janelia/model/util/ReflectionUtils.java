@@ -133,9 +133,9 @@ public class ReflectionUtils {
      * Set the given attribute on the specified object, 
      * using the public setter method.
      */
-    public static void set(Object obj, String attributeName, Object value) 
+    public static void set(Object obj, String attributeName, Object value, Class<?> attributeType)
             throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        Class[] argTypes = {value.getClass()};
+        Class[] argTypes = {attributeType};
         Object[] argValues = {value};
         String methodName = getAccessor("set", attributeName);
         obj.getClass().getMethod(methodName, argTypes).invoke(obj, argValues);

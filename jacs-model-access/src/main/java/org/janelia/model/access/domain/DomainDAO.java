@@ -1910,12 +1910,37 @@ public class DomainDAO {
         return getDomainObject(subjectKey, node);
     }
 
-    public <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue) throws Exception {
-        return updateProperty(subjectKey, clazz.getName(), id, propName, propValue);
+    /**
+     * 
+     * @param subjectKey - who is invoking the update
+     * @param clazz type of the object to update
+     * @param id ID of the object to update
+     * @param propName name of property to update
+     * @param propValue new property value - if null the property is "removed"
+     * @param propType this is needed so that the reflection can find the method if the propValue is a native type
+     *                 otherwise the property value is autoboxed and the method is not found
+     * @return updated object
+     * @param <T>
+     * @throws Exception
+     */
+    public <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue, Class<?> propType) throws Exception {
+        return updateProperty(subjectKey, clazz.getName(), id, propName, propValue, propType);
     }
 
+    /**
+     *
+     * @param subjectKey - who is invoking the update
+     * @param clazz type of the object to update
+     * @param id ID of the object to update
+     * @param propName name of property to update
+     * @param propValue new property value - if null the property is "removed"
+     * @param propType this is needed so that the reflection can find the method if the propValue is a native type
+     *                 otherwise the property value is autoboxed and the method is not found
+     * @return updated object
+     * @throws Exception
+     */
     @SuppressWarnings("unchecked")
-    public <T extends DomainObject> T updateProperty(String subjectKey, String className, Long id, String propName, Object propValue) throws Exception {
+    public <T extends DomainObject> T updateProperty(String subjectKey, String className, Long id, String propName, Object propValue, Class<?> propType) throws Exception {
         Class<T> clazz = (Class<T>) DomainUtils.getObjectClassByName(className);
         if (propValue == null) {
             deleteProperty(subjectKey, clazz, propName);
@@ -1923,7 +1948,7 @@ public class DomainDAO {
         }
         T domainObject = getDomainObject(subjectKey, clazz, id);
         try {
-            set(domainObject, propName, propValue);
+            set(domainObject, propName, propValue, propType);
         } catch (Exception e) {
             throw new IllegalStateException("Could not update object attribute " + propName, e);
         }
@@ -2532,8 +2557,8 @@ public class DomainDAO {
     }
 
     // Copy and pasted from ReflectionUtils in shared module
-    private void set(Object obj, String attributeName, Object value) throws Exception {
-        Class<?>[] argTypes = {value.getClass()};
+    private void set(Object obj, String attributeName, Object value, Class<?> propType) throws Exception {
+        Class<?>[] argTypes = {propType};
         Object[] argValues = {value};
         String methodName = getAccessor("set", attributeName);
         obj.getClass().getMethod(methodName, argTypes).invoke(obj, argValues);
