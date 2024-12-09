@@ -1,6 +1,19 @@
 # JACS Domain Model and DAOs
 
-[![CircleCI](https://circleci.com/gh/JaneliaSciComp/jacs-model.svg?style=svg)](https://circleci.com/gh/JaneliaSciComp/jacs-model)
+[![Java CI with Maven](https://github.com/JaneliaSciComp/jacs-model/actions/workflows/gradle.yml/badge.svg)](https://github.com/JaneliaSciComp/jacs-model/actions/workflows/gradle.yml)
+
+This module contains common domain models and DAOs which can be used to access data stored in the JACS databases.
+
+## Contents
+
+* **org.janelia.model**
+    * **access** - DAO's and other API's used for data access.
+        * **domain** - Contains legacy DAO's from JACSv1. This is the current production API.
+        * **tiledMicroscope** - Classes for dealing with in-memory manipulation of the "Tm" (Tiled microscope) module for the Large Volume Tools
+    * **domain** - Document-based domain model for Fly Confocal Imaging and MouseLight. These document classes are directly serialized into MongoDB, and are currently used in the web service interfaces.
+    * **sage** - Contains the Hibernate-based model for communicating with the SAGE database. In the future, this will be replaced with a SAGE web service.
+    * **security** - Contains model classes for the JACS security model.
+    * **util** - Useful utilities
 
 ## Build 
 
@@ -44,17 +57,3 @@ In the example below 'cert.crt' is the Janelia wildcard certificate. When prompt
 sudo keytool -importcert -alias JaneliaWildcard -file cert.crt -keystore /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/security/cacerts
 ```
 
-## Summary
-
-This module contains common domain models and DAOs which can be used to access data stored in the JACS databases.
-
-## Contents
-
-* **org.janelia.model**
-    * **access** - DAO's and other API's used for data access.
-        * **domain** - Contains legacy DAO's from JACSv1. This is the current production API.
-        * **tiledMicroscope** - Classes for dealing with in-memory manipulation of the "Tm" (Tiled microscope) module for the Large Volume Tools
-    * **domain** - Document-based domain model for Fly Confocal Imaging and MouseLight. These document classes are directly serialized into MongoDB, and are currently used in the web service interfaces.
-    * **sage** - Contains the Hibernate-based model for communicating with the SAGE database. In the future, this will be replaced with a SAGE web service.
-    * **security** - Contains model classes for the JACS security model.
-    * **util** - Useful utilities
