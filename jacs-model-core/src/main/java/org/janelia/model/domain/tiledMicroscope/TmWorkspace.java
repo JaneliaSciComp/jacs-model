@@ -1,5 +1,8 @@
 package org.janelia.model.domain.tiledMicroscope;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
@@ -8,10 +11,6 @@ import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.domain.support.SearchAttribute;
 import org.janelia.model.domain.support.SearchTraversal;
 import org.janelia.model.domain.support.SearchType;
-import org.janelia.model.security.Subject;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Workspace for annotating a sample in Horta.
