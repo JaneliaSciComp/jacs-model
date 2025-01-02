@@ -16,10 +16,10 @@ subprojects {
         mavenLocal()
         mavenCentral()
         maven {
-            url "https://nexus.janelia.org/repository/maven-releases"
+            url = "https://nexus.janelia.org/repository/maven-releases"
         }
         maven {
-            url "https://nexus.janelia.org/repository/maven-snapshots"
+            url = "https://nexus.janelia.org/repository/maven-snapshots"
         }
     }
 
@@ -98,8 +98,8 @@ subprojects {
                 def snapshotsRepoUrl = 'https://nexus.janelia.org/repository/maven-snapshots'
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
                 credentials {
-                    username "${mavenRepoUser}"
-                    password "${mavenRepoPassword}"
+                    username = mavenRepoUser
+                    password = mavenRepoPassword
                 }
             }
         }
@@ -108,7 +108,7 @@ subprojects {
 }
 
 license {
-    header rootProject.file('LICENSE.md')
+    header = rootProject.file('LICENSE')
     exclude "**/*"
 }
 
@@ -118,7 +118,7 @@ downloadLicenses {
 }
 
 tasks.register('updateWrapper', Wrapper) {
-    gradleVersion = "8.10"
+    gradleVersion = "8.12"
 }
 
 tasks.register('version') {
