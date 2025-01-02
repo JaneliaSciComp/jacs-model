@@ -12,7 +12,7 @@ import org.janelia.model.access.domain.dao.SyncedRootDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.files.SyncedRoot;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Map;
 

@@ -16,13 +16,13 @@ public class MongoNumberDeserializer extends JsonDeserializer<Number> {
     public Number deserialize(JsonParser jsonParser, DeserializationContext ctxt) throws IOException {
         JsonNode node = jsonParser.readValueAsTree();
         if (node.get("$numberLong") != null) {
-            return new Long(node.get("$numberLong").asText());
+            return Long.valueOf(node.get("$numberLong").asText());
         } else {
             String value = node.asText();
             if (FLOATING_POINT_PATTERN.matcher(value).matches()) {
-                return new Double(value);
+                return Double.valueOf(value);
             } else {
-                return new Long(node.asText());
+                return Long.valueOf(node.asText());
             }
         }
     }

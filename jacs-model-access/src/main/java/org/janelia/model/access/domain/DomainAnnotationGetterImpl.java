@@ -3,10 +3,9 @@ package org.janelia.model.access.domain;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import com.google.common.collect.ImmutableSet;
-
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ontology.DomainAnnotationGetter;

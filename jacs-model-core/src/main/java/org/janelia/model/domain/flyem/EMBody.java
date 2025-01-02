@@ -121,7 +121,7 @@ public class EMBody extends AbstractDomainObject implements HasFiles {
 
     @JsonIgnore
     public Long getBodyId() {
-        return new Long(getName());
+        return Long.valueOf(getName());
     }
 
     @JsonIgnore

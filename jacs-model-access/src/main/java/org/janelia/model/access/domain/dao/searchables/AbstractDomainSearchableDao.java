@@ -71,12 +71,12 @@ public abstract class AbstractDomainSearchableDao<T extends DomainObject> implem
 
     @Override
     public List<T> findEntitiesByForeignKeyReadableBySubjectKey(String subjectKey, String foreignKey, Reference foreignRef) {
-        return findEntitiesByForeignKeyReadableBySubjectKey(subjectKey, foreignKey, foreignRef);
+        return domainObjectDao.findEntitiesByForeignKeyReadableBySubjectKey(subjectKey, foreignKey, foreignRef);
     }
 
     @Override
     public List<T> findEntitiesByForeignKeyReadableBySubjectKey(@Nullable String subjectKey, String foreignKey, Reference foreignRef, long offset, int length) {
-        return findEntitiesByForeignKeyReadableBySubjectKey(subjectKey, foreignKey, foreignRef, offset, length);
+        return domainObjectDao.findEntitiesByForeignKeyReadableBySubjectKey(subjectKey, foreignKey, foreignRef, offset, length);
     }
 
     @Override
@@ -139,7 +139,7 @@ public abstract class AbstractDomainSearchableDao<T extends DomainObject> implem
         DaoUpdateResult updateResult = domainObjectDao.update(entityId, fieldsToUpdate);
         if (updateResult.getEntitiesAffected() > 0) {
             try {
-                T entityRef = getEntityType().newInstance();
+                T entityRef = getEntityType().getConstructor().newInstance();
                 domainObjectIndexer.indexDocument(entityRef);
             } catch (Exception e) {
                 LOG.error("Error creating a reference to {} of type {} for indexing", entityId, getEntityType(), e);

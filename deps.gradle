@@ -1,14 +1,13 @@
 dependencies {
     project.ext {
         // logging
-        SLF4J_VERSION = "1.7.26"
-        LOGBACK_VERSION = "1.1.7"
+        SLF4J_VERSION = "2.0.16"
+        LOGBACK_VERSION = "1.5.15"
         SLF4J_LIB = "org.slf4j:slf4j-api:${SLF4J_VERSION}"
-        LOGBACK_CORE_LIB = "ch.qos.logback:logback-core:${LOGBACK_VERSION}"
         LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:${LOGBACK_VERSION}"
 
-        // dependency injection
-        JAVAX_INJECT_API_LIB = "javax.inject:javax.inject:1"
+        // JAKARTA API
+        JAKARTA_CDI_API_LIB = "jakarta.enterprise:jakarta.enterprise.cdi-api:4.1.0"
 
         // protobuf
         PROTOSTUFF_VERSION = "1.3.8"
@@ -21,11 +20,12 @@ dependencies {
         GUAVA_LIB = "com.google.guava:guava:28.1-jre"
 
         // database
-        MONGODB_DRIVER_VERSION = "3.12.5"
-        MONGODB_DRIVER_LIB = "org.mongodb:mongo-java-driver:${MONGODB_DRIVER_VERSION}"
+        MONGODB_VERSION = "5.2.1"
+        MONGODB_SYNC_DRIVER_LIB = "org.mongodb:mongodb-driver-sync:${MONGODB_VERSION}"
+        MONGODB_BSON_LIB = "org.mongodb:bson:${MONGODB_VERSION}"
+        MONGODB_LEGACY_DRIVER_LIB = "org.mongodb:mongodb-driver-legacy:${MONGODB_VERSION}"
         MYSQL_DRIVER_LIB = "mysql:mysql-connector-java:5.1.42"
-        JONGO_LIB = "org.jongo:jongo:1.4.1"
-        HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
+        JONGO_LIB = "org.jongo:jongo:1.5.1"
 
         // search
         SOLR_VERSION = "3.6.2"
@@ -36,13 +36,8 @@ dependencies {
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:4.1"
         COMMONS_IO_LIB = "commons-io:commons-io:2.6"
 
-        // JAX-RS client
-        JERSEY_VERSION = "2.27"
-        JAX_RS_JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
-
         // JSON
-        JACKSON_VERSION = "2.9.10"
+        JACKSON_VERSION = "2.18.2"
         JACKSON_CORE_LIB = "com.fasterxml.jackson.core:jackson-core:${JACKSON_VERSION}"
         JACKSON_ANNOTATIONS_LIB = "com.fasterxml.jackson.core:jackson-annotations:${JACKSON_VERSION}"
         JACKSON_DATABIND_LIB = "com.fasterxml.jackson.core:jackson-databind:${JACKSON_VERSION}"
@@ -57,18 +52,15 @@ dependencies {
         JAMA_LIB = "gov.nist.math:jama:1.0.3"
 
         // testing
-        ASSERTJ_VERSION = "3.11.1"
-        JUNIT_VERSION = "4.13.1"
-        HAMCREST_VERSION = "2.0.0.0"
-        MOCKITO_VERSION = "2.8.9"
-
-        ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
-        JUNIT_LIB = "junit:junit:${JUNIT_VERSION}"
-        HAMCREST_LIB = "org.hamcrest:java-hamcrest:${HAMCREST_VERSION}"
-        MOCKITO_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
-
-        SLF4J_SIMPLE = "org.slf4j:slf4j-simple:1.7.26"
-
+        JUNIT4_LIB = "junit:junit:4.13.1"
+        JUNIT5_LIB = "org.junit.jupiter:junit-jupiter:5.11.4"
+        JUNIT_ENGINE_LIB = "org.junit.vintage:junit-vintage-engine:5.11.4"
+        JUNIT_PLATFORM_LAUNCHER = "org.junit.platform:junit-platform-launcher:1.11.4"
+        HAMCREST_LIB = "org.hamcrest:java-hamcrest:2.0.0.0"
+        MOCKITO_VERSION = "5.14.2"
+        MOCKITO_CORE_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
+        MOCKITO_JUNIT5_LIB = "org.mockito:mockito-junit-jupiter:${MOCKITO_VERSION}"
+        ASSERTJ_LIB = "org.assertj:assertj-core:3.27.0"
     }
 
     implementation COMMONS_LANG_LIB,
@@ -80,8 +72,15 @@ dependencies {
 
     testImplementation ASSERTJ_LIB,
                        HAMCREST_LIB,
-                       JUNIT_LIB,
-                       MOCKITO_LIB,
-                       SLF4J_SIMPLE
+                       JUNIT4_LIB,
+                       JUNIT5_LIB,
+                       MOCKITO_CORE_LIB,
+                       MOCKITO_JUNIT5_LIB,
+                       LOGBACK_CLASSIC_LIB
+
+    testRuntimeOnly JUNIT_ENGINE_LIB,
+                    JUNIT_PLATFORM_LAUNCHER
+
+    mockitoAgent MOCKITO_CORE_LIB
 
 }

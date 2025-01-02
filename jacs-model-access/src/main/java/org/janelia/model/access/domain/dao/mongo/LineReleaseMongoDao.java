@@ -3,7 +3,7 @@ package org.janelia.model.access.domain.dao.mongo;
 import java.util.Collections;
 import java.util.List;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;

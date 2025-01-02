@@ -17,7 +17,7 @@ import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.beans.PropertyDescriptor;
 import java.util.*;
 import java.util.stream.Collectors;

@@ -8,31 +8,31 @@ allprojects {
     apply plugin: 'idea'
 
     group = 'org.janelia.jacs-model'
-    version = '3.3.0'
+    version = '4.0.0'
 }
 
 subprojects {
-    apply from: "${rootDir}/deps.gradle"
-
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
-
-    configurations {
-        provided
-        implementation.extendsFrom(provided)
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            url "https://nexus.janelia.org/repository/maven-releases"
+        }
+        maven {
+            url "https://nexus.janelia.org/repository/maven-snapshots"
+        }
     }
 
+    configurations {
+        mockitoAgent { transitive = false }
+    }
+
+    def mockitoAgentRef = configurations.getByName("mockitoAgent")
+
+    apply from: "${rootDir}/deps.gradle"
+
+
     afterEvaluate {
-        repositories {
-            mavenLocal()
-            mavenCentral()
-            maven {
-                url "https://nexus.janelia.org/repository/maven-releases"
-            }
-            maven {
-                url "https://nexus.janelia.org/repository/maven-snapshots"
-            }
-        }
 
         compileJava {
             doFirst {
@@ -50,6 +50,17 @@ subprojects {
                         '-Xlint:unchecked'
                 ]
             }
+        }
+
+        java {
+            sourceCompatibility = JavaVersion.VERSION_11
+            targetCompatibility = JavaVersion.VERSION_11
+        }
+
+        test {
+            useJUnitPlatform()
+
+            jvmArgs("-javaagent:${mockitoAgentRef.asPath}")
         }
 
         idea {

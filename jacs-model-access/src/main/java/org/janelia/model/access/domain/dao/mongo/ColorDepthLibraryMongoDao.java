@@ -13,7 +13,7 @@ import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibraryUtils;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;

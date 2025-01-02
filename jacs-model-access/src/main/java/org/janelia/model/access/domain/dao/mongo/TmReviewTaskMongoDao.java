@@ -6,7 +6,7 @@ import org.janelia.model.access.domain.dao.TmReviewTaskDao;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 
 /**

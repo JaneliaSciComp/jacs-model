@@ -4,8 +4,6 @@ project(":jacs-model-rendering") {
             JACKSON_DATA_YAML_LIB
 
         implementation JAI_CORE_LIB,
-                       JAI_CODEC_LIB,
-                       JAX_RS_JERSEY_CLIENT_LIB,
-                       JAX_RS_JERSEY_MEDIA_JSON_LIB
+                       JAI_CODEC_LIB
     }
 }

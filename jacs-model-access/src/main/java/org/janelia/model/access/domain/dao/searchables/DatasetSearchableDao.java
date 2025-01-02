@@ -3,7 +3,7 @@ package org.janelia.model.access.domain.dao.searchables;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.DatasetDao;

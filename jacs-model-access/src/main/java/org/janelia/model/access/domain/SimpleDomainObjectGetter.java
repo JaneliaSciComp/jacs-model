@@ -2,7 +2,7 @@ package org.janelia.model.access.domain;
 
 import java.util.List;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.domain.DomainObject;

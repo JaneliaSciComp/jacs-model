@@ -6,7 +6,7 @@ import org.janelia.model.access.domain.dao.NDContainerDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.files.NDContainer;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @AsyncIndex
 public class NDContainerSearchableDao extends AbstractDomainSearchableDao<NDContainer> implements NDContainerDao {

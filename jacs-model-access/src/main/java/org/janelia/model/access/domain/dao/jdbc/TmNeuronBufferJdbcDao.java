@@ -7,7 +7,7 @@ import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.sql.DataSource;
 import java.io.InputStream;
 import java.sql.Connection;

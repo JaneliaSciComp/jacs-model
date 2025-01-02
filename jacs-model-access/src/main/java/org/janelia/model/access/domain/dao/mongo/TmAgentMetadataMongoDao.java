@@ -7,7 +7,7 @@ import org.janelia.model.access.domain.dao.TmAgentDao;
 import org.janelia.model.domain.tiledMicroscope.TmAgentMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 
 /**

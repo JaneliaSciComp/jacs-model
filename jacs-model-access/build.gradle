@@ -1,22 +1,17 @@
 project(":jacs-model-access") {
 
+    sourceSets {
+        integrationTest {
+            compileClasspath += sourceSets.main.output + sourceSets.test.output
+            runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+        }
+    }
+
     configurations {
         integrationTestCompileOnly.extendsFrom(testCompileOnly)
         integrationTestImplementation.extendsFrom(testImplementation)
         integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
-    }
-
-    sourceSets {
-        integrationTest {
-            java {
-                compileClasspath += main.output + test.output
-                runtimeClasspath += main.output + test.output
-                srcDir file('src/integrationTest/java')
-            }
-            resources {
-                srcDir file('src/integrationTest/resources')
-            }
-        }
+        integrationTestRuntimeElements.extendsFrom(integrationTestImplementation, integrationTestRuntimeOnly)
     }
 
     compileIntegrationTestJava {
@@ -29,28 +24,38 @@ project(":jacs-model-access") {
     }
 
     dependencies {
-        api project(":jacs-model-core")
+        api project(':jacs-model-core')
 
-        implementation JACKSON_DATABIND_LIB,
-                JACKSON_DATATYPE_JODA_LIB,
-                JAVAX_INJECT_API_LIB,
-                JONGO_LIB,
-                MONGODB_DRIVER_LIB,
-                REFLECTIONS_LIB,
-                SOLR_SEARCH_LIB
+        implementation JAKARTA_CDI_API_LIB,
+                       JACKSON_DATABIND_LIB,
+                       JACKSON_DATATYPE_JODA_LIB,
+                       JONGO_LIB,
+                       MONGODB_SYNC_DRIVER_LIB,
+                       MONGODB_LEGACY_DRIVER_LIB,
+                       REFLECTIONS_LIB,
+                       SOLR_SEARCH_LIB
 
         integrationTestImplementation SLF4J_LIB,
-                LOGBACK_CORE_LIB,
-                LOGBACK_CLASSIC_LIB
+                                      LOGBACK_CLASSIC_LIB
 
-        implementation (HIBERNATE_LIB) {
-            exclude group: 'javax.transaction'
+    }
+
+    idea {
+        module {
+            downloadSources = true
+            downloadJavadoc = true
+
+            scopes.TEST.plus += [
+                    configurations.integrationTestRuntimeElements
+            ]
         }
     }
 
     tasks.register('integrationTest', Test) {
-        testClassesDirs += sourceSets.integrationTest.output.classesDirs
-        classpath = sourceSets.integrationTest.runtimeClasspath
+        testClassesDirs = testing.suites.test.sources.output.classesDirs
+        classpath = testing.suites.test.sources.runtimeClasspath
+
+        systemProperties(System.getProperties())
     }
 
 }

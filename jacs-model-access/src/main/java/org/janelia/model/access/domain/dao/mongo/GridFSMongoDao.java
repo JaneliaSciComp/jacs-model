@@ -12,7 +12,7 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.util.function.Consumer;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 /**
  * dao for accessing mongo gridfs buckets; good for storing files
  * larger than 16MB.

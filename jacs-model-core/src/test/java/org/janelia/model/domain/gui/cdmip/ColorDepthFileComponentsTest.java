@@ -24,7 +24,7 @@ public class ColorDepthFileComponentsTest {
         Assert.assertEquals("GMR_SS00313-20170324_26_C5", cdf.getSampleName());
         Assert.assertEquals("40x", cdf.getObjective());
         Assert.assertEquals("Brain", cdf.getAnatomicalArea());
-        Assert.assertEquals(new Integer(1), cdf.getChannelNumber());
+        Assert.assertEquals(Integer.valueOf(1), cdf.getChannelNumber());
     }
 
     @Test
@@ -39,7 +39,7 @@ public class ColorDepthFileComponentsTest {
         Assert.assertEquals("GMR_SS00810-20140421_31_D1", cdf.getSampleName());
         Assert.assertEquals("20x", cdf.getObjective());
         Assert.assertEquals("VNC", cdf.getAnatomicalArea());
-        Assert.assertEquals(new Integer(1), cdf.getChannelNumber());
+        Assert.assertEquals(Integer.valueOf(1), cdf.getChannelNumber());
     }
 
     @Test
@@ -54,7 +54,7 @@ public class ColorDepthFileComponentsTest {
         Assert.assertEquals("GMR_SS00810-20140421_31_D1", cdf.getSampleName());
         Assert.assertEquals("20x", cdf.getObjective());
         Assert.assertEquals("VNC", cdf.getAnatomicalArea());
-        Assert.assertEquals(new Integer(1), cdf.getChannelNumber());
+        Assert.assertEquals(Integer.valueOf(1), cdf.getChannelNumber());
     }
 
     @Test
@@ -69,7 +69,7 @@ public class ColorDepthFileComponentsTest {
         Assert.assertEquals("JRC_SS54549-20180523_31_A2", cdf.getSampleName());
         Assert.assertEquals("20x", cdf.getObjective());
         Assert.assertEquals("Brain", cdf.getAnatomicalArea());
-        Assert.assertEquals(new Integer(1), cdf.getChannelNumber());
+        Assert.assertEquals(Integer.valueOf(1), cdf.getChannelNumber());
     }
 
 }

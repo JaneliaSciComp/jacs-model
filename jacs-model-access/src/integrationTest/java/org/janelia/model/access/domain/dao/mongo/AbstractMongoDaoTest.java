@@ -26,9 +26,8 @@ public class AbstractMongoDaoTest {
                 ITestDomainDAOManager.DATABASE_PASSWORD,
                 ITestDomainDAOManager.REPLICA_SET,
                 false,
-                0, // use default
-                0, // use default
-                -1, // use default
+                0,
+                -1,
                 0,
                 0,
                 0,

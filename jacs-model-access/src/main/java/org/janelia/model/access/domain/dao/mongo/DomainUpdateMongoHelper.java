@@ -7,7 +7,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.cdi.DaoObjectMapper;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.stream.Collectors;
 
 /**

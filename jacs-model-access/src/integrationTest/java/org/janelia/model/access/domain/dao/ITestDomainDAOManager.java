@@ -8,16 +8,16 @@ import org.janelia.model.access.domain.DomainDAO;
  */
 public class ITestDomainDAOManager {
 
-    public static final String DATABASE_HOST = "dev-mongodb1:27017,dev-mongodb2:27017,dev-mongodb3:27017";
+    public static final String DATABASE_HOST = System.getProperty("JACS_DATABASE_HOST", "dev-mongodb1:27017,dev-mongodb2:27017,dev-mongodb3:27017");
     // DO NOT CHANGE THIS
     // The integration tests (AbstractMongoDaoTest) drop this database after they're done,
     // so if you point this to a real database you're gonna have a bad time.
-    public static final String AUTH_DATABASE_NAME = "admin";
+    public static final String AUTH_DATABASE_NAME = System.getProperty("JACS_AUTH_DATABASE","admin");
     public static final String DATABASE_NAME = "jacs-test";
 
-    public static final String DATABASE_USER = "devAdmin";
-    public static final String DATABASE_PASSWORD = "shar3dd3vs3rv3r";
-    public static final String REPLICA_SET = "rsDev";
+    public static final String DATABASE_USER = System.getProperty("JACS_DATABASE_USER");
+    public static final String DATABASE_PASSWORD = System.getProperty("JACS_DATABASE_PASSWORD");
+    public static final String REPLICA_SET = System.getProperty("JACS_DATABASE_REPLICA_SET", "rsDev");
     private static ITestDomainDAOManager instance;
 
     protected DomainDAO dao;

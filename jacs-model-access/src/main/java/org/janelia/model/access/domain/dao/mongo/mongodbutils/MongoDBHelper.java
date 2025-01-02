@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import javax.inject.Provider;
+import jakarta.inject.Provider;
 
 import com.google.common.base.Splitter;
-import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientOptions;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoClientURI;
 import com.mongodb.MongoCredential;
@@ -17,7 +17,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
-
 import org.apache.commons.lang3.StringUtils;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -36,7 +35,6 @@ public class MongoDBHelper {
             String mongoPassword,
             String mongoReplicaSet,
             boolean useSSL,
-            int threadsAllowedToBlockMultiplier,
             int connectionsPerHost,
             int connectTimeoutInMillis,
             int maxWaitTimeInSecs,
@@ -54,8 +52,6 @@ public class MongoDBHelper {
                 .applyToConnectionPoolSettings(builder -> {
                             if (connectionsPerHost > 0) {
                                 builder.maxSize(connectionsPerHost);
-                                if (threadsAllowedToBlockMultiplier > 0)
-                                    builder.maxWaitQueueSize(threadsAllowedToBlockMultiplier * connectionsPerHost);
                             }
                             if (maxWaitTimeInSecs > 0) {
                                 builder.maxWaitTime(maxWaitTimeInSecs, TimeUnit.SECONDS);
@@ -115,7 +111,6 @@ public class MongoDBHelper {
             String mongoUsername,
             String mongoPassword,
             boolean useSSL,
-            int threadsAllowedToBlockMultiplier,
             int connectionsPerHost,
             int connectTimeout,
             int maxWaitTimeInSecs,
@@ -130,9 +125,6 @@ public class MongoDBHelper {
                         .maxConnectionLifeTime(maxConnLifeTimeInSecs * 1000)
                         .sslEnabled(useSSL)
                 ;
-        if (threadsAllowedToBlockMultiplier > 0) {
-            optionsBuilder.threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockMultiplier);
-        }
         if (connectionsPerHost > 0) {
             optionsBuilder.connectionsPerHost(connectionsPerHost);
         }

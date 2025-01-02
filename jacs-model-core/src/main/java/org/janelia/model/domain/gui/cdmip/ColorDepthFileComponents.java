@@ -64,8 +64,8 @@ public class ColorDepthFileComponents {
             this.sampleName = m.group("sampleName");
             this.objective = m.group("objective");
             this.anatomicalArea = m.group("anatomicalArea");
-            sampleRef = Reference.createFor(Sample.class, new Long(m.group("sampleId")));
-            channelNumber = new Integer(m.group("channelNum"));
+            sampleRef = Reference.createFor(Sample.class, Long.valueOf(m.group("sampleId")));
+            channelNumber = Integer.valueOf(m.group("channelNum"));
             alignmentSpace = m.group("alignmentSpace");
             versionSuffix = m.group("versionSuffix");
             componentsFound = true;

@@ -143,7 +143,6 @@ public class DomainDAO {
                 0,
                 0,
                 0,
-                0,
                 () -> null
         );
         init(mongoClient, databaseName);

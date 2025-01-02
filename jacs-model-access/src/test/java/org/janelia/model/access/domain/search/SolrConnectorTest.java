@@ -17,11 +17,12 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -30,6 +31,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 public class SolrConnectorTest {
+
+    private SolrServer testSolrServer;
+    private SolrConnector solrConnector;
+
+    @BeforeEach
+    public void setUp() {
+        testSolrServer = Mockito.mock(SolrServer.class);
+        solrConnector = new SolrConnector(testSolrServer);
+    }
 
     @Test
     public void indexDocumentStream() throws Exception {
@@ -67,8 +77,6 @@ public class SolrConnectorTest {
                 new TestData(testSolrDocs.size(), 1, 1),
                 new TestData(testSolrDocs.size() + 1, 100, 1)
         };
-        SolrServer testSolrServer = Mockito.mock(SolrServer.class);
-        SolrConnector solrConnector = createSolrConnector(testSolrServer);
         for (TestData td : testData) {
             solrConnector.addDocsToIndex(testSolrDocs.stream(), td.batchSize);
             int batchSize = Math.max(1, td.batchSize);
@@ -110,8 +118,6 @@ public class SolrConnectorTest {
                 new TestData(ImmutableSet.of(1L, 2L, 3L, 4L), 10L, 3, Arrays.asList("id:1 OR id:2 OR id:3", "id:4")),
                 new TestData(ImmutableSet.of(1L, 2L, 3L, 4L), 10L, 2, Arrays.asList("id:1 OR id:2", "id:3 OR id:4"))
         };
-        SolrServer testSolrServer = Mockito.mock(SolrServer.class);
-        SolrConnector solrConnector = createSolrConnector(testSolrServer);
         for (TestData td : testData) {
             try {
                 Mockito.when(testSolrServer.query(any(SolrQuery.class))).then(invocation -> {
@@ -158,9 +164,6 @@ public class SolrConnectorTest {
         }
     }
 
-    private SolrConnector createSolrConnector(SolrServer testSolrServer) {
-        return new SolrConnector(testSolrServer);
-    }
     private SolrInputDocument createTestSolrDoc(String id) {
         SolrInputDocument solrDoc = new SolrInputDocument();
         solrDoc.setField("id", id);

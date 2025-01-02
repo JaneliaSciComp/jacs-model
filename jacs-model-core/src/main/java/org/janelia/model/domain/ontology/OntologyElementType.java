@@ -14,13 +14,10 @@ public abstract class OntologyElementType implements Serializable {
     public static OntologyTerm createTypeByName(String className) {
 
         try {
-            return (OntologyTerm)Class.forName(ONTOLOGY_TERM_TYPES_PACKAGE+"."+className).newInstance();
+            return (OntologyTerm)Class.forName(ONTOLOGY_TERM_TYPES_PACKAGE+"."+className).getConstructor().newInstance();
+        } catch (Exception ex) {
+            throw new IllegalStateException(ex);
         }
-        catch (Exception ex) {
-            System.err.println("Could not instantiate term type: "+className);
-            ex.printStackTrace();
-        }
-        return null;
     }
 }
 
