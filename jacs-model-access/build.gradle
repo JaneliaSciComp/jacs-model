@@ -8,7 +8,6 @@ project(":jacs-model-access") {
     }
 
     configurations {
-        integrationTestCompileOnly.extendsFrom(testCompileOnly)
         integrationTestImplementation.extendsFrom(testImplementation)
         integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
         integrationTestRuntimeElements.extendsFrom(integrationTestImplementation, integrationTestRuntimeOnly)
