@@ -51,8 +51,8 @@ project(":jacs-model-access") {
     }
 
     tasks.register('integrationTest', Test) {
-        testClassesDirs = testing.suites.test.sources.output.classesDirs
-        classpath = testing.suites.test.sources.runtimeClasspath
+        testClassesDirs = sourceSets.integrationTest.output.classesDirs
+        classpath = sourceSets.integrationTest.runtimeClasspath
 
         systemProperties(System.getProperties())
     }
