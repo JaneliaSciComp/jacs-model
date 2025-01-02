@@ -55,6 +55,10 @@ project(":jacs-model-access") {
         classpath = sourceSets.integrationTest.runtimeClasspath
 
         systemProperties(System.getProperties())
+
+        shouldRunAfter(test)
+
+        useJUnitPlatform()
     }
 
 }
