@@ -29,7 +29,9 @@ subprojects {
 
     def mockitoAgentRef = configurations.getByName("mockitoAgent")
 
-    apply from: "${rootDir}/deps.gradle"
+    apply {
+        from("${rootDir}/deps.gradle")
+    }
 
 
     afterEvaluate {
