@@ -8,19 +8,18 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.collect.ImmutableMap;
-
 import org.janelia.testutils.TestUtils;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RenderedVolumeLoaderImplTest {
     private static final String TEST_DATADIR = "src/test/resources/testdata/rendering";
@@ -31,17 +30,17 @@ public class RenderedVolumeLoaderImplTest {
     private Path testDirectory;
     private RenderedVolumeLocation testVolumeLocation;
 
-    @BeforeClass
+    @BeforeAll
     public static void createTestDir() throws IOException {
         testSuiteDirectory = Files.createTempDirectory("testrendering");
     }
 
-    @AfterClass
+    @AfterAll
     public static void deleteTestDir() throws IOException {
         TestUtils.deletePath(testSuiteDirectory);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         renderedVolumeLoader = new RenderedVolumeLoaderImpl();
         testDirectory = Files.createTempDirectory(testSuiteDirectory, null);
@@ -201,12 +200,12 @@ public class RenderedVolumeLoaderImplTest {
             }
         }
         TestData[] testData = new TestData[]{
-                new TestData(0, 0, 0, -1, -1, -1, 0, imageBytes -> assertNotNull("Test 0", imageBytes)),
-                new TestData(0, 0, 0, -1, -1, -1, 1, imageBytes -> assertNotNull("Test 1", imageBytes)),
-                new TestData(0, 0, 0, -1, -1, -1, 2, imageBytes -> assertNull("Test 2", imageBytes)),
-                new TestData(10, 11, 9, 10, 10, 3, 0, imageBytes -> assertNotNull("Test 3", imageBytes)),
-                new TestData(10, 11, 9, 100, 100, 100, 0, imageBytes -> assertNotNull("Test 4", imageBytes)),
-                new TestData(10, 11, 9, -1, -1, -1, 0, imageBytes -> assertNotNull("Test 5", imageBytes)),
+                new TestData(0, 0, 0, -1, -1, -1, 0, imageBytes -> assertNotNull(imageBytes, "Test 0")),
+                new TestData(0, 0, 0, -1, -1, -1, 1, imageBytes -> assertNotNull(imageBytes, "Test 1")),
+                new TestData(0, 0, 0, -1, -1, -1, 2, imageBytes -> assertNull(imageBytes, "Test 2")),
+                new TestData(10, 11, 9, 10, 10, 3, 0, imageBytes -> assertNotNull(imageBytes, "Test 3")),
+                new TestData(10, 11, 9, 100, 100, 100, 0, imageBytes -> assertNotNull(imageBytes, "Test 4")),
+                new TestData(10, 11, 9, -1, -1, -1, 0, imageBytes -> assertNotNull(imageBytes, "Test 5")),
         };
         for (TestData td : testData) {
             Streamable<byte[]> rawImageContent = renderedVolumeLoader.loadRawImageContentFromVoxelCoord(testVolumeLocation, rawImage, td.channel, td.xVoxel, td.yVoxel, td.zVoxel, td.dimx, td.dimy, td.dimz);

@@ -10,12 +10,12 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.janelia.testutils.TestUtils;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class FileBasedRenderedVolumeLocationTest {
     private static final String TEST_DATADIR = "src/test/resources/testdata/rendering";
@@ -25,17 +25,17 @@ public class FileBasedRenderedVolumeLocationTest {
     private Path testDirectory;
     private RenderedVolumeLocation testVolumeLocation;
 
-    @BeforeClass
+    @BeforeAll
     public static void createTestDir() throws IOException {
         testSuiteDirectory = Files.createTempDirectory("testrendering");
     }
 
-    @AfterClass
+    @AfterAll
     public static void deleteTestDir() throws IOException {
         TestUtils.deletePath(testSuiteDirectory);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         testDirectory = Files.createTempDirectory(testSuiteDirectory, null);
         testVolumeLocation = new FileBasedRenderedVolumeLocation(testDirectory, Function.identity());

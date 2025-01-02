@@ -60,7 +60,7 @@ subprojects {
         test {
             useJUnitPlatform()
 
-            jvmArgs("-javaagent:${mockitoAgentRef.asPath}")
+            jvmArgs "-javaagent:${mockitoAgentRef.asPath}", "-Xshare:off"
         }
 
         idea {
