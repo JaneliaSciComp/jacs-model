@@ -1,10 +1,16 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.util.List;
+import java.util.Map;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.UpdateOptions;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
@@ -12,15 +18,12 @@ import org.janelia.model.access.domain.dao.SyncedRootDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.files.SyncedRoot;
 
-import jakarta.inject.Inject;
-import java.util.List;
-import java.util.Map;
-
+@Dependent
 public class SyncedRootMongoDao extends AbstractDomainObjectMongoDao<SyncedRoot> implements SyncedRootDao {
 
     @Inject
     SyncedRootMongoDao(MongoDatabase mongoDatabase,
-                       TimebasedIdentifierGenerator idGenerator,
+                       IdGenerator<Long> idGenerator,
                        DomainPermissionsMongoHelper permissionsHelper,
                        DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);

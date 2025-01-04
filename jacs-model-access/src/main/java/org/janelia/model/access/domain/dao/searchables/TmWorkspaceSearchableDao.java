@@ -2,6 +2,7 @@ package org.janelia.model.access.domain.dao.searchables;
 
 import java.util.List;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -14,6 +15,7 @@ import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
  * {@link TmWorkspace} DAO.
  */
 @AsyncIndex
+@Dependent
 public class TmWorkspaceSearchableDao extends AbstractDomainSearchableDao<TmWorkspace> implements TmWorkspaceDao {
 
     private final TmWorkspaceDao tmWorkspaceDao;

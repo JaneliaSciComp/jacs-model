@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.google.common.base.Preconditions;
@@ -13,26 +14,26 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.UpdateOptions;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.OntologyDao;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
 import org.janelia.model.util.SortCriteria;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 /**
  * {@link Ontology} Mongo DAO.
  */
+@Dependent
 public class OntologyMongoDao extends AbstractDomainObjectMongoDao<Ontology> implements OntologyDao {
 
     @Inject
     OntologyMongoDao(MongoDatabase mongoDatabase,
-                     TimebasedIdentifierGenerator idGenerator,
+                     IdGenerator<Long> idGenerator,
                      DomainPermissionsMongoHelper permissionsHelper,
                      DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);

@@ -1,25 +1,28 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.util.List;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.DomainDAO;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.TmAgentDao;
 import org.janelia.model.domain.tiledMicroscope.TmAgentMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
 
-import jakarta.inject.Inject;
-import java.util.List;
-
 /**
  * {@link TmReviewTask} Mongo DAO.
  */
+@Dependent
 public class TmAgentMetadataMongoDao extends AbstractDomainObjectMongoDao<TmAgentMetadata> implements TmAgentDao {
 
     private final DomainDAO domainDao;
 
     @Inject
     TmAgentMetadataMongoDao(MongoDatabase mongoDatabase,
-                            TimebasedIdentifierGenerator idGenerator,
+                            IdGenerator<Long> idGenerator,
                             DomainPermissionsMongoHelper permissionsHelper,
                             DomainUpdateMongoHelper updateHelper,
                             DomainDAO domainDao) {

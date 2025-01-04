@@ -1,14 +1,16 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
 import org.janelia.model.access.domain.dao.NDContainerDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.files.NDContainer;
 
-import jakarta.inject.Inject;
-
 @AsyncIndex
+@Dependent
 public class NDContainerSearchableDao extends AbstractDomainSearchableDao<NDContainer> implements NDContainerDao {
 
     private final NDContainerDao ndContainerDao;

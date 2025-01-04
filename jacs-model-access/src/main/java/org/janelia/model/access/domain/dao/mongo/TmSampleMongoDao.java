@@ -1,8 +1,13 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.util.Collections;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.DomainDAO;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.DomainObject;
@@ -10,19 +15,17 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.workspace.TreeNode;
 
-import jakarta.inject.Inject;
-import java.util.Collections;
-
 /**
  * {@link TmSample} Mongo DAO.
  */
+@Dependent
 public class TmSampleMongoDao extends AbstractDomainObjectMongoDao<TmSample> implements TmSampleDao {
 
     private final DomainDAO domainDao;
 
     @Inject
     TmSampleMongoDao(MongoDatabase mongoDatabase,
-                     TimebasedIdentifierGenerator idGenerator,
+                     IdGenerator<Long> idGenerator,
                      DomainPermissionsMongoHelper permissionsHelper,
                      DomainUpdateMongoHelper updateHelper,
                      DomainDAO domainDao) {

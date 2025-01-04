@@ -2,6 +2,7 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.EntityUtils;
 
@@ -12,10 +13,10 @@ import java.util.List;
  */
 abstract class AbstractMongoDao {
 
-    final TimebasedIdentifierGenerator idGenerator;
+    final IdGenerator<Long> idGenerator;
     final MongoDatabase mongoDatabase;
 
-    AbstractMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator) {
+    AbstractMongoDao(MongoDatabase mongoDatabase, IdGenerator<Long> idGenerator) {
         this.mongoDatabase = mongoDatabase;
         this.idGenerator = idGenerator;
     }

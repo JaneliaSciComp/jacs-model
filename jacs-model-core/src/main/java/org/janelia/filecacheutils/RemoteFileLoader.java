@@ -1,14 +1,8 @@
 package org.janelia.filecacheutils;
 
-import java.io.FileNotFoundException;
-import java.nio.file.Path;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 import com.google.common.cache.CacheLoader;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Local file cache loader.

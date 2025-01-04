@@ -1,5 +1,19 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.beans.PropertyDescriptor;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.MongoDatabase;
@@ -7,30 +21,30 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.AddToSetFieldValueHandler;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SubjectDao;
-import org.janelia.model.security.*;
+import org.janelia.model.security.Group;
+import org.janelia.model.security.GroupRole;
+import org.janelia.model.security.Subject;
+import org.janelia.model.security.User;
+import org.janelia.model.security.UserGroupRole;
 import org.janelia.model.security.util.SubjectUtils;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import jakarta.inject.Inject;
-import java.beans.PropertyDescriptor;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Subject Mongo DAO.
  */
+@Dependent
 public class SubjectMongoDao extends AbstractEntityMongoDao<Subject> implements SubjectDao {
 
     private static final Logger log = LoggerFactory.getLogger(SubjectMongoDao.class);
 
     @Inject
-    public SubjectMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator) {
+    public SubjectMongoDao(MongoDatabase mongoDatabase, IdGenerator<Long> idGenerator) {
         super(mongoDatabase, idGenerator);
     }
 

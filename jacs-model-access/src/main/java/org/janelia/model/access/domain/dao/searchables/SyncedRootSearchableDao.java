@@ -1,5 +1,10 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import java.util.List;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
 import org.janelia.model.access.domain.dao.SyncedRootDao;
@@ -7,10 +12,8 @@ import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.files.SyncedRoot;
 
-import jakarta.inject.Inject;
-import java.util.List;
-
 @AsyncIndex
+@Dependent
 public class SyncedRootSearchableDao extends AbstractDomainSearchableDao<SyncedRoot> implements SyncedRootDao {
 
     private final SyncedRootDao syncedPathDao;

@@ -5,6 +5,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.UpdateOptions;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bson.conversions.Bson;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
 import org.janelia.model.access.domain.dao.ReadDao;
@@ -27,7 +28,7 @@ public abstract class AbstractEntityMongoDao<T extends HasIdentifier>
 
     final MongoCollection<T> mongoCollection;
 
-    AbstractEntityMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator) {
+    AbstractEntityMongoDao(MongoDatabase mongoDatabase, IdGenerator<Long> idGenerator) {
         super(mongoDatabase, idGenerator);
         Class<T> entityClass = getEntityType();
         mongoCollection = getEntityCollection(entityClass);

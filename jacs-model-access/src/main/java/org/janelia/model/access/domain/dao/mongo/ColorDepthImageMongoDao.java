@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.google.common.collect.ImmutableList;
@@ -21,11 +22,11 @@ import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.AddToSetFieldValueHandler;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
@@ -36,11 +37,11 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
 import org.janelia.model.util.SortCriteria;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 /**
  * {@link ColorDepthImage} Mongo DAO.
  */
+@Dependent
 public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorDepthImage> implements ColorDepthImageDao {
     private static class ColorDepthLibraryCount {
         String library;
@@ -50,7 +51,7 @@ public class ColorDepthImageMongoDao extends AbstractDomainObjectMongoDao<ColorD
 
     @Inject
     ColorDepthImageMongoDao(MongoDatabase mongoDatabase,
-                            TimebasedIdentifierGenerator idGenerator,
+                            IdGenerator<Long> idGenerator,
                             DomainPermissionsMongoHelper permissionsHelper,
                             DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);

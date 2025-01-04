@@ -2,22 +2,23 @@ package org.janelia.model.access.domain.dao.mongo;
 
 import java.util.List;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.mongodb.client.MongoDatabase;
-
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.LSMImageDao;
 import org.janelia.model.domain.sample.LSMImage;
 
 /**
  * {@link LSMImage} Mongo DAO.
  */
-public class LSMImageMongoDao extends ImageMongoDao<LSMImage> implements LSMImageDao {
+@Dependent
+public class LSMImageMongoDao extends AbstractImageMongoDao<LSMImage> implements LSMImageDao {
 
     @Inject
     LSMImageMongoDao(MongoDatabase mongoDatabase,
-                     TimebasedIdentifierGenerator idGenerator,
+                     IdGenerator<Long> idGenerator,
                      DomainPermissionsMongoHelper permissionsHelper,
                      DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);

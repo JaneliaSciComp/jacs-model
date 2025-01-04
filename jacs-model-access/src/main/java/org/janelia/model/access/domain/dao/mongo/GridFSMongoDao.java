@@ -1,23 +1,24 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.function.Consumer;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import com.mongodb.MongoGridFSException;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.gridfs.model.GridFSFile;
-
-import java.io.FileNotFoundException;
-import java.io.OutputStream;
-import java.io.InputStream;
-import java.util.function.Consumer;
-
-import jakarta.inject.Inject;
+import com.mongodb.client.model.Filters;
 /**
  * dao for accessing mongo gridfs buckets; good for storing files
  * larger than 16MB.
  */
-
+@Dependent
 public class GridFSMongoDao {
     GridFSBucket gridFS;
     final MongoDatabase mongoDatabase;

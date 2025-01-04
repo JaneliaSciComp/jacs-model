@@ -1,28 +1,37 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
 
 import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-
 import com.mongodb.client.model.UpdateOptions;
 import org.apache.commons.collections4.CollectionUtils;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.DaoUpdateResult;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.ontology.*;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
+import org.janelia.model.domain.ontology.Annotation;
+import org.janelia.model.domain.ontology.EnumItem;
+import org.janelia.model.domain.ontology.Ontology;
+import org.janelia.model.domain.ontology.OntologyTerm;
+import org.janelia.model.domain.ontology.OntologyTermReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import jakarta.inject.Inject;
 
 /**
  * {@link Annotation} Mongo DAO.
  */
+@Dependent
 public class AnnotationMongoDao extends AbstractDomainObjectMongoDao<Annotation> implements AnnotationDao {
 
     private static final Logger LOG = LoggerFactory.getLogger(AnnotationMongoDao.class);
@@ -31,7 +40,7 @@ public class AnnotationMongoDao extends AbstractDomainObjectMongoDao<Annotation>
 
     @Inject
     AnnotationMongoDao(MongoDatabase mongoDatabase,
-                       TimebasedIdentifierGenerator idGenerator,
+                       IdGenerator<Long> idGenerator,
                        DomainPermissionsMongoHelper permissionsHelper,
                        DomainUpdateMongoHelper updateHelper,
                        OntologyMongoDao ontologyMongoDao) {

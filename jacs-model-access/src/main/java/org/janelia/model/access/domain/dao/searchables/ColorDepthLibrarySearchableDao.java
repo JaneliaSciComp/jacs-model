@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -15,6 +16,7 @@ import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
  * {@link ColorDepthLibrary} DAO.
  */
 @AsyncIndex
+@Dependent
 public class ColorDepthLibrarySearchableDao extends AbstractDomainSearchableDao<ColorDepthLibrary> implements ColorDepthLibraryDao {
 
     private final ColorDepthLibraryDao colorDepthLibraryDao;

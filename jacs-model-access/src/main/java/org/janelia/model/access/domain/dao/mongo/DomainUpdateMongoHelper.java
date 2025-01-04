@@ -1,5 +1,10 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.model.Updates;
@@ -7,12 +12,10 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.cdi.DaoObjectMapper;
 
-import jakarta.inject.Inject;
-import java.util.stream.Collectors;
-
 /**
  * Entity update helper for a mongo store.
  */
+@Dependent
 class DomainUpdateMongoHelper {
 
     private final ObjectMapper objectMapper;

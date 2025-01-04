@@ -1,15 +1,18 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import java.util.List;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.TmMappedNeuronDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.tiledMicroscope.TmMappedNeuron;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 
-import jakarta.inject.Inject;
-import java.util.List;
-
 @AsyncIndex
+@Dependent
 public class TmMappedNeuronSearchableDao extends AbstractDomainSearchableDao<TmMappedNeuron> implements TmMappedNeuronDao {
 
     private final TmMappedNeuronDao tmMappedNeuronDao;

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -21,6 +22,7 @@ import org.janelia.model.domain.ontology.OntologyTermReference;
  * {@link Annotation} DAO.
  */
 @AsyncIndex
+@Dependent
 public class AnnotationSearchableDao extends AbstractDomainSearchableDao<Annotation> implements AnnotationDao {
 
     private final AnnotationDao annotationDao;

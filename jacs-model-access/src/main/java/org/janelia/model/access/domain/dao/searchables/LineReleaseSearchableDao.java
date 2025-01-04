@@ -2,6 +2,7 @@ package org.janelia.model.access.domain.dao.searchables;
 
 import java.util.List;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -13,6 +14,7 @@ import org.janelia.model.domain.sample.LineRelease;
  * {@link LineRelease} DAO.
  */
 @AsyncIndex
+@Dependent
 public class LineReleaseSearchableDao extends AbstractNodeSearchableDao<LineRelease> implements LineReleaseDao {
 
     private final LineReleaseDao lineReleaseDao;

@@ -2,6 +2,7 @@ package org.janelia.model.access.domain;
 
 import java.util.List;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
@@ -10,6 +11,7 @@ import org.janelia.model.domain.DomainObjectGetter;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
 
+@Dependent
 public class SimpleDomainObjectGetter implements DomainObjectGetter {
 
     private final ReferenceDomainObjectReadDao referenceDomainObjectReadDao;

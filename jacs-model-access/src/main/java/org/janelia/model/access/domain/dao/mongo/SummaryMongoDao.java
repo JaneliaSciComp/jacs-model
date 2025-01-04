@@ -1,5 +1,11 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.math.BigDecimal;
+import java.util.List;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.MongoDatabase;
@@ -9,25 +15,22 @@ import com.mongodb.client.model.Filters;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.SummaryDao;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.report.DatabaseSummary;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.sample.Sample;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
-
-import jakarta.inject.Inject;
-import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Summary Mongo DAO.
  */
+@Dependent
 public class SummaryMongoDao extends AbstractMongoDao implements SummaryDao {
 
     @Inject
-    public SummaryMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator) {
+    public SummaryMongoDao(MongoDatabase mongoDatabase, IdGenerator<Long> idGenerator) {
         super(mongoDatabase, idGenerator);
     }
 

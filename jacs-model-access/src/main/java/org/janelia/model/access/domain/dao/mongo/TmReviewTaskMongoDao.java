@@ -1,24 +1,27 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.util.List;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import com.mongodb.client.MongoDatabase;
 import org.janelia.model.access.domain.DomainDAO;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.TmReviewTaskDao;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
-
-import jakarta.inject.Inject;
-import java.util.List;
 
 /**
  * {@link TmReviewTask} Mongo DAO.
  */
+@Dependent
 public class TmReviewTaskMongoDao extends AbstractDomainObjectMongoDao<TmReviewTask> implements TmReviewTaskDao {
 
     private final DomainDAO domainDao;
 
     @Inject
     TmReviewTaskMongoDao(MongoDatabase mongoDatabase,
-                         TimebasedIdentifierGenerator idGenerator,
+                         IdGenerator<Long> idGenerator,
                          DomainPermissionsMongoHelper permissionsHelper,
                          DomainUpdateMongoHelper updateHelper,
                          DomainDAO domainDao) {

@@ -1,29 +1,32 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-import org.apache.commons.collections4.CollectionUtils;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
-import org.janelia.model.access.domain.dao.EmBodyDao;
-import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.flyem.EMBody;
-import org.janelia.model.domain.flyem.EMDataSet;
-
-import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import org.apache.commons.collections4.CollectionUtils;
+import org.janelia.model.access.domain.IdGenerator;
+import org.janelia.model.access.domain.dao.EmBodyDao;
+import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.flyem.EMBody;
+import org.janelia.model.domain.flyem.EMDataSet;
+
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Dependent
 public class EmBodyMongoDao extends AbstractDomainObjectMongoDao<EMBody> implements EmBodyDao {
 
     @Inject
     EmBodyMongoDao(MongoDatabase mongoDatabase,
-                   TimebasedIdentifierGenerator idGenerator,
+                   IdGenerator<Long> idGenerator,
                    DomainPermissionsMongoHelper permissionsHelper,
                    DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);

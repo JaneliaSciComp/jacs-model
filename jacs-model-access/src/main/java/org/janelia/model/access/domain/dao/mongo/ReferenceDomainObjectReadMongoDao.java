@@ -6,29 +6,30 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-
 import org.bson.conversions.Bson;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 /**
  * DAO for reading entities by their references.
  */
+@Dependent
 public class ReferenceDomainObjectReadMongoDao extends AbstractMongoDao implements ReferenceDomainObjectReadDao {
 
     private final DomainPermissionsMongoHelper permissionsHelper;
 
     @Inject
     public ReferenceDomainObjectReadMongoDao(MongoDatabase mongoDatabase,
-                                             TimebasedIdentifierGenerator idGenerator,
+                                             IdGenerator<Long> idGenerator,
                                              DomainPermissionsMongoHelper permissionsHelper) {
         super(mongoDatabase, idGenerator);
         this.permissionsHelper = permissionsHelper;

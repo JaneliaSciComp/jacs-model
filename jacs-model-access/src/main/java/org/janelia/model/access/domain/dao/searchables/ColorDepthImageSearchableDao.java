@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -23,6 +24,7 @@ import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
  * {@link ColorDepthImage} DAO.
  */
 @AsyncIndex
+@Dependent
 public class ColorDepthImageSearchableDao extends AbstractDomainSearchableDao<ColorDepthImage> implements ColorDepthImageDao {
 
     private final ColorDepthImageDao colorDepthImageDao;

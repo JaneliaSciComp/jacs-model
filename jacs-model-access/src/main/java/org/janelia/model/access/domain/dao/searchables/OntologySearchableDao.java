@@ -2,6 +2,7 @@ package org.janelia.model.access.domain.dao.searchables;
 
 import java.util.List;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -14,6 +15,7 @@ import org.janelia.model.domain.ontology.OntologyTerm;
  * {@link Ontology} DAO.
  */
 @AsyncIndex
+@Dependent
 public class OntologySearchableDao extends AbstractDomainSearchableDao<Ontology> implements OntologyDao {
 
     private final OntologyDao ontologyDao;

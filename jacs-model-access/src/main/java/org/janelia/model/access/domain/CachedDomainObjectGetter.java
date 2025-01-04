@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.google.common.cache.Cache;
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @WithCache
+@Dependent
 public class CachedDomainObjectGetter implements DomainObjectGetter {
 
     private static final Logger LOG = LoggerFactory.getLogger(CachedDomainObjectGetter.class);

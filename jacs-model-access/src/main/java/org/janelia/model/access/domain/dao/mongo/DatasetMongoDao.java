@@ -1,25 +1,28 @@
 package org.janelia.model.access.domain.dao.mongo;
 
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-import org.apache.commons.collections4.CollectionUtils;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
-import org.janelia.model.access.domain.dao.DatasetDao;
-import org.janelia.model.domain.sample.DataSet;
-
-import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import org.apache.commons.collections4.CollectionUtils;
+import org.janelia.model.access.domain.IdGenerator;
+import org.janelia.model.access.domain.dao.DatasetDao;
+import org.janelia.model.domain.sample.DataSet;
+
 /**
  * {@link DataSet} Mongo DAO.
  */
+@Dependent
 public class DatasetMongoDao extends AbstractDomainObjectMongoDao<DataSet> implements DatasetDao {
     @Inject
     DatasetMongoDao(MongoDatabase mongoDatabase,
-                    TimebasedIdentifierGenerator idGenerator,
+                    IdGenerator<Long> idGenerator,
                     DomainPermissionsMongoHelper permissionsHelper,
                     DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);

@@ -1,23 +1,26 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.util.List;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.TmMappedNeuronDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.TmMappedNeuron;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 
-import jakarta.inject.Inject;
-import java.util.List;
-
+@Dependent
 public class TmMappedNeuronMongoDao extends AbstractDomainObjectMongoDao<TmMappedNeuron> implements TmMappedNeuronDao {
 
     @Inject
     TmMappedNeuronMongoDao(MongoDatabase mongoDatabase,
-                             TimebasedIdentifierGenerator idGenerator,
-                             DomainPermissionsMongoHelper permissionsHelper,
-                             DomainUpdateMongoHelper updateHelper) {
+                           IdGenerator<Long> idGenerator,
+                           DomainPermissionsMongoHelper permissionsHelper,
+                           DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
     }
 

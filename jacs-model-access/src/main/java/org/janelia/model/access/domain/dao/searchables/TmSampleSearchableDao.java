@@ -1,5 +1,6 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -11,6 +12,7 @@ import org.janelia.model.domain.tiledMicroscope.TmSample;
  * {@link TmSample} DAO.
  */
 @AsyncIndex
+@Dependent
 public class TmSampleSearchableDao extends AbstractDomainSearchableDao<TmSample> implements TmSampleDao {
 
     private final TmSampleDao tmSampleDao;

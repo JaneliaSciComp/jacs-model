@@ -22,8 +22,8 @@ dependencies {
         // database
         MONGODB_VERSION = "5.2.1"
         MONGODB_SYNC_DRIVER_LIB = "org.mongodb:mongodb-driver-sync:${MONGODB_VERSION}"
-        MONGODB_BSON_LIB = "org.mongodb:bson:${MONGODB_VERSION}"
         MONGODB_LEGACY_DRIVER_LIB = "org.mongodb:mongodb-driver-legacy:${MONGODB_VERSION}"
+        MONGODB_BSON_LIB = "org.mongodb:bson:${MONGODB_VERSION}"
         MYSQL_DRIVER_LIB = "mysql:mysql-connector-java:5.1.42"
         JONGO_LIB = "org.jongo:jongo:1.5.1"
 

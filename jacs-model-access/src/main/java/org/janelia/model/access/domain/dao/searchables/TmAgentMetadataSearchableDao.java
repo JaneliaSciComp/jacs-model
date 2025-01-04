@@ -1,19 +1,19 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.TmAgentDao;
-import org.janelia.model.access.domain.dao.TmReviewTaskDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.tiledMicroscope.TmAgentMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
-
-import jakarta.inject.Inject;
-import java.util.List;
 
 /**
  * {@link TmReviewTask} DAO.
  */
 @AsyncIndex
+@Dependent
 public class TmAgentMetadataSearchableDao extends AbstractDomainSearchableDao<TmAgentMetadata> implements TmAgentDao {
 
     private final TmAgentDao tmAgentDao;

@@ -3,6 +3,7 @@ package org.janelia.model.access.domain.dao.searchables;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -14,6 +15,7 @@ import org.janelia.model.domain.sample.DataSet;
  * {@link DataSet} DAO.
  */
 @AsyncIndex
+@Dependent
 public class DatasetSearchableDao extends AbstractDomainSearchableDao<DataSet> implements DatasetDao {
 
     private final DatasetDao datasetDao;

@@ -1,5 +1,10 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.util.Set;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.model.Filters;
 import org.apache.commons.collections4.CollectionUtils;
@@ -8,12 +13,10 @@ import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.Subject;
 
-import jakarta.inject.Inject;
-import java.util.Set;
-
 /**
  * Domain permissions helper.
  */
+@Dependent
 class DomainPermissionsMongoHelper {
     private final SubjectDao subjectDao;
 

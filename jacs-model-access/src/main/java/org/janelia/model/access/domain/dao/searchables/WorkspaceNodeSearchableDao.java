@@ -2,18 +2,19 @@ package org.janelia.model.access.domain.dao.searchables;
 
 import java.util.List;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
-import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.workspace.Workspace;
 
 /**
  * {@link Workspace} DAO.
  */
 @AsyncIndex
+@Dependent
 public class WorkspaceNodeSearchableDao extends AbstractNodeSearchableDao<Workspace> implements WorkspaceNodeDao {
 
     private final WorkspaceNodeDao workspaceNodeDao;

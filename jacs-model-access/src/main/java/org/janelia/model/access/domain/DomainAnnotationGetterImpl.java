@@ -3,6 +3,7 @@ package org.janelia.model.access.domain;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.google.common.collect.ImmutableSet;
@@ -13,6 +14,7 @@ import org.janelia.model.domain.ontology.SimpleDomainAnnotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Dependent
 public class DomainAnnotationGetterImpl implements DomainAnnotationGetter {
 
     private static final Logger LOG = LoggerFactory.getLogger(DomainAnnotationGetterImpl.class);

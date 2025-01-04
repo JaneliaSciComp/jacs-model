@@ -24,6 +24,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.domain.DomainObject;
@@ -44,7 +45,7 @@ public abstract class AbstractNodeMongoDao<T extends Node> extends AbstractDomai
     private static final Logger LOG = LoggerFactory.getLogger(AbstractNodeMongoDao.class);
 
     AbstractNodeMongoDao(MongoDatabase mongoDatabase,
-                         TimebasedIdentifierGenerator idGenerator,
+                         IdGenerator<Long> idGenerator,
                          DomainPermissionsMongoHelper permissionsHelper,
                          DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);

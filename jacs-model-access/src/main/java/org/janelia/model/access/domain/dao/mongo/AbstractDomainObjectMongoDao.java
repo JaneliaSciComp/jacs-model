@@ -4,6 +4,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.DomainObjectDao;
 import org.janelia.model.domain.DomainObject;
@@ -28,7 +29,7 @@ public abstract class AbstractDomainObjectMongoDao<T extends DomainObject>
     private final DomainUpdateMongoHelper updateHelper;
 
     AbstractDomainObjectMongoDao(MongoDatabase mongoDatabase,
-                                 TimebasedIdentifierGenerator idGenerator,
+                                 IdGenerator<Long> idGenerator,
                                  DomainPermissionsMongoHelper permissionsHelper,
                                  DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, idGenerator);

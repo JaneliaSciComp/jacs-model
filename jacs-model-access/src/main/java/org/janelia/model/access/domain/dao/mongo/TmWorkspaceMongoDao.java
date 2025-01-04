@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -16,6 +17,7 @@ import com.mongodb.client.model.Filters;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.domain.DomainDAO;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.TmMappedNeuronDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
@@ -31,6 +33,7 @@ import org.slf4j.LoggerFactory;
 /**
  * {@link TmWorkspace} Mongo DAO.
  */
+@Dependent
 public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspace> implements TmWorkspaceDao {
     private static final Logger LOG = LoggerFactory.getLogger(TmWorkspaceMongoDao.class);
 
@@ -44,7 +47,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
 
     @Inject
     TmWorkspaceMongoDao(MongoDatabase mongoDatabase,
-                        TimebasedIdentifierGenerator idGenerator,
+                        IdGenerator<Long> idGenerator,
                         DomainPermissionsMongoHelper permissionsHelper,
                         DomainUpdateMongoHelper updateHelper,
                         DomainDAO domainDao,

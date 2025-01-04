@@ -3,24 +3,25 @@ package org.janelia.model.access.domain.dao.mongo;
 import java.util.Collection;
 import java.util.List;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-
 import org.apache.commons.collections4.CollectionUtils;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.Sample;
-import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 /**
  * {@link DataSet} Mongo DAO.
  */
+@Dependent
 public class SampleMongoDao extends AbstractDomainObjectMongoDao<Sample> implements SampleDao {
     @Inject
     SampleMongoDao(MongoDatabase mongoDatabase,
-                   TimebasedIdentifierGenerator idGenerator,
+                   IdGenerator<Long> idGenerator,
                    DomainPermissionsMongoHelper permissionsHelper,
                    DomainUpdateMongoHelper updateHelper) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
