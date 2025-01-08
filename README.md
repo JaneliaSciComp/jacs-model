@@ -1,6 +1,7 @@
 # JACS Domain Model and DAOs
 
 [![Java CI with Maven](https://github.com/JaneliaSciComp/jacs-model/actions/workflows/gradle.yml/badge.svg)](https://github.com/JaneliaSciComp/jacs-model/actions/workflows/gradle.yml)
+[![DOI](https://zenodo.org/badge/108035505.svg)](https://doi.org/10.5281/zenodo.14610126)
 
 This module contains common domain models and DAOs which can be used to access data stored in the JACS databases.
 
