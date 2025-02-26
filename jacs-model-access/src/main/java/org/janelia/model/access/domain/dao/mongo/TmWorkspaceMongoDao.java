@@ -117,7 +117,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
 
             // Aggregate to calculate the total size of neuron documents without fetching them
             AggregateIterable<Document> aggregation = neuronCollection.aggregate(Arrays.asList(
-                    Aggregates.match(new Document("workspaceRef", workspace.getId().toString())), // Add this line
+                    Aggregates.match(new Document("workspaceRef", "TmWorkspace#"+workspace.getId().toString())), // Add this line
                     Aggregates.project(Projections.fields(
                             Projections.computed("size", new Document("$bsonSize", "$$ROOT"))
                     )),
