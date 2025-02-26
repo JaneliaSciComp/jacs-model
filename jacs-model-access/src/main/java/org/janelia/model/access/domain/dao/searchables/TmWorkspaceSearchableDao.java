@@ -1,6 +1,8 @@
 package org.janelia.model.access.domain.dao.searchables;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -64,5 +66,10 @@ public class TmWorkspaceSearchableDao extends AbstractDomainSearchableDao<TmWork
     @Override
     public List<BoundingBox3d> getWorkspaceBoundingBoxes(Long workspaceId) {
         return tmWorkspaceDao.getWorkspaceBoundingBoxes(workspaceId);
+    }
+
+    @Override
+    public Map<TmWorkspace, Long> getLargestWorkspaces(String subjectKey, Long limit) {
+        return tmWorkspaceDao.getLargestWorkspaces(subjectKey, limit);
     }
 }

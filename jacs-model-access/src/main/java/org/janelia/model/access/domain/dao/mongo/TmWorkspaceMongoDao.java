@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -11,10 +12,16 @@ import javax.inject.Inject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 
+import com.mongodb.client.model.Projections;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.dao.TmMappedNeuronDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
@@ -86,6 +93,51 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                 -1,
                 mongoCollection,
                 TmWorkspace.class);
+    }
+
+    @Override
+    public Map<TmWorkspace, Long> getLargestWorkspaces(String subjectKey, Long limit) {
+        // Step 1: Get all accessible workspaces using existing method
+        List<TmWorkspace> workspaces = getAllTmWorkspaces(subjectKey);
+
+        Map<TmWorkspace, Long> workspaceSizeMap = new HashMap<>();
+
+        // Step 2: Iterate through workspaces and aggregate neuron document sizes
+        for (TmWorkspace workspace : workspaces) {
+            String neuronCollectionName = workspace.getNeuronCollection();
+            if (neuronCollectionName == null || neuronCollectionName.isEmpty()) {
+                continue; // Skip workspaces without a valid neuron collection
+            }
+
+            MongoCollection<Document> neuronCollection = mongoDatabase.getCollection(neuronCollectionName);
+
+            // Aggregate to calculate the total size of neuron documents without fetching them
+            AggregateIterable<Document> aggregation = neuronCollection.aggregate(Arrays.asList(
+                    Aggregates.project(Projections.fields(
+                            Projections.computed("size", new Document("$bsonSize", "$$ROOT"))
+                    )),
+                    Aggregates.group(null, Accumulators.sum("totalSize", "$size"))
+            ));
+
+            // Extract the total size from the aggregation result
+            Long totalSize = 0L;
+            for (Document result : aggregation) {
+                totalSize = result.getLong("totalSize");
+            }
+
+            workspaceSizeMap.put(workspace, totalSize);
+        }
+
+        // Sort by total size in descending order and limit results
+        return workspaceSizeMap.entrySet().stream()
+                .sorted(Map.Entry.<TmWorkspace, Long>comparingByValue().reversed())
+                .limit(limit)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
     }
 
     @Override
