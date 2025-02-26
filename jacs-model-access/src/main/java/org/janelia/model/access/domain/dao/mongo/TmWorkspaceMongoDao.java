@@ -99,12 +99,16 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     public Map<TmWorkspace, Long> getLargestWorkspaces(String subjectKey, Long limit) {
         // Step 1: Get all accessible workspaces using existing method
         List<TmWorkspace> workspaces = getAllTmWorkspaces(subjectKey);
+        LOG.info("Retrieved {} workspaces for analysis", workspaces.size());
 
         Map<TmWorkspace, Long> workspaceSizeMap = new HashMap<>();
 
         // Step 2: Iterate through workspaces and aggregate neuron document sizes
         for (TmWorkspace workspace : workspaces) {
             String neuronCollectionName = workspace.getNeuronCollection();
+
+            LOG.info("Analyzing {} workspace storing neurons in {}",
+                    workspace.getName(),neuronCollectionName);
             if (neuronCollectionName == null || neuronCollectionName.isEmpty()) {
                 continue; // Skip workspaces without a valid neuron collection
             }
@@ -119,6 +123,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                     Aggregates.group(null, Accumulators.sum("totalSize", "$size"))
             ));
 
+            LOG.info("Finished aggregation analysis");
             // Extract the total size from the aggregation result
             Long totalSize = 0L;
             for (Document result : aggregation) {
@@ -128,6 +133,8 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
             workspaceSizeMap.put(workspace, totalSize);
         }
 
+        LOG.info("Workspace analysis complete. Results: {}",
+                workspaceSizeMap);
         // Sort by total size in descending order and limit results
         return workspaceSizeMap.entrySet().stream()
                 .sorted(Map.Entry.<TmWorkspace, Long>comparingByValue().reversed())
