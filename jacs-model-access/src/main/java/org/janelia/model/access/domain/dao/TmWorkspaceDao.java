@@ -2,9 +2,9 @@ package org.janelia.model.access.domain.dao;
 
 import org.janelia.model.domain.tiledMicroscope.BoundingBox3d;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.domain.tiledMicroscope.TmWorkspaceInfo;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * TmWorkspace data access object
@@ -17,5 +17,5 @@ public interface TmWorkspaceDao extends DomainObjectDao<TmWorkspace> {
     TmWorkspace updateTmWorkspace(String subjectKey, TmWorkspace tmWorkspace);
     void saveWorkspaceBoundingBoxes(TmWorkspace workspace, List<BoundingBox3d> boundingBoxes);
     List<BoundingBox3d> getWorkspaceBoundingBoxes(Long workspaceId);
-    Map<TmWorkspace, Long> getLargestWorkspaces(String subjectKey, Long limit);
+    List<TmWorkspaceInfo> getLargestWorkspaces(String subjectKey, Long limit);
 }
