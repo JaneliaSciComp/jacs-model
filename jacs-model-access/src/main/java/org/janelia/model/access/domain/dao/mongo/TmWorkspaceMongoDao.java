@@ -3,6 +3,7 @@ package org.janelia.model.access.domain.dao.mongo;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,42 +100,54 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     public Map<TmWorkspace, Long> getLargestWorkspaces(String subjectKey, Long limit) {
         // Step 1: Get all accessible workspaces using existing method
         List<TmWorkspace> workspaces = getAllTmWorkspaces(subjectKey);
-        LOG.info("Retrieved {} workspaces for analysis", workspaces.size());
 
         Map<TmWorkspace, Long> workspaceSizeMap = new HashMap<>();
 
-        // Step 2: Iterate through workspaces and aggregate neuron document sizes
-        for (TmWorkspace workspace : workspaces) {
-            String neuronCollectionName = workspace.getNeuronCollection();
-            if (neuronCollectionName == null || neuronCollectionName.isEmpty()) {
-                continue; // Skip workspaces without a valid neuron collection
-            }
+        // Step 2: Use parallel processing for faster aggregation
+        ForkJoinPool customThreadPool = new ForkJoinPool(8); // Limit to 8 threads
+        workspaceSizeMap = customThreadPool.submit(() ->
+                workspaces.parallelStream()
+                        .collect(Collectors.toMap(
+                                workspace -> workspace,
+                                workspace -> {
+                                    String neuronCollectionName = workspace.getNeuronCollection();
+                                    if (neuronCollectionName == null || neuronCollectionName.isEmpty()) {
+                                        return 0L;
+                                    }
 
-            MongoCollection<Document> neuronCollection = mongoDatabase.getCollection(neuronCollectionName);
+                                    MongoCollection<Document> neuronCollection = mongoDatabase.getCollection(neuronCollectionName);
 
-            // Aggregate to calculate the total size of neuron documents without fetching them
-            AggregateIterable<Document> aggregation = neuronCollection.aggregate(Arrays.asList(
-                    Aggregates.match(new Document("workspaceRef", "TmWorkspace#"+workspace.getId().toString())), // Add this line
-                    Aggregates.project(Projections.fields(
-                            Projections.computed("size", new Document("$bsonSize", "$$ROOT"))
-                    )),
-                    Aggregates.group(null, Accumulators.sum("totalSize", "$size"))
-            ));
+                                    LOG.info("Analyzing {} workspace storing neurons in {}",
+                                            workspace.getName(), neuronCollectionName);
 
-            // Extract the total size from the aggregation result
-            Long totalSize = 0L;
-            for (Document result : aggregation) {
-                Number size = result.get("totalSize", Number.class);
-                if (size != null) {
-                    totalSize = size.longValue();
-                }
-            }
+                                    Long totalSize = 0L;
+                                    try {
+                                        String workspaceRef = "TmWorkspace#" + workspace.getId();
+                                        AggregateIterable<Document> aggregation = neuronCollection.aggregate(Arrays.asList(
+                                                Aggregates.match(Filters.eq("workspaceRef", workspaceRef)),
+                                                Aggregates.project(Projections.fields(
+                                                        Projections.computed("size", new Document("$bsonSize", "$$ROOT"))
+                                                )),
+                                                Aggregates.group(null, Accumulators.sum("totalSize", "$size"))
+                                        ));
 
-            workspaceSizeMap.put(workspace, totalSize);
-        }
+                                        for (Document result : aggregation) {
+                                            Number size = result.get("totalSize", Number.class);
+                                            totalSize = size != null ? size.longValue() : 0L;
+                                        }
+                                    } catch (Exception e) {
+                                        LOG.error("Error processing workspace: {}", workspace.getName(), e);
+                                    }
 
-        LOG.info("Workspace analysis complete. Results: {}",
-                workspaceSizeMap);
+                                    LOG.info("Finished aggregation analysis for {}", workspace.getName());
+                                    return totalSize;
+                                }
+                        ))
+        ).join();
+
+        customThreadPool.shutdown();
+        LOG.info("Workspace analysis complete. Results: {}", workspaceSizeMap);
+
         // Sort by total size in descending order and limit results
         return workspaceSizeMap.entrySet().stream()
                 .sorted(Map.Entry.<TmWorkspace, Long>comparingByValue().reversed())
