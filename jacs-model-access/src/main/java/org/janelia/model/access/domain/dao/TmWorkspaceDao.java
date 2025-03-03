@@ -18,4 +18,5 @@ public interface TmWorkspaceDao extends DomainObjectDao<TmWorkspace> {
     void saveWorkspaceBoundingBoxes(TmWorkspace workspace, List<BoundingBox3d> boundingBoxes);
     List<BoundingBox3d> getWorkspaceBoundingBoxes(Long workspaceId);
     List<TmWorkspaceInfo> getLargestWorkspaces(String subjectKey, Long limit);
+    long deleteByIdAndSubjectKey(Long id, String subjectKey);
 }

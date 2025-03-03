@@ -37,6 +37,11 @@ public class TmWorkspaceSearchableDao extends AbstractDomainSearchableDao<TmWork
     }
 
     @Override
+    public long deleteByIdAndSubjectKey(Long id, String subjectKey) {
+        return tmWorkspaceDao.deleteByIdAndSubjectKey(id, subjectKey);
+    }
+
+    @Override
     public TmWorkspace createTmWorkspace(String subjectKey, TmWorkspace tmWorkspace) {
         TmWorkspace persistedTmWorkspace = tmWorkspaceDao.createTmWorkspace(subjectKey, tmWorkspace);
         domainObjectIndexer.indexDocument(persistedTmWorkspace);

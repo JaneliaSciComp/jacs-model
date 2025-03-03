@@ -42,7 +42,7 @@ public class TmMappedNeuronMongoDao extends AbstractDomainObjectMongoDao<TmMappe
     public long deleteNeuronsForWorkspace(TmWorkspace workspace, String subjectKey) {
 
         LOG.info("Deleting neurons from workspace {} in mongo collection {}",
-                workspace.getName(), mongoCollection.getNamespace().getCollectionName());
+                workspace.getName(), workspace.getNeuronCollection());
         return MongoDaoHelper.deleteMatchingRecords(mongoCollection,
                 Filters.and(MongoDaoHelper.createFilterCriteria(
                         Filters.eq("workspaceRef", Reference.createFor(workspace))
