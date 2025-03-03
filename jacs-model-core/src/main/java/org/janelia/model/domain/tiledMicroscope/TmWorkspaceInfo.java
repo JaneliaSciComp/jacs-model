@@ -9,6 +9,9 @@ public class TmWorkspaceInfo {
     private String ownerKey;
     private Date dateCreated;
 
+    public TmWorkspaceInfo() {
+    }
+
     public TmWorkspaceInfo(Long workspaceId, String workspaceName, Long totalSize, String ownerKey, Date dateCreated) {
         this.workspaceId = workspaceId;
         this.workspaceName = workspaceName;
