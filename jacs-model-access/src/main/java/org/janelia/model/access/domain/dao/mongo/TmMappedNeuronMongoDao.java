@@ -7,11 +7,15 @@ import org.janelia.model.access.domain.dao.TmMappedNeuronDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.tiledMicroscope.TmMappedNeuron;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.List;
 
 public class TmMappedNeuronMongoDao extends AbstractDomainObjectMongoDao<TmMappedNeuron> implements TmMappedNeuronDao {
+    private static final Logger LOG = LoggerFactory.getLogger(TmMappedNeuronMongoDao.class);
+
 
     @Inject
     TmMappedNeuronMongoDao(MongoDatabase mongoDatabase,
@@ -36,7 +40,9 @@ public class TmMappedNeuronMongoDao extends AbstractDomainObjectMongoDao<TmMappe
 
     @Override
     public long deleteNeuronsForWorkspace(TmWorkspace workspace, String subjectKey) {
-        // TODO: this should remove the deleted documents from the search index
+
+        LOG.info("Deleting neurons from workspace {} in mongo collection {}",
+                workspace.getName(), workspace.getNeuronCollection());
         return MongoDaoHelper.deleteMatchingRecords(mongoCollection,
                 Filters.and(MongoDaoHelper.createFilterCriteria(
                         Filters.eq("workspaceRef", Reference.createFor(workspace))

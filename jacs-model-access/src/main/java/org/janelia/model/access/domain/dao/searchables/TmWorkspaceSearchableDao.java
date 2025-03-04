@@ -9,6 +9,7 @@ import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.tiledMicroscope.BoundingBox3d;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.domain.tiledMicroscope.TmWorkspaceInfo;
 
 /**
  * {@link TmWorkspace} DAO.
@@ -33,6 +34,11 @@ public class TmWorkspaceSearchableDao extends AbstractDomainSearchableDao<TmWork
     @Override
     public List<TmWorkspace> getAllTmWorkspaces(String subjectKey) {
         return tmWorkspaceDao.getAllTmWorkspaces(subjectKey);
+    }
+
+    @Override
+    public long deleteByIdAndSubjectKey(Long id, String subjectKey) {
+        return tmWorkspaceDao.deleteByIdAndSubjectKey(id, subjectKey);
     }
 
     @Override
@@ -64,5 +70,10 @@ public class TmWorkspaceSearchableDao extends AbstractDomainSearchableDao<TmWork
     @Override
     public List<BoundingBox3d> getWorkspaceBoundingBoxes(Long workspaceId) {
         return tmWorkspaceDao.getWorkspaceBoundingBoxes(workspaceId);
+    }
+
+    @Override
+    public List<TmWorkspaceInfo> getLargestWorkspaces(String subjectKey, Long limit) {
+        return tmWorkspaceDao.getLargestWorkspaces(subjectKey, limit);
     }
 }

@@ -310,15 +310,12 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     private TmNeuronMetadata createNeuronWithExistingId(TmNeuronMetadata entity,
                                                         String collectionName, String subjectKey) {
-        LOG.info("TRACE1");
         MongoCollection<TmNeuronMetadata> mongoCollection =  getNeuronCollection(collectionName);
 
         Date now = new Date();
-        LOG.info("TRACE2");
         for (TmGeoAnnotation anno : entity.getRootAnnotations()) {
             anno.setParentId(entity.getId());
         }
-        LOG.info("TRACE3");
         entity.setOwnerKey(subjectKey);
         entity.getReaders().add(subjectKey);
         entity.getWriters().add(subjectKey);
@@ -448,10 +445,12 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     @Override
     public long deleteNeuronsForWorkspace(TmWorkspace workspace, String subjectKey) {
-        return MongoDaoHelper.deleteMatchingRecords(mongoCollection,
-                Filters.and(MongoDaoHelper.createFilterCriteria(
-                        Filters.eq("workspaceRef", Reference.createFor(workspace))
-                ), permissionsHelper.createWritePermissionFilterForSubjectKey(subjectKey)));
+        LOG.info("Deleting neurons from workspace {} in mongo collection {}",
+                workspace.getName(), workspace.getNeuronCollection());
+        return MongoDaoHelper.deleteMatchingRecords(
+                getNeuronCollection(workspace.getNeuronCollection()),
+                Filters.eq("workspaceRef", Reference.createFor(workspace))  // Simplified filter
+        );
     }
 
     private MongoCollection<TmNeuronMetadata> getNeuronCollection(String collectionName) {
