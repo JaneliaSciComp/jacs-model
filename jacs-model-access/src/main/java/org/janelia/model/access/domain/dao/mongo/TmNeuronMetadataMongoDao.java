@@ -447,10 +447,10 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     public long deleteNeuronsForWorkspace(TmWorkspace workspace, String subjectKey) {
         LOG.info("Deleting neurons from workspace {} in mongo collection {}",
                 workspace.getName(), workspace.getNeuronCollection());
-        return MongoDaoHelper.deleteMatchingRecords(getNeuronCollection(workspace.getNeuronCollection()),
-                Filters.and(MongoDaoHelper.createFilterCriteria(
-                        Filters.eq("workspaceRef", Reference.createFor(workspace))
-                ), permissionsHelper.createWritePermissionFilterForSubjectKey(subjectKey)));
+        return MongoDaoHelper.deleteMatchingRecords(
+                getNeuronCollection(workspace.getNeuronCollection()),
+                Filters.eq("workspaceRef", Reference.createFor(workspace))  // Simplified filter
+        );
     }
 
     private MongoCollection<TmNeuronMetadata> getNeuronCollection(String collectionName) {

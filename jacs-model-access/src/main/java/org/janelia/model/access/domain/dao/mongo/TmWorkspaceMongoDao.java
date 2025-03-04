@@ -313,6 +313,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
         catch (Exception e) {
             throw new IllegalStateException("Error deleting neuron metadata for workspace "+workspace, e);
         }
+        gridFSMongoDao.deleteDataBlock(workspace.getId().toString());
         n += super.deleteByIdAndSubjectKey(workspace.getId(), subjectKey);
         return n;
     }
