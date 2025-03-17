@@ -57,10 +57,10 @@ public class ImageUtilsTest {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "default.0.tif");
         File testFile = testDirectory.resolve("default.0.tif").toFile();
         RenderedImageInfo imageInfo;
-        try (InputStream tiffStream = new FileInputStream(testFile)) {
+        try (InputStream tiffStream = Files.newInputStream(testFile.toPath())) {
             imageInfo = ImageUtils.loadImageInfoFromTiffStream(tiffStream);
         }
-        try (FileSeekableStream tiffStream = new FileSeekableStream(testFile)) {
+        try (InputStream tiffStream = Files.newInputStream(testFile.toPath())) {
             byte[] imageBytes = ImageUtils.loadImagePixelBytesFromTiffStream(tiffStream, -1, -1, -1, -1, -1, -1);
             // save the bytes as tiff to make sure they can be read
             int imageSize = imageInfo.sx * imageInfo.sy * (imageInfo.cmPixelSize / 8);
@@ -80,7 +80,7 @@ public class ImageUtilsTest {
                     })
                     .iterator();
             File testOutputFile = testDirectory.resolve("outputTiff.tif").toFile();
-            OutputStream testOutputStream = new FileOutputStream(testOutputFile);
+            OutputStream testOutputStream = Files.newOutputStream(testOutputFile.toPath());
             TIFFEncodeParam param = new TIFFEncodeParam();
             ImageEncoder encoder = ImageCodec.createImageEncoder("tiff", testOutputStream, param);
             param.setExtraImages(pagesIterator);
