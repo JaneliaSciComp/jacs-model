@@ -24,6 +24,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.media.jai.JAI;
 import javax.media.jai.NullOpImage;
@@ -40,7 +41,6 @@ import com.sun.media.jai.codec.SeekableStream;
 import com.sun.media.jai.codec.TIFFDirectory;
 import com.sun.media.jai.codec.TIFFEncodeParam;
 import com.sun.media.jai.codecimpl.TIFFImageDecoder;
-
 import org.janelia.rendering.NamedSupplier;
 import org.janelia.rendering.RenderedImageInfo;
 import org.janelia.rendering.RenderedImageWithStream;
@@ -54,7 +54,6 @@ public class ImageUtils {
     private static final Logger LOG = LoggerFactory.getLogger(ImageUtils.class);
 
     private static class TiffROI {
-        SeekableStream tiffStream;
         int imageWidth;
         int imageHeight;
         int numSlices;
@@ -65,6 +64,54 @@ public class ImageUtils {
         int endY;
         int startZ;
         int endZ;
+    }
+
+    private static class SeekableStreamWrapper extends SeekableStream {
+        private final InputStream sourceStream;
+        private final SeekableStream seekableDelegate;
+
+        private SeekableStreamWrapper(InputStream sourceStream) {
+            this.sourceStream = sourceStream;
+            if (sourceStream instanceof SeekableStream) {
+                seekableDelegate = (SeekableStream) sourceStream;
+            } else {
+                seekableDelegate = new MemoryCacheSeekableStream(sourceStream);
+            };
+        }
+
+        @Override
+        public int read() throws IOException {
+            return seekableDelegate.read();
+        }
+
+        @Override
+        public int read(byte[] bytes, int offset, int len) throws IOException {
+            return seekableDelegate.read(bytes, offset, len);
+        }
+
+        @Override
+        public long getFilePointer() throws IOException {
+            return seekableDelegate.getFilePointer();
+        }
+
+        @Override
+        public void seek(long l) throws IOException {
+            seekableDelegate.seek(l);
+        }
+
+        @Override
+        public void close() {
+            try {
+                seekableDelegate.close();
+            } catch (Exception ignore) {}
+            if (sourceStream != seekableDelegate) {
+                // MemoryCacheSeekableStream do not close the source stream,
+                // so I am closing it explicitly
+                try {
+                    sourceStream.close();
+                } catch (Exception ignore) {}
+            }
+        }
     }
 
     @FunctionalInterface
@@ -107,15 +154,10 @@ public class ImageUtils {
 
     @Nullable
     public static RenderedImageInfo loadImageInfoFromTiffStream(InputStream inputStream) {
-        SeekableStream tiffStream;
         if (inputStream == null) {
             return null;
-        } else if (inputStream instanceof SeekableStream) {
-            tiffStream = (SeekableStream) inputStream;
-        } else {
-            tiffStream = new MemoryCacheSeekableStream(inputStream);
         }
-        try {
+        try (SeekableStream tiffStream = new SeekableStreamWrapper(inputStream)) {
             TIFFDirectory tiffDirectory = new TIFFDirectory(tiffStream, 0);
             int imageWidth = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_IMAGE_WIDTH);
             int imageHeight = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_IMAGE_LENGTH);
@@ -128,23 +170,29 @@ public class ImageUtils {
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);
-        } finally {
-            try {
-                tiffStream.close();
-            } catch (IOException ignore) {
-            }
         }
     }
 
+    /**
+     * Load pixels from the given input stream and ROI specified by the start voxel and dimensions.
+     * After all pixels are put in the output byte buffer the input stream is closed.
+     *
+     * @param inputStream
+     * @param x0
+     * @param y0
+     * @param z0
+     * @param deltax
+     * @param deltay
+     * @param deltaz
+     * @return
+     */
     @Nullable
-    public static byte[] loadImagePixelBytesFromTiffStream(InputStream inputStream,
+    public static byte[] loadImagePixelBytesFromTiffStream(@Nullable InputStream inputStream,
                                                            int x0, int y0, int z0,
                                                            int deltax, int deltay, int deltaz) {
-        try {
-            TiffROI tiffROI = getROIFromTiffStream(inputStream, x0, y0, z0, deltax, deltay, deltaz);
-            if (tiffROI == null) {
-                return null;
-            }
+        if (inputStream == null) return null;
+        try (SeekableStream tiffStream = new SeekableStreamWrapper(inputStream)) {
+            TiffROI tiffROI = getROIFromTiffStream(tiffStream, x0, y0, z0, deltax, deltay, deltaz);
             // allocate the buffer
             int sliceSize = (tiffROI.endX - tiffROI.startX) * (tiffROI.endY - tiffROI.startY);
             int totalVoxels = sliceSize * (tiffROI.endZ - tiffROI.startZ);
@@ -152,7 +200,7 @@ public class ImageUtils {
 
             PixelDataHandlers<?> pixelDataHandlers = createDataHandlers(tiffROI.imageWidth, tiffROI.imageHeight, tiffROI.bytesPerPixel);;
 
-            ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffROI.tiffStream, null);
+            ImageDecoder decoder = ImageCodec.createImageDecoder("tiff", tiffStream, null);
             IntStream.range(0, tiffROI.endZ - tiffROI.startZ)
                     .forEach(sliceIndex -> {
                         try {
@@ -180,37 +228,25 @@ public class ImageUtils {
     public static long sizeImagePixelBytesFromTiffStream(InputStream inputStream,
                                                          int x0, int y0, int z0,
                                                          int deltax, int deltay, int deltaz) {
-        TiffROI tiffROI = getROIFromTiffStream(inputStream, x0, y0, z0, deltax, deltay, deltaz);
-        if (tiffROI == null) {
+        if (inputStream == null) {
             return 0L;
-        } else {
-            try {
-                return (tiffROI.endX - tiffROI.startX) *
-                        (tiffROI.endY - tiffROI.startY) *
-                        (tiffROI.endZ - tiffROI.startZ) *
-                        tiffROI.bytesPerPixel;
-            } finally {
-                try {
-                    tiffROI.tiffStream.close();
-                } catch (IOException ignore) {
-                }
-            }
+        }
+        try (SeekableStream tiffStream = new SeekableStreamWrapper(inputStream)) {
+            TiffROI tiffROI = getROIFromTiffStream(tiffStream, x0, y0, z0, deltax, deltay, deltaz);
+            return (long) (tiffROI.endX - tiffROI.startX) *
+                    (tiffROI.endY - tiffROI.startY) *
+                    (tiffROI.endZ - tiffROI.startZ) *
+                    tiffROI.bytesPerPixel;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
         }
     }
 
-    @Nullable
-    private static TiffROI getROIFromTiffStream(InputStream inputStream,
+    @Nonnull
+    private static TiffROI getROIFromTiffStream(@Nonnull SeekableStream tiffStream,
                                                 int x0, int y0, int z0,
                                                 int deltax, int deltay, int deltaz) {
-        SeekableStream tiffStream;
         try {
-            if (inputStream == null) {
-                return null;
-            } else if (inputStream instanceof SeekableStream) {
-                tiffStream = (SeekableStream) inputStream;
-            } else {
-                tiffStream = new MemoryCacheSeekableStream(inputStream);
-            }
             TIFFDirectory tiffDirectory = new TIFFDirectory(tiffStream, 0);
             int imageWidth = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_IMAGE_WIDTH);
             int imageHeight = (int) tiffDirectory.getFieldAsLong(TIFFImageDecoder.TIFF_IMAGE_LENGTH);
@@ -252,7 +288,6 @@ public class ImageUtils {
             }
 
             TiffROI tiffROI = new TiffROI();
-            tiffROI.tiffStream = tiffStream;
             tiffROI.imageWidth = imageWidth;
             tiffROI.imageHeight = imageHeight;
             tiffROI.numSlices = numSlices;

@@ -2,8 +2,10 @@ package org.janelia.rendering.utils;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,7 +54,7 @@ public class ImageUtilsTest {
         TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "default.0.tif");
         File testFile = testDirectory.resolve("default.0.tif").toFile();
         RenderedImageInfo imageInfo;
-        try (FileSeekableStream tiffStream = new FileSeekableStream(testFile)) {
+        try (InputStream tiffStream = new FileInputStream(testFile)) {
             imageInfo = ImageUtils.loadImageInfoFromTiffStream(tiffStream);
         }
         try (FileSeekableStream tiffStream = new FileSeekableStream(testFile)) {

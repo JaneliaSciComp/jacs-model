@@ -109,7 +109,7 @@ public class FileBasedRenderedVolumeLocation extends FileBasedDataLocation imple
         byte[] imageTextureBytes = ImageUtils.bandMergedTextureBytesFromImageStreams(
                 channelImageNames.stream()
                         .map(channelImageName -> Paths.get(getBaseDataStoragePath(), imageRelativePath, channelImageName))
-                        .filter(channelImagePath -> Files.exists(channelImagePath))
+                        .filter(Files::exists)
                         .map(channelImagePath -> NamedSupplier.namedSupplier(
                                 channelImagePath.toString(),
                                 () -> {
