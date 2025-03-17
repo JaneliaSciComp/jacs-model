@@ -7,17 +7,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import com.sun.media.jai.codec.FileSeekableStream;
 import com.sun.media.jai.codec.ImageCodec;
 import com.sun.media.jai.codec.ImageEncoder;
 import com.sun.media.jai.codec.TIFFEncodeParam;
-
+import org.janelia.rendering.NamedSupplier;
 import org.janelia.rendering.RenderedImageInfo;
 import org.janelia.testutils.TestUtils;
 import org.junit.AfterClass;
@@ -26,6 +28,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class ImageUtilsTest {
     private static final String TEST_DATADIR = "src/test/resources/testdata/rendering";
@@ -95,4 +98,25 @@ public class ImageUtilsTest {
         }
     }
 
+    @Test
+    public void combineSlices() {
+        TestUtils.prepareTestDataFiles(Paths.get(TEST_DATADIR), testDirectory, "default.0.tif", "default.1.tif");
+        File testFile0 = testDirectory.resolve("default.0.tif").toFile();
+        File testFile1 = testDirectory.resolve("default.1.tif").toFile();
+
+        byte[] contentBytes = ImageUtils.bandMergedTextureBytesFromImageStreams(
+                Stream.of(testFile0, testFile1)
+                                .map(f  -> NamedSupplier.namedSupplier(
+                                        f.getName(),
+                                        () -> {
+                                            try {
+                                                return Files.newInputStream(f.toPath());
+                                            } catch (IOException e) {
+                                                throw new UncheckedIOException(e);
+                                            }
+                                        })),
+                /* pageNumber */10);
+
+        assertNotNull(contentBytes);
+    }
 }

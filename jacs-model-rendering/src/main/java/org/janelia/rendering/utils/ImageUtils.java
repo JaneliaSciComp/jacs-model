@@ -307,16 +307,13 @@ public class ImageUtils {
     }
 
     @Nullable
-    public static byte[] loadRenderedImageBytesFromTiffStream(InputStream inputStream, int x0, int y0, int z0, int deltax, int deltay, int deltaz) {
-        SeekableStream tiffStream;
+    public static byte[] loadRenderedImageBytesFromTiffStream(@Nullable InputStream inputStream,
+                                                              int x0, int y0, int z0,
+                                                              int deltax, int deltay, int deltaz) {
         if (inputStream == null) {
             return null;
-        } else if (inputStream instanceof SeekableStream) {
-            tiffStream = (SeekableStream) inputStream;
-        } else {
-            tiffStream = new MemoryCacheSeekableStream(inputStream);
         }
-        try {
+        try (SeekableStream tiffStream = new SeekableStreamWrapper(inputStream)) {
             int numSlices = TIFFDirectory.getNumDirectories(tiffStream);
             int startZ;
             int endZ;
@@ -358,11 +355,6 @@ public class ImageUtils {
         } catch (Exception e) {
             LOG.error("Error reading TIFF image stream", e);
             throw new IllegalStateException(e);
-        } finally {
-            try {
-                tiffStream.close();
-            } catch (IOException ignore) {
-            }
         }
     }
 
@@ -430,15 +422,11 @@ public class ImageUtils {
     @Nullable
     private static RenderedImagesWithStreams loadRenderedImageFromTiffStream(NamedSupplier<InputStream> namedInputStreamSupplier, int pageNumber) {
         Stopwatch stopwatch = Stopwatch.createStarted();
-        SeekableStream tiffStream;
         InputStream inputStream = namedInputStreamSupplier.get();
         if (inputStream == null) {
             return null;
-        } else if (inputStream instanceof SeekableStream) {
-            tiffStream = (SeekableStream) inputStream;
-        } else {
-            tiffStream = new MemoryCacheSeekableStream(inputStream);
         }
+        SeekableStream tiffStream = new SeekableStreamWrapper(inputStream);
         try {
             LOG.debug("Load page {} from {}", pageNumber, namedInputStreamSupplier.getName());
             ParameterBlock decodeTiffPB = new ParameterBlock()
