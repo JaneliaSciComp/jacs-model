@@ -141,15 +141,23 @@ public class ImageUtils {
         }
     }
 
+    /**
+     * Use the reference to {@code openSeekableStream} instead.
+     *
+     * @return
+     */
+    @Deprecated
     public static Function<Path, InputStream> getImagePathHandler() {
-        return (Path p) -> {
-            try {
-                return new FileSeekableStream(p.toFile());
-            } catch (IOException e) {
-                LOG.error("Error opening {}", p, e);
-                throw new IllegalArgumentException(e);
-            }
-        };
+        return ImageUtils::openSeekableStream;
+    }
+
+    public static InputStream openSeekableStream(Path p) {
+        try {
+            return new FileSeekableStream(p.toFile());
+        } catch (IOException e) {
+            LOG.error("Error opening {}", p, e);
+            throw new IllegalStateException(e);
+        }
     }
 
     @Nullable
