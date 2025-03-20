@@ -141,6 +141,12 @@ public class ImageUtils {
         }
     }
 
+    /**
+     * Use the reference to {@code openSeekableStream} instead.
+     *
+     * @return
+     */
+    @Deprecated
     public static Function<Path, InputStream> getImagePathHandler() {
         return ImageUtils::openSeekableStream;
     }
