@@ -53,18 +53,18 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     private final MongoDatabase mongoDatabase;
     private final DomainUpdateMongoHelper updateHelper;
-
-    @Inject
-    private GridFSMongoDao gridFSMongoDao;
+    private final GridFSMongoDao gridFSMongoDao;
 
     @Inject
     TmNeuronMetadataMongoDao(MongoDatabase mongoDatabase,
                              TimebasedIdentifierGenerator idGenerator,
                              DomainPermissionsMongoHelper permissionsHelper,
-                             DomainUpdateMongoHelper updateHelper) {
+                             DomainUpdateMongoHelper updateHelper,
+                             GridFSMongoDao gridFSMongoDao) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
         this.updateHelper = updateHelper;
         this.mongoDatabase = mongoDatabase;
+        this.gridFSMongoDao = gridFSMongoDao;
     }
 
     @Override
