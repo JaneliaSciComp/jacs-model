@@ -73,8 +73,8 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         String collection = workspace.getNeuronCollection();
         // check permissions
         Set<String> subjectWriteGroups = permissionsHelper.retrieveSubjectWriteGroups(subjectKey);
-        LOG.info("Writers: {}", workspace.getWriters());
-        LOG.info("Subject Key: {}", subjectKey);
+        LOG.debug("Writers: {}", workspace.getWriters());
+        LOG.debug("Subject Key: {}", subjectKey);
         if (!subjectKey.equals(workspace.getOwnerKey()) &&
                 !subjectWriteGroups.contains(Subject.ADMIN_KEY) &&
                 !CollectionUtils.containsAny(workspace.getWriters(), subjectWriteGroups) &&
