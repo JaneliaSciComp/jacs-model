@@ -100,9 +100,9 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 neuronMetadata.setNeuronData(null);
                 neuronMetadata.setLargeNeuron(true);
             }
-            LOG.info("creating neuron");
-            if (neuronMetadata.getId()!=null) {
-                LOG.info("Recreating existing neuron with id {} of class type {}",
+            LOG.debug("creating neuron");
+            if (neuronMetadata.getId() != null) {
+                LOG.debug("Recreating existing neuron with id {} of class type {}",
                         neuronMetadata.getId(), neuronMetadata.getId().getClass());
                 persistedNeuronMetadata = createNeuronWithExistingId(neuronMetadata, collection, neuronOwnerKey);
             } else
@@ -112,7 +112,8 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
             }
             return persistedNeuronMetadata;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("Error creating neuron {} in workspace:{}:{}",
+                    neuronMetadata, workspace, workspace.getName(), e);
             throw new IllegalStateException(e);
         }
     }

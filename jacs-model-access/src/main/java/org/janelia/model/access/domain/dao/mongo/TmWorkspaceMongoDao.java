@@ -102,11 +102,9 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
         // Step 1: Get all accessible workspaces using existing method
         List<TmWorkspace> workspaces = getAllTmWorkspaces(subjectKey);
 
-        List<TmWorkspaceInfo> workspaceInfoList = new ArrayList<>();
-
         // Step 2: Use parallel processing for faster aggregation
         ForkJoinPool customThreadPool = new ForkJoinPool(8); // Limit to 8 threads
-        workspaceInfoList = customThreadPool.submit(() ->
+        List<TmWorkspaceInfo> workspaceInfoList = customThreadPool.submit(() ->
                 workspaces.parallelStream()
                         .map(workspace -> {
                             String neuronCollectionName = workspace.getNeuronCollection();
