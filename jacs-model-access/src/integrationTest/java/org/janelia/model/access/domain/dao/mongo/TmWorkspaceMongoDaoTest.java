@@ -86,7 +86,8 @@ public class TmWorkspaceMongoDaoTest extends AbstractMongoDaoTest {
                 updateMongoHelper,
                 dao,
                 tmNeuronMetadataDao,
-                tmMappedNeuronDao
+                tmMappedNeuronDao,
+                new GridFSMongoDao(testMongoDatabase)
         );
     }
 

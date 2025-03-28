@@ -47,9 +47,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     private final DomainDAO domainDao;
     private final TmNeuronMetadataDao tmNeuronMetadataDao;
     private final TmMappedNeuronDao tmMappedNeuronDao;
-
-    @Inject
-    private GridFSMongoDao gridFSMongoDao;
+    private final GridFSMongoDao gridFSMongoDao;
 
     @Inject
     TmWorkspaceMongoDao(MongoDatabase mongoDatabase,
@@ -58,12 +56,14 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                         DomainUpdateMongoHelper updateHelper,
                         DomainDAO domainDao,
                         TmNeuronMetadataDao tmNeuronMetadataDao,
-                        TmMappedNeuronDao tmMappedNeuronDao) {
+                        TmMappedNeuronDao tmMappedNeuronDao,
+                        GridFSMongoDao gridFSMongoDao) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
         this.mongoDatabase = mongoDatabase;
         this.domainDao = domainDao;
         this.tmNeuronMetadataDao = tmNeuronMetadataDao;
         this.tmMappedNeuronDao = tmMappedNeuronDao;
+        this.gridFSMongoDao = gridFSMongoDao;
     }
 
     @Override
