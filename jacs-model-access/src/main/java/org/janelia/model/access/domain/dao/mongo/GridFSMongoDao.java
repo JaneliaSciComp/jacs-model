@@ -29,6 +29,10 @@ public class GridFSMongoDao {
         gridFS = GridFSBuckets.create(mongoDatabase, defaultBucket);
     }
 
+    public boolean hasDataBlock(String id) throws FileNotFoundException{
+        return gridFS.find(Filters.eq("filename", id)).first() != null;
+    }
+
     public void downloadDataBlock(OutputStream output, String id) throws FileNotFoundException{
         try {
             gridFS.downloadToStream(id, output);

@@ -13,6 +13,7 @@ import org.janelia.model.access.domain.dao.ITestDomainDAOManager;
 import org.janelia.model.access.domain.dao.TmMappedNeuronDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.domain.sample.DataSet;
+import org.janelia.model.domain.tiledMicroscope.BoundingBox3d;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.Workspace;
@@ -130,6 +131,12 @@ public class TmWorkspaceMongoDaoTest extends AbstractMongoDaoTest {
         }
     }
 
+    @Test
+    public void getUndefinedBoundingBoxes() {
+        List<BoundingBox3d> boundingBox3dList = tmWorkspaceMongoDao.getWorkspaceBoundingBoxes(100L);
+        assertTrue(boundingBox3dList.isEmpty());
+    }
+
     private TmWorkspace createTestWorkspace(String name,
                                             User u,
                                             Set<String> readers,
@@ -188,6 +195,5 @@ public class TmWorkspaceMongoDaoTest extends AbstractMongoDaoTest {
     private void removeTestSubject(Subject s) {
         if (s != null) subjectMongoDao.removeSubjectByKey(s.getKey());
     }
-
 
 }

@@ -186,13 +186,15 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     public List<BoundingBox3d> getWorkspaceBoundingBoxes(Long workspaceId) {
         ObjectMapper mapper = new ObjectMapper();
         try {
+            if (!gridFSMongoDao.hasDataBlock(workspaceId.toString())) {
+                return Collections.emptyList();
+            }
             ByteArrayOutputStream boundingBoxBytes = new ByteArrayOutputStream();
             gridFSMongoDao.downloadDataBlock(boundingBoxBytes, workspaceId.toString());
-            List<BoundingBox3d> boundingBoxes = mapper.readValue(boundingBoxBytes.toByteArray(), new TypeReference<List<BoundingBox3d>>(){});
-            return boundingBoxes;
+            return mapper.readValue(boundingBoxBytes.toByteArray(), new TypeReference<List<BoundingBox3d>>(){});
         } catch (Exception e) {
-            LOG.error ("Problem fetching fragment bounding boxes from GridFS",e);
-            throw new RuntimeException("Problem fetching fragment bounding boxes from GridFS");
+            LOG.error ("Problem fetching fragment bounding boxes from GridFS", e);
+            throw new IllegalStateException("Problem fetching fragment bounding boxes from GridFS", e);
         }
     }
 
