@@ -9,6 +9,7 @@ public class TmOperation {
         CLEAR_PARENT_ANCHOR,
         CENTER_CURRENT_ANCHOR,
         RECENTER_3D_VIEW,
+        DELETE_NEURON,
         DELETE_NEURON_SUBTREE,
         SET_VERTEX_NEURON_ROOT,
         SPLIT_NEURON_EDGE_VERTICES,
