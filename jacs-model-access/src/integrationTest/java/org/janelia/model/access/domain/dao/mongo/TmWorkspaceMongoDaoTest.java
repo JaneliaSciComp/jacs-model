@@ -62,6 +62,7 @@ public class TmWorkspaceMongoDaoTest extends AbstractMongoDaoTest {
         subjectMongoDao = new SubjectMongoDao(testMongoDatabase, timebasedIdentifierGenerator);
         DomainPermissionsMongoHelper permissionsMongoHelper = new DomainPermissionsMongoHelper(subjectMongoDao);
         DomainUpdateMongoHelper updateMongoHelper = new DomainUpdateMongoHelper(testObjectMapper);
+        GridFSMongoDao neuronGridFS = new GridFSMongoDao(testMongoDatabase);
         workspaceNodeMongoDao = new WorkspaceNodeMongoDao(
                 testMongoDatabase,
                 timebasedIdentifierGenerator,
@@ -71,7 +72,8 @@ public class TmWorkspaceMongoDaoTest extends AbstractMongoDaoTest {
                 testMongoDatabase,
                 timebasedIdentifierGenerator,
                 permissionsMongoHelper,
-                updateMongoHelper
+                updateMongoHelper,
+                neuronGridFS
         );
         TmMappedNeuronDao tmMappedNeuronDao = new TmMappedNeuronMongoDao(
                 testMongoDatabase,
@@ -86,7 +88,8 @@ public class TmWorkspaceMongoDaoTest extends AbstractMongoDaoTest {
                 updateMongoHelper,
                 dao,
                 tmNeuronMetadataDao,
-                tmMappedNeuronDao
+                tmMappedNeuronDao,
+                neuronGridFS
         );
     }
 

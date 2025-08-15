@@ -12,7 +12,6 @@ import javax.media.jai.JAI;
 import javax.media.jai.ParameterBlockJAI;
 
 import com.google.common.base.Stopwatch;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,24 +56,24 @@ public class RenderedImagesWithStreams {
     public RenderedImageWithStream combine(String operation) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         try {
-            if (renderedImages.size() == 0) {
+            if (renderedImages.isEmpty()) {
                 return null;
             } else if (renderedImages.size() == 1) {
                 return new RenderedImageWithStream(renderedImages.get(0), renderedImageStreams.get(0));
             } else {
                 ParameterBlock combinedImages = new ParameterBlockJAI(operation);
-                renderedImages.forEach(rim -> combinedImages.addSource(rim));
+                renderedImages.forEach(combinedImages::addSource);
                 LOG.debug("Adding all sources {} for {} took {} ms", renderedImageNames, operation, stopwatch.elapsed(TimeUnit.MILLISECONDS));
                 return new RenderedImageWithStream(
                         JAI.create(operation, combinedImages, null),
                         new InputStream() {
                             @Override
-                            public int read() throws IOException {
+                            public int read() {
                                 throw new UnsupportedOperationException("Read is not supported from a final combined stream which is created only for being able to close all underlying streams");
                             }
 
                             @Override
-                            public void close() throws IOException {
+                            public void close() {
                                 RenderedImagesWithStreams.this.close();
                             }
                         }

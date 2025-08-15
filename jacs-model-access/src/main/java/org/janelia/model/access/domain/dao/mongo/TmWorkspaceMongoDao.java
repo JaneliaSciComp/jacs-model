@@ -47,9 +47,7 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
     private final DomainDAO domainDao;
     private final TmNeuronMetadataDao tmNeuronMetadataDao;
     private final TmMappedNeuronDao tmMappedNeuronDao;
-
-    @Inject
-    private GridFSMongoDao gridFSMongoDao;
+    private final GridFSMongoDao gridFSMongoDao;
 
     @Inject
     TmWorkspaceMongoDao(MongoDatabase mongoDatabase,
@@ -58,12 +56,14 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
                         DomainUpdateMongoHelper updateHelper,
                         DomainDAO domainDao,
                         TmNeuronMetadataDao tmNeuronMetadataDao,
-                        TmMappedNeuronDao tmMappedNeuronDao) {
+                        TmMappedNeuronDao tmMappedNeuronDao,
+                        GridFSMongoDao gridFSMongoDao) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
         this.mongoDatabase = mongoDatabase;
         this.domainDao = domainDao;
         this.tmNeuronMetadataDao = tmNeuronMetadataDao;
         this.tmMappedNeuronDao = tmMappedNeuronDao;
+        this.gridFSMongoDao = gridFSMongoDao;
     }
 
     @Override
@@ -102,11 +102,9 @@ public class TmWorkspaceMongoDao extends AbstractDomainObjectMongoDao<TmWorkspac
         // Step 1: Get all accessible workspaces using existing method
         List<TmWorkspace> workspaces = getAllTmWorkspaces(subjectKey);
 
-        List<TmWorkspaceInfo> workspaceInfoList = new ArrayList<>();
-
         // Step 2: Use parallel processing for faster aggregation
         ForkJoinPool customThreadPool = new ForkJoinPool(8); // Limit to 8 threads
-        workspaceInfoList = customThreadPool.submit(() ->
+        List<TmWorkspaceInfo> workspaceInfoList = customThreadPool.submit(() ->
                 workspaces.parallelStream()
                         .map(workspace -> {
                             String neuronCollectionName = workspace.getNeuronCollection();

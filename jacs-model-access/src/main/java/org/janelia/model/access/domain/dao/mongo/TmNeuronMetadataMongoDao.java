@@ -1,5 +1,15 @@
 package org.janelia.model.access.domain.dao.mongo;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.inject.Inject;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -17,17 +27,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
-import org.janelia.model.access.domain.dao.*;
+import org.janelia.model.access.domain.dao.AppendFieldValueHandler;
+import org.janelia.model.access.domain.dao.DaoUpdateResult;
+import org.janelia.model.access.domain.dao.EntityFieldValueHandler;
+import org.janelia.model.access.domain.dao.RemoveItemsFieldValueHandler;
+import org.janelia.model.access.domain.dao.SetFieldValueHandler;
+import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.tiledMicroscope.*;
+import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
+import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronData;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
+import org.janelia.model.domain.tiledMicroscope.TmOperation;
+import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.security.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.*;
 
 /**
  * {@link TmNeuronMetadata} Mongo DAO.
@@ -38,18 +53,18 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     private final MongoDatabase mongoDatabase;
     private final DomainUpdateMongoHelper updateHelper;
-
-    @Inject
-    private GridFSMongoDao gridFSMongoDao;
+    private final GridFSMongoDao gridFSMongoDao;
 
     @Inject
     TmNeuronMetadataMongoDao(MongoDatabase mongoDatabase,
                              TimebasedIdentifierGenerator idGenerator,
                              DomainPermissionsMongoHelper permissionsHelper,
-                             DomainUpdateMongoHelper updateHelper) {
+                             DomainUpdateMongoHelper updateHelper,
+                             GridFSMongoDao gridFSMongoDao) {
         super(mongoDatabase, idGenerator, permissionsHelper, updateHelper);
         this.updateHelper = updateHelper;
         this.mongoDatabase = mongoDatabase;
+        this.gridFSMongoDao = gridFSMongoDao;
     }
 
     @Override
@@ -58,14 +73,14 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         String collection = workspace.getNeuronCollection();
         // check permissions
         Set<String> subjectWriteGroups = permissionsHelper.retrieveSubjectWriteGroups(subjectKey);
-        LOG.info("Writers: {}", workspace.getWriters());
-        LOG.info("Subject Key: {}", subjectKey);
         if (!subjectKey.equals(workspace.getOwnerKey()) &&
                 !subjectWriteGroups.contains(Subject.ADMIN_KEY) &&
                 !CollectionUtils.containsAny(workspace.getWriters(), subjectWriteGroups) &&
                 !workspace.getWriters().contains(subjectKey)
         ) {
             // the current subject is neither an owner nor an allowed writer to the current workspace
+            LOG.info("{} is not an allowed writer - {} to workspace {}:{}",
+                    subjectKey, workspace.getWriters(), workspace.getId(), workspace.getName());
             throw new SecurityException(subjectKey + " is not allowed to write to workspace " + workspace.getName());
         }
         // Inherit from parent only if not existing already
@@ -85,19 +100,20 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                 neuronMetadata.setNeuronData(null);
                 neuronMetadata.setLargeNeuron(true);
             }
-            LOG.info("creating neuron");
-            if (neuronMetadata.getId()!=null) {
-                LOG.info("Recreating existing neuron with id {} of class type {}",
+            LOG.debug("creating neuron");
+            if (neuronMetadata.getId() != null) {
+                LOG.debug("Recreating existing neuron with id {} of class type {}",
                         neuronMetadata.getId(), neuronMetadata.getId().getClass());
                 persistedNeuronMetadata = createNeuronWithExistingId(neuronMetadata, collection, neuronOwnerKey);
             } else
-                persistedNeuronMetadata = saveNeuron(neuronMetadata,collection, neuronOwnerKey, false);
+                persistedNeuronMetadata = saveNeuron(neuronMetadata, collection, neuronOwnerKey, false);
             if (isLarge) {
                 saveLargeNeuronPointData(persistedNeuronMetadata.getId(), pointData);
             }
             return persistedNeuronMetadata;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("Error creating neuron {} in workspace:{}:{}",
+                    neuronMetadata, workspace, workspace.getName(), e);
             throw new IllegalStateException(e);
         }
     }
@@ -175,41 +191,41 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         return MongoDaoHelper.findByIds(neuronIdList, getNeuronCollection(workspace.getNeuronCollection()), TmNeuronMetadata.class);
     }
 
-    private void saveLargeNeuronPointData (Long neuronId, TmNeuronData pointData) {
+    private void saveLargeNeuronPointData(Long neuronId, TmNeuronData pointData) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             byte[] binaryData = mapper.writeValueAsBytes(pointData);
-            gridFSMongoDao.updateDataBlock(new ByteArrayInputStream(binaryData),neuronId.toString());
+            gridFSMongoDao.updateDataBlock(new ByteArrayInputStream(binaryData), neuronId.toString());
         } catch (Exception e) {
-            LOG.error ("Problem saving large neuron to GridFS",e);
+            LOG.error("Problem saving large neuron to GridFS", e);
             throw new RuntimeException("Problem saving large neuron to GridFS");
         }
     }
 
-    private void removeLargeNeuronPointData (Long neuronId) {
+    private void removeLargeNeuronPointData(Long neuronId) {
         try {
             gridFSMongoDao.deleteDataBlock(neuronId.toString());
         } catch (Exception e) {
 
-            LOG.error ("Problem saving large neuron to GridFS",e);
+            LOG.error("Problem saving large neuron to GridFS", e);
             throw new RuntimeException("Problem removing large neuron from GridFS");
         }
     }
 
 
-    private boolean checkLargeNeuron (TmNeuronMetadata neuron) {
+    private boolean checkLargeNeuron(TmNeuronMetadata neuron) {
         ObjectMapper mapper = new ObjectMapper();
         int NODE_LIMIT = 40000;
         // apply quick check on node count to speed up performance
-        if (neuron.getNeuronData().getGeoAnnotations().size()<NODE_LIMIT &&
-                neuron.getNeuronData().getAnchoredPaths().size()<NODE_LIMIT)
+        if (neuron.getNeuronData().getGeoAnnotations().size() < NODE_LIMIT &&
+                neuron.getNeuronData().getAnchoredPaths().size() < NODE_LIMIT)
             return false;
         try {
-            if (mapper.writeValueAsBytes(neuron).length>10000000) {
+            if (mapper.writeValueAsBytes(neuron).length > 10000000) {
                 return true;
             }
         } catch (JsonProcessingException e) {
-            LOG.error ("Problem checking the size of the neuron",e);
+            LOG.error("Problem checking the size of the neuron", e);
             throw new RuntimeException("Problem checking the size of neuron "
                     + neuron.getId());
         }
@@ -219,7 +235,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     private void hydrateLargeNeurons(List<TmNeuronMetadata> neuronList) {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            for (TmNeuronMetadata neuron: neuronList) {
+            for (TmNeuronMetadata neuron : neuronList) {
                 // hydrate large neurons from gridfs
                 if (neuron.isLargeNeuron()) {
                     ByteArrayOutputStream outputNeuron = new ByteArrayOutputStream();
@@ -282,17 +298,17 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     @Override
     public List<TmOperation> getOperations(Long workspaceId, Long neuronId, Date startDate, Date endDate) {
-        MongoCollection<TmOperation> operationCollection =  mongoDatabase.getCollection("tmOperation", TmOperation.class);
+        MongoCollection<TmOperation> operationCollection = mongoDatabase.getCollection("tmOperation", TmOperation.class);
         ImmutableList.Builder<Bson> operationFilterBuilder = ImmutableList.builder();
         operationFilterBuilder.add(Filters.eq("workspaceId", workspaceId));
-        if (neuronId!=null) {
+        if (neuronId != null) {
             operationFilterBuilder.add(Filters.eq("neuronId", neuronId));
         }
-        if (startDate!=null) {
-            operationFilterBuilder.add(Filters.and(Filters.gte("timestamp",startDate)));
+        if (startDate != null) {
+            operationFilterBuilder.add(Filters.and(Filters.gte("timestamp", startDate)));
         }
-        if (endDate!=null) {
-            operationFilterBuilder.add(Filters.and(Filters.lte("timestamp",endDate)));
+        if (endDate != null) {
+            operationFilterBuilder.add(Filters.and(Filters.lte("timestamp", endDate)));
         }
         Bson filter = MongoDaoHelper.createFilterCriteria(operationFilterBuilder.build());
         return MongoDaoHelper.find(filter, null, 0, 10000, operationCollection, TmOperation.class);
@@ -300,7 +316,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     private TmNeuronMetadata createNeuronWithExistingId(TmNeuronMetadata entity,
                                                         String collectionName, String subjectKey) {
-        MongoCollection<TmNeuronMetadata> mongoCollection =  getNeuronCollection(collectionName);
+        MongoCollection<TmNeuronMetadata> mongoCollection = getNeuronCollection(collectionName);
 
         Date now = new Date();
         for (TmGeoAnnotation anno : entity.getRootAnnotations()) {
@@ -316,14 +332,14 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
     }
 
     private TmNeuronMetadata saveNeuron(TmNeuronMetadata entity,
-                                       String collectionName, String subjectKey, boolean forceCreate) {
-        MongoCollection<TmNeuronMetadata> mongoCollection =  getNeuronCollection(collectionName);
+                                        String collectionName, String subjectKey, boolean forceCreate) {
+        MongoCollection<TmNeuronMetadata> mongoCollection = getNeuronCollection(collectionName);
 
         Date now = new Date();
         if (entity.getId() == null || forceCreate) {
             if (!forceCreate)
                 entity.setId(createNewId());
-            if (entity.getNeuronData()!=null) {
+            if (entity.getNeuronData() != null) {
                 for (TmGeoAnnotation anno : entity.getRootAnnotations()) {
                     anno.setParentId(entity.getId());
                 }
@@ -342,7 +358,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
                     updateHelper.getEntityUpdates(entity)
             );
             if (updateResult.getMatchedCount() == 0) {
-                throw new MongoException("Could not update "+entity+". Object was not matched.");
+                throw new MongoException("Could not update " + entity + ". Object was not matched.");
             }
         }
         return entity;
@@ -351,7 +367,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     @Override
     public void updateNeuronStyles(BulkNeuronStyleUpdate bulkNeuronStyleUpdate, TmWorkspace workspace, String subjectKey) {
-        MongoCollection<TmNeuronMetadata> mongoCollection =  getNeuronCollection(workspace.getNeuronCollection());
+        MongoCollection<TmNeuronMetadata> mongoCollection = getNeuronCollection(workspace.getNeuronCollection());
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatesBuilder = ImmutableMap.builder();
         if (bulkNeuronStyleUpdate.getVisible() != null) {
             updatesBuilder.put("visible", new SetFieldValueHandler<>(bulkNeuronStyleUpdate.getVisible()));
@@ -375,7 +391,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         long desired = bulkNeuronStyleUpdate.getNeuronIds().size();
         long found = daoUpdateResult.getEntitiesFound();
         if (desired != found) {
-            throw new MongoException("Update neuron styles failed. Tried to update "+desired+" neurons, but only found "+found);
+            throw new MongoException("Update neuron styles failed. Tried to update " + desired + " neurons, but only found " + found);
         }
     }
 
@@ -395,7 +411,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     @Override
     public void updateNeuronTagsForNeurons(TmWorkspace workspace, List<Long> neuronIds, List<String> tags, boolean tagState,
-                                            String subjectKey) {
+                                           String subjectKey) {
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatesBuilder = ImmutableMap.builder();
         if (tagState) {
             updatesBuilder.put("tags", new AppendFieldValueHandler<>(ImmutableSet.copyOf(tags)));
@@ -418,7 +434,7 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         long desired = neuronIds.size();
         long found = daoUpdateResult.getEntitiesFound();
         if (desired != found) {
-            throw new MongoException("Update neuron tags failed. Tried to update "+desired+" neurons, but only found "+found);
+            throw new MongoException("Update neuron tags failed. Tried to update " + desired + " neurons, but only found " + found);
         }
     }
 
@@ -427,8 +443,8 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
         MongoCollection<TmNeuronMetadata> mongoCollection = getNeuronCollection(workspace.getNeuronCollection());
         return MongoDaoHelper.count(
                 MongoDaoHelper.createFilterCriteria(
-                Filters.eq("workspaceRef", Reference.createFor(workspace)),
-                permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
+                        Filters.eq("workspaceRef", Reference.createFor(workspace)),
+                        permissionsHelper.createReadPermissionFilterForSubjectKey(subjectKey)),
                 mongoCollection
         );
     }
