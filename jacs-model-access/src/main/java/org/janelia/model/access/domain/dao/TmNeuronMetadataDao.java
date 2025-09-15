@@ -25,6 +25,6 @@ public interface TmNeuronMetadataDao extends DomainObjectDao<TmNeuronMetadata> {
     Long getNeuronCountsForWorkspace(TmWorkspace workspace, String subjectKey);
     TmNeuronMetadata saveNeuronMetadata(TmWorkspace workspace, TmNeuronMetadata neuron, String subjectKey);
     void createOperationLog(TmOperation newOperation, String subjectKey);
-    List<TmOperation> getOperations(Long workspaceId, Long neuronId, Date startDate, Date endDate);
+    List<TmOperation> getOperations(Long workspaceId, Long neuronId, String userId, TmOperation.Activity activity);
     long deleteNeuronsForWorkspace(TmWorkspace workspace, String subjectKey);
 }
