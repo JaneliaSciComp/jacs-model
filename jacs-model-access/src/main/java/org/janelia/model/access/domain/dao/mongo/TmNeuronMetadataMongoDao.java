@@ -298,17 +298,20 @@ public class TmNeuronMetadataMongoDao extends AbstractDomainObjectMongoDao<TmNeu
 
     @Override
     public List<TmOperation> getOperations(Long workspaceId, Long neuronId, String userId, TmOperation.Activity activity) {
+        LOG.info("Querying operations log with parameters workspace {}, neuron {}, userID {}, activity {}",
+                workspaceId, neuronId, userId, activity);
         MongoCollection<TmOperation> operationCollection = mongoDatabase.getCollection("tmOperation", TmOperation.class);
         ImmutableList.Builder<Bson> operationFilterBuilder = ImmutableList.builder();
+
         operationFilterBuilder.add(Filters.eq("workspaceId", workspaceId));
         if (neuronId != null) {
             operationFilterBuilder.add(Filters.eq("neuronId", neuronId));
         }
         if (userId != null) {
-            operationFilterBuilder.add(Filters.and(Filters.gte("user", userId)));
+            operationFilterBuilder.add(Filters.eq("user", userId));
         }
         if (activity != null) {
-            operationFilterBuilder.add(Filters.and(Filters.lte("activity", activity)));
+            operationFilterBuilder.add(Filters.eq("activity", activity));
         }
         Bson filter = MongoDaoHelper.createFilterCriteria(operationFilterBuilder.build());
         return MongoDaoHelper.find(filter, null, 0, 10000, operationCollection, TmOperation.class);
