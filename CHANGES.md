@@ -1,4 +1,4 @@
-
+## 3.5.0 - 08/27/2026
 
 * changed sample query and added additional options for lines, flycoreIDs and crossBarcodes
 * userID can now be used for activity and operations filter
