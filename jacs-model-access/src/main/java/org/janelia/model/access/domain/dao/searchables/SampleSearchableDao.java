@@ -1,11 +1,11 @@
 package org.janelia.model.access.domain.dao.searchables;
 
-import java.util.Collection;
 import java.util.List;
 
 import javax.inject.Inject;
 
 import org.janelia.model.access.cdi.AsyncIndex;
+import org.janelia.model.access.domain.SampleQuery;
 import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.sample.Sample;
@@ -26,12 +26,7 @@ public class SampleSearchableDao extends AbstractDomainSearchableDao<Sample> imp
     }
 
     @Override
-    public List<Sample> findMatchingSample(Collection<Long> ids,
-                                           Collection<String> dataSetIds,
-                                           Collection<String> sampleNames,
-                                           Collection<String> slideCodes,
-                                           long offset,
-                                           int length) {
-        return sampleDao.findMatchingSample(ids, dataSetIds, sampleNames, slideCodes, offset, length);
+    public List<Sample> findMatchingSamples(SampleQuery sampleQuery) {
+        return sampleDao.findMatchingSamples(sampleQuery);
     }
 }
