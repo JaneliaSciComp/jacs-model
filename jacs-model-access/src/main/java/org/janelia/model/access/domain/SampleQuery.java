@@ -17,6 +17,18 @@ public class SampleQuery {
     private long offset;
     private int length;
 
+    public boolean isEmpty() {
+        return sampleIds.isEmpty()
+                && sampleRefs.isEmpty()
+                && datasetIds.isEmpty()
+                && sampleNames.isEmpty()
+                && sampleLines.isEmpty()
+                && sampleSlideCodes.isEmpty()
+                && sampleFlycoreIds.isEmpty()
+                && sampleCrossBarcodes.isEmpty()
+                ;
+    }
+
     public boolean hasSampleIds() {
         return !sampleIds.isEmpty();
     }
