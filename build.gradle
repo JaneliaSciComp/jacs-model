@@ -55,8 +55,8 @@ subprojects {
         }
 
         java {
-            sourceCompatibility = JavaVersion.VERSION_11
-            targetCompatibility = JavaVersion.VERSION_11
+            sourceCompatibility = JavaVersion.VERSION_21
+            targetCompatibility = JavaVersion.VERSION_21
         }
 
         test {
@@ -120,7 +120,7 @@ downloadLicenses {
 }
 
 tasks.register('updateWrapper', Wrapper) {
-    gradleVersion = "8.12"
+    gradleVersion = "9.6.1"
 }
 
 tasks.register('version') {

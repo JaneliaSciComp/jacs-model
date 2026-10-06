@@ -50,14 +50,20 @@ dependencies {
         JAMA_LIB = "gov.nist.math:jama:1.0.3"
 
         // testing
-        JUNIT4_LIB = "junit:junit:4.13.1"
-        JUNIT5_LIB = "org.junit.jupiter:junit-jupiter:5.11.4"
-        JUNIT_ENGINE_LIB = "org.junit.vintage:junit-vintage-engine:5.11.4"
-        JUNIT_PLATFORM_LAUNCHER = "org.junit.platform:junit-platform-launcher:1.11.4"
+        // the bom keeps jupiter api/engine and platform artifacts aligned
+        JUNIT_BOM = "org.junit:junit-bom:5.14.4"
+        JUNIT4_LIB = "junit:junit:4.13.2"
+        JUNIT5_LIB = "org.junit.jupiter:junit-jupiter"
+        JUNIT_ENGINE_LIB = "org.junit.vintage:junit-vintage-engine"
+        JUNIT_PLATFORM_LAUNCHER = "org.junit.platform:junit-platform-launcher"
         HAMCREST_LIB = "org.hamcrest:java-hamcrest:2.0.0.0"
-        MOCKITO_VERSION = "5.14.2"
+        // and update of mockito-junit-jupiter may require an update of junit if the test discovery gets broken
+        MOCKITO_VERSION = "5.24.0"
         MOCKITO_CORE_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
         MOCKITO_JUNIT5_LIB = "org.mockito:mockito-junit-jupiter:${MOCKITO_VERSION}"
+        BYTE_BUDDY_VERSION = "1.18.14"
+        BYTE_BUDDY_LIB = "net.bytebuddy:byte-buddy:${BYTE_BUDDY_VERSION}"
+        BYTE_BUDDY_AGENT_LIB = "net.bytebuddy:byte-buddy-agent:${BYTE_BUDDY_VERSION}"
         ASSERTJ_LIB = "org.assertj:assertj-core:3.27.0"
     }
 
@@ -68,7 +74,11 @@ dependencies {
                    JAI_CODEC_LIB,
                    SLF4J_LIB
 
+    testImplementation platform(JUNIT_BOM)
+
     testImplementation ASSERTJ_LIB,
+                       BYTE_BUDDY_LIB,
+                       BYTE_BUDDY_AGENT_LIB,
                        HAMCREST_LIB,
                        JUNIT4_LIB,
                        JUNIT5_LIB,
