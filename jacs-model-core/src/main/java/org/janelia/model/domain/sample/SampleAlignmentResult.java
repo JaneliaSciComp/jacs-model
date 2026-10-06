@@ -16,7 +16,7 @@ import org.janelia.model.domain.interfaces.IsAligned;
 public class SampleAlignmentResult extends PipelineResult implements HasAnatomicalArea, HasImageStack, IsAligned {
 
     private String legacyName;
-	private String anatomicalArea;
+    private String anatomicalArea;
     private String imageSize;
     private String opticalResolution;
     private String channelColors;
